@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "cardId": "quality_story_20260912",
+  "name": "质量验证向导",
+  "description": "用于离线功能验收的合成角色卡。",
+  "characters": [
+    { "characterId": "npc_elena", "name": "灯塔向导", "description": "带领旅人探索海港的向导。", "participant": true }
+  ],
+  "initialState": {
+    "items": [
+      { "instanceId": "quality_tea", "name": "旅行茶", "ownerId": "player", "quantity": 5 },
+      { "instanceId": "quality_watch", "name": "航海怀表", "ownerId": "player", "quantity": 1, "keepsake": true, "unique": true }
+    ],
+    "relationships": { "npc_elena": { "affection": 50, "trust": 40, "alertness": 10 } },
+    "moods": { "npc_elena": { "moodCode": "calm", "text": "等候旅人出发" } }
+  },
+  "openingVariants": [
+    { "variantId": "rain", "title": "雨夜灯塔", "text": "向导在灯塔里等着旅人。", "initialState": { "scene": { "sceneId": "lighthouse", "locationId": "tower", "title": "雨夜灯塔" } } },
+    { "variantId": "harbor", "title": "清晨港口", "text": "晨光照亮港口，旅人带着五份旅行茶和航海怀表抵达码头。", "initialState": { "scene": { "sceneId": "harbor", "locationId": "pier", "title": "清晨港口" } } }
+  ],
+  "rules": {
+    "version": "quality.browser.v1",
+    "actions": {
+      "drink.tea": {
+        "actionId": "drink.tea", "label": "饮用两份旅行茶", "attribute": "wisdom", "dc": 12,
+        "consequences": {
+          "success": [{ "type": "item_consume", "payload": { "itemId": "quality_tea", "from": "player", "to": "consumed", "quantity": 2 } }],
+          "failure": [{ "type": "item_consume", "payload": { "itemId": "quality_tea", "from": "player", "to": "consumed", "quantity": 2 } }],
+          "critical_success": [{ "type": "item_consume", "payload": { "itemId": "quality_tea", "from": "player", "to": "consumed", "quantity": 2 } }],
+          "critical_failure": [{ "type": "item_consume", "payload": { "itemId": "quality_tea", "from": "player", "to": "consumed", "quantity": 2 } }]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+/* 局域网配对弹窗：外壳已交给 ui/Modal，这里只留内容样式。 */
+.pairing-dialog .ui-modal__body {
+  align-items: center;
+  text-align: center;
+}
+
+.pairing-lead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pairing-icon {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.pairing-lead p {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.pairing-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.pairing-pin {
+  height: 44px;
+  font-size: var(--fs-lg);
+  text-align: center;
+  letter-spacing: 4px;
+  font-weight: var(--fw-semibold);
+  background: var(--bg-subtle);
+}
+
+.pairing-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+}

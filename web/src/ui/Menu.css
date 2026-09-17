@@ -1,0 +1,130 @@
+/* 下拉菜单：唯一实现（替代 .menu / .check-popover-menu / .probe-* 三套）。 */
+.ui-menu {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow-lg), inset 0 1px 1.5px 0 var(--glass-specular-top);
+}
+
+.ui-menu--up {
+  bottom: calc(100% + var(--space-2));
+}
+
+.ui-menu--down {
+  top: calc(100% + var(--space-2));
+}
+
+.ui-menu--align-end {
+  right: 0;
+}
+
+.ui-menu--align-start {
+  left: 0;
+}
+
+.ui-menu__header {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-light);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.ui-menu__empty {
+  padding: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.ui-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.ui-menu__item:hover:not(:disabled),
+.ui-menu__item:focus-visible {
+  background: var(--glass-pill-bg-hover);
+  outline: none;
+  transform: translateX(2px);
+}
+
+.ui-menu__item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent-solid);
+}
+
+.ui-menu__item--active {
+  background: var(--glass-pill-bg-hover);
+  color: var(--text-main);
+  font-weight: var(--fw-semibold);
+}
+
+.ui-menu__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-menu__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ui-menu__item-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-menu__item-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-menu__item-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.ui-menu__sep {
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+  background: var(--border-light);
+}
+
+.ui-menu__foot {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: var(--lh-tight);
+}

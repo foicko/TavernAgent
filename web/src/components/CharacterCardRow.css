@@ -1,0 +1,5 @@
+/* 角色卡行：只在确认删除时改变行外观。 */
+.char-card-entry.confirming {
+  border-color: var(--color-warn-border);
+  background: var(--color-danger-bg);
+}

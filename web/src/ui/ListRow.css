@@ -1,0 +1,88 @@
+/* 可选列表行：整行为一个按钮，行尾动作是它的兄弟节点（HTML 不允许按钮嵌套）。 */
+.ui-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  padding: 0 var(--space-2) 0 0;
+  transition: var(--transition-fast);
+}
+
+.ui-list-row:hover {
+  border-color: var(--border-mid);
+}
+
+.ui-list-row--selected {
+  border-color: var(--accent-solid);
+  background: var(--bg-subtle);
+}
+
+.ui-list-row--disabled {
+  opacity: 0.6;
+}
+
+.ui-list-row__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.ui-list-row__main:disabled {
+  cursor: not-allowed;
+}
+
+.ui-list-row__main:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: -2px;
+}
+
+.ui-list-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-list-row__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-list-row__subtitle {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-list-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.ui-list-row__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}

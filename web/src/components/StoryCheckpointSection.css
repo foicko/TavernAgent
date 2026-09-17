@@ -1,0 +1,31 @@
+/* 前情回顾区块：此前 class 无任何规则、全靠内联样式；现收口到这里。 */
+.story-checkpoint-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.story-checkpoint-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.story-checkpoint-toggle:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+.story-checkpoint-toggle-hint {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-normal);
+  color: var(--text-dim);
+}
+
+.story-checkpoint-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

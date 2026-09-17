@@ -1,0 +1,106 @@
+/* 表单行：标签 / 控件 / 提示 / 错误 + 共用控件外观。 */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-field__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+}
+
+.ui-field__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: var(--lh-tight);
+}
+
+.ui-field__error {
+  font-size: var(--fs-xs);
+  color: var(--color-danger-text);
+  line-height: var(--lh-tight);
+}
+
+.ui-input,
+.ui-select {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  transition: var(--transition-fast);
+}
+
+.ui-select {
+  cursor: pointer;
+  padding-right: var(--space-5);
+}
+
+.ui-input::placeholder {
+  color: var(--text-dim);
+}
+
+.ui-input:hover,
+.ui-select:hover {
+  border-color: var(--border-mid);
+}
+
+.ui-input:focus-visible,
+.ui-select:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 1px;
+  border-color: var(--accent-solid);
+}
+
+.ui-input:disabled,
+.ui-select:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+.ui-field--invalid .ui-input,
+.ui-field--invalid .ui-select {
+  border-color: var(--color-warn-border);
+}
+
+.ui-input--mono,
+.ui-select--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--fs-sm);
+}
+
+/* 带单位/后缀或行内按钮的输入组 */
+.ui-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ui-input-group__suffix {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.ui-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ui-input-row .ui-input {
+  flex: 1;
+  min-width: 0;
+}

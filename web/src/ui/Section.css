@@ -1,0 +1,71 @@
+/* 区块卡片：标题（可选序号徽标）+ 说明 + 右上操作 + 内容。 */
+.ui-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+
+.ui-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ui-section__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+  line-height: var(--lh-tight);
+}
+
+.ui-section__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.ui-section__text {
+  min-width: 0;
+}
+
+.ui-section__description {
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: var(--lh-tight);
+}
+
+.ui-section__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.ui-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ui-section--flush .ui-section__body {
+  gap: 0;
+}

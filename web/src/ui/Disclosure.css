@@ -1,0 +1,62 @@
+/* 折叠区：把"高级参数"这类低频内容收起来。 */
+.ui-disclosure {
+  border-top: 1px solid var(--border-light);
+}
+
+.ui-disclosure__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-disclosure__trigger:hover {
+  color: var(--text-main);
+}
+
+.ui-disclosure__trigger:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+.ui-disclosure__caret {
+  flex-shrink: 0;
+  font-size: 10px;
+  transition: var(--transition-fast);
+}
+
+.ui-disclosure__caret--open {
+  transform: rotate(90deg);
+}
+
+.ui-disclosure__summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-disclosure__spacer {
+  flex: 1;
+}
+
+.ui-disclosure__value {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+}
+
+.ui-disclosure__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+}

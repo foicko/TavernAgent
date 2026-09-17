@@ -1,0 +1,5 @@
+/* 世界书悬浮卡：定位由 styles.css 的 .lore-popover 负责，这里只补内容样式。 */
+.lore-pop-keys {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}

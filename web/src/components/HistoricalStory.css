@@ -1,0 +1,153 @@
+/* ==========================================================================
+   历史已提交回合（HistoricalStory 局部样式）
+   --------------------------------------------------------------------------
+   令牌一律取自 src/styles/tokens.css；无对应令牌的字面值就地保留并注明。
+
+   作用域说明（不能新增 className，HistoricalStory 也没有自己的根节点）：
+   - .story-turn 是 HistoricalStory 每条已提交回合的外层容器，但 NarrativeStream
+     也复用同类名。这里只在「再加一层限定」的前提下定义规则；
+     凡是与 NarrativeStream 重叠的选择器，其声明值与其原内联值完全一致，
+     因此不会改变 NarrativeStream 的实际渲染结果（其内联样式优先级更高）。
+   - .block-dialogue / .block-monologue / .btn-solid 按约定不在本文件定义，
+     由仓库其它位置统一放置。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 回合卡片
+   -------------------------------------------------------------------------- */
+/* 开场序章：深色描边 + 强调色左边框（.opening-turn 为 HistoricalStory 独有） */
+.story-turn.opening-turn > .dialogue-turn-wrap {
+  border-color: var(--border-mid);
+  border-left: 3.5px solid var(--accent-solid);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--glass-specular-top), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* 已提交回合：中描边 + 表面底色
+   （与 NarrativeStream 重叠，但其对应节点均带相同内联值，实际渲染不变） */
+.story-turn:not(.opening-turn) > .dialogue-turn-wrap {
+  border-color: var(--border-light);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--bg-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+/* 旁白段落：紧凑段距与行高（覆盖 styles.css 的 1.85 行高） */
+.story-turn .block-narration {
+  margin-bottom: var(--space-2);
+  line-height: 1.8; /* 无对应行高令牌（--lh-tight=1.35 / --lh-normal=1.6） */
+}
+
+/* 玩家输入卡与下一张卡片之间的间距 */
+.story-turn > .player-turn-container {
+  margin-bottom: 14px; /* 无对应间距令牌（--space-3=12 / --space-4=16） */
+}
+
+/* --------------------------------------------------------------------------
+   2. 意图抉择卡
+   -------------------------------------------------------------------------- */
+/* HistoricalStory 的抉择卡嵌在 .dialogue-turn-wrap 内；
+   NarrativeStream 的 .decision-deck-box 直接挂在 .story-turn 下，故不受影响。 */
+.dialogue-turn-wrap .decision-deck-box {
+  margin-top: 14px; /* 无对应间距令牌 */
+  border-top: 1px dashed var(--border-light);
+  padding-top: var(--space-3);
+}
+
+.dialogue-turn-wrap .decision-deck-header {
+  margin-bottom: var(--space-2);
+}
+
+/* 头部右侧的「多意图推演」标注 */
+.dialogue-turn-wrap .decision-deck-header > span:last-child {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+/* 单张抉择卡：Liquid Glass 悬浮卡片 + 意图色胶囊发光标 + 顶层镜面高光 */
+.decision-card-btn {
+  position: relative;
+  overflow: hidden;
+  padding: 10px 14px 10px 18px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 8px);
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
+  box-shadow: var(--glass-specular-top), 0 2px 8px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.decision-card-btn::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  bottom: 10px;
+  width: 3.5px;
+  border-radius: var(--radius-full);
+  background: var(--decision-accent, var(--accent-solid));
+  box-shadow: 0 0 6px var(--decision-accent, transparent);
+  transition: all 0.2s ease;
+}
+
+.decision-card-btn:hover {
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  border-color: var(--border-mid);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-specular-top), 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.decision-card-btn:hover::before {
+  top: 7px;
+  bottom: 7px;
+  width: 4px;
+  box-shadow: 0 0 10px var(--decision-accent, var(--accent-solid));
+}
+
+.decision-card-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* 卡片第一行：意图标签 + 「推进 ↵」 */
+.decision-card-btn > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.decision-card-btn > div:first-child > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 10.5px;
+}
+
+.decision-card-btn > div:first-child > span:last-child {
+  font-size: 10px;
+  color: var(--text-dim);
+  transition: all 0.18s ease;
+}
+
+.decision-card-btn:hover > div:first-child > span:last-child {
+  color: var(--accent-solid);
+  transform: translateX(2px);
+}
+
+/* 卡片正文 */
+.decision-card-btn > div:last-child {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-main);
+}

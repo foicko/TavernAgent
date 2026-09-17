@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="720" viewBox="0 0 320 480" role="img" aria-label="TavernAgent original story illustration">
+<rect width="320" height="480" fill="#3b4554"/><circle cx="240" cy="86" r="100" fill="#b8c4d1" opacity=".08"/>
+<path d="M0 387Q96 340 162 382T320 345V480H0" fill="#111827" opacity=".25"/>
+<rect x="24" y="24" width="272" height="432" rx="120" fill="none" stroke="#b8c4d1" opacity=".35"/>
+<path d="M160 166a35 35 0 1 0 0 70a35 35 0 1 0 0-70M90 348c4-73 136-73 140 0" fill="#b8c4d1" opacity=".9"/><circle cx="160" cy="82" r="3" fill="#b8c4d1"/>
+<path d="M123 406h74M140 417h40" stroke="#b8c4d1" stroke-width="2" opacity=".7"/>
+</svg>

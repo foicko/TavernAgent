@@ -1,0 +1,171 @@
+/* ==========================================================================
+   回合操作条 + 内联编辑器（TurnActions 局部样式）
+   --------------------------------------------------------------------------
+   令牌一律取自 src/styles/tokens.css；无对应令牌的字面值就地保留并注明。
+   这些选择器只作用于 .turn-editor / .turn-actions-bar 内部，
+   不新增/不修改任何 className，避免影响其它组件。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 内联编辑器（改正文 / 改输入）
+   -------------------------------------------------------------------------- */
+.turn-editor {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+  border: 1px solid var(--border-mid);
+  box-shadow: var(--glass-specular-top), 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* 编辑器首行说明文字（无 className，按结构定位） */
+.turn-editor > div:first-child {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.turn-editor textarea {
+  width: 100%;
+  padding: var(--space-2) 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 8px);
+  color: var(--text-main);
+  font-size: 12.5px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.turn-editor textarea:focus {
+  outline: none;
+  border-color: var(--accent-solid);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* 编辑器底部按钮行（无 className，按结构定位） */
+.turn-editor > div:last-child {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* 编辑器内按钮的紧凑尺寸与晶体微胶囊形态 */
+.turn-editor .btn-solid {
+  height: 26px;
+  padding: 0 12px;
+  font-size: var(--fs-xs);
+  border-radius: var(--radius-full);
+}
+
+.turn-editor .btn-quiet {
+  height: 26px;
+  padding: 0 12px;
+  font-size: var(--fs-xs);
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.turn-editor .btn-quiet:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+}
+
+/* --------------------------------------------------------------------------
+   2. 回合操作条
+   -------------------------------------------------------------------------- */
+.turn-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* 左右两组容器（左组无候选时是空 div，规则无副作用） */
+.turn-actions-bar > div {
+  display: flex;
+  align-items: center;
+}
+
+/* 左侧：候选版本切换器 */
+.turn-actions-bar > div:first-child {
+  gap: 6px;
+}
+
+.turn-actions-bar > div:first-child > span {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.turn-actions-bar > div:first-child > .btn-quiet {
+  height: 24px;
+  padding: 0 8px;
+  font-size: var(--fs-xs);
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.turn-actions-bar > div:first-child > .btn-quiet:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+/* 右侧：操作按钮群（升级为现代化晶体药丸胶囊微键） */
+.turn-actions-bar > div:last-child {
+  gap: 6px;
+}
+
+.turn-actions-bar > div:last-child > .btn-quiet:not([title="新建候选分支，重新掷骰并演绎新结果"]) {
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.turn-actions-bar > div:last-child > .btn-quiet:not([title="新建候选分支，重新掷骰并演绎新结果"]):hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.turn-actions-bar > div:last-child > .btn-quiet[title="新建候选分支，重新掷骰并演绎新结果"] {
+  height: 24px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+  border-radius: var(--radius-full);
+  background: var(--glass-bg-subtle, var(--bg-subtle));
+  border: 1px solid var(--glass-border, var(--border-light));
+  color: var(--accent-solid);
+  font-weight: 600;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.turn-actions-bar > div:last-child > .btn-quiet[title="新建候选分支，重新掷骰并演绎新结果"]:hover {
+  background: var(--bg-elevated);
+  border-color: var(--accent-solid);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--accent-subtle);
+}

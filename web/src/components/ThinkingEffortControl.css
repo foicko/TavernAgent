@@ -1,0 +1,21 @@
+/* 输入台的思考强度：一个胶囊 + 向上展开的菜单（与模型切换同一形态）。 */
+.thinking-effort {
+  position: relative;
+  display: inline-flex;
+}
+
+.thinking-effort__name {
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+/* 非默认档位是"有东西生效了"，给一点强调色，避免用户忘了自己调过。 */
+.thinking-effort__trigger--set .thinking-effort__name {
+  color: var(--accent-solid);
+  font-weight: var(--fw-medium);
+}
+
+.thinking-effort__caret {
+  flex-shrink: 0;
+  opacity: 0.6;
+}

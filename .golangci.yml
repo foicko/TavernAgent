@@ -1,0 +1,46 @@
+version: "2"
+
+linters:
+  enable:
+    - copyloopvar
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    errcheck:
+      check-type-assertions: false
+      exclude-functions:
+        - (*os.File).Close
+        - (io.Closer).Close
+        - (*net/http.Response).Body.Close
+        - (*database/sql.Tx).Rollback
+    staticcheck:
+      checks:
+        - all
+        - -ST1000 # missing package comment
+        - -ST1003 # underscores in identifiers
+        - -ST1005 # error strings ending with punctuation
+        - -QF1001 # De Morgan's law
+        - -QF1003 # tagged switch
+        - -QF1012 # WriteString(fmt.Sprintf)
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+      - path: _test\.go
+        linters:
+          - staticcheck
+        text: SA5011
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

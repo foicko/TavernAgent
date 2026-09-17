@@ -1,0 +1,55 @@
+# Reference Agent Codebases (Excluded from main project repo)
+/Reasonix/
+/grok-build/
+/pi-agent/
+/LiveAgent/
+
+# Local reference materials & assets (design mockups, papers, imported char cards)
+/design-preview/
+/papers/
+/chars/
+
+# Agent harness state (plan files written by the coding assistant, not project content)
+/.zcode/
+
+# Local Runtime Data
+/data/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+.trae/
+.workbuddy/
+
+# Build artifacts
+/dist/
+/build/
+# 前端构建产物：由 pnpm build 生成、被 //go:embed 嵌入。
+# 不入库，避免"改了 src 忘了重建、go build 静默嵌入旧前端"。
+web/dist/
+bin/
+*.exe
+*.dll
+
+# Local secrets (API keys live only on the backend host)
+data/config/secrets.json
+
+# Frontend
+web/node_modules/
+web/.vite/
+
+# Local verification scratch (published reports live in docs/artifacts)
+/.playwright-cli/
+/output/
+__pycache__/
+*.pyc
+
+# 架构图的位图渲染：由 scripts/architecture_diagram.py 生成，可随时重出；
+# 入库版本是矢量版 docs/artifacts/architecture/*.svg。
+# 发布审计对仓库里的任何位图一律判违规（scripts/release_audit.py），
+# 且本项目"仓库里只放矢量"的约定由此保持。
+docs/artifacts/architecture/*.png

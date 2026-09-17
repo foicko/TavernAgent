@@ -1,0 +1,271 @@
+{
+  "acceptResult": {
+    "eventsUrl": "/api/v1/turns/turn_new_1/events",
+    "status": "processing",
+    "statusUrl": "/api/v1/turns/turn_new_1",
+    "turnId": "turn_new_1"
+  },
+  "apiError": {
+    "code": "INVALID_ARGUMENT",
+    "message": "参数校验失败",
+    "retryable": false,
+    "turnId": "turn_err_1"
+  },
+  "deriveResult": {
+    "branch": {
+      "branchId": "branch_sub_1",
+      "name": "新分支",
+      "headNodeId": "node_root",
+      "version": 1
+    },
+    "branchId": "branch_sub_1",
+    "eventsUrl": "/api/v1/turns/turn_new_2/events",
+    "status": "processing",
+    "statusUrl": "/api/v1/turns/turn_new_2",
+    "turnId": "turn_new_2"
+  },
+  "memoryUsage": {
+    "limit": 200,
+    "used": 1,
+    "protected": 0,
+    "headroom": 199,
+    "tier": "Normal",
+    "reclaimable": 0
+  },
+  "memoryView": {
+    "memoryId": "mem_contract_1",
+    "sourceNodeId": "node_turn_1",
+    "kind": "observed",
+    "ownerIds": [
+      "char_1"
+    ],
+    "content": "艾莲娜佩戴着一枚带有雄鹰印记的银制徽章。",
+    "entityIds": [
+      "char_1"
+    ],
+    "confidence": 0.95,
+    "pinned": false,
+    "hidden": false,
+    "subjectKey": "char_1.badge",
+    "createdTurn": 1,
+    "validFromTurn": 1,
+    "effective": true,
+    "protected": false
+  },
+  "sessionView": {
+    "director": {
+      "title": "第一幕：启程",
+      "revisionId": "rev_1",
+      "status": "active",
+      "currentBeatId": "beat_1",
+      "currentBeatTitle": "初遇",
+      "completed": 0,
+      "total": 3
+    },
+    "sessionId": "sess_contract_1",
+    "characterId": "char_1",
+    "title": "风暴前夕",
+    "rootNodeId": "node_root",
+    "branch": {
+      "branchId": "branch_main",
+      "name": "主分支",
+      "headNodeId": "node_turn_1",
+      "version": 1
+    },
+    "branches": null,
+    "viewNodeId": "node_turn_1",
+    "viewNode": null,
+    "headNode": {
+      "nodeId": "node_turn_1",
+      "sessionId": "sess_contract_1",
+      "parentId": "node_root",
+      "kind": "turn",
+      "depth": 1,
+      "turnNumber": 1,
+      "schemaVersion": 0,
+      "createdAt": "2026-09-13T10:00:00Z",
+      "contentJson": "{\"inputKind\":\"dialogue\",\"inputText\":\"你好\"}"
+    },
+    "nodes": [
+      {
+        "nodeId": "node_root",
+        "sessionId": "sess_contract_1",
+        "parentId": "",
+        "kind": "root",
+        "depth": 0,
+        "turnNumber": 0,
+        "schemaVersion": 0,
+        "createdAt": "2026-09-13T09:50:00Z",
+        "contentJson": "{}"
+      }
+    ],
+    "candidateGroups": null,
+    "state": {
+      "characters": {
+        "char_1": {
+          "characterId": "char_1",
+          "name": "艾莲娜"
+        }
+      },
+      "items": {
+        "item_1": {
+          "instanceId": "item_1",
+          "keepsake": true,
+          "name": "旧怀表",
+          "quantity": 1
+        }
+      },
+      "moods": {
+        "char_1": {
+          "moodCode": "calm",
+          "text": "心如止水"
+        }
+      },
+      "promises": {
+        "prom_1": {
+          "content": "遵守约定",
+          "promiseId": "prom_1",
+          "sourceNodeId": "node_root",
+          "state": "active"
+        }
+      },
+      "relationships": {
+        "npc_1": {
+          "affection": 10,
+          "alertness": 0,
+          "trust": 15
+        }
+      },
+      "scene": {
+        "sceneId": "scene_gates",
+        "title": "古堡大门"
+      }
+    },
+    "secrets": [
+      {
+        "secretId": "sec_1",
+        "title": "失落遗迹",
+        "order": 1,
+        "content": "神殿藏有远古符文石。",
+        "revealed": true
+      }
+    ],
+    "outline": {
+      "milestones": [
+        {
+          "milestoneId": "m_1",
+          "description": "穿越黑森林"
+        }
+      ],
+      "goals": [
+        {
+          "goalId": "g_1",
+          "characterId": "char_1",
+          "text": "找到失落的石板"
+        }
+      ],
+      "scene": "古堡大门"
+    },
+    "activeSummary": {
+      "summaryId": "sum_1",
+      "fromNodeId": "node_root",
+      "toNodeId": "node_turn_1",
+      "sourceHash": "hash_abcdef",
+      "visibilityScope": "",
+      "text": "主角踏入了大门。"
+    },
+    "actions": [
+      {
+        "actionId": "act_search",
+        "label": "搜寻线索",
+        "attribute": "perception",
+        "dc": 12
+      }
+    ],
+    "hasMore": false
+  },
+  "sseEvents": {
+    "block.appended": {
+      "frame": {
+        "v": 1,
+        "seq": 1,
+        "type": "block",
+        "kind": "narration",
+        "speakerId": null,
+        "text": "森林深处的阴影中，隐约有红色的眼睛亮起。"
+      },
+      "frameSeq": 1
+    },
+    "block.delta": {
+      "attemptId": "att_1",
+      "delta": "森林深处的阴影中，",
+      "kind": "narration",
+      "seq": 1,
+      "speakerId": null
+    },
+    "turn.cancelled": {},
+    "turn.committed": {},
+    "turn.conflicted": {},
+    "turn.failed": {
+      "code": "LLM_GATEWAY_TIMEOUT",
+      "message": "模型供应商响应超时"
+    },
+    "turn.started": {},
+    "turn.thinking": {
+      "attemptId": "att_1",
+      "thinking": "正在构思剧情转折..."
+    }
+  },
+  "turnContent": {
+    "inputKind": "dialogue",
+    "inputText": "请问前面有什么危险？",
+    "blocks": [
+      {
+        "kind": "narration",
+        "text": "远方传来低沉的咆哮。"
+      },
+      {
+        "kind": "dialogue",
+        "speakerId": "char_1",
+        "text": "小心，前面有魔兽出没。"
+      },
+      {
+        "kind": "inner_monologue",
+        "text": "（它比预想的还要敏捷……）"
+      }
+    ],
+    "options": [
+      {
+        "optionId": "opt_1",
+        "intent": "clever",
+        "text": "攀上树枝观察周围地形"
+      },
+      {
+        "optionId": "opt_2",
+        "intent": "aggressive",
+        "text": "拔剑戒备准备正面突击"
+      }
+    ],
+    "mood": {
+      "characterId": "char_1",
+      "moodCode": "vigilant",
+      "text": "警惕环视四周"
+    },
+    "checks": [
+      {
+        "rollId": "roll_1",
+        "actionId": "act_search",
+        "attribute": "perception",
+        "attributeValue": 0,
+        "attributeModifier": 2,
+        "natural": 15,
+        "total": 17,
+        "dc": 12,
+        "outcome": "success",
+        "rulesetVersion": "v1",
+        "permanentEffect": "感知敏锐"
+      }
+    ]
+  },
+  "version": 1
+}

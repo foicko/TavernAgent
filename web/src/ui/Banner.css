@@ -1,0 +1,48 @@
+/* 行内提示条：替代手写的 .banner / .alert / 说明段落。 */
+.ui-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-light);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-tight);
+}
+
+.ui-banner__icon {
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.ui-banner__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.ui-banner--info {
+  border-left-color: var(--color-info);
+}
+
+.ui-banner--ok {
+  border-left-color: var(--color-success);
+  color: var(--text-main);
+}
+
+.ui-banner--warn {
+  border-left-color: var(--color-warning);
+  color: var(--text-main);
+}
+
+.ui-banner--error {
+  border-left-color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.ui-banner__dismiss {
+  flex-shrink: 0;
+}

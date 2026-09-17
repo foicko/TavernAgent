@@ -1,0 +1,749 @@
+/* ==========================================================================
+   RightRail 组件局部样式（由 RightRail.tsx 直接 import）
+   --------------------------------------------------------------------------
+   设计令牌统一来自 ../styles/tokens.css；无对应令牌的字面值按原行内样式保留。
+   说明：组件 CSS 的注入顺序早于 styles.css（main.tsx 先 import App 再 import
+   styles.css），因此凡是 styles.css 已有同名规则、且需要覆盖的属性，这里一律
+   使用「双类名」选择器提升优先级，避免依赖源码顺序。
+   ========================================================================== */
+
+/* 立绘神态滤镜：取值随 tachieExpression 变化，经 CSS 变量注入 */
+.tachie-image.tachie-image-live {
+  filter: var(--rr-tachie-filter);
+}
+
+/* --- 二级页面导航磁贴 (Liquid Glass Nav Tiles) -------------------------- */
+.hud-nav-tile-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.hud-nav-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  background: var(--glass-bg-subtle, rgba(255, 255, 255, 0.45));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 2px 8px -2px var(--glass-shadow, rgba(0, 0, 0, 0.05)),
+              inset 0 1px 0 var(--glass-specular, rgba(255, 255, 255, 0.6));
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: var(--text-main);
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .hud-nav-tile {
+  background: var(--glass-bg-subtle, rgba(20, 20, 26, 0.55));
+  border-color: var(--glass-border, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.35),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.hud-nav-tile:hover {
+  background: var(--glass-bg-hover, rgba(255, 255, 255, 0.7));
+  border-color: var(--accent-glow, rgba(120, 150, 200, 0.4));
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px -3px var(--glass-shadow-hover, rgba(0, 0, 0, 0.08)),
+              inset 0 1px 0 var(--glass-specular, rgba(255, 255, 255, 0.8));
+}
+
+[data-theme="dark"] .hud-nav-tile:hover {
+  background: var(--glass-bg-hover, rgba(28, 28, 36, 0.75));
+  border-color: var(--accent-glow, rgba(150, 180, 255, 0.35));
+  box-shadow: 0 6px 18px -3px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.hud-nav-tile:active {
+  transform: translateY(0);
+}
+
+.hud-nav-tile-icon {
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--glass-pill-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-border, rgba(0, 0, 0, 0.05));
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+[data-theme="dark"] .hud-nav-tile-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.hud-nav-tile:hover .hud-nav-tile-icon {
+  transform: scale(1.08);
+}
+
+.hud-nav-tile-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.hud-nav-tile-title {
+  font-size: var(--fs-sm, 13px);
+  font-weight: var(--fw-semibold, 600);
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.hud-nav-tile-subtitle {
+  font-size: var(--fs-xs, 11px);
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.hud-nav-tile-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--glass-pill-bg, rgba(0, 0, 0, 0.04));
+  color: var(--text-dim);
+  border: 1px solid var(--glass-border, rgba(0, 0, 0, 0.06));
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .hud-nav-tile-badge {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.hud-nav-tile-arrow {
+  font-size: 15px;
+  color: var(--text-dim);
+  line-height: 1;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: -2px;
+}
+
+.hud-nav-tile:hover .hud-nav-tile-arrow {
+  color: var(--accent-text, #3b82f6);
+  transform: translateX(2px);
+}
+
+/* --- 角色设定与世界观折叠区块 ------------------------------------------- */
+.hud-block-title.dossier-block-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.dossier-block-title-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dossier-block-title-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+/* --- 心境三维量表 -------------------------------------------------------- */
+/* 量表数值行：标签右侧的浮动增减与当前值 */
+.meter-value-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- 携带物品与信物 ------------------------------------------------------ */
+.hud-empty-card.hud-empty-card--full {
+  grid-column: 1 / -1;
+}
+
+/* --- 主动契约与承诺 ------------------------------------------------------ */
+.pledge-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* 誓约状态色由状态映射在运行时决定，经 CSS 变量注入 */
+.pledge-status-pill {
+  font-weight: var(--fw-medium);
+  color: var(--rr-pledge-color);
+}
+
+.pledge-status-static {
+  font-weight: var(--fw-medium);
+  color: var(--text-dim);
+}
+
+.pledge-source-node {
+  margin-top: var(--space-1);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* --- 认知记忆库 ---------------------------------------------------------- */
+.hud-block-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 全局一键折叠/展开记忆按钮 */
+.mem-graph-cue-btn.mem-collapse-all-btn {
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.mem-graph-cue-btn.mem-collapse-all-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-surface);
+  border-color: var(--glass-border-hover, var(--border-mid));
+  transform: translateY(-0.5px);
+}
+
+/* 记忆库空状态卡片 */
+.memory-empty-card {
+  margin: 6px 0;
+  padding: var(--space-5) 14px;
+  border: 1px dashed var(--glass-border, var(--border-subtle));
+  border-radius: var(--radius-md, 10px);
+  background: var(--glass-bg, var(--bg-subtle));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  box-shadow: var(--glass-specular-top);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.memory-empty-icon {
+  margin-bottom: 6px;
+  font-size: 22px;
+}
+
+.memory-empty-title {
+  margin-bottom: var(--space-1);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+
+.memory-empty-desc {
+  line-height: 1.5;
+}
+
+/* 记忆容量与进度条 */
+.rail-right .memory-quota {
+  padding: 8px 10px;
+  background: var(--glass-bg, var(--bg-canvas));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--glass-specular-top);
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.rail-right .memory-quota progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 6px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .rail-right .memory-quota progress {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rail-right .memory-quota progress::-webkit-progress-bar {
+  background: transparent;
+  border-radius: var(--radius-full);
+}
+
+.rail-right .memory-quota progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--accent-solid), var(--accent-muted, #3b82f6));
+  border-radius: var(--radius-full);
+}
+
+/* 记忆分类筛选微晶药丸栏 */
+.rail-right .memory-filter-row {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.rail-right .mem-filter-btn {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid var(--glass-border, var(--border-light));
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.rail-right .mem-filter-btn:hover {
+  color: var(--text-main);
+  border-color: var(--glass-border-hover, var(--border-mid));
+  background: var(--bg-surface);
+  transform: translateY(-0.5px);
+}
+
+.rail-right .mem-filter-btn.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* 记忆过滤搜索框 */
+.rail-right .memory-search {
+  width: 100%;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg, var(--bg-canvas));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  box-shadow: var(--glass-specular-top);
+  font-size: 11.5px;
+  color: var(--text-main);
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  transition: var(--transition-fast);
+}
+
+.rail-right .memory-search:focus {
+  outline: none;
+  border-color: var(--accent-solid);
+  box-shadow: var(--glass-focus-glow, 0 0 0 3px rgba(59, 130, 246, 0.2));
+  background: var(--bg-surface);
+}
+
+/* --- 记忆卡片折叠与液态玻璃交互 ---------------------------------------- */
+.rail-right .memory-item-card {
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-left: 3.5px solid var(--border-mid);
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.rail-right .memory-item-card:hover {
+  border-color: var(--glass-border-hover, var(--border-dark));
+  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* 分类色彩指示条 */
+.rail-right .memory-item-card.category-episodic {
+  border-left-color: #3b82f6; /* 亲历：清澈空蓝 */
+}
+
+.rail-right .memory-item-card.category-inference {
+  border-left-color: #8b5cf6; /* 推测：幽邃玄紫 */
+}
+
+.rail-right .memory-item-card.category-secret {
+  border-left-color: #ef4444; /* 秘密：朱砂绯红 */
+}
+
+.rail-right .memory-item-card.recalled {
+  border-color: rgba(210, 170, 70, 0.45);
+  box-shadow: var(--glass-specular-top), 0 0 12px rgba(210, 170, 70, 0.18);
+}
+
+.rail-right .memory-item-card.pinned {
+  background: rgba(210, 170, 70, 0.08);
+  border-color: rgba(210, 170, 70, 0.35);
+}
+
+.rail-right .memory-item-card.hidden {
+  opacity: 0.42;
+}
+
+/* 折叠态 (Collapsed) 紧凑呈现 */
+.rail-right .memory-item-card.is-collapsed {
+  padding: 7px 10px;
+  gap: 4px;
+}
+
+.rail-right .memory-item-card.is-collapsed .mem-item-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.45;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.rail-right .memory-item-card.is-collapsed .mem-item-content:hover {
+  color: var(--text-main);
+}
+
+.rail-right .memory-item-card.is-collapsed .memory-evidence,
+.rail-right .memory-item-card.is-collapsed .mem-item-footer {
+  display: none;
+}
+
+/* 展开态 (Expanded) 完整呈现 */
+.rail-right .memory-item-card.is-expanded {
+  padding: 10px 12px;
+  gap: 7px;
+}
+
+.rail-right .memory-item-card.is-expanded .mem-item-content {
+  line-height: 1.55;
+  color: var(--text-main);
+}
+
+/* 记忆类别小徽标 */
+.rail-right .category-episodic .mem-type-badge {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.09);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs, 3px);
+  font-weight: 700;
+}
+
+.rail-right .category-inference .mem-type-badge {
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.09);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs, 3px);
+  font-weight: 700;
+}
+
+.rail-right .category-secret .mem-type-badge {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.09);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs, 3px);
+  font-weight: 700;
+}
+
+[data-theme="dark"] .rail-right .category-episodic .mem-type-badge {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.16);
+}
+
+[data-theme="dark"] .rail-right .category-inference .mem-type-badge {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.16);
+}
+
+[data-theme="dark"] .rail-right .category-secret .mem-type-badge {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.16);
+}
+
+/* 记忆操作按钮组 */
+.rail-right .mem-act-btn {
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: var(--transition-fast);
+}
+
+.rail-right .mem-act-btn:hover {
+  color: var(--text-main);
+  border-color: var(--glass-border-hover, var(--border-mid));
+  background: var(--bg-surface);
+  transform: translateY(-0.5px);
+}
+
+.rail-right .mem-act-btn.pinned-active {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  font-weight: 600;
+}
+
+/* 单条折叠/展开指示按键 */
+.rail-right .mem-act-btn.mem-toggle-expand-btn {
+  color: var(--accent-solid);
+  border-color: var(--glass-border, var(--border-subtle));
+  font-weight: 600;
+}
+
+.rail-right .mem-act-btn.mem-toggle-expand-btn:hover {
+  background: rgba(var(--accent-glow-rgb, 59, 130, 246), 0.1);
+  border-color: var(--accent-solid);
+}
+
+.mem-expand-arrow {
+  font-size: 8px;
+  display: inline-block;
+  margin-left: 1px;
+  transition: transform 0.2s ease;
+}
+
+/* 证据与来源呼出抽屉 */
+.rail-right .memory-evidence {
+  margin-top: 4px;
+  padding: 6px 10px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.rail-right .memory-evidence summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.rail-right .memory-evidence summary:hover {
+  color: var(--text-main);
+}
+
+.rail-right .memory-evidence blockquote {
+  margin: 4px 0 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--accent-solid);
+  color: var(--text-main);
+  font-style: italic;
+}
+
+/* 实体胶囊标签 */
+.rail-right .mem-entity-pill {
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  font-size: 9.5px;
+  color: var(--text-dim);
+}
+
+/* 记忆置信度角标 */
+.mem-confidence-tag {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* 记忆行内编辑操作条 */
+.mem-inline-actions.mem-inline-actions--spaced {
+  margin-top: var(--space-1);
+}
+
+/* 记忆行内编辑按钮尺寸 */
+.probe-btn.mem-edit-btn {
+  flex: none;
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+/* --- 角色详情上半区现代质感升级 ---------------------------------------- */
+/* 角色档案铭牌徽章 */
+.rail-right .dossier-badges-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.rail-right .dossier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  font-size: 11px;
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-full);
+  color: var(--text-main);
+  box-shadow: var(--glass-specular-top);
+  transition: var(--transition-fast);
+}
+
+.rail-right .dossier-badge:hover {
+  border-color: var(--glass-border-hover, var(--border-mid));
+  background: var(--bg-surface);
+}
+
+/* 人设与世界观分段栏 */
+.rail-right .dossier-tab-row {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.rail-right .dossier-tab-btn {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: var(--transition-fast);
+}
+
+.rail-right .dossier-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.rail-right .dossier-tab-btn.active {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 心境三维量表槽道与流光填充 */
+.rail-right .meter-box-minimal {
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  box-shadow: var(--glass-specular-top), var(--shadow-sm);
+  border-radius: var(--radius-lg, 12px);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rail-right .meter-bar-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+[data-theme="dark"] .rail-right .meter-bar-track {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.rail-right .meter-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+}
+
+.rail-right #meter-fill-aff {
+  background: linear-gradient(90deg, #f43f5e, #fb7185);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+}
+
+.rail-right #meter-fill-trust {
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.35);
+}
+
+.rail-right #meter-fill-alert {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+}
+
+/* 背包与契约现代微晶空状态卡片 */
+.rail-right .hud-empty-card {
+  background: var(--glass-bg, var(--bg-subtle));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px dashed var(--glass-border, var(--border-mid));
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 12px;
+  box-shadow: var(--glass-specular-top);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.rail-right .inventory-slot-card {
+  background: var(--glass-bg, var(--bg-subtle));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--glass-specular-top);
+  transition: var(--transition-fast);
+}
+
+.rail-right .inventory-slot-card:hover {
+  border-color: var(--glass-border-hover, var(--border-dark));
+  background: var(--bg-surface);
+  transform: translateY(-1px);
+}
+
+.rail-right .pledge-entry {
+  background: var(--glass-bg, var(--bg-subtle));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--glass-specular-top);
+}
+

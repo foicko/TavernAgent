@@ -1,0 +1,18 @@
+/* 世界书示例弹窗：外壳已交给 ui/Modal，这里只留内容样式。 */
+.worldbook-preview-note {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.worldbook-preview-entries {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.worldbook-preview-entries h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-md);
+}

@@ -1,0 +1,27 @@
+/* 输入台的模型切换：一个胶囊 + 向上展开的菜单。 */
+.model-quick-switch {
+  position: relative;
+  display: inline-flex;
+}
+
+.model-quick-switch__trigger {
+  max-width: 200px;
+}
+
+.model-quick-switch__name {
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-quick-switch__caret {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .model-quick-switch__name {
+    max-width: 88px;
+  }
+}

@@ -1,0 +1,157 @@
+/* 心智与实体星图（MindGraphModal）：外壳复用 ui/Modal，
+   这里只保留图谱自绘区域、过滤胶囊与检查器抽屉的样式。 */
+
+/* 对话框本体：Modal size="full" 已给 95vw×92vh，这里补外观与裁剪。
+   用两段选择器提高优先级，避免和其它弹窗的尺寸微调互相干扰。 */
+.ui-modal.mind-graph-fullscreen {
+  width: 95vw;
+  height: 92vh;
+  background: var(--bg-base);
+  border-color: var(--border-mid);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* 头部：标题、过滤胶囊与操作按钮同排，行内垂直居中。 */
+.ui-modal.mind-graph-fullscreen .ui-modal__head {
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+
+/* 过滤胶囊容器 */
+.mind-graph-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 过滤胶囊：未选中为安静描边，选中为实心。 */
+.memory-filter-btn {
+  height: 28px;
+  padding: 0 var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.memory-filter-btn:hover {
+  border-color: var(--border-dark);
+  color: var(--text-main);
+}
+
+.memory-filter-btn.active {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: var(--accent-contrast);
+  font-weight: var(--fw-semibold);
+}
+
+/* 顶栏「视口居中」：比默认 btn-quiet 略矮，避免挤压标题行。 */
+.ui-modal.mind-graph-fullscreen .ui-modal__head-actions .btn-quiet {
+  height: 28px;
+  padding: 0 10px;
+  font-size: var(--fs-sm);
+}
+
+/* 限制说明（配色沿用 styles.css 的 .mind-graph-limit-note），
+   贴边 body 为纵向 flex，禁止被 canvas 挤压缩高。 */
+.ui-modal.mind-graph-fullscreen .mind-graph-limit-note {
+  flex-shrink: 0;
+}
+
+/* 画布容器：布局/光标/裁剪沿用 styles.css 的 .mind-graph-canvas-container，这里补触摸行为。 */
+.ui-modal.mind-graph-fullscreen .mind-graph-canvas-container {
+  touch-action: none;
+}
+
+/* 画布铺满容器 */
+.ui-modal.mind-graph-fullscreen .mind-graph-canvas-container > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 左下角交互提示气泡 */
+.mind-graph-hint {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  padding: 6px var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+
+/* 右侧认知检查器抽屉 */
+.mind-graph-inspector-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 320px;
+  height: 100%;
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-mid);
+  box-shadow: var(--shadow-float);
+  overflow-y: auto;
+}
+
+.mind-graph-inspector-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.mind-graph-inspector-title {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* 节点类型徽章：底色由组件按节点类型注入 --mg-node-color。 */
+.mind-graph-node-badge {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  background: var(--mg-node-color, var(--color-node-muted));
+  border-radius: var(--radius-full);
+  color: var(--accent-contrast);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.mind-graph-node-title {
+  margin: var(--space-1) 0;
+  font-size: 18px;
+}
+
+.mind-graph-node-sub {
+  color: var(--text-main);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+}
+
+.mind-graph-node-links {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+}

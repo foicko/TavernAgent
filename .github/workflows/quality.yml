@@ -1,0 +1,120 @@
+name: Quality and release artifacts
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - name: Frontend types, Hooks lint, unit tests and fresh embed
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm typecheck
+          pnpm lint
+          pnpm test
+          pnpm build
+          pnpm audit --registry=https://registry.npmjs.org --audit-level=high
+      - name: Go formatting, tests, race and vet
+        run: |
+          test -z "$(gofmt -l internal cmd)"
+          go test -race -count=1 ./...
+          go vet ./...
+          go build ./...
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+          args: --timeout=5m
+      - name: Dependency vulnerabilities and metering contract
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+          python -m unittest discover -s scripts/tests -v
+          python scripts/release_audit.py --strict
+      - name: Architecture gate (file/function size, complexity, layering)
+        # baseline 棘轮：只拦新增违规，不要求一次性清掉历史债。
+        run: python scripts/architecture_check.py
+      - name: Browser tests against the freshly embedded binary
+        run: |
+          go build -o build/browser/tavernagent ./cmd/tavernagent
+          cd web
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: output/playwright
+
+  artifact-runtime:
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            target: windows/amd64
+            name: windows-amd64
+          - runner: macos-15-intel
+            target: darwin/amd64
+            name: macos-amd64
+          - runner: macos-15
+            target: darwin/arm64
+            name: macos-arm64
+          - runner: ubuntu-24.04
+            target: linux/amd64
+            name: linux-amd64
+          - runner: ubuntu-24.04-arm
+            target: linux/arm64
+            name: linux-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Native tests, build, package and run the actual extracted artifact
+        run: python scripts/release.py --target ${{ matrix.target }} --smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tavernagent-${{ matrix.name }}
+          path: |
+            build/release/*.zip
+            build/release/*.tar.gz
+            build/release/*.json
+            build/release/SHA256SUMS.txt
+            build/release/runtime-*/server.log

@@ -1,0 +1,105 @@
+/* ==========================================================================
+   PromisesModal (主动契约与承诺 二级页面弹窗样式)
+   ========================================================================== */
+
+.promises-modal-window {
+  max-width: 620px;
+  width: 90vw;
+}
+
+.promises-modal-lead {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.promises-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+.promises-modal-card {
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-lg, 12px);
+  padding: 12px 14px;
+  box-shadow: var(--glass-specular-top);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+
+.promises-modal-card:hover {
+  border-color: var(--glass-border-hover, var(--border-dark));
+  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.promises-modal-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.promises-modal-type-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.promises-modal-status-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid currentColor;
+}
+
+.promises-modal-text {
+  font-size: 12px;
+  color: var(--text-main);
+  line-height: 1.55;
+}
+
+.promises-modal-source {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-mono, monospace);
+  margin-top: 2px;
+}
+
+.promises-modal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 42px 16px;
+  background: var(--glass-bg, var(--bg-subtle));
+  border: 1px dashed var(--glass-border, var(--border-light));
+  border-radius: var(--radius-lg, 12px);
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.promises-modal-empty-icon {
+  font-size: 28px;
+}
+
+.promises-modal-empty-title {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 13px;
+}

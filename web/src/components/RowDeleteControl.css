@@ -1,0 +1,62 @@
+/* 行内两步删除控件（RowDeleteControl）：默认只露一个图标，确认后换成文字按钮组。 */
+/* 行内两步删除：默认只露一个图标，确认后换成文字按钮组。 */
+.row-delete-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.row-delete-btn {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  padding: 4px var(--space-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.row-delete-btn:hover {
+  border-color: var(--border-mid);
+  color: var(--text-main);
+}
+
+.row-delete-btn:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 1px;
+}
+
+.row-delete-btn--icon {
+  padding: 4px 6px;
+  opacity: 0.55;
+}
+
+.row-delete-actions:hover .row-delete-btn--icon,
+.row-delete-btn--icon:focus-visible {
+  opacity: 1;
+}
+
+.row-delete-btn--confirm {
+  border-color: var(--color-warn-border);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+
+.row-confirm-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-danger-text);
+}
+
+/* 确认态提示：这是给用户看的最后一句，别让它折行折在词中间。 */
+.row-confirm-hint {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

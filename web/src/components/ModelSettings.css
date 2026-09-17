@@ -1,0 +1,177 @@
+/* ==========================================================================
+   模型设置页（角色优先）
+   --------------------------------------------------------------------------
+   只写本页特有的布局；按钮/输入/开关/提示条一律来自 web/src/ui/ 原语，
+   配色与字号一律取自 tokens.css。
+   ========================================================================== */
+
+.model-settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ---- 角色区 ---- */
+.role-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.role-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.role-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.role-row:last-child {
+  padding-bottom: 0;
+}
+
+.role-row--off {
+  opacity: 0.65;
+}
+
+.role-row__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.role-row__label {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+
+.role-row__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: var(--lh-tight);
+}
+
+.role-row__control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.role-row__status {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: var(--lh-tight);
+}
+
+.role-row__toggle {
+  margin-top: var(--space-1);
+}
+
+/* ---- 连接列表 ---- */
+.conn-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.conn-list__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ---- 连接编辑表单 ---- */
+.conn-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.conn-form__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.conn-form__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+
+.conn-form__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.conn-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.conn-form__grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.conn-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.conn-form__caption {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.conn-form__actions {
+  position: sticky;
+  bottom: calc(-1 * var(--space-4));
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  padding: var(--space-3) 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-light);
+}
+
+.conn-form__spacer {
+  flex: 1;
+}
+
+.conn-form__usage {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: var(--lh-tight);
+}
+
+/* 输入预算算不出来（<= 0）时才用警示色，正常情况保持弱化。 */
+.conn-form__usage--warn {
+  color: var(--color-danger-text);
+}
+
+@media (max-width: 720px) {
+  .role-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .conn-form__grid,
+  .conn-form__grid--three {
+    grid-template-columns: 1fr;
+  }
+}

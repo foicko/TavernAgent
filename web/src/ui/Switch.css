@@ -1,0 +1,84 @@
+/* 开关：真实 checkbox 语义 + 轨道外观，保留 label 可访问名。 */
+.ui-switch-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ui-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--text-main);
+  user-select: none;
+}
+
+.ui-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ui-switch__track {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 17px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-mid);
+  background: var(--bg-subtle);
+  transition: var(--transition-fast);
+}
+
+.ui-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: var(--transition-fast);
+}
+
+.ui-switch input:checked + .ui-switch__track {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+}
+
+.ui-switch input:checked + .ui-switch__track::after {
+  left: 15px;
+  background: var(--accent-contrast);
+}
+
+.ui-switch input:focus-visible + .ui-switch__track {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+.ui-switch input:disabled + .ui-switch__track {
+  opacity: 0.5;
+}
+
+.ui-switch--disabled {
+  cursor: not-allowed;
+  color: var(--text-dim);
+}
+
+.ui-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ui-switch__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  padding-left: 38px;
+}

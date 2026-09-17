@@ -1,0 +1,97 @@
+/* 状态胶囊 / 标签 / 状态点：参考 LiquidGlassBarKit.kt GlassPillChip 规范 */
+.ui-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-pill-bg);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+  padding: 4px var(--space-2);
+  max-width: 100%;
+  min-width: 0;
+  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top);
+  transition: transform 0.2s var(--glass-spring-ease),
+              background-color 0.16s ease,
+              border-color 0.16s ease,
+              color 0.16s ease;
+}
+
+.ui-pill--sm {
+  font-size: var(--fs-xs);
+  padding: 3px 8px;
+}
+
+.ui-pill--accent {
+  background: var(--glass-pill-bg-active);
+  border-color: var(--glass-pill-bg-active);
+  color: var(--glass-pill-text-active);
+  box-shadow: 0 2px 8px -1px var(--glass-shadow);
+}
+
+.ui-pill--success {
+  border-color: var(--color-success);
+  background: transparent;
+  color: var(--color-success);
+}
+
+.ui-pill--warning {
+  border-color: var(--color-warning);
+  background: transparent;
+  color: var(--color-warning);
+}
+
+.ui-pill--info {
+  border-color: var(--color-info);
+  background: transparent;
+  color: var(--color-info);
+}
+
+.ui-pill--danger {
+  border-color: var(--color-warn-border);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.ui-pill__truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-status-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+
+.ui-status-dot--accent {
+  background: var(--accent-solid);
+}
+
+.ui-status-dot--success {
+  background: var(--color-success);
+}
+
+.ui-status-dot--warning {
+  background: var(--color-warning);
+}
+
+.ui-status-dot--info {
+  background: var(--color-info);
+}
+
+.ui-status-dot--danger {
+  background: var(--color-danger-text);
+}
+
+.ui-status-dot--hollow {
+  background: transparent;
+  border: 1.5px solid currentColor;
+  color: var(--text-dim);
+}

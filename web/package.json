@@ -1,0 +1,35 @@
+{
+  "name": "tavernagent-web",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "node scripts/check.mjs && eslint src --max-warnings 0",
+    "test": "vitest run src",
+    "test:browser": "playwright test",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "9.39.1",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "jsdom": "^30.0.1",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "8.50.0",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.0"
+  }
+}

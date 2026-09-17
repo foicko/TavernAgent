@@ -1,0 +1,191 @@
+/* ==========================================================================
+   LeftRail 组件局部样式（由 LeftRail.tsx 直接 import）
+   --------------------------------------------------------------------------
+   设计令牌统一来自 ../styles/tokens.css；无对应令牌的字面值按原行内样式保留。
+   说明：组件 CSS 的注入顺序早于 styles.css（main.tsx 先 import App 再 import
+   styles.css），因此凡是 styles.css 已有同名规则、且需要覆盖的属性，这里一律
+   使用「双类名」选择器提升优先级，避免依赖源码顺序。
+   ========================================================================== */
+
+/* 折叠图标停靠轨中的细分隔线 */
+.rail-dock-divider {
+  width: 20px;
+  height: 1px;
+  margin: 2px 0;
+  background: var(--border-light);
+}
+
+/* 移动端抽屉顶栏标题 */
+.mobile-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* --- 四个可切换视图面板 -------------------------------------------------- */
+/* display 随 leftTab 变化，经 CSS 变量注入；其余布局固定 */
+.rail-view-panel {
+  display: var(--lr-panel-display, none);
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 分支树基类本身已是 flex，需要更高优先级让变量接管 display */
+.branch-timeline-tree.rail-view-panel {
+  display: var(--lr-panel-display, none);
+}
+
+/* --- 因果分支树 ---------------------------------------------------------- */
+.tree-lead-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.tree-empty-card {
+  margin: var(--space-2) 0;
+  padding: var(--space-6) 14px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.tree-empty-icon {
+  margin-bottom: 6px;
+  font-size: 24px;
+}
+
+.tree-empty-title {
+  margin-bottom: var(--space-1);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+
+.tree-empty-desc {
+  line-height: var(--lh-normal);
+}
+
+/* 分支节点回合标签文本：此前没有任何 CSS 规则，补上以承接父级继承的视觉 */
+.node-tag-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+}
+
+/* 分叉二次确认文案与按钮组 */
+.probe-fork-confirm-text {
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text-main);
+}
+
+.probe-fork-confirm-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* 快照次级操作网格：列数随节点可重生状态变化，经 CSS 变量注入 */
+.probe-secondary-grid.probe-secondary-grid--dynamic {
+  grid-template-columns: var(--lr-probe-cols, 1fr);
+}
+
+/* --- 角色库 -------------------------------------------------------------- */
+.btn-primary-send.roster-import-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(10px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(10px));
+  border: 1px solid var(--glass-border, var(--border-mid));
+  box-shadow: var(--glass-specular-top), 0 2px 8px rgba(0, 0, 0, 0.04);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary-send.roster-import-btn:hover {
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  border-color: var(--accent-solid);
+  color: var(--accent-solid);
+  transform: translateY(-1px);
+  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary-send.roster-import-btn:active {
+  transform: translateY(0);
+}
+
+.char-card-thumb.char-card-thumb--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-muted);
+  font-size: 18px;
+}
+
+/* --- 世界书 -------------------------------------------------------------- */
+.lore-search-row {
+  display: flex;
+  gap: 6px;
+}
+
+.lore-lead-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.btn-quiet.lore-sample-btn {
+  height: 24px;
+  padding: 0 var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+/* --- 会话库 -------------------------------------------------------------- */
+.session-primary-icon {
+  font-size: var(--fs-sm);
+}
+
+/* 导入剧本用的隐藏文件选择框 */
+.session-import-input {
+  display: none;
+}
+
+/* 确认态：整行加一道描边，避免"正在删哪一条"要靠猜。 */
+.char-card-entry.confirming,
+.session-entry-card:has(.row-delete-btn--confirm) {
+  border-color: var(--color-warn-border);
+  background: var(--color-danger-bg);
+}
+
+/* 行尾动作靠 margin-left:auto 顶到右边：载体本身已是横向 flex
+   （.char-card-entry 与 .session-card-main 在 styles.css 里定义），
+   这里只补两处会因为新增按钮而暴露的溢出行为。 */
+.session-card-content,
+.char-card-info {
+  min-width: 0;
+}
+
+/* 按下反馈：只改配色、不动几何——几何一变，鼠标抬起时就可能已经不在原按钮上，
+   浏览器会把 click 派发给整行，行内的删除按钮就收不到点击。 */
+.session-entry-card:active,
+.char-card-entry:active {
+  background: var(--bg-elevated);
+}

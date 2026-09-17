@@ -1,0 +1,132 @@
+/* 弹窗：唯一实现，具备液态玻璃背景折射与水晶高光边框 */
+.ui-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(14, 15, 18, 0.45);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.ui-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 88vh;
+  background: var(--glass-bg-elevated);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow-lg), inset 0 1px 1.5px 0 var(--glass-specular-top);
+  outline: none;
+}
+
+.ui-modal--sm {
+  max-width: 460px;
+}
+
+.ui-modal--md {
+  max-width: 720px;
+}
+
+.ui-modal--lg {
+  max-width: 980px;
+}
+
+.ui-modal--xl {
+  max-width: 1120px;
+}
+
+/* 全屏型弹窗（心智星图这类以画布为主的界面） */
+.ui-modal--full {
+  width: 95vw;
+  max-width: none;
+  height: 92vh;
+  max-height: none;
+}
+
+.ui-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.ui-modal__head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.ui-modal__text {
+  min-width: 0;
+}
+
+.ui-modal__title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+  line-height: var(--lh-tight);
+}
+
+.ui-modal__description {
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  line-height: var(--lh-tight);
+}
+
+.ui-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 贴边内容：由内容自己排版（画布、灯箱、预览列表） */
+.ui-modal--flush .ui-modal__body {
+  flex: 1;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.ui-modal__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.ui-modal__foot-spacer {
+  flex: 1;
+}
+
+@media (max-width: 720px) {
+  .ui-modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .ui-modal {
+    max-height: 94vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}

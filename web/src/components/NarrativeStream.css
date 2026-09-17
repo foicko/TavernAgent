@@ -1,0 +1,268 @@
+/* ==========================================================================
+   NarrativeStream 组件样式（自内联 style 迁移而来）
+   --------------------------------------------------------------------------
+   令牌统一取自 ../styles/tokens.css；无对应令牌的一次性字面值按原样保留。
+   注意：--border-subtle / --bg-panel / --accent-subtle 是迁移前既有的引用，
+   tokens.css（以及全站任何位置）都没有声明它们，这里按原写法保留，
+   以维持迁移前完全一致的渲染结果。
+   ========================================================================== */
+
+/* —— 右栏折叠后的悬浮召回按钮：emoji 头像 —— */
+/* 该 span 原本没有任何样式规则，这里与相邻的 .floating-trigger-avatar-img 对齐。 */
+.floating-trigger-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-md);
+  line-height: 1;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-mid);
+}
+
+/* —— 向上加载更早历史的外层容器 —— */
+/* 该 div 无类名：.stage-scroll-area 下唯一直接包含 .btn-quiet 的子容器。 */
+.stage-scroll-area > div:has(> .btn-quiet) {
+  text-align: center;
+  margin: var(--space-2) 0 14px;
+}
+.stage-scroll-area > div:has(> .btn-quiet) > .btn-quiet {
+  padding: 6px var(--space-4);
+  border-radius: 16px;
+  font-size: var(--fs-xs);
+}
+
+/* —— 历史快照只读浏览提示条 —— */
+.history-read-banner {
+  margin: 10px 0 var(--space-4);
+  padding: 10px var(--space-4);
+  background: var(--bg-subtle);
+  border: 1px dashed var(--accent-solid);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+}
+.history-read-banner > div {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* —— 会话切换骨架屏 —— */
+.skeleton-body {
+  display: flex;
+  flex-direction: column;
+}
+.player-skeleton .skeleton-header .skeleton-line {
+  width: 90px;
+  height: 12px;
+}
+.player-skeleton .skeleton-body .skeleton-line {
+  width: 65%;
+  height: 14px;
+}
+.assistant-skeleton .skeleton-header .skeleton-line {
+  width: 130px;
+  height: 14px;
+}
+.assistant-skeleton .skeleton-body .skeleton-line:nth-child(1) {
+  width: 94%;
+  height: 14px;
+  margin-bottom: var(--space-2);
+}
+.assistant-skeleton .skeleton-body .skeleton-line:nth-child(2) {
+  width: 88%;
+  height: 14px;
+  margin-bottom: var(--space-2);
+}
+.assistant-skeleton .skeleton-body .skeleton-line:nth-child(3) {
+  width: 72%;
+  height: 14px;
+}
+
+/* —— story-turn 语义变体 —— */
+/* 仅登记类名；排布沿用既有的 .story-turn（数值一致，本身不改变外观）。 */
+.initial-prologue-turn,
+.active-streaming-turn,
+.truncated-turn,
+.error-turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ==========================================================================
+   3. 初始开场序幕卡
+   ========================================================================== */
+.dialogue-turn-wrap.prologue-card {
+  border-color: var(--border-subtle);
+  background: var(--bg-panel);
+  border-radius: 10px;
+  padding: 20px var(--space-5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+.prologue-card .dialogue-meta-header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.prologue-card .speaker-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.prologue-card .speaker-label img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--border-subtle);
+}
+.prologue-card .speaker-label > div > div:first-child {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-main);
+}
+.prologue-card .speaker-label > div > div:last-child {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+.prologue-card .turn-time-stamp {
+  font-weight: var(--fw-semibold);
+  color: var(--accent-solid);
+  background: var(--accent-subtle);
+  padding: var(--space-1) 10px;
+  border-radius: var(--radius-lg);
+  font-size: var(--fs-xs);
+}
+.prologue-card .dialogue-content-text {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text-main);
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+.prologue-guide-box {
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px var(--space-4);
+  border: 1px dashed var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.prologue-guide-box > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+.prologue-guide-box > div:last-child {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: var(--lh-normal);
+}
+
+/* ==========================================================================
+   3. 活跃流式演义回合
+   ========================================================================== */
+.active-streaming-turn .player-turn-container {
+  margin-bottom: 14px;
+}
+.active-streaming-turn .dice-badge-quiet {
+  margin-bottom: 6px;
+}
+.active-streaming-turn .dialogue-turn-wrap.is-streaming {
+  border-color: var(--border-mid);
+  background: var(--bg-surface);
+}
+.active-streaming-turn .speaker-delivery {
+  color: var(--text-muted);
+  margin-left: var(--space-2);
+  font-size: var(--fs-xs);
+}
+.active-streaming-turn .turn-time-stamp {
+  color: var(--accent-solid);
+  font-weight: var(--fw-semibold);
+}
+.active-streaming-turn .dialogue-content-text > p:not([class]) {
+  color: var(--text-dim);
+  font-style: italic;
+  margin: 0;
+}
+/* block-dialogue / block-monologue 与 HistoricalStory 共用，按约定不在本文件
+   （也不在任何组件 CSS 中）定义规则，由仓库统一放置；这里保持它们无样式规则。
+   block-narration 的段距/行高在本组件的流式回合内兜底，值与原内联一致。 */
+.active-streaming-turn .block-narration {
+  margin-bottom: var(--space-2);
+  line-height: 1.8;
+}
+
+/* ==========================================================================
+   4. 截断续写控制栏
+   ========================================================================== */
+.truncated-turn .decision-deck-box {
+  border-color: var(--accent-solid);
+  padding: var(--space-3) var(--space-4);
+}
+.truncated-turn .decision-deck-header {
+  margin-bottom: var(--space-2);
+}
+.truncated-turn .decision-deck-header > span:first-child {
+  color: var(--accent-solid);
+  font-weight: 700;
+}
+.truncated-turn .decision-deck-header > span:last-child {
+  font-size: var(--fs-xs);
+}
+.truncated-turn .decision-deck-box > p {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.truncated-turn .decision-deck-box > p + div {
+  display: flex;
+  gap: 10px;
+}
+.truncated-turn .decision-deck-box > p + div > .btn-primary-send {
+  flex: 1;
+  justify-content: center;
+}
+.truncated-turn .decision-deck-box > p + div > .probe-btn:nth-child(2) {
+  flex: 1;
+  justify-content: center;
+}
+.truncated-turn .decision-deck-box > p + div > .probe-btn:nth-child(3) {
+  padding: 0 14px;
+}
+
+/* ==========================================================================
+   5. 错误提示卡
+   ========================================================================== */
+.error-turn .decision-deck-box {
+  border-color: var(--color-warn-border);
+  background: var(--color-warn-bg);
+  padding: 10px 14px;
+}
+.error-turn .decision-deck-box > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.error-turn .decision-deck-box > div > span:first-child {
+  color: var(--color-danger-text);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+}
+.error-turn .decision-deck-box > div > .probe-btn {
+  font-size: var(--fs-xs);
+  padding: 3px 10px;
+}

@@ -1,0 +1,109 @@
+@media (max-width: 480px) {
+  .top-header .brand-title { display: none; }
+  .top-header .brand-group { flex: 0 0 auto; }
+}
+
+.header-active-model-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-subtle);
+  -webkit-backdrop-filter: var(--glass-blur-subtle);
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 1px 3px var(--glass-shadow);
+  transition: transform 0.2s var(--glass-spring-ease),
+              background-color 0.16s ease,
+              border-color 0.16s ease,
+              box-shadow 0.16s ease;
+}
+
+.header-active-model-pill:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-elevated);
+  transform: translateY(-0.5px) scale(1.02);
+  box-shadow: inset 0 1px 1.5px 0 var(--glass-specular-top), 0 3px 8px -1px var(--glass-shadow);
+}
+
+.active-model-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.active-model-indicator-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25), 0 0 6px rgba(16, 185, 129, 0.4);
+  animation: glass-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes glass-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25), 0 0 6px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 3.5px rgba(16, 185, 129, 0.15), 0 0 10px rgba(16, 185, 129, 0.7);
+  }
+}
+
+.active-model-indicator-dot.idle {
+  background: var(--text-dim);
+  opacity: 0.4;
+}
+
+.header-active-model-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+/* 面包屑：标题 + 分支胶囊，横向对齐 */
+.scene-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.breadcrumb-icon {
+  flex-shrink: 0;
+  font-size: var(--fs-md);
+  line-height: 1;
+}
+
+.breadcrumb-title {
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breadcrumb-branch {
+  font-size: var(--fs-xs);
+  flex-shrink: 0;
+}
+
+/* 移动端栏位开关里的图标字形 */
+.rail-toggle-glyph {
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.rail-toggle-glyph--emoji {
+  font-size: 15px;
+}
+
+/* 模式切换按钮里的图标字形 */
+.tab-icon {
+  font-size: var(--fs-md);
+  line-height: 1;
+}

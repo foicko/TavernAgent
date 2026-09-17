@@ -1,0 +1,209 @@
+/* ==========================================================================
+   MemoryBankModal (认知记忆库 二级页面弹窗样式)
+   ========================================================================== */
+
+.memory-modal-window {
+  max-width: 960px;
+  width: 94vw;
+}
+
+.memory-modal-subbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.memory-modal-quota-box {
+  flex: 1;
+  min-width: 240px;
+  padding: 8px 12px;
+  background: var(--glass-bg, var(--bg-canvas));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--glass-specular-top);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.memory-modal-quota-box progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 6px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .memory-modal-quota-box progress {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.memory-modal-quota-box progress::-webkit-progress-bar {
+  background: transparent;
+  border-radius: var(--radius-full);
+}
+
+.memory-modal-quota-box progress::-webkit-progress-value {
+  background: linear-gradient(90deg, var(--accent-solid), var(--accent-muted, #3b82f6));
+  border-radius: var(--radius-full);
+}
+
+.memory-modal-search-wrap {
+  flex: 1;
+  min-width: 260px;
+}
+
+.memory-modal-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg, var(--bg-canvas));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  box-shadow: var(--glass-specular-top);
+  font-size: 12px;
+  color: var(--text-main);
+  box-sizing: border-box;
+  transition: var(--transition-fast);
+}
+
+.memory-modal-search:focus {
+  outline: none;
+  border-color: var(--accent-solid);
+  box-shadow: var(--glass-focus-glow, 0 0 0 3px rgba(59, 130, 246, 0.2));
+  background: var(--bg-surface);
+}
+
+/* 类别过滤器 */
+.memory-modal-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.memory-modal-filter-btn {
+  font-size: 11.5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
+  border: 1px solid var(--glass-border, var(--border-light));
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.memory-modal-filter-btn:hover {
+  color: var(--text-main);
+  border-color: var(--glass-border-hover, var(--border-mid));
+  background: var(--bg-surface);
+  transform: translateY(-0.5px);
+}
+
+.memory-modal-filter-btn.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* 记忆流列表 */
+.memory-modal-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.memory-modal-stream .memory-item-card {
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
+  border: 1px solid var(--glass-border, var(--border-light));
+  border-left: 3.5px solid var(--border-mid);
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.memory-modal-stream .memory-item-card:hover {
+  border-color: var(--glass-border-hover, var(--border-dark));
+  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.memory-modal-stream .memory-item-card.category-episodic {
+  border-left-color: #3b82f6;
+}
+
+.memory-modal-stream .memory-item-card.category-inference {
+  border-left-color: #8b5cf6;
+}
+
+.memory-modal-stream .memory-item-card.category-secret {
+  border-left-color: #ef4444;
+}
+
+.memory-modal-stream .memory-item-card.recalled {
+  border-color: rgba(210, 170, 70, 0.45);
+  box-shadow: var(--glass-specular-top), 0 0 12px rgba(210, 170, 70, 0.18);
+}
+
+.memory-modal-stream .memory-item-card.pinned {
+  background: rgba(210, 170, 70, 0.08);
+  border-color: rgba(210, 170, 70, 0.35);
+}
+
+.memory-modal-stream .memory-item-card.hidden {
+  opacity: 0.42;
+}
+
+.memory-modal-stream .memory-item-card.is-collapsed {
+  padding: 8px 12px;
+  gap: 5px;
+}
+
+.memory-modal-stream .memory-item-card.is-collapsed .mem-item-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.45;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.memory-modal-stream .memory-item-card.is-collapsed .mem-item-content:hover {
+  color: var(--text-main);
+}
+
+.memory-modal-stream .memory-item-card.is-collapsed .memory-evidence,
+.memory-modal-stream .memory-item-card.is-collapsed .mem-item-footer {
+  display: none;
+}
+
+.memory-modal-stream .memory-item-card.is-expanded {
+  padding: 12px 14px;
+  gap: 8px;
+}
+
+.memory-modal-stream .memory-item-card.is-expanded .mem-item-content {
+  line-height: 1.6;
+  color: var(--text-main);
+}
