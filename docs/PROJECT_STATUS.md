@@ -100,11 +100,16 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 
 1. **发布闭环**：完成真实模型协议/叙事验收与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
 2. **逐步偿还技术债**：按“改到哪、拆到哪”拆分大函数/大文件。
-3. **M5 规划**：桌面原生壳层（Tauri 2 / Wails）、群像聚光灯、Edge-TTS 流式发音、立绘联动、外部受控 MCP、多 NPC 视角隔离。
+3. **M5 规划**：群像聚光灯、Edge-TTS 流式发音、立绘联动、外部受控 MCP、多 NPC 视角隔离。
+   - Windows 桌面壳（Wails v2 + WebView2）已落地，见 [桌面端说明](DESKTOP.md)；
+     剩托盘/开机自启、原生保存对话框、代码签名与局域网第二屏开关。
 4. **LAN 增强**：确有手机访问需求时推进第二设备网络/防火墙验证。
 
 ## 8. 相关文件
 
+- [系统提示词总览](PROMPTS.md)：全部系统提示词的逐字提取 + 组装顺序 + 修改规则（由
+  `scripts/prompt_docs.py` 生成，`scripts/tests/test_prompt_docs.py` 防止漂移）。
+- [桌面端（Windows）](DESKTOP.md)：Wails 壳、图标/清单、窗口栏配色与构建方式。
 - [ADS 合规评审与整改记录](ADS_GAP_ANALYSIS.md)：对照 `Agent开发规范.md`（ADS v1.0）的
   整改项、显式取舍（无工具的工作流式设计、压缩用轮数触发、未上 OTel 等）与未处理缺口。
 - [运行维护说明](OPERATIONS.md)：安装、三槽位配置、局域网、备份与升级回退。
