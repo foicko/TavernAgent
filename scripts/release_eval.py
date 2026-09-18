@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from eval_metrics import DEFAULT_CONSECUTIVE_K, summarize
 from eval_protocol import Client, SEED_INPUTS, evaluate_sample, result_content
 from gemini_meter import MODEL, utc
 
@@ -115,7 +116,16 @@ class Evaluation:
                     raise RuntimeError("Isolated services did not start; see application.log and meter.log")
                 time.sleep(0.25)
         self.configure()
-        write_json(self.directory/"fingerprint.json", fingerprint(self.binary))
+        # 提示词版本与消融开关随指纹一起落盘（ADS-7.8-04 / 7.8-01）：
+        # 报告必须能自证"这一轮跑的是哪份提示词、关了哪些特性"，
+        # 否则成功率变化无法归因，基线组的可比性也无从核对。
+        diagnostic = {}
+        try:
+            status = self.client.must("GET", "/api/status")
+            diagnostic = {key: status[key] for key in ("prompt", "ablation") if key in status}
+        except (OSError, ValueError, RuntimeError) as error:
+            diagnostic = {"diagnosticError": str(error)}
+        write_json(self.directory/"fingerprint.json", {**fingerprint(self.binary), **diagnostic})
         print(json.dumps({"started": True, "port": self.args.port, **self.save_ledger()}), flush=True)
 
     def preflight(self):
@@ -140,8 +150,9 @@ class Evaluation:
             "characterJson": json.dumps(card, ensure_ascii=False), "playerName": "旅人", "playerRole": "灯塔档案的核对者"})
         session = self.client.must("GET", "/api/v1/sessions/"+created["sessionId"])
         inputs = list(SEED_INPUTS)
-        random.Random(20260913).shuffle(inputs)
+        random.Random(self.args.seed).shuffle(inputs)
         report = {"generatedAt": utc(), "model": MODEL, "fingerprint": fingerprint(self.binary), "sessionId": session["sessionId"],
+                  "seed": self.args.seed,
                   "note": "Independent branches from a common opening; background inference disabled; at most one continuation repair per sample.", "results": []}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.args.workers) as workers:
             futures = {workers.submit(evaluate_sample, self.client, session, inputs[i%len(inputs)], i+1, 150, 1): i for i in range(self.args.samples)}
@@ -150,13 +161,18 @@ class Evaluation:
                 report["results"].append(result)
                 report["results"].sort(key=lambda row: row["sample"])
                 count = len(report["results"])
-                first = sum(row["firstPass"] for row in report["results"])
-                repaired = sum(row["repaired"] for row in report["results"])
-                report.update(samples=count, firstPassSuccesses=first, afterRepairSuccesses=first+repaired,
-                              firstPassRate=first/count, afterRepairRate=(first+repaired)/count, ledger=self.save_ledger())
-                report["passed"] = count == 100 and first >= 95 and first+repaired >= 99
+                summary = summarize(report["results"], self.args.consecutive_k)
+                report["summary"] = summary
+                report.update(summary)
+                report["ledger"] = self.save_ledger()
+                # 通过门槛保持原有口径（100 例、首过 ≥95、含一次修复 ≥99）；
+                # Pass^k 是同时给出的**可靠性读数**，不是新的门槛——先看到数字，
+                # 再由人决定是否收紧门槛，避免"悄悄换了验收标准"。
+                report["passed"] = count == 100 and summary["firstPassSuccesses"] >= 95 and summary["afterRepairSuccesses"] >= 99
                 write_json(report_path, report)
-                print(json.dumps({"completed": count, "sample": result["sample"], "status": result["status"], "first": first, "repaired": repaired, **report["ledger"]}), flush=True)
+                print(json.dumps({"completed": count, "sample": result["sample"], "status": result["status"],
+                                  "first": summary["firstPassSuccesses"], "repaired": summary["repairedSuccesses"],
+                                  "passPowerK": round(summary["passPowerK"], 4), **report["ledger"]}), flush=True)
         if not report["passed"]:
             raise SystemExit(1)
 
@@ -224,6 +240,8 @@ def main():
     parser.add_argument("--samples", type=int, default=100)
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--label", default="", help="Distinct evidence suffix for a retest; never resets the meter")
+    parser.add_argument("--seed", type=int, default=20260913, help="Input-shuffle seed; vary it across 3-5 runs to see run-to-run spread")
+    parser.add_argument("--consecutive-k", type=int, default=DEFAULT_CONSECUTIVE_K, help="Window for the Pass^k reliability figure (default 5)")
     args = parser.parse_args()
     evaluation = Evaluation(args)
     if args.command == "ledger":

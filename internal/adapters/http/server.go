@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"tavernagent/internal/application"
+	ctxpkg "tavernagent/internal/context"
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
 )
@@ -43,6 +44,10 @@ type Deps struct {
 	// 缺少读数时端点返回空对象，而不是 500：观测不得影响服务可用性。
 	Metrics *application.RuntimeMetrics
 	Usage   ports.UsageStore
+	// Ablation 是启动期生效的消融开关（ADS-7.8-01）。零值表示生产形态
+	// （未关闭任何特性），它随 /api/status 一起暴露，使基线评估的产物
+	// 自带"这一轮关了什么"的自证，而不必依赖运行者的记忆。
+	Ablation ctxpkg.Ablation
 }
 
 // Server 是 HTTP 适配器。
@@ -57,6 +62,7 @@ type Server struct {
 	bus            *application.EventBus
 	metrics        *application.RuntimeMetrics
 	usage          ports.UsageStore
+	ablation       ctxpkg.Ablation
 	addr           string
 	origin         string
 	allowedOrigins []string
@@ -88,6 +94,7 @@ func New(deps Deps) (*Server, error) {
 		allowedOrigins: append([]string(nil), deps.AllowedOrigins...),
 		metrics:        deps.Metrics,
 		usage:          deps.Usage,
+		ablation:       deps.Ablation,
 		staticFS:       deps.StaticFS,
 		authPIN:        pin,
 		authToken:      token,
@@ -289,26 +296,6 @@ func (s *Server) authStatus(w http.ResponseWriter, r *http.Request) {
 	token := extractToken(r)
 	authed := token != "" && secureEqual(token, s.authToken)
 	writeJSON(w, 200, map[string]any{"authenticated": authed, "required": true})
-}
-
-// runtimeStatus 暴露运行读数（T0.2）：回合与用量计数、最近若干次调用的
-// 真实/估算 token 对照。
-//
-// 设计约束：这是**只读观测端点**。任何一项取不到就降级为空，绝不因为
-// 观测失败而返回 5xx——观测不得影响服务可用性。
-func (s *Server) runtimeStatus(w http.ResponseWriter, r *http.Request) {
-	out := map[string]any{
-		"counters": s.metrics.Snapshot(),
-	}
-	if s.usage != nil {
-		if totals, err := s.usage.TurnUsageTotals(); err == nil {
-			out["usage"] = totals
-		}
-		if recent, err := s.usage.RecentTurnUsage(10); err == nil {
-			out["recent"] = recent
-		}
-	}
-	writeJSON(w, 200, out)
 }
 
 func clientIP(r *http.Request) string {

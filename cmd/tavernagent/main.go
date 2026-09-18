@@ -41,30 +41,82 @@ func main() {
 	}
 }
 
-func run() error {
+// cliOptions 是命令行开关的解析结果。
+//
+// 抽出来是为了让 run() 保持"装配 + 运行"的单一职责：它已经承担了数据目录锁、
+// 存储打开、配置迁移、服务装配、HTTP 启动一整条主线，再把 flag 声明混在开头，
+// 主线会被淹没（架构门禁对函数体长度有硬上限）。
+type cliOptions struct {
+	addr           string
+	dataDir        string
+	fallbackKind   string
+	pin            string
+	allowedOrigins string
+	showVersion    bool
+	ablation       ctxpkg.Ablation
+}
+
+// parseFlags 声明并解析全部命令行开关。
+//
+// 消融开关用 flag.Func 绑定解析：取值非法时由 flag 包直接报错退出，
+// 因此不会出现"解析失败却被忽略、最后跑成生产形态"的静默降级——
+// 对基线评估来说，静默降级比启动失败危险得多（ADS-7.8-01）。
+func parseFlags() cliOptions {
 	addr := flag.String("addr", "127.0.0.1:8890", "监听地址")
 	dataDir := flag.String("data", "data", "数据目录")
 	fallbackKind := flag.String("provider", "", "未配置时回退的开发供应商（留空表示强制在设置中配置真实模型）")
-	pinFlag := flag.String("pin", "", "局域网配对码（留空时自动生成 6 位安全数字码）")
+	pin := flag.String("pin", "", "局域网配对码（留空时自动生成 6 位安全数字码）")
 	showVersion := flag.Bool("version", false, "显示构建版本")
 	allowedOrigins := flag.String("allow-origin", "", "额外允许的浏览器来源，以逗号分隔（开发代理等）")
+	var ablation ctxpkg.Ablation
+	flag.Func("ablate", "消融开关（评估用，逗号分隔）：dynamic-context,memory,lorebook,summaries,compaction 或 all；留空为生产形态",
+		func(spec string) error {
+			parsed, err := ctxpkg.ParseAblation(spec)
+			if err != nil {
+				return err
+			}
+			ablation = parsed
+			return nil
+		})
 	flag.Parse()
-	if *showVersion {
-		fmt.Printf("%s commit=%s built=%s\n", appVersion, buildCommit, buildTime)
+	return cliOptions{
+		addr: *addr, dataDir: *dataDir, fallbackKind: *fallbackKind, pin: *pin,
+		allowedOrigins: *allowedOrigins, showVersion: *showVersion, ablation: ablation,
+	}
+}
+
+// setupCompiler 解析消融开关并构造**唯一**的编译器（ADS-7.8-01）。
+//
+// 幂等性来自构造顺序：开关在编译器之前落定，编译器是所有上下文编译的唯一入口，
+// 因此不存在"某个模块已经捕获了未消融的配置"这种半开状态。
+func setupCompiler(store ports.Store, ablation ctxpkg.Ablation) (*ctxpkg.Compiler, error) {
+	opts := ctxpkg.DefaultOptions()
+	ablation.Apply(&opts)
+	if ablation.Enabled() {
+		log.Printf("⚠️  消融模式已启用，仅用于评估对照，已关闭特性：%s", ablation.String())
+	}
+	log.Printf("提示词版本 %s", ctxpkg.PromptManifest())
+	return ctxpkg.New(store, opts), nil
+}
+
+func run() error {
+	opts := parseFlags()
+	if opts.showVersion {
+		fmt.Printf("%s commit=%s built=%s prompt=%s\n", appVersion, buildCommit, buildTime, ctxpkg.PromptManifest())
 		return nil
 	}
-	if *fallbackKind != "" && *fallbackKind != "mock" {
-		return fmt.Errorf("不支持的开发供应商 %q；可使用 mock 或留空", *fallbackKind)
+	if opts.fallbackKind != "" && opts.fallbackKind != "mock" {
+		return fmt.Errorf("不支持的开发供应商 %q；可使用 mock 或留空", opts.fallbackKind)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	dataLock, err := datalock.Acquire(*dataDir)
+	dataLock, err := datalock.Acquire(opts.dataDir)
 	if err != nil {
 		return err
 	}
 	defer dataLock.Close()
 
-	pin := strings.TrimSpace(*pinFlag)
+	pin := strings.TrimSpace(opts.pin)
 	if pin == "" {
 		number, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
 		if err != nil {
@@ -75,7 +127,7 @@ func run() error {
 	log.Printf("🔑 局域网配对码 (LAN PIN): %s", pin)
 	log.Printf("📱 局域网设备首次访问请输入该配对码建立安全连接（本机 127.0.0.1 访问自动免检）")
 
-	store, err := sqlite.Open(*dataDir, ports.RealClock{})
+	store, err := sqlite.Open(opts.dataDir, ports.RealClock{})
 	if err != nil {
 		return fmt.Errorf("打开存储失败: %w", err)
 	}
@@ -88,7 +140,7 @@ func run() error {
 	}
 	log.Printf("sqlite driver=%s fts5=%v attr_err=%q", info.DriverVersion, info.FTS5Available, info.AttributeError)
 
-	cfgStore, err := config.New(*dataDir)
+	cfgStore, err := config.New(opts.dataDir)
 	if err != nil {
 		return fmt.Errorf("配置存储初始化失败: %w", err)
 	}
@@ -100,10 +152,13 @@ func run() error {
 		log.Printf("模型配置已迁移为实例+槽位形态（旧文件备份为 settings.json.v1.bak）")
 	}
 
-	fallback := buildFallback(*fallbackKind)
+	fallback := buildFallback(opts.fallbackKind)
 	bus := application.NewEventBus(store)
 	sessionSvc := application.NewSessionService(store)
-	compiler := ctxpkg.New(store, ctxpkg.DefaultOptions())
+	compiler, err := setupCompiler(store, opts.ablation)
+	if err != nil {
+		return err
+	}
 
 	manager := application.NewProviderManager(cfgStore, buildFromConfig, fallback)
 	manager.SetUsageStore(store)
@@ -142,19 +197,20 @@ func run() error {
 	server, err := http.New(http.Deps{
 		Director: directorSvc,
 		Sessions: sessionSvc, Turns: turnSvc, Branches: branchSvc,
-		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: *addr,
+		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: opts.addr,
 		StaticFS:       staticFS,
 		AuthPIN:        pin,
-		AllowedOrigins: strings.FieldsFunc(*allowedOrigins, func(r rune) bool { return r == ',' }),
+		AllowedOrigins: strings.FieldsFunc(opts.allowedOrigins, func(r rune) bool { return r == ',' }),
 		Metrics:        metrics,
 		Usage:          store,
+		Ablation:       opts.ablation,
 	})
 	if err != nil {
 		return err
 	}
-	logMsg := fmt.Sprintf("SillyDog 服务就绪：http://%s （模型：配置驱动）", *addr)
-	if *fallbackKind != "" {
-		logMsg = fmt.Sprintf("SillyDog 服务就绪：http://%s （模型：配置驱动，兜底 %s）", *addr, *fallbackKind)
+	logMsg := fmt.Sprintf("SillyDog 服务就绪：http://%s （模型：配置驱动）", opts.addr)
+	if opts.fallbackKind != "" {
+		logMsg = fmt.Sprintf("SillyDog 服务就绪：http://%s （模型：配置驱动，兜底 %s）", opts.addr, opts.fallbackKind)
 	}
 	log.Println(logMsg)
 	return server.ListenAndServeContext(ctx)

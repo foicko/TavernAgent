@@ -479,6 +479,23 @@ SELECT COUNT(*) FROM up WHERE node_key = ?""", (descendant_id, ancestor_id)).fet
                 "summaryBlocked", "summaryNormalized", "budgetExceeded")
         return {key: counters.get(key, 0) for key in keys}
 
+    def diagnostics(self) -> dict:
+        """读取 /api/status 里的提示词版本与消融开关（ADS-7.8-01 / 7.8-04）。
+
+        证据必须能自证"这一轮跑的是哪份提示词、关了哪些特性"：同一个二进制可以在
+        消融模式下启动，报告若不记录这一项，两次结果就无法比较，也无法归因。
+        取不到时降级为空字典——观测失败不应该让整轮评测作废。
+        """
+        try:
+            status = self.client.must("GET", "/api/status")
+        except (OSError, ValueError, RuntimeError) as error:
+            return {"diagnosticError": str(error)}
+        out = {key: status[key] for key in ("prompt", "ablation") if key in status}
+        phases = (status.get("counters") or {}).get("compilePhases") or {}
+        if phases:
+            out["compilePhases"] = phases
+        return out
+
     def server_warnings(self, keyword: str = "", limit: int = 0) -> list[str]:
         """被测服务日志里的 WARN/ERROR 行（同文去重计数）。
 
@@ -918,6 +935,36 @@ def record_failure(turn: dict) -> str:
     return f"{code}: {message}".strip(": ")
 
 
+def attribute_failed_steps(report: dict) -> list[dict]:
+    """把失败项整理成结构化归因（ADS-7.4-09）。
+
+    只填**已知**的字段：功能场景的判定是断言式的，脚本没有"首个错误步"的定位能力，
+    因此 firstErrorStep 固定为 assert、rootCauseSide 保持 unknown 并标注 confidence=low。
+    宁可如实说"未定位"，也不要按关键词猜一个看起来专业的类别——那会让读报告的人
+    以为已经做过归因，从而跳过回放轨迹这一步。
+    """
+    attributions = []
+    for scenario in report.get("scenarios", []):
+        if scenario.get("passed"):
+            continue
+        for step in scenario.get("steps", []):
+            if step.get("passed"):
+                continue
+            attributions.append({
+                "scenario": scenario.get("name"),
+                "taskGoal": scenario.get("title") or scenario.get("name"),
+                "step": step.get("name"),
+                "firstErrorStep": "assert",
+                "errorClass": "scenario_assertion_failed",
+                "rootCauseSide": "unknown",
+                "confidence": "low",
+                "recoverable": True,
+                "rootCauseNote": "场景断言失败；脚本未做首错定位，需回放 conversation.log 与轨迹判定「看/想/做/验」哪一层出问题（ADS-7.9.1）",
+                "evidence": {"detail": str(step.get("evidence", ""))[:400]},
+            })
+    return attributions
+
+
 def server_log_warnings(path: Path, keyword: str = "", limit: int = 0) -> list[str]:
     """按出现次数汇总被测服务日志里的 WARN/ERROR 行（同文合并，次数降序）。"""
     if not Path(path).is_file():
@@ -1000,6 +1047,7 @@ def main() -> int:
         "compactionWindow": {"contextWindow": COMPACTION_WINDOW, "maxTokens": COMPACTION_OUTPUT},
         "scenarios": [], "sessions": {}, "passed": False, "completed": False, "serverWarnings": [],
     }
+    runner = None
     recorder = Recorder(directory, [
         "功能测试对话记录",
         f"模型：{provider.model} @ {provider.base_url}（kind={provider.kind}）",
@@ -1035,10 +1083,16 @@ def main() -> int:
         report["turnCount"] = len(recorder.turns)
         report["finishedAt"] = utc()
         report["serverWarnings"] = server_log_warnings(directory / "server.log")
+        report["failureAttributions"] = attribute_failed_steps(report)
+        if runner is not None:
+            report["diagnostics"] = runner.diagnostics()
         total = sum(len(s["steps"]) for s in report["scenarios"])
         failed = sum(1 for s in report["scenarios"] for step in s["steps"] if not step["passed"])
         recorder.rule("总结")
         recorder.line(f"场景 {len(report['scenarios'])} 个｜判定 {total} 项｜通过 {total - failed}｜失败 {failed}｜对话 {report['turnCount']} 轮")
+        diagnostics = report.get("diagnostics") or {}
+        if diagnostics:
+            recorder.line(f"提示词版本 {diagnostics.get('prompt', '未知')}｜消融开关 {diagnostics.get('ablation', '未知')}")
         for item in report["scenarios"]:
             recorder.line(f"  · {item['title']}：{'通过' if item['passed'] else '存在失败项'}")
         if report["serverWarnings"]:

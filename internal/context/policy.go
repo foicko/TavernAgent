@@ -21,6 +21,12 @@ type CompactionPolicy struct {
 	// 在 Compile 时自动剥离 <thought> 块（节省 30%~50% 历史 Token）。
 	// 默认放宽至 20 轮，让近期的角色内心活动充分保留。
 	PruneThoughtDepth int
+
+	// Disabled 彻底关闭压缩（消融用，ADS-7.8-01）。
+	// 关掉后 DecideCompaction 恒判"不压缩"，后台不再生成新摘要；
+	// 已存在的摘要是否仍注入由 CompilerOptions.DisableSummaries 单独控制——
+	// 两个开关分开，才能区分"不生成"与"不使用"两种消融配置。
+	Disabled bool
 }
 
 // DefaultCompactionPolicy 返回推荐的跑团演义压缩策略默认值。
@@ -51,6 +57,9 @@ type CompactionDecision struct {
 // DecideCompaction 根据给定的祖先链与路径上已有的摘要，评估是否需要启动新的历史压缩。
 // ancestors 必须是拓扑升序（从 root 到当前 headNode）。
 func DecideCompaction(ancestors []*domain.PlotNode, existingSummaries []*domain.SummaryArtifact, policy CompactionPolicy) *CompactionDecision {
+	if policy.Disabled {
+		return &CompactionDecision{ShouldCompact: false, Reason: "disabled"}
+	}
 	if policy.TailWindowTurns <= 0 {
 		policy.TailWindowTurns = 20
 	}
