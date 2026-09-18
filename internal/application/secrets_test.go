@@ -285,12 +285,16 @@ func commitViaBuildPlan(t *testing.T, st *sqlite.Store, sessionID, branchID, par
 	return nodeID
 }
 
-// systemPromptOf 拼接请求中全部 system 消息。
-// 测试意图是"材料是否进入请求"，不应绑定它在第几条消息。
+// systemPromptOf 拼接请求里的注入材料：静态 system 前缀 + 末尾的尾部状态块。
+//
+// 动态材料按 ADS-2.7-02/2.7-03 走 user 槽位、位于上下文最末尾（<system-reminder>），
+// 因此不能只取 system 消息；但也不能拼接全部消息——中间的玩家输入会重复断言要查的
+// 关键词，让"秘密未解锁则不得出现"这类反向断言失效。
 func systemPromptOf(msgs []ports.ChatMessage) string {
 	var b strings.Builder
-	for _, m := range msgs {
-		if m.Role == "system" {
+	for i, m := range msgs {
+		isTailBlock := i == len(msgs)-1 && strings.Contains(m.Content, ctxpkg.SystemReminderOpen)
+		if m.Role == "system" || isTailBlock {
 			b.WriteString(m.Content)
 			b.WriteString("\n")
 		}

@@ -206,14 +206,20 @@ func TestCompileLedgerWithRelationshipAndSecretTrajectory(t *testing.T) {
 		t.Fatalf("compile at turn 3: %v", err)
 	}
 
+	// 账本与秘密都属"本轮观察结果"，按 ADS-2.7-02/2.7-03 落在上下文末尾的
+	// 尾部状态块里（user 槽位），因此这里必须扫描**全部**消息而不是只取 system。
 	var allSystem strings.Builder
 	for _, m := range req.Messages {
-		if m.Role == "system" {
-			allSystem.WriteString(m.Content)
-			allSystem.WriteString("\n")
-		}
+		allSystem.WriteString(m.Content)
+		allSystem.WriteString("\n")
 	}
 	sys := allSystem.String()
+
+	// 0. 账本与秘密必须位于最后一条消息（尾部状态块），且不是 system 槽位。
+	if last := req.Messages[len(req.Messages)-1]; last.Role != "user" ||
+		!strings.Contains(last.Content, "【已揭示的世界观与秘密】") {
+		t.Fatalf("尾部状态块缺失或角色错误（角色=%s）:\n%s", last.Role, last.Content)
+	}
 
 	// 1. 验证账本包含关系轨迹与转折点
 	if !strings.Contains(sys, "<domain_state_ledger authoritative=\"true\">") {
@@ -244,11 +250,15 @@ func TestCompileLedgerWithRelationshipAndSecretTrajectory(t *testing.T) {
 // T4.3: 验证主动 Token 压缩阈值在达到预算/窗口压力时主动置位 PrepareCompression。
 func TestProactiveTokenCompressionThreshold(t *testing.T) {
 	opts := ctxpkg.DefaultOptions()
-	opts.ContextWindow = 4000
+	opts.ContextWindow = 4500
 	opts.ReservedOutput = 500
 	opts.SafetyMargin = 200
-	// inputBudget = 4000 - 500 - 200 = 3300
-	// 75% budget = 2475
+	// inputBudget = 4500 - 500 - 200 = 3800
+	// 75% budget = 2850
+	//
+	// 窗口取值与必修提示词的体量绑定（扮演准则 + 输出协议 + 资料边界声明 + 人设）：
+	// 必修部分增删约 300 token 就要同步挪动窗口，否则本用例会滑出
+	// "超过 75% 但装得下"的区间而误报。
 
 	f := newFixtureFull(t, nil, "", "", opts)
 	state := domain.NewWorldState()

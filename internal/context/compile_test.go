@@ -87,6 +87,7 @@ func newFixtureFull(t *testing.T, books []domain.Lorebook, opening, secretsJSON 
 	return &fixture{store: st, compiler: ctxpkg.New(st, opts)}
 }
 
+// systemPrompt 返回注入材料全文（见 tail_status_test.go 的 injectedMaterials）。
 func (f *fixture) systemPrompt(t *testing.T, nodeID, input string) string {
 	t.Helper()
 	return f.systemPromptWithState(t, nodeID, input, nil)
@@ -110,34 +111,20 @@ func (f *fixture) compileMessagesWithChecks(t *testing.T, nodeID, input string, 
 	return req.Messages
 }
 
-// systemPromptWithState 返回"系统提示"全文。
+// systemPromptWithState 返回注入材料全文。
 //
-// 启用 SplitDynamicContext 后系统提示被拆成静态与动态两条 system 消息，
-// 因此这里拼接**所有** system 消息而不是取 Messages[0]——测试用例的意图是
-// "这些材料是否进入请求"，而不是"它们排在第几条消息"。
+// 启用 SplitDynamicContext 后，材料被拆成静态 system 消息与**末尾的尾部状态块**
+// （user 槽位 + <system-reminder>，见 ADS-2.7-02），因此这里拼接两类注入块而不是
+// 只取 system——测试用例的意图是"这些材料是否进入请求"，而不是"它们排在第几条消息"。
 func (f *fixture) systemPromptWithState(t *testing.T, nodeID, input string, state *domain.WorldState) string {
 	t.Helper()
-	var b strings.Builder
-	for _, m := range f.compileMessages(t, nodeID, input, state) {
-		if m.Role == "system" {
-			b.WriteString(m.Content)
-			b.WriteString("\n")
-		}
-	}
-	return b.String()
+	return injectedMaterials(f.compileMessages(t, nodeID, input, state))
 }
 
 // systemPromptWithChecks 允许带上准备阶段已定的检定结果（契约 §5.2）。
 func (f *fixture) systemPromptWithChecks(t *testing.T, nodeID, input string, checks []domain.CheckResult) string {
 	t.Helper()
-	var b strings.Builder
-	for _, m := range f.compileMessagesWithChecks(t, nodeID, input, nil, checks) {
-		if m.Role == "system" {
-			b.WriteString(m.Content)
-			b.WriteString("\n")
-		}
-	}
-	return b.String()
+	return injectedMaterials(f.compileMessagesWithChecks(t, nodeID, input, nil, checks))
 }
 
 func book(entries ...domain.LorebookEntry) []domain.Lorebook {
@@ -294,21 +281,21 @@ func TestLorebookHitFromRecentHistory(t *testing.T) {
 	}
 }
 
-// 世界书内容只进 system prompt，不进入历史消息（不污染正文）。
+// 世界书内容只进注入块，不进入历史消息（不污染正文）。
 func TestLorebookNotInjectedIntoHistoryMessages(t *testing.T) {
 	f := newFixture(t, book(entry("e1", true, "钟楼每逢午夜会敲响十三下。", "钟楼")), ctxpkg.DefaultOptions())
 	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "钟楼前。", nil, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
-	// 意图是"世界书不得混进历史对话"，因此只检查非 system 消息：
-	// 启用前缀缓存分离后，动态 system 消息合法地出现在历史之后。
-	for _, m := range req.Messages {
-		if m.Role == "system" {
+	// 意图是"世界书不得混进历史对白"：注入块只有首条 system 与末条状态块，其余都不该有。
+	last := len(req.Messages) - 1
+	for i, m := range req.Messages {
+		if m.Role == "system" || i == last {
 			continue
 		}
 		if strings.Contains(m.Content, "十三下") {
-			t.Fatalf("世界书内容出现在非 system 消息中: %+v", m)
+			t.Fatalf("世界书内容出现在历史消息中: %+v", m)
 		}
 	}
 }
@@ -935,11 +922,7 @@ func TestSplitDynamicContext(t *testing.T) {
 		t.Fatalf("compile failed: %v", err)
 	}
 
-	// 消息顺序应为：
-	// 0: system (静态设定)
-	// 1: assistant (开场白)
-	// 2: system (动态情境提示：钟楼设定、检定结果)
-	// 3: user (最新玩家输入)
+	// 消息顺序见 tail_status_test.go（易变状态在末尾、走 user 槽位）。
 	if len(req.Messages) != 4 {
 		t.Fatalf("期望 4 条消息，实际 %d 条: %+v", len(req.Messages), req.Messages)
 	}
@@ -952,9 +935,9 @@ func TestSplitDynamicContext(t *testing.T) {
 		t.Fatalf("静态首条消息不应包含动态世界书或检定结果:\n%s", staticSys)
 	}
 
-	dynSys := req.Messages[2]
-	if dynSys.Role != "system" {
-		t.Fatalf("第 3 条消息角色应为 system，实际: %s", dynSys.Role)
+	dynSys := req.Messages[3]
+	if dynSys.Role != "user" || !strings.Contains(dynSys.Content, ctxpkg.SystemReminderOpen) {
+		t.Fatalf("尾部状态块应为 user 槽位的 <system-reminder>（ADS-2.7-02），实际: %s", dynSys.Role)
 	}
 	if !strings.Contains(dynSys.Content, "【当前情境与状态提示】") ||
 		!strings.Contains(dynSys.Content, "钟楼建于三百年以前") ||

@@ -848,14 +848,14 @@ func TestLorebookReachesProviderRequest(t *testing.T) {
 			t.Fatalf("不应注入的内容 %q 出现在提示词:\n%s", banned, sys)
 		}
 	}
-	// 世界书内容只应存在于 system 消息中（历史对话里不得出现）。
-	// 启用前缀缓存分离后动态 system 合法地排在历史之后，因此按 Role 过滤而不是按下标。
-	for _, m := range req.Messages {
-		if m.Role == "system" {
-			continue
-		}
-		if strings.Contains(m.Content, "十三下") {
-			t.Fatalf("世界书内容泄漏到非 system 消息: %+v", m)
+	// 世界书内容只应存在于注入块中：首条静态 system 或末尾的尾部状态块（user 槽位，ADS-2.7-02）。
+	last := len(req.Messages) - 1
+	if !strings.Contains(req.Messages[last].Content, ctxpkg.SystemReminderOpen) {
+		t.Fatalf("末条消息应为尾部状态块: %+v", req.Messages[last])
+	}
+	for _, m := range req.Messages[:last] {
+		if m.Role != "system" && strings.Contains(m.Content, "十三下") {
+			t.Fatalf("世界书内容泄漏到历史消息: %+v", m)
 		}
 	}
 }

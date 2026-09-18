@@ -107,7 +107,9 @@ func TestFitToBudgetDropsLowestPriorityFirst(t *testing.T) {
 	// 压力 3：只有历史超预算 → 丢最旧的回合，且停在"最近 N 轮"保护下限。
 	// 构造要点：回合数需多于保护下限（默认 20），且单回合体积要落在
 	// "30 轮超出预算、裁到 20 轮能装下"的区间，否则会走 422 分支。
-	c3 := New(nil, CompilerOptions{ContextWindow: 8000, ReservedOutput: 200, SafetyMargin: 100})
+	// 窗口取值与必修提示词（扮演准则 + 输出协议 + 人设）的体量绑定：必修部分增删
+	// 约 500 token 就要同步挪动窗口，否则本用例会滑出上述区间而误报。
+	c3 := New(nil, CompilerOptions{ContextWindow: 8500, ReservedOutput: 200, SafetyMargin: 100})
 	mid := repeatCJK(t, 150)
 	history := make([]*domain.PlotNode, 0, 30)
 	for i := 0; i < 30; i++ {

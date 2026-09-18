@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	ctxpkg "tavernagent/internal/context"
 	"tavernagent/internal/ports"
 	"tavernagent/internal/protocol"
 )
@@ -342,11 +343,12 @@ func (m *ProviderManager) probe(ctx context.Context, cfg ports.ProviderConfig, u
 	}
 }
 
-// frameProbeSystem 是格式探测专用的提示词：要求供应商输出最小合法帧序列。
-// 与 context.FrameProtocolInstruction 同源（此处内联避免应用层反向依赖编译包）。
-const frameProbeSystem = `你是输出协议测试器。只输出以下两行 JSON，不要任何解释或代码围栏：
-{"v":1,"seq":1,"type":"block","kind":"narration","speakerId":null,"text":"就绪"}
-{"v":1,"seq":2,"type":"final","proposals":[],"options":[]}`
+// frameProbeSystem 是格式探测专用的系统提示词。
+//
+// 直接引用 context.FrameProbeInstruction，不再内联一份拷贝：两份同源字符串必然漂移，
+// 而漂移的后果是"探测通过、真实生成被协议拒绝"这种最难排查的不一致。
+// application 本来就依赖 context（压缩、编译都在用），这里的引用不引入新的依赖方向。
+const frameProbeSystem = ctxpkg.FrameProbeInstruction
 
 // checkFrameFormat 用一次性解析器做只读校验，判断供应商是否稳定输出帧协议。
 // 不落库、不改配置；兼容模式降级视为格式不通过（说明该模型未遵守结构化协议）。

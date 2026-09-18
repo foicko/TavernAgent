@@ -139,7 +139,10 @@ func TestCompileDropsRedundantSummaryBeforeHistory(t *testing.T) {
 	summaryText := repeatRunes(99, 3000)
 	saveSummary(t, f, ids[2], ids[3], summaryText)
 
-	compiler := f.compiler.WithBudget(4608, 1024)
+	// 窗口取值与必修提示词（扮演准则 + 输出协议 + 资料边界声明 + 人设）绑定：
+	// 预算必须落进"装得下 4 轮正文历史、装不下那条 3000 字摘要"的区间，
+	// 必修部分增删约 300 token 就要同步挪动窗口。
+	compiler := f.compiler.WithBudget(5632, 1024)
 	req, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", domain.NewWorldState(), nil)
 	if err != nil {
 		t.Fatalf("冗余摘要应被优先淘汰而不是整轮失败：%v", err)
