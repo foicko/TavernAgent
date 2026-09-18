@@ -79,11 +79,24 @@ Set-Location web; pnpm typecheck; pnpm lint; pnpm test; pnpm build
 
 CI（`.github/workflows/quality.yml`）在 Ubuntu 跑 `go test -race`、`govulncheck`、浏览器测试，并在五平台构建 + 解压冒烟。真实模型验收由 `scripts/release_eval.py` 与 `scripts/gemini_meter.py` 负责，普通 CI 不调用付费模型。
 
+评估报告同时给出 `passAtK`（能力上限）与 `passPowerK`（业务可靠性）两个口径，失败按类别聚簇
+并逐条记录首错归因，见 `scripts/eval_metrics.py` 与 [ADS 合规记录](ADS_GAP_ANALYSIS.md)。
+造裸模型基线用消融开关（列出即关闭，`-ablate=all` 表示全关）：
+
+```powershell
+go run ./cmd/tavernagent -provider mock -ablate=all   # /api/status 的 ablation 字段自证
+python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --model-label scripted-fixture -n 20 --seeds 1,2,3 --out output/protocol.json
+```
+
 ## 6. 已知技术债
 
-- **真实模型质量未闭环**：当前主要是确定性回归与 Mock 链路；真实模型协议成功率与叙事质量需按验收门槛单独验证。
+- **真实模型质量未闭环**：当前主要是确定性回归与 Mock 链路；真实模型的成功率有了口径与归因
+  （`scripts/eval_metrics.py` 的 Pass@k / Pass^k、失败聚簇、多种子波动），但**结论本身仍需**
+  用 `scripts/release_eval.py` 跑真实网关产出 100 例证据。
 - **大函数/大文件**：`internal/adapters/http/server.go`、`internal/application/commitplan.go:buildPlan`、`internal/domain/state.go:ApplyEvent`、`internal/adapters/sqlite/import.go:ImportSession`、`internal/context` 若干函数等被 `architecture_baseline.json` 豁免；只在需要改动时再拆。
-- **前端样式体积**：`web/src/styles.css` 单文件较大（baseline 记录 5081 行）。
+- **前端样式体积**：`web/src/styles.css` 单文件 5340 行，已**超出 baseline 记录的 5081**
+  （门禁上限 800）。该漂移发生在本次规范整改之前，未用 `--accept-growth` 吞掉；改动 CSS 的
+  人需补理由或拆分。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
 ## 7. 待做功能
@@ -95,6 +108,8 @@ CI（`.github/workflows/quality.yml`）在 Ubuntu 跑 `go test -race`、`govulnc
 
 ## 8. 相关文件
 
+- [ADS 合规评审与整改记录](ADS_GAP_ANALYSIS.md)：对照 `Agent开发规范.md`（ADS v1.0）的
+  整改项、显式取舍（无工具的工作流式设计、压缩用轮数触发、未上 OTel 等）与未处理缺口。
 - [运行维护说明](OPERATIONS.md)：安装、三槽位配置、局域网、备份与升级回退。
 - [素材授权](ASSET_LICENSES.md)、[第三方声明](../THIRD_PARTY_NOTICES.md)、[MIT 许可证](../LICENSE)。
 - [贡献指南](../CONTRIBUTING.md)、[安全报告](../SECURITY.md)。
