@@ -77,7 +77,9 @@ func (s *TurnService) run(ctx context.Context, turn *domain.TurnRequest) {
 // calibratedCompiler 构造本次尝试的编译器：预算 + 真实用量校准 + 预算观测。
 // 三者都作用在 attempt 副本上，共享的 compiler 不被修改。
 func (s *TurnService) calibratedCompiler(cfg ports.ProviderConfig) *ctxpkg.Compiler {
-	compiler := s.compiler.WithBudget(cfg.ContextWindow, cfg.MaxTokens).WithBudgetObserver(s.metrics.AddBudgetReport)
+	compiler := s.compiler.WithBudget(cfg.ContextWindow, cfg.MaxTokens).
+		WithBudgetObserver(s.metrics.AddBudgetReport).
+		WithPhaseObserver(s.metrics.AddPhase)
 	if factor := s.tokenCalibrationFactor(); factor > 0 {
 		compiler = compiler.WithTokenCalibration(factor)
 	}

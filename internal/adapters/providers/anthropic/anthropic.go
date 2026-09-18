@@ -89,14 +89,35 @@ func (p *Provider) Capabilities(ctx context.Context) (ports.ProviderCapabilities
 }
 
 type anthropicRequest struct {
-	Model       string             `json:"model"`
-	System      string             `json:"system,omitempty"`
-	Messages    []anthropicMessage `json:"messages"`
-	MaxTokens   int                `json:"max_tokens"`
-	Stream      bool               `json:"stream"`
-	Temperature *float64           `json:"temperature,omitempty"`
+	Model string `json:"model"`
+	// System 走块数组而非裸字符串：只有块形态才能挂 cache_control
+	// （Anthropic 不会自动缓存提示词，必须显式打点）。
+	System      []anthropicSystemBlock `json:"system,omitempty"`
+	Messages    []anthropicMessage     `json:"messages"`
+	MaxTokens   int                    `json:"max_tokens"`
+	Stream      bool                   `json:"stream"`
+	Temperature *float64               `json:"temperature,omitempty"`
 	// Thinking 只在用户显式设置思考强度且预算放得下时出现。
 	Thinking *anthropicThinking `json:"thinking,omitempty"`
+}
+
+// anthropicSystemBlock 是 system 参数的一个文本块。
+type anthropicSystemBlock struct {
+	Type         string                 `json:"type"` // 固定 "text"
+	Text         string                 `json:"text"`
+	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
+}
+
+// anthropicContentBlock 是消息内容块（仅在需要挂缓存断点时使用）。
+type anthropicContentBlock struct {
+	Type         string                 `json:"type"` // 固定 "text"
+	Text         string                 `json:"text"`
+	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
+}
+
+// anthropicCacheControl 声明前缀缓存断点。type 固定为 "ephemeral"。
+type anthropicCacheControl struct {
+	Type string `json:"type"`
 }
 
 // anthropicThinking 是 extended thinking 配置（Anthropic 要求 budget_tokens ≥ 1024
@@ -107,8 +128,10 @@ type anthropicThinking struct {
 }
 
 type anthropicMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role string `json:"role"`
+	// Content 是 string 或 []anthropicContentBlock：Anthropic 两种形态都接受，
+	// 只有块形态能携带 cache_control，因此这里用 any 而不是 string。
+	Content any `json:"content"`
 }
 
 type sseEvent = providerutil.SSEEvent
@@ -366,7 +389,8 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 
 func (p *Provider) buildBody(req ports.ChatRequest) ([]byte, error) {
 	var systemParts []string
-	var rawMessages []anthropicMessage
+	type flatMessage struct{ Role, Text string }
+	var rawMessages []flatMessage
 
 	for _, m := range req.Messages {
 		if strings.EqualFold(m.Role, "system") {
@@ -378,22 +402,58 @@ func (p *Provider) buildBody(req ports.ChatRequest) ([]byte, error) {
 			if strings.EqualFold(m.Role, "assistant") {
 				role = "assistant"
 			}
-			rawMessages = append(rawMessages, anthropicMessage{Role: role, Content: m.Content})
+			rawMessages = append(rawMessages, flatMessage{Role: role, Text: m.Content})
 		}
 	}
 
-	// Anthropic 必须保证 user 和 assistant 严格交替，连续相同角色必须合并
-	var mergedMessages []anthropicMessage
+	// Anthropic 必须保证 user 和 assistant 严格交替，连续相同角色必须合并。
+	// 先在字符串层面合并（尾部状态块与玩家输入都是 user，会合并成一条），
+	// 再统一转成消息对象——这样挂缓存断点时不必处理 any 类型的拼接。
+	var merged []flatMessage
 	for _, m := range rawMessages {
-		if len(mergedMessages) > 0 && mergedMessages[len(mergedMessages)-1].Role == m.Role {
-			mergedMessages[len(mergedMessages)-1].Content += "\n\n" + m.Content
+		if len(merged) > 0 && merged[len(merged)-1].Role == m.Role {
+			merged[len(merged)-1].Text += "\n\n" + m.Text
 		} else {
-			mergedMessages = append(mergedMessages, m)
+			merged = append(merged, m)
 		}
 	}
 
-	if len(mergedMessages) == 0 {
-		mergedMessages = append(mergedMessages, anthropicMessage{Role: "user", Content: "Hello"})
+	if len(merged) == 0 {
+		merged = append(merged, flatMessage{Role: "user", Text: "Hello"})
+	}
+
+	// 前缀缓存断点（ADS-2.2 / 7.5-04）：Anthropic 不做自动前缀缓存，
+	// 不在想要复用的前缀末尾显式打点就等于永远按全价重算输入。这里打两个点：
+	//
+	//  1. 静态前缀末尾（最后一块 system）——覆盖扮演准则、输出协议、资料边界声明
+	//     与角色卡人设，这些在整段会话里逐字节不变。
+	//  2. 历史前沿（最后一条 assistant）——它之后只会追加新回合，
+	//     因此每轮只会为新增的那一轮付一次写缓存成本，其余全部命中。
+	//
+	// 断点上限为 4，这里用 2 个。断点只影响计费与延迟，不影响语义：
+	// 即便某轮前缀没命中（例如历史被上下文压缩改写），也只是退化为全价计算。
+	const cacheEphemeral = "ephemeral"
+	var systemBlocks []anthropicSystemBlock
+	for _, part := range systemParts {
+		systemBlocks = append(systemBlocks, anthropicSystemBlock{Type: "text", Text: part})
+	}
+	if n := len(systemBlocks); n > 0 {
+		systemBlocks[n-1].CacheControl = &anthropicCacheControl{Type: cacheEphemeral}
+	}
+
+	messages := make([]anthropicMessage, 0, len(merged))
+	for _, m := range merged {
+		messages = append(messages, anthropicMessage{Role: m.Role, Content: m.Text})
+	}
+	for i := len(merged) - 1; i >= 0; i-- {
+		if merged[i].Role != "assistant" {
+			continue
+		}
+		messages[i].Content = []anthropicContentBlock{{
+			Type: "text", Text: merged[i].Text,
+			CacheControl: &anthropicCacheControl{Type: cacheEphemeral},
+		}}
+		break
 	}
 
 	maxTokens := req.MaxTokens
@@ -406,8 +466,8 @@ func (p *Provider) buildBody(req ports.ChatRequest) ([]byte, error) {
 
 	ar := anthropicRequest{
 		Model:       p.cfg.Model,
-		System:      strings.Join(systemParts, "\n\n"),
-		Messages:    mergedMessages,
+		System:      systemBlocks,
+		Messages:    messages,
 		MaxTokens:   maxTokens,
 		Stream:      true,
 		Temperature: p.cfg.Temperature,

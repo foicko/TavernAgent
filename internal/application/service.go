@@ -83,7 +83,17 @@ func NewTurnServiceWithManager(store ports.Store, manager *ProviderManager, comp
 	s.manager = manager
 	if manager != nil {
 		manager.SetUsageStore(store)
-		s.compactor = NewCompactorService(store, manager, bus, ctxpkg.DefaultCompactionPolicy())
+		// 压缩必须与编译器共用同一份策略：否则「关掉压缩」只关掉一半——
+		// 编译侧不再折叠旧区间，后台却仍在为新回合生成摘要（白付生成成本，
+		// 而且评估里"无压缩"这一组实际上带着后台开销）。
+		var policy ctxpkg.CompactionPolicy
+		if compiler != nil {
+			policy = compiler.Options().CompactionPolicy
+		}
+		if policy == (ctxpkg.CompactionPolicy{}) {
+			policy = ctxpkg.DefaultCompactionPolicy()
+		}
+		s.compactor = NewCompactorService(store, manager, bus, policy)
 		s.cognitive = NewCognitiveService(store, func() (ports.ModelProvider, error) { return manager.BackgroundProvider("reflection") })
 		s.cognitive.resolve = func() (ports.ModelProvider, ports.ProviderConfig, error) { return manager.Resolve("reflection", true) }
 	}

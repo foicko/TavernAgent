@@ -84,6 +84,16 @@ type CompilerOptions struct {
 	// OnBudget 在预算裁剪后回调，回报裁剪了什么（观测与排障用）。
 	OnBudget func(report BudgetReport)
 
+	// DisableMemoryInjection / DisableLorebookInjection / DisableSummaries 是
+	// 消融开关的落点（ADS-7.8-01），只由 Ablation.Apply 在启动阶段置位。
+	//
+	// 为什么不复用 "预算设成 0 即禁用"：预算字段 <=0 的语义是"取默认值"，
+	// 用它表达禁用会让"我想关掉"和"我忘了配"变成同一种状态——评估里
+	// 一个拼错的开关名就会静默变成"其实没关"。
+	DisableMemoryInjection   bool
+	DisableLorebookInjection bool
+	DisableSummaries         bool
+
 	// OnPhase 在编译各阶段结束时回调，用于把"准备耗时"归因到具体阶段。
 	// 默认 nil：不做任何计时，生产路径零开销。
 	OnPhase func(phase string, d time.Duration)
@@ -156,6 +166,25 @@ func (c *Compiler) WithBudgetObserver(onBudget func(BudgetReport)) *Compiler {
 	copy := *c
 	copy.options.OnBudget = onBudget
 	return &copy
+}
+
+// WithPhaseObserver 在 attempt 副本上注册阶段耗时回调（观测用）。
+//
+// Compile 内部本来就按阶段计时（beginPhase/endPhase），但生产路径没有消费者，
+// 于是"准备一条请求慢在哪一段"只能靠猜。装配处把回调接到运行读数上，
+// 得到的是比整轮耗时更细、又不必引入完整追踪栈的现场。
+func (c *Compiler) WithPhaseObserver(onPhase func(phase string, d time.Duration)) *Compiler {
+	copy := *c
+	copy.options.OnPhase = onPhase
+	return &copy
+}
+
+// Options 返回当前生效的编译选项快照（只读）。
+//
+// 供组合根读取消融后的策略：例如压缩服务必须与编译器用同一份 CompactionPolicy，
+// 否则"关掉压缩"只关掉了一半——编译侧不再折叠，后台仍在生成摘要。
+func (c *Compiler) Options() CompilerOptions {
+	return c.options
 }
 
 // WithBudget returns an attempt-local compiler; concurrent turns never mutate
@@ -267,6 +296,9 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 	t0 = c.beginPhase("lorebook")
 	haystack := buildHaystack(sc.OpeningText, ancestors, inputText)
 	lore := c.matchLorebook(sc, haystack)
+	if c.options.DisableLorebookInjection {
+		lore = nil
+	}
 	c.endPhase("lorebook", t0)
 
 	// 记忆召回：候选池与词法排名都由检索层给出（SQL 侧路径过滤 + FTS5），
@@ -280,6 +312,11 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 	if err != nil {
 		return req, err
 	}
+	if c.options.DisableMemoryInjection {
+		// 消融：记忆不进上下文。检索本身照跑——它便宜且能保证耗时口径可比，
+		// 只把"是否注入"这一个变量隔离出来。
+		memories = nil
+	}
 	c.endPhase("memory_recall", t0)
 
 	// 注入清单随请求上行：提交时据此判定 lastMeaningfulMentionTurn（§8.1）。
@@ -288,8 +325,10 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 	// 相关摘要（技术契约 §9.2）：只采用来源区间仍在当前路径上的（T24）。
 	// 只折叠摘要确实覆盖且位于保护尾部之外的回合；区间之间的空缺保留原文。
 	var summaries []*domain.SummaryArtifact
-	if sums, serr := c.store.SummariesOnPath(nodeID); serr == nil && len(sums) > 0 {
-		summaries = sums
+	if !c.options.DisableSummaries {
+		if sums, serr := c.store.SummariesOnPath(nodeID); serr == nil && len(sums) > 0 {
+			summaries = sums
+		}
 	}
 
 	// 历史大检定账本（M4h）：把祖先路径上已结算的判定收据编译成不可被

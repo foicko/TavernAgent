@@ -2,6 +2,7 @@ package application
 
 import (
 	"sync/atomic"
+	"time"
 
 	ctxpkg "tavernagent/internal/context"
 )
@@ -39,6 +40,49 @@ type RuntimeMetrics struct {
 	// 用量台账写入失败次数。台账不参与业务判定（写失败不阻断回合），
 	// 但"账没记上"必须能被读到——否则磁盘满这类问题只剩一行日志。
 	usageWriteFailures atomic.Int64
+	// 上下文编译的阶段耗时。Compile 内部本来就按阶段计时，但此前没有生产消费者，
+	// "准备一条请求慢在哪一段"只能靠猜；这里把它落成进程内累计值，
+	// 用最小的代价换到比"整轮耗时"细一档的现场（不必引入完整追踪栈）。
+	phaseNanos [phaseSlotCount]atomic.Int64
+	phaseCalls [phaseSlotCount]atomic.Int64
+}
+
+// compilePhases 是 Compile 内部的阶段名，索引即存储槽位。
+// 顺序固定：改动顺序会让历史读数的含义位移，因此只在末尾追加。
+var compilePhases = []string{
+	"session_context", "ancestor_chain", "lorebook", "memory_recall", "ledger", "budget", "other",
+}
+
+const phaseSlotCount = 7
+
+// phaseSlot 把阶段名映射到存储槽位；未知阶段一律计入 other，
+// 而不是静默丢弃——新加阶段时"没被统计到"应当看得出来。
+func phaseSlot(name string) int {
+	for i, n := range compilePhases {
+		if n == name {
+			return i
+		}
+	}
+	return phaseSlotCount - 1
+}
+
+// PhaseStat 是单个编译阶段的累计读数。
+type PhaseStat struct {
+	Calls   int64   `json:"calls"`
+	TotalMs int64   `json:"totalMs"`
+	AvgMs   float64 `json:"avgMs"`
+}
+
+// AddPhase 接入 CompilerOptions.OnPhase。
+//
+// 只做加法不做推导：平均值由快照时按 calls 现算，避免在热路径上做浮点除法。
+func (m *RuntimeMetrics) AddPhase(phase string, d time.Duration) {
+	if m == nil || d < 0 {
+		return
+	}
+	slot := phaseSlot(phase)
+	m.phaseNanos[slot].Add(int64(d))
+	m.phaseCalls[slot].Add(1)
 }
 
 // MetricsSnapshot 是计数器的不可变快照。
@@ -61,6 +105,10 @@ type MetricsSnapshot struct {
 	QueueRejected int64 `json:"queueRejected"`
 
 	UsageWriteFailures int64 `json:"usageWriteFailures"`
+
+	// CompilePhases 是上下文编译各阶段的累计耗时（毫秒）。
+	// 只包含实际发生过的阶段，避免输出一堆恒为 0 的噪声。
+	CompilePhases map[string]PhaseStat `json:"compilePhases,omitempty"`
 }
 
 // Snapshot 返回当前计数快照。
@@ -87,7 +135,26 @@ func (m *RuntimeMetrics) Snapshot() MetricsSnapshot {
 		QueueRejected: m.queueRejected.Load(),
 
 		UsageWriteFailures: m.usageWriteFailures.Load(),
+
+		CompilePhases: m.compilePhases(),
 	}
+}
+
+func (m *RuntimeMetrics) compilePhases() map[string]PhaseStat {
+	out := map[string]PhaseStat{}
+	for i, name := range compilePhases {
+		calls := m.phaseCalls[i].Load()
+		if calls == 0 {
+			continue
+		}
+		total := m.phaseNanos[i].Load()
+		out[name] = PhaseStat{
+			Calls:   calls,
+			TotalMs: total / int64(time.Millisecond),
+			AvgMs:   float64(total) / float64(calls) / float64(time.Millisecond),
+		}
+	}
+	return out
 }
 
 // UsageWriteFailed 记一次用量台账写入失败（由观测供应商在写失败时调用）。

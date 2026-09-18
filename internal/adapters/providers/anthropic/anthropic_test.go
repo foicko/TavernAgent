@@ -40,8 +40,19 @@ func TestAnthropic_BuildBody(t *testing.T) {
 		t.Fatalf("unmarshal request failed: %v", err)
 	}
 
-	if reqBody.System != "System rule 1\n\nSystem rule 2" {
-		t.Errorf("unexpected system prompt: %q", reqBody.System)
+	// system 走块数组：只有块形态能挂 cache_control（Anthropic 不做自动前缀缓存）。
+	if len(reqBody.System) != 2 {
+		t.Fatalf("expected 2 system blocks, got %d", len(reqBody.System))
+	}
+	if reqBody.System[0].Text != "System rule 1" || reqBody.System[1].Text != "System rule 2" {
+		t.Errorf("unexpected system blocks: %+v", reqBody.System)
+	}
+	// 前缀缓存断点必须打在**静态前缀末尾**（最后一块 system）。
+	if reqBody.System[0].CacheControl != nil {
+		t.Error("缓存断点不应打在非末尾的 system 块上")
+	}
+	if cc := reqBody.System[1].CacheControl; cc == nil || cc.Type != "ephemeral" {
+		t.Errorf("静态前缀末尾缺少 cache_control 断点: %+v", cc)
 	}
 
 	if len(reqBody.Messages) != 2 {
@@ -52,6 +63,20 @@ func TestAnthropic_BuildBody(t *testing.T) {
 	}
 	if reqBody.Messages[1].Role != "assistant" {
 		t.Errorf("unexpected assistant role: %q", reqBody.Messages[1].Role)
+	}
+	// 第二个断点打在历史前沿（最后一条 assistant）：它之后只会追加新回合，
+	// 因此后续每轮只需为新增的那一轮付一次写缓存成本。
+	frontier, ok := reqBody.Messages[1].Content.([]any)
+	if !ok || len(frontier) != 1 {
+		t.Fatalf("历史前沿应转成内容块形态以携带断点: %#v", reqBody.Messages[1].Content)
+	}
+	block, _ := frontier[0].(map[string]any)
+	if block["type"] != "text" || block["text"] != "Assistant reply" {
+		t.Errorf("历史前沿内容块不正确: %+v", block)
+	}
+	cc, _ := block["cache_control"].(map[string]any)
+	if cc == nil || cc["type"] != "ephemeral" {
+		t.Errorf("历史前沿缺少 cache_control 断点: %+v", block)
 	}
 	if reqBody.MaxTokens <= 0 {
 		t.Errorf("expected positive max_tokens, got %d", reqBody.MaxTokens)
