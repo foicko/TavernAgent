@@ -11,7 +11,7 @@ import { Modal } from "../ui/Modal";
 import "./CharacterImportModal.css";
 
 export const CharacterImportModal: React.FC = () => {
-  const { charImportOpen, setCharImportOpen, notifyQuiet } = useUi();
+  const { charImportOpen, setCharImportOpen, pendingCardId, notifyQuiet } = useUi();
   const createSession = useStory((s) => s.createSession);
 
   const [parsing, setParsing] = useState(false);
@@ -34,6 +34,31 @@ export const CharacterImportModal: React.FC = () => {
       setCustomOpening("");
     }
   }, [charImportOpen]);
+
+  // 从卡库直接开新局：卡已在服务端，只需拉回预览，不必让用户重新上传文件。
+  useEffect(() => {
+    if (!charImportOpen || !pendingCardId) return;
+    const sequence = ++parseSequence.current;
+    setParsing(true);
+    setError(null);
+    setImportedPreview(null);
+    api
+      .getCard(pendingCardId)
+      .then((preview) => {
+        if (sequence !== parseSequence.current) return;
+        setImportedPreview(preview);
+        setOpeningId(preview.openings?.[0]?.variantId ?? "");
+        setCustomOpening("");
+      })
+      .catch((err: unknown) => {
+        if (sequence !== parseSequence.current) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setError("读取角色卡失败：" + msg);
+      })
+      .finally(() => {
+        if (sequence === parseSequence.current) setParsing(false);
+      });
+  }, [charImportOpen, pendingCardId]);
 
   const handlePresetSelect = (key: string) => {
     if (creating) return;
@@ -93,7 +118,10 @@ export const CharacterImportModal: React.FC = () => {
       let storageWarning = "";
       try {
         const saved = saveImportedCard({
+          cardId: importedPreview.cardId,
           name: importedPreview.name,
+          shortName: importedPreview.shortName,
+          role: importedPreview.role,
           avatar: importedPreview.avatar,
           format: importedPreview.format,
           tags: importedPreview.tags,
@@ -119,7 +147,9 @@ export const CharacterImportModal: React.FC = () => {
 
       await createSession({
         title: `${importedPreview.name} 的冒险`,
-        characterJson: importedPreview.characterJson,
+        // 卡已在服务端卡库时只传 cardId：请求体不再携带兆级 characterJson。
+        cardId: importedPreview.cardId,
+        characterJson: importedPreview.cardId ? undefined : importedPreview.characterJson,
         playerName: playerName.trim(),
         playerRole: playerRole.trim() || undefined,
         openingVariantId: importedPreview.openings.length > 0 ? openingId : undefined,

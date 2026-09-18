@@ -53,6 +53,8 @@ interface UiState {
   fullTachieOpen: boolean;
   worldbookModalOpen: boolean;
   charImportOpen: boolean;
+  /** 从卡库直接开新局时携带的 cardId；导入弹窗据此预填而不必重新上传文件。 */
+  pendingCardId: string | null;
   mindGraphOpen: boolean;
   blueprintOpen: boolean;
 
@@ -88,6 +90,8 @@ interface UiState {
   setFullTachieOpen: (open: boolean) => void;
   setWorldbookModalOpen: (open: boolean) => void;
   setCharImportOpen: (open: boolean) => void;
+  /** openCharImportWithCard 用卡库里的既有卡打开导入/开局弹窗（预填，无需重新上传）。 */
+  openCharImportWithCard: (cardId: string) => void;
   setMindGraphOpen: (open: boolean) => void;
   setBlueprintOpen: (open: boolean) => void;
   dossierModalOpen: boolean;
@@ -131,6 +135,7 @@ export const useUi = create<UiState>((set, get) => ({
   fullTachieOpen: false,
   worldbookModalOpen: false,
   charImportOpen: false,
+  pendingCardId: null,
   mindGraphOpen: false,
   blueprintOpen: false,
   dossierModalOpen: false,
@@ -243,7 +248,8 @@ export const useUi = create<UiState>((set, get) => ({
 
   setFullTachieOpen: (open) => set({ fullTachieOpen: open }),
   setWorldbookModalOpen: (open) => set({ worldbookModalOpen: open }),
-  setCharImportOpen: (open) => set({ charImportOpen: open }),
+  setCharImportOpen: (open) => set((s) => ({ charImportOpen: open, pendingCardId: open ? s.pendingCardId : null })),
+  openCharImportWithCard: (cardId) => set({ charImportOpen: true, pendingCardId: cardId }),
   setMindGraphOpen: (open) => set({ mindGraphOpen: open }),
   setBlueprintOpen: (open) => set({ blueprintOpen: open }),
   setDossierModalOpen: (open) => set({ dossierModalOpen: open }),

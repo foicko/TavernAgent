@@ -179,6 +179,7 @@ func run() error {
 	memorySvc := application.NewMemoryService(store)
 
 	archiveSvc := application.NewArchiveService(store, appVersion)
+	cardSvc := application.NewCardService(store)
 
 	// http 层不再直接持有 Store：读取视图由 application 组装，
 	// 适配器只做协议转换（I2）。
@@ -198,6 +199,7 @@ func run() error {
 		Director: directorSvc,
 		Sessions: sessionSvc, Turns: turnSvc, Branches: branchSvc,
 		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: opts.addr,
+		Cards:          cardSvc,
 		StaticFS:       staticFS,
 		AuthPIN:        pin,
 		AllowedOrigins: strings.FieldsFunc(opts.allowedOrigins, func(r rune) bool { return r == ',' }),

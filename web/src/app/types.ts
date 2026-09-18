@@ -356,6 +356,10 @@ export interface MemoryUsage {
 // ---- M1-2：导入预览 ----
 
 export interface CardPreview {
+  /** 服务端卡库中的稳定 ID（导入成功时返回）。有它就可以只传 cardId 建会话。 */
+  cardId?: string;
+  shortName?: string;
+  role?: string;
   format: string;
   /** 卡片 spec_version（原生卡为空）。 */
   specVersion?: string;
@@ -380,6 +384,19 @@ export interface CardPreview {
   warnings: string[];
   characterJson: string;
   openings: { variantId: string; title: string; text: string }[];
+}
+
+/** 卡库摘要（列表接口返回，不含兆级 characterJson）。 */
+export interface CardLibrarySummary {
+  cardId: string;
+  name: string;
+  shortName?: string;
+  avatar?: string;
+  format?: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastUsedAt?: string;
 }
 /** 分支图谱（M4e）：以目标节点为中心的一圈子图。 */
 export interface GraphNode {

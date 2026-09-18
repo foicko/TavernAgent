@@ -99,7 +99,7 @@ func TestDirectorUpgradePreservesLegacyStory(t *testing.T) {
 		DROP INDEX idx_turns_status; DROP INDEX idx_attempts_turn_number;
 		ALTER TABLE turn_requests DROP COLUMN active_attempt_id;
 		DROP TABLE director_drafts; DROP TABLE director_projections;
-		DROP TABLE turn_usage;
+		DROP TABLE turn_usage; DROP TABLE character_cards;
 		DROP INDEX IF EXISTS idx_memory_subject;
 		ALTER TABLE memory_records DROP COLUMN subject_key;
 		ALTER TABLE memory_records DROP COLUMN created_turn;

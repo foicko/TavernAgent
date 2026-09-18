@@ -51,6 +51,7 @@ func newTestServerWithProvider(t *testing.T, provider ports.ModelProvider) (*htt
 		Sessions: sessSvc, Turns: turnSvc,
 		Branches: application.NewBranchService(st, turnSvc),
 		Memories: application.NewMemoryService(st),
+		Cards:    application.NewCardService(st),
 		Archive:  application.NewArchiveService(st, "test"),
 		Bus:      bus, Addr: "127.0.0.1:8890",
 	})

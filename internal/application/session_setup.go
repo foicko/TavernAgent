@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"tavernagent/internal/domain"
@@ -19,8 +20,12 @@ type Player struct {
 
 // SessionSetupRequest 是创建会话的输入。
 type SessionSetupRequest struct {
-	IdempotencyKey   string
-	Title            string
+	IdempotencyKey string
+	Title          string
+	// CardID 指卡库中的一张卡（优先）。它让建会话不必回传兆级 characterJson：
+	// 服务端直接取卡内容冻结进模板，卡库成为唯一真相。
+	CardID string
+	// CharacterJSON 是兼容入口：未提供 CardID 时使用（内置预设与旧客户端）。
 	CharacterJSON    string
 	Player           Player
 	OpeningVariantID string // 选择的备选开场（缺省回退第一个变体）
@@ -56,6 +61,9 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 	sessionID, requestHash, prior, err := s.beginSetup(ctx, req)
 	if err != nil || prior != nil {
 		return prior, err
+	}
+	if err := s.resolveSetupCard(req); err != nil {
+		return nil, err
 	}
 	card, resolved, err := parseSetupCard(req)
 	if err != nil {
@@ -136,7 +144,29 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 		}
 		return nil, Err("STORAGE_UNAVAILABLE", "创建会话失败: "+err.Error(), 503)
 	}
+	// 最近使用时间是卡库的展示元数据，属 best-effort：写失败不应让已成功的
+	// 建会话回滚（故事已经落库，卡活跃度只是锦上添花）。
+	if req.CardID != "" {
+		_ = s.store.TouchCard(req.CardID, time.Now())
+	}
 	return &SetupResult{Session: sess, Branch: branch, RootNode: root, State: state, OpeningText: resolved.Text}, nil
+}
+
+// resolveSetupCard 把 cardId 解析成 characterJson。未提供 cardId（或已提供
+// characterJson）时不做任何事，兼容内置预设与旧客户端。
+func (s *SessionService) resolveSetupCard(req *SessionSetupRequest) error {
+	if req.CardID == "" || req.CharacterJSON != "" {
+		return nil
+	}
+	entry, err := s.store.GetCard(req.CardID)
+	if errors.Is(err, ports.ErrNotFound) {
+		return Err("CARD_NOT_FOUND", "角色卡不存在: "+req.CardID, 404)
+	}
+	if err != nil {
+		return Err("STORAGE_UNAVAILABLE", "读取角色卡失败: "+err.Error(), 503)
+	}
+	req.CharacterJSON = entry.CharacterJSON
+	return nil
 }
 
 // beginSetup 校验开局请求并处理幂等：命中既有会话时直接返回它的结果，

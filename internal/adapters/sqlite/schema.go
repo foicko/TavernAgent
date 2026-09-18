@@ -17,7 +17,30 @@ var migrations = []string{
 	schemaV13,
 	schemaV14,
 	schemaV15,
+	schemaV16,
 }
+
+// schemaV16：角色卡库（用户资产，独立于会话模板）。
+//
+// 与 template_versions 分表是刻意的：模板被会话引用且不可变，卡库可增删改。
+// 从卡库删卡只删本表，已有故事不受影响；content_hash 供去重与变更识别，
+// last_used_at 支撑“最近使用”排序与卡片活跃度展示。
+const schemaV16 = `
+CREATE TABLE character_cards (
+  card_id        TEXT PRIMARY KEY,
+  name           TEXT NOT NULL DEFAULT '',
+  short_name     TEXT NOT NULL DEFAULT '',
+  avatar         TEXT NOT NULL DEFAULT '',
+  format         TEXT NOT NULL DEFAULT '',
+  role           TEXT NOT NULL DEFAULT '',
+  character_json TEXT NOT NULL,
+  content_hash   TEXT NOT NULL DEFAULT '',
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL,
+  last_used_at   TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX idx_character_cards_updated ON character_cards(updated_at DESC);
+`
 
 // schemaV8：会话归属角色卡（M4l 双向硬绑定，契约 §11.2.1）。
 //

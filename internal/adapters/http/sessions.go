@@ -6,9 +6,7 @@ package http
 // file-lines 棘轮），而这些 handler 正好是一个内聚的整体。
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -26,13 +24,14 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		writeBodyError(w, err)
 		return
 	}
-	if req.CharacterJSON == "" {
+	if req.CharacterJSON == "" && req.CardID == "" {
 		writeError(w, 422, "CARD_MISSING", "缺少角色卡", false, "")
 		return
 	}
 	res, err := s.sessions.Setup(r.Context(), &application.SessionSetupRequest{
 		IdempotencyKey:   req.IdempotencyKey,
 		Title:            req.Title,
+		CardID:           req.CardID,
 		CharacterJSON:    req.CharacterJSON,
 		Player:           application.Player{Name: req.PlayerName, Role: req.PlayerRole, Backpack: req.PlayerBackpack},
 		OpeningVariantID: req.OpeningVariantID,
@@ -204,118 +203,6 @@ func (s *Server) importSession(w http.ResponseWriter, r *http.Request) {
 		"scope":      res.Manifest.Scope,
 		"counts":     res.Manifest.Counts,
 		"assets":     res.Assets,
-	})
-}
-
-// importCard 服务端统一角色卡导入接口（G2 技术债治理）。
-// 支持 multipart/form-data 文件上传，也支持原始二进制或 JSON 请求体。
-// 纯 Go 解析 PNG chunk (tEXt/iTXt/zTXt) 或原生/V2/V3 JSON，返回标准化角色卡与兼容报告。
-
-// importCard 服务端统一角色卡导入接口（G2 技术债治理）。
-// 支持 multipart/form-data 文件上传，也支持原始二进制或 JSON 请求体。
-// 纯 Go 解析 PNG chunk (tEXt/iTXt/zTXt) 或原生/V2/V3 JSON，返回标准化角色卡与兼容报告。
-func (s *Server) importCard(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, maxCardUploadBytes)
-
-	var data []byte
-	ct := r.Header.Get("Content-Type")
-	if strings.HasPrefix(ct, "multipart/form-data") {
-		if err := r.ParseMultipartForm(maxCardUploadBytes); err != nil {
-			writeError(w, 400, "BAD_REQUEST", "解析表单数据失败: "+err.Error(), false, "")
-			return
-		}
-		var file io.Reader
-		if f, _, err := r.FormFile("file"); err == nil {
-			defer f.Close()
-			file = f
-		} else if f, _, err := r.FormFile("card"); err == nil {
-			defer f.Close()
-			file = f
-		} else {
-			writeError(w, 400, "BAD_REQUEST", "表单未包含 file 或 card 文件字段", false, "")
-			return
-		}
-		var err error
-		data, err = io.ReadAll(file)
-		if err != nil {
-			writeError(w, 400, "BAD_REQUEST", "读取卡片文件失败: "+err.Error(), false, "")
-			return
-		}
-	} else {
-		var err error
-		data, err = io.ReadAll(r.Body)
-		if err != nil {
-			writeError(w, 400, "BAD_REQUEST", "读取请求体失败: "+err.Error(), false, "")
-			return
-		}
-	}
-
-	if len(bytes.TrimSpace(data)) == 0 {
-		writeError(w, 400, "BAD_REQUEST", "角色卡内容为空", false, "")
-		return
-	}
-
-	var rep *application.ImportReport
-	var err error
-	if bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")) {
-		rep, err = application.ImportCardPNG(data)
-	} else {
-		rep, err = application.ImportCardJSON(string(data))
-	}
-	if err != nil {
-		writeError(w, 422, "CARD_INVALID", "角色卡解析失败: "+err.Error(), false, "")
-		return
-	}
-
-	cardJSON := rep.CardJSON()
-	// 归一化后的卡片 JSON 必须能原样交给建会话接口；超出额度就当场说清楚，
-	// 而不是让玩家在「开启冒险」那一步收到 413。
-	if len(cardJSON) > maxCardJSONBytes {
-		writeError(w, 422, "CARD_TOO_LARGE",
-			fmt.Sprintf("角色卡体积过大（%.1f MB，上限 %d MB）；请精简世界书条目或改用较小的 PNG",
-				float64(len(cardJSON))/(1<<20), maxCardJSONBytes>>20), false, "")
-		return
-	}
-
-	openings := make([]map[string]string, 0, len(rep.Card.OpeningVariants))
-	for _, ov := range rep.Card.OpeningVariants {
-		openings = append(openings, map[string]string{
-			"variantId": ov.VariantID,
-			"title":     ov.Title,
-			"text":      ov.Text,
-		})
-	}
-
-	avatar := rep.Card.Avatar
-	if avatar == "" && len(rep.Card.Characters) > 0 {
-		avatar = rep.Card.Characters[0].Avatar
-	}
-
-	writeJSON(w, 200, map[string]any{
-		"format":       rep.Format,
-		"specVersion":  rep.SpecVersion,
-		"source":       rep.Source,
-		"name":         rep.Card.Name,
-		"avatar":       avatar,
-		"description":  rep.Card.Description,
-		"personality":  rep.Card.Personality,
-		"scenario":     rep.Card.Scenario,
-		"firstMes":     rep.Card.FirstMes,
-		"mesExample":   rep.Card.MesExample,
-		"systemPrompt": rep.Card.SystemPrompt,
-		// 键名与前端 CardPreview 一致：错位会让预览里的这两个字段恒为空。
-		"postHistoryInstructions": rep.Card.PostHistory,
-		"creatorNotes":            rep.Card.CreatorNotes,
-		"tags":                    rep.Card.Tags,
-		"creator":                 rep.Card.Creator,
-		"characterVersion":        rep.Card.Version,
-		"nickname":                rep.Card.Nickname,
-		"supported":               rep.Supported,
-		"ignored":                 rep.Ignored,
-		"warnings":                rep.Warnings,
-		"characterJson":           cardJSON,
-		"card":                    rep.Card,
-		"openings":                openings,
 	})
 }
 

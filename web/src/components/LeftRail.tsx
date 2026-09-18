@@ -1,5 +1,5 @@
 // LeftRail: 左侧多维导航栏 (48px 图标停靠轨 / 270px 完整内容)
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useUi } from "../stores/uiStore";
 import { useStory, resolveCharKeyFromSession } from "../stores/storyStore";
@@ -15,7 +15,8 @@ import {
   findCardByCharacterId,
   findCardByName,
   getSessionAvatar,
-  deleteImportedCard,
+  refreshImportedCards,
+  deleteImportedCardRemote,
 } from "../lib/characterCardStore";
 import "./LeftRail.css";
 
@@ -43,6 +44,7 @@ export const LeftRail: React.FC = () => {
     switchLeftTab,
     openLeftTabAndExpand,
     activeCharKey,
+    charImportOpen,
     setCharImportOpen,
     setWorldbookModalOpen,
     notifyQuiet,
@@ -81,6 +83,18 @@ export const LeftRail: React.FC = () => {
   // 行本身的点击（切换故事/切换主角）。
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmCardId, setConfirmCardId] = useState<string | null>(null);
+  // 卡库真相在服务端：本地缓存只负责渲染。挂载时拉取一次服务端卡库，
+  // 成功后重读缓存；失败则保留缓存（离线仍能展示上次已知的卡）。
+  const [importedCards, setImportedCards] = useState(() => listImportedCards());
+  useEffect(() => {
+    let alive = true;
+    void refreshImportedCards()
+      .then(() => { if (alive) setImportedCards(listImportedCards()); })
+      .catch(() => { /* 离线：继续用本地缓存 */ });
+    return () => { alive = false; };
+  }, []);
+  // 导入弹窗关闭后重读：新导入的卡已写入缓存，需要反映到列表。
+  useEffect(() => { setImportedCards(listImportedCards()); }, [charImportOpen]);
   const [loreFilter, setLoreFilter] = useState("");
   const [sessionFilter, setSessionFilter] = useState<"all" | "current">("all");
 
@@ -439,7 +453,6 @@ export const LeftRail: React.FC = () => {
             </div>
 
             {(() => {
-              const importedCards = listImportedCards();
               const totalCards = SELECTABLE_PRESET_KEYS.length + importedCards.length;
               return (
                 <>
@@ -472,7 +485,8 @@ export const LeftRail: React.FC = () => {
                           if (matchedSession) {
                             void openSession(matchedSession.sessionId);
                           } else {
-                            useUi.getState().setCharImportOpen(true);
+                            // 卡已在服务端：直接预填开局弹窗，不必重新上传文件。
+                            useUi.getState().openCharImportWithCard(card.cardId);
                           }
                           if (typeof window !== "undefined" && window.innerWidth <= 768) {
                             toggleLeftRail();
@@ -481,9 +495,14 @@ export const LeftRail: React.FC = () => {
                         onAskDelete={() => setConfirmCardId(card.cardId)}
                         onCancelDelete={() => setConfirmCardId(null)}
                         onConfirmDelete={() => {
-                          deleteImportedCard(card.cardId);
                           setConfirmCardId(null);
-                          useUi.getState().notifyQuiet(`已从卡库移除「${card.name}」`);
+                          // 先删服务端再删缓存；失败时提示且缓存不动，避免出现“刷新后复活”的卡。
+                          void deleteImportedCardRemote(card.cardId)
+                            .then(() => {
+                              setImportedCards(listImportedCards());
+                              useUi.getState().notifyQuiet(`已从卡库移除「${card.name}」`);
+                            })
+                            .catch(() => useUi.getState().notifyQuiet(`移除「${card.name}」失败，请稍后重试`));
                         }}
                       />
                     );

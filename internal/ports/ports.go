@@ -38,6 +38,10 @@ var ErrNoState = errors.New("no state projection")
 // 会与在途写入竞争，因此拒绝；应用层据此返回 409。
 var ErrSessionBusy = errors.New("session has an in-flight turn")
 
+// ErrCardLibraryFull 表示角色卡库已达上限。它是有意的硬上限而非静默淘汰：
+// 卡片是用户资产，宁可显式拒绝并让用户自己删，也不要像浏览器缓存那样悄悄丢卡。
+var ErrCardLibraryFull = errors.New("character card library is full")
+
 // CommitPlan 是提交前的完整计划：校验通过后在一个短事务内写入（C03）。
 type CommitPlan struct {
 	AttemptID       string // optional for direct edits; fences a superseded model attempt
@@ -110,6 +114,27 @@ type SessionStore interface {
 	// 仍有未完成回合时返回 ErrSessionBusy，会话不存在时返回 ErrNotFound。
 	// 删除不可撤销，调用方负责与用户确认。
 	DeleteSession(sessionID string) error
+}
+
+// CardStore 是角色卡库的持久化（用户资产）。
+//
+// 卡库与会话模板是两套语义：卡库行可增删改，模板行被会话引用且不可变。
+// 因此「从卡库移除」只作用于本表，不触碰任何 template_versions——
+// 已有故事永远能继续，这也是前端删除确认文案所承诺的行为。
+//
+// 卡库条目按 card_id（角色卡稳定标识）唯一，重复导入同一张卡是覆盖而非新增。
+type CardStore interface {
+	// ListCards 返回全部卡（按最近更新倒序），CharacterJSON 会被置空。
+	ListCards() ([]*domain.CharacterCardEntry, error)
+	// GetCard 返回单张卡的完整内容；不存在时返回 ErrNotFound。
+	GetCard(cardID string) (*domain.CharacterCardEntry, error)
+	// SaveCard 以 card_id 为准 upsert：已存在则更新元数据与内容、保留创建时间。
+	// 卡库已满且是新卡时返回 ErrCardLibraryFull。
+	SaveCard(card *domain.CharacterCardEntry) error
+	// DeleteCard 移除一张卡；不存在时返回 ErrNotFound（调用方按幂等处理）。
+	DeleteCard(cardID string) error
+	// TouchCard 记录最近一次用于创建会话的时间；不存在时返回 ErrNotFound。
+	TouchCard(cardID string, at time.Time) error
 }
 
 // StoryStore 是剧情树、分支指针与状态投影的读取。
@@ -309,11 +334,15 @@ type OpsStore interface {
 // ---- 按服务组合的依赖视图 ----
 // 这些组合接口不是新实现，只是把"某个服务需要哪几组能力"写成可读的类型。
 
-// SessionDeps 是会话用例需要的存储能力（建立会话要同时写入根节点快照，组装视图需读取摘要）。
+// SessionDeps 是会话用例需要的存储能力。
+//
+// 包含 CardStore 是因为建会话现在可以直接引用卡库中的卡（cardId）：
+// 前端不必再回传兆级 characterJson，卡库与模板在此收敛到同一条读路径。
 type SessionDeps interface {
 	SessionStore
 	StoryStore
 	SummaryStore
+	CardStore
 }
 
 // TurnDeps 是回合编排（受理 → 生成 → 校验 → 提交）需要的存储能力。
@@ -389,6 +418,7 @@ type Store interface {
 	SummaryStore
 	MemoryBatchStore
 	UsageStore
+	CardStore
 }
 
 // SystemInfo 是 SQLite 运行时探测结果（FTS5 能力等）。

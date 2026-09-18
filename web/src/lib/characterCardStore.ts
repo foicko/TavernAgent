@@ -2,6 +2,8 @@
 // 确保导入的角色卡在刷新页面后立绘、元数据与会话头像永不丢失。
 //
 import { parseAttrLine } from "./dossierAttrs";
+import { api } from "../app/api";
+import type { CardLibrarySummary } from "../app/types";
 
 // 本地存储（localStorage）总配额通常只有 5MB，且写入失败是静默的：
 // 一旦超限，要么整份列表丢失、要么头像在刷新后消失。这里的对策是
@@ -161,6 +163,60 @@ export function deleteImportedCard(cardId: string): StoredCharacterCard[] {
   // 缓存必须同步更新：否则界面在下次整页刷新前仍会渲染已删除的卡。
   memoryCardsCache = saved;
   return saved;
+}
+
+/**
+ * refreshImportedCards 用服务端卡库覆盖本地缓存。
+ *
+ * 这是「服务端为真相、localStorage 仅为缓存」的分界点：服务端成功返回时，
+ * 本地缓存只是它的一份投影；与服务端已有条目合并（保留上次导入时缓存的
+ * 描述/人设等富字段），避免每次刷新都把详情丢掉。网络失败时保留缓存不动，
+ * 让离线仍能展示上次已知的卡库。
+ */
+export async function refreshImportedCards(): Promise<void> {
+  const { cards } = await api.listCards();
+  const existing = listImportedCards();
+  const byId = new Map(existing.map((c) => [c.cardId, c]));
+  const merged = (cards ?? []).map((summary) => summaryToStored(summary, byId.get(summary.cardId)));
+  const { saved } = persistCards(merged);
+  memoryCardsCache = saved;
+}
+
+/**
+ * deleteImportedCardRemote 先删服务端、再删本地缓存。
+ *
+ * 顺序很重要：先删服务端保证「删了就是真删了」；服务端失败时本地缓存不动，
+ * 界面不会出现一张刷新后又复活的卡。
+ */
+export async function deleteImportedCardRemote(cardId: string): Promise<void> {
+  await api.deleteCard(cardId);
+  deleteImportedCard(cardId);
+}
+
+/** 把服务端摘要映射成卡片库条目，并尽量保留本地已有的富字段。 */
+function summaryToStored(summary: CardLibrarySummary, existing?: StoredCharacterCard): StoredCharacterCard {
+  return {
+    cardId: summary.cardId,
+    characterId: existing?.characterId || summary.cardId,
+    name: summary.name,
+    shortName: summary.shortName?.trim() || cleanShortName(summary.name),
+    avatar: summary.avatar || existing?.avatar,
+    format: summary.format || existing?.format,
+    role: summary.role || existing?.role,
+    description: existing?.description,
+    personality: existing?.personality,
+    scenario: existing?.scenario,
+    firstMes: existing?.firstMes,
+    mesExample: existing?.mesExample,
+    systemPrompt: existing?.systemPrompt,
+    creatorNotes: existing?.creatorNotes,
+    tags: existing?.tags,
+    creator: existing?.creator,
+    characterVersion: existing?.characterVersion,
+    nickname: existing?.nickname,
+    characterJson: existing?.characterJson ?? "",
+    importedAt: summary.createdAt || existing?.importedAt || new Date().toISOString(),
+  };
 }
 
 /**

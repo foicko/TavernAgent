@@ -41,7 +41,9 @@ export interface OptionView {
 export interface CreateSessionOpts {
   idempotencyKey?: string;
   title?: string;
-  characterJson: string;
+  // cardId 优先：服务端直接从卡库取卡内容，请求体不必携带兆级 characterJson。
+  cardId?: string;
+  characterJson?: string;
   playerName: string;
   playerRole?: string;
   openingVariantId?: string;

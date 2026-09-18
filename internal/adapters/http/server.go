@@ -32,6 +32,7 @@ type Deps struct {
 	Turns          *application.TurnService
 	Branches       *application.BranchService
 	Memories       *application.MemoryService
+	Cards          *application.CardService
 	Archive        *application.ArchiveService
 	Manager        *application.ProviderManager
 	Bus            *application.EventBus
@@ -57,6 +58,7 @@ type Server struct {
 	turns          *application.TurnService
 	branches       *application.BranchService
 	memories       *application.MemoryService
+	cards          *application.CardService
 	archive        *application.ArchiveService
 	manager        *application.ProviderManager
 	bus            *application.EventBus
@@ -89,6 +91,7 @@ func New(deps Deps) (*Server, error) {
 		director: deps.Director,
 		sessions: deps.Sessions, turns: deps.Turns,
 		branches: deps.Branches, memories: deps.Memories, archive: deps.Archive,
+		cards:   deps.Cards,
 		manager: deps.Manager, bus: deps.Bus,
 		addr: deps.Addr, origin: "http://" + deps.Addr,
 		allowedOrigins: append([]string(nil), deps.AllowedOrigins...),
@@ -120,7 +123,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/sessions/{id}/branches", s.security(s.forkBranch))
 	mux.HandleFunc("GET /api/v1/sessions/{id}/export", s.security(s.exportSession))
 	mux.HandleFunc("POST /api/v1/sessions/import", s.security(s.importSession))
-	mux.HandleFunc("POST /api/v1/cards/import", s.security(s.importCard))
+	s.registerCardRoutes(mux)
 	mux.HandleFunc("GET /api/v1/nodes/{nodeId}", s.security(s.getNode))
 	mux.HandleFunc("POST /api/v1/sessions/{id}/branches/{branchId}/turns", s.security(s.acceptTurn))
 	mux.HandleFunc("POST /api/v1/sessions/{id}/branches/{branchId}/regenerations", s.security(s.regenerateTurn))
@@ -354,9 +357,12 @@ func sameOrigin(a, b string) bool { return strings.TrimSuffix(a, "/") == strings
 // ---- handlers ----
 
 type createSessionRequest struct {
-	IdempotencyKey   string                `json:"idempotencyKey,omitempty"`
-	Title            string                `json:"title"`
-	CharacterJSON    string                `json:"characterJson"`
+	IdempotencyKey string `json:"idempotencyKey,omitempty"`
+	Title          string `json:"title"`
+	// CardID 指卡库中的一张卡（优先，免传 characterJson）；
+	// CharacterJSON 为兼容入口（内置预设与旧客户端）。
+	CardID           string                `json:"cardId,omitempty"`
+	CharacterJSON    string                `json:"characterJson,omitempty"`
 	PlayerName       string                `json:"playerName"`
 	PlayerRole       string                `json:"playerRole,omitempty"`
 	PlayerBackpack   []domain.ItemInstance `json:"playerBackpack,omitempty"`

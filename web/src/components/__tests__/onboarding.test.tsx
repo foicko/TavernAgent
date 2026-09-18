@@ -5,10 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CardPreview } from "../../app/types";
 import fixture from "../../../../scripts/fixtures/quality_story_card.json";
 
-const mocks = vi.hoisted(() => ({ preview: vi.fn() }));
+const mocks = vi.hoisted(() => ({ preview: vi.fn(), getCard: vi.fn() }));
 vi.mock("../../app/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../app/api")>();
-  return { ...actual, api: { ...actual.api, importCardFile: mocks.preview } };
+  return { ...actual, api: { ...actual.api, importCardFile: mocks.preview, getCard: mocks.getCard } };
 });
 import { CharacterImportModal } from "../CharacterImportModal";
 import { useStory } from "../../stores/storyStore";
@@ -101,8 +101,7 @@ describe("character onboarding", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("ignores late file parsing after selecting another file or closing the dialog", async () => {
-    const first = deferred<CardPreview>();
+  it("ignores late file parsing after selecting another file or closing the dialog", async () => {    const first = deferred<CardPreview>();
     const afterClose = deferred<CardPreview>();
     mocks.preview.mockReturnValueOnce(first.promise).mockResolvedValueOnce({ ...preview, name: "后选择的角色" }).mockReturnValueOnce(afterClose.promise);
     const user = userEvent.setup();
@@ -116,5 +115,32 @@ describe("character onboarding", () => {
     await act(async () => { useUi.getState().setCharImportOpen(true); afterClose.resolve(preview); });
     expect(screen.queryByText(/解析就绪/)).toBeNull();
     expect(screen.queryByRole("button", { name: "开启冒险" })).toBeNull();
+  });
+
+  it("starts the session by cardId when the import was persisted to the server library", async () => {
+    mocks.preview.mockResolvedValue({ ...preview, cardId: "card_fixture" });
+    const createSession = vi.fn().mockResolvedValue({ sessionId: "created" });
+    useStory.setState({ createSession });
+    const user = userEvent.setup();
+    render(<CharacterImportModal />);
+    await upload(user);
+    await user.click(screen.getByRole("button", { name: "开启冒险" }));
+    // 卡已在服务端：只传 cardId，不再回传兆级 characterJson。
+    expect(createSession.mock.calls[0][0]).toMatchObject({ cardId: "card_fixture", characterJson: undefined });
+  });
+
+  it("prefills a library card without re-uploading the file", async () => {
+    const libraryPreview: CardPreview = { ...preview, cardId: "card_lib", name: "库中角色" };
+    mocks.getCard.mockResolvedValue(libraryPreview);
+    useUi.setState({ charImportOpen: true, pendingCardId: "card_lib" });
+    const createSession = vi.fn().mockResolvedValue({ sessionId: "created" });
+    useStory.setState({ createSession });
+    const user = userEvent.setup();
+    render(<CharacterImportModal />);
+    expect(await screen.findByText("✨ 解析就绪：库中角色")).toBeTruthy();
+    expect(mocks.getCard).toHaveBeenCalledWith("card_lib");
+    expect(mocks.preview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "开启冒险" }));
+    expect(createSession.mock.calls[0][0]).toMatchObject({ cardId: "card_lib" });
   });
 });

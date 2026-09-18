@@ -4,6 +4,7 @@ import type {
   AcceptResult,
   AssistantEditResult,
   BranchView,
+  CardLibrarySummary,
   CardPreview,
   DeriveResult,
   ImportResult,
@@ -199,7 +200,8 @@ export const api = {
   createSession: (req: {
     idempotencyKey?: string;
     title?: string;
-    characterJson: string;
+    cardId?: string;
+    characterJson?: string;
     playerName: string;
     playerRole?: string;
     playerBackpack?: unknown[];
@@ -306,11 +308,11 @@ export const api = {
     }
     return JSON.parse(text) as ImportResult;
   },
-  // 服务端统一角色卡导入（G2 技术债治理）：支持 PNG 与 JSON，返回 CardPreview。
+  // 服务端卡库：导入即入库。返回的 CardPreview 带 cardId，可直接用它建会话。
   importCardFile: async (file: File): Promise<CardPreview> => {
     const form = new FormData();
     form.append("file", file);
-    const res = await binaryRequest("/api/v1/cards/import", {
+    const res = await binaryRequest("/api/v1/cards", {
       method: "POST",
       body: form,
     });
@@ -320,6 +322,11 @@ export const api = {
     }
     return JSON.parse(text) as CardPreview;
   },
+  // 卡库摘要列表：只含元数据，不回传完整 characterJson。
+  listCards: () => http<{ cards: CardLibrarySummary[] }>("GET", "/api/v1/cards"),
+  // 取单张卡的完整预览（服务端重新解析存储的归一化 JSON，与导入同形状）。
+  getCard: (cardId: string) => http<CardPreview>("GET", `/api/v1/cards/${encodeURIComponent(cardId)}`),
+  deleteCard: (cardId: string) => http<{ ok: boolean }>("DELETE", `/api/v1/cards/${encodeURIComponent(cardId)}`),
   // ---- M3：记忆管理 ----
   // 带 branchId 时后端会按该分支解析覆盖关系并标记 effective。
   listMemories: (sessionId: string, branchId?: string, nodeId?: string, query?: { search?: string; kind?: string; cursor?: string; limit?: number }) =>
