@@ -8,6 +8,9 @@
 /design-preview/
 /papers/
 /chars/
+# 根目录的本地参考资料（学习用 PDF/规范文档，不入库）
+/AI-Agents-in-Depth-zh-CN.pdf
+/Agent开发规范.md
 
 # Agent harness state (plan files written by the coding assistant, not project content)
 /.zcode/

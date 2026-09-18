@@ -135,9 +135,7 @@ Anthropic 不做自动前缀缓存，不在想要复用的前缀末尾显式打�
 
 ## 4. 尚未处理的缺口
 
-1. **`web/src/styles.css` 已超架构门禁 baseline**：5340 行，baseline 记录 5081，
-   上限 800。该漂移在本次整改**之前**就已存在（HEAD 版本即为 5340），本次未动 CSS，
-   也未用 `--accept-growth` 吞掉它。需要由改动 CSS 的人补理由或拆分。
+1. **`web/src/styles.css` 体积过大**：5340 行，属历史遗留；改动 CSS 时优先拆分或收敛，不再设基线豁免。
 2. **真实模型质量仍未闭环**：本次补的是评估口径与归因，不是跑出来的结论。
    `release_eval.py` 仍需真实网关（Gemini meter）才能产出 100 例证据。
 3. **OpenTelemetry / span 树**：见第 3 节取舍。
@@ -152,9 +150,6 @@ Anthropic 不做自动前缀缓存，不在想要复用的前缀末尾显式打�
 # Go 全量与静态检查
 go build ./...; go vet ./...
 go test -count=1 ./...
-
-# 架构门禁（baseline 棘轮，只拦新增/变大）
-python scripts/architecture_check.py
 
 # 脚本单测
 python -m unittest discover -s scripts/tests

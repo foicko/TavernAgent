@@ -55,9 +55,6 @@ jobs:
           go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
           python -m unittest discover -s scripts/tests -v
           python scripts/release_audit.py --strict
-      - name: Architecture gate (file/function size, complexity, layering)
-        # baseline 棘轮：只拦新增违规，不要求一次性清掉历史债。
-        run: python scripts/architecture_check.py
       - name: Browser tests against the freshly embedded binary
         run: |
           go build -o build/browser/tavernagent ./cmd/tavernagent

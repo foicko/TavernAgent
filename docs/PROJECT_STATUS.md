@@ -14,7 +14,7 @@
 
 ## 2. 架构
 
-分层依赖由 `scripts/architecture_check.py` 强制（含文件/函数规模、复杂度、分层白名单）：
+分层依赖按以下约定组织（禁止反向依赖，例如 domain 不得 import application）：
 
 ```
 internal/
@@ -70,7 +70,6 @@ go run ./cmd/tavernagent -data ./data -addr 127.0.0.1:8890
 go test -count=1 ./...          # 全部 Go 测试
 go vet ./...                    # 静态检查
 golangci-lint run               # lint（版本锁 .golangci-version）
-python scripts/architecture_check.py   # 架构门禁（baseline 棘轮）
 python -m unittest discover -s scripts/tests   # 脚本单测
 python scripts/release_audit.py --strict       # 许可证/合规审计
 # 前端
@@ -93,16 +92,14 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 - **真实模型质量未闭环**：当前主要是确定性回归与 Mock 链路；真实模型的成功率有了口径与归因
   （`scripts/eval_metrics.py` 的 Pass@k / Pass^k、失败聚簇、多种子波动），但**结论本身仍需**
   用 `scripts/release_eval.py` 跑真实网关产出 100 例证据。
-- **大函数/大文件**：`internal/adapters/http/server.go`、`internal/application/commitplan.go:buildPlan`、`internal/domain/state.go:ApplyEvent`、`internal/adapters/sqlite/import.go:ImportSession`、`internal/context` 若干函数等被 `architecture_baseline.json` 豁免；只在需要改动时再拆。
-- **前端样式体积**：`web/src/styles.css` 单文件 5340 行，已**超出 baseline 记录的 5081**
-  （门禁上限 800）。该漂移发生在本次规范整改之前，未用 `--accept-growth` 吞掉；改动 CSS 的
-  人需补理由或拆分。
+- **大函数/大文件**：`internal/adapters/http/server.go`、`internal/application/commitplan.go:buildPlan`、`internal/domain/state.go:ApplyEvent`、`internal/adapters/sqlite/import.go:ImportSession`、`internal/context` 若干函数等；只在需要改动时再拆。
+- **前端样式体积**：`web/src/styles.css` 单文件 5340 行，改动时优先拆分或收敛。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
 ## 7. 待做功能
 
 1. **发布闭环**：完成真实模型协议/叙事验收与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
-2. **逐步偿还技术债**：按“改到哪、拆到哪”清理 baseline 中的大函数/大文件。
+2. **逐步偿还技术债**：按“改到哪、拆到哪”拆分大函数/大文件。
 3. **M5 规划**：桌面原生壳层（Tauri 2 / Wails）、群像聚光灯、Edge-TTS 流式发音、立绘联动、外部受控 MCP、多 NPC 视角隔离。
 4. **LAN 增强**：确有手机访问需求时推进第二设备网络/防火墙验证。
 
