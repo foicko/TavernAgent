@@ -1,10 +1,11 @@
-# Build a single executable with the current frontend embedded.
+﻿# Build a single executable with the current frontend embedded.
 [CmdletBinding()]
 param(
   [string]$Version = "dev",
   [string]$OutputDirectory = "build",
   [switch]$SkipInstall,
-  [switch]$SkipChecks
+  [switch]$SkipChecks,
+  [switch]$Desktop
 )
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -46,4 +47,14 @@ try {
   $metadata = [ordered]@{ version = $Version; commit = $commit; builtAt = $builtAt; sha256 = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash; executable = $fileName }
   $metadata | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $targetDir "BUILD-INFO.json") -Encoding UTF8
   Write-Host "Built $executable"
+
+  if ($Desktop) {
+    if ((& go env GOOS) -ne "windows") { throw "桌面壳（-Desktop）目前仅支持 Windows；其他平台请构建无头服务。" }
+    $desktopExe = Join-Path $targetDir "tavernagent-desktop.exe"
+    # 先生成图标/清单/版本资源（.syso），再构建；Wails 必须带 production/dev 标签，
+    # 缺标签时它编译成“弹框报错”的变体，窗口根本不渲染。
+    Invoke-Checked "go" @("run", "./cmd/winresgen", "-version", "tavernagent/$Version")
+    Invoke-Checked "go" @("build", "-trimpath", "-tags", "desktop,production", "-ldflags", $flags, "-o", $desktopExe, "./cmd/tavernagent-desktop")
+    Write-Host "Built $desktopExe"
+  }
 } finally { Pop-Location }

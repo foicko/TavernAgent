@@ -31,6 +31,8 @@ Thumbs.db
 # Build artifacts
 /dist/
 /build/
+# 由 cmd/winresgen 生成的 Windows 资源对象（图标/清单/版本信息）
+cmd/tavernagent-desktop/*.syso
 # 前端构建产物：由 pnpm build 生成、被 //go:embed 嵌入。
 # 不入库，避免"改了 src 忘了重建、go build 静默嵌入旧前端"。
 web/dist/

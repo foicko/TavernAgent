@@ -41,6 +41,9 @@ type Deps struct {
 	AuthPIN        string // 局域网配对码（非空时，非本机局域网请求必须通过配对鉴权）
 	AuthToken      string // 配对成功的授权 Token（留空且 AuthPIN 非空时自动随机生成）
 	AllowedOrigins []string
+	// EmbeddedHost 是嵌入式桌面壳的虚拟主机名（Windows 下 Wails 用 wails.localhost）。
+	// 它只在进程内由桌面壳的资源服务提供，不对外监听；留空表示纯网络服务模式。
+	EmbeddedHost string
 	// Metrics 与 Usage 是运行观测端口（T0.2）。两者都可为空——
 	// 缺少读数时端点返回空对象，而不是 500：观测不得影响服务可用性。
 	Metrics *application.RuntimeMetrics
@@ -71,6 +74,7 @@ type Server struct {
 	staticFS       fs.FS
 	authPIN        string
 	authToken      string
+	embeddedHost   string
 	pairFails      map[string]pairFailure
 	now            func() time.Time
 	mu             sync.Mutex
@@ -95,6 +99,7 @@ func New(deps Deps) (*Server, error) {
 		manager: deps.Manager, bus: deps.Bus,
 		addr: deps.Addr, origin: "http://" + deps.Addr,
 		allowedOrigins: append([]string(nil), deps.AllowedOrigins...),
+		embeddedHost:   strings.ToLower(strings.TrimSpace(deps.EmbeddedHost)),
 		metrics:        deps.Metrics,
 		usage:          deps.Usage,
 		ablation:       deps.Ablation,
@@ -197,8 +202,8 @@ func (s *Server) ListenAndServe() error {
 func (s *Server) security(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
-		// 允许本机及私有局域网 Host 访问
-		if !isLANHost(host) {
+		// 允许本机/私有局域网，以及嵌入式桌面壳的虚拟主机（进程内资源服务）。
+		if !s.hostAllowed(host) {
 			writeError(w, 403, "FORBIDDEN", "只允许本机或局域网私有网络访问", false, "")
 			return
 		}
@@ -288,7 +293,7 @@ type pairFailure struct {
 }
 
 func (s *Server) authStatus(w http.ResponseWriter, r *http.Request) {
-	if !isLANHost(r.Host) {
+	if !s.hostAllowed(r.Host) {
 		writeError(w, 403, "FORBIDDEN", "只允许本机或局域网私有网络访问", false, "")
 		return
 	}
@@ -341,6 +346,25 @@ func hostname(host string) string {
 func isLoopbackPeer(r *http.Request) bool {
 	ip := net.ParseIP(clientIP(r))
 	return ip != nil && ip.IsLoopback()
+}
+
+// hostAllowed 是“这个 Host 是否可信”的统一口径：本机/私有局域网，或嵌入式桌面壳的虚拟主机。
+// 所有自带 Host 校验的端点（security 与 authStatus）必须走这里，否则会出现
+// “大部分接口正常、某个接口在桌面端 403”的不一致。
+func (s *Server) hostAllowed(host string) bool {
+	return isLANHost(host) || s.embeddedHostAllowed(host)
+}
+
+// embeddedHostAllowed 判断请求是否来自嵌入式桌面壳的虚拟主机（如 Wails 的 wails.localhost）。
+//
+// 安全边界：该主机名只由进程内的桌面壳资源服务产生，不对外监听。即便有网络请求
+// 伪造同名 Host，也仍要越过下面的配对鉴权（除非显式关闭了 PIN，而那只应发生在
+// 不开放任何 TCP 监听的单机桌面模式）。
+func (s *Server) embeddedHostAllowed(host string) bool {
+	if s.embeddedHost == "" {
+		return false
+	}
+	return strings.EqualFold(hostname(host), s.embeddedHost)
 }
 
 func isLANHost(host string) bool {
