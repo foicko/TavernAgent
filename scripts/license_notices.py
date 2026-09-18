@@ -16,6 +16,10 @@ def collect():
     output = ROOT/"LICENSES"
     output.mkdir(exist_ok=True)
     rows, missing = [], []
+    # 先把整个模块图拉下来：依赖图里可能存在“已锁定但未下载”的模块（例如只需要
+    # 在别的平台上构建的间接依赖），`go list -m -json all` 对它们不返回 Dir，
+    # 会让下面的 add() 直接 KeyError。新增 Wails 这类 CLI+库同模块的依赖时必然踩到。
+    subprocess.check_call(["go", "mod", "download", "all"], cwd=ROOT)
     def add(name, version, directory, declared="See included text"):
         files = documents(Path(directory))
         if not files:
