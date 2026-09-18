@@ -137,9 +137,8 @@ test.describe("模型配置：角色优先", () => {
     const effort = page.getByLabel(/调整思考强度/);
     await expect(effort).toContainText("思考 默认");
 
-    // 2) 选"高" → 按钮立刻更新，并说明只影响新回合。
+    // 2) 选"高" → 按钮立刻更新。
     await effort.click();
-    await expect(page.getByText("只影响新回合，正在生成的这一段不变。")).toBeVisible();
     await page.getByRole("menuitemradio", { name: /^高/ }).click();
     await expect(effort).toContainText("思考 高");
 

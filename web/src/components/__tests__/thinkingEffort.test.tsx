@@ -97,9 +97,17 @@ describe("ThinkingEffortControl · 输入台右下角", () => {
     expect((trigger as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("jumps to the model settings from the menu", async () => {
+  it("only shows thinking effort options and does not include model settings jump or footer", async () => {
     await openMenu();
-    fireEvent.click(screen.getByText("打开模型设置…"));
-    expect(useSettings.getState().settingsOpen).toBe(true);
+    expect(screen.queryByText("打开模型设置…")).toBeNull();
+    expect(screen.queryByText(/只影响新回合/)).toBeNull();
+    expect(screen.getAllByRole("menuitemradio")).toHaveLength(4);
+  });
+
+  it("shows a checkmark for the currently selected effort", async () => {
+    seed([{ ...deepseek, reasoningEffort: "medium" }]);
+    await openMenu();
+    const current = screen.getByRole("menuitemradio", { name: /^中/ });
+    expect(current.textContent).toContain("✓");
   });
 });

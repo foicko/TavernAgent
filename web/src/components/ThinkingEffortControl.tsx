@@ -9,7 +9,7 @@ import { useDismiss } from "../lib/useDismiss";
 import { activePrimaryInstance, useSettings } from "../stores/settingsStore";
 import { useUi } from "../stores/uiStore";
 import { Button } from "../ui/Button";
-import { Menu, MenuItem, MenuSeparator } from "../ui/Menu";
+import { Menu, MenuItem } from "../ui/Menu";
 import "./ThinkingEffortControl.css";
 
 export function ThinkingEffortControl() {
@@ -17,7 +17,6 @@ export function ThinkingEffortControl() {
   const providers = useSettings((s) => s.providers);
   const loaded = useSettings((s) => s.loaded);
   const load = useSettings((s) => s.load);
-  const openSettings = useSettings((s) => s.openSettings);
   const notify = useUi((s) => s.notifyQuiet);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,11 +45,6 @@ export function ThinkingEffortControl() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const gotoSettings = () => {
-    close();
-    openSettings();
   };
 
   return (
@@ -87,7 +81,6 @@ export function ThinkingEffortControl() {
         direction="up"
         align="end"
         onClose={close}
-        footer="只影响新回合，正在生成的这一段不变。"
       >
         {EFFORT_OPTIONS.map((option) => (
           <MenuItem
@@ -96,11 +89,16 @@ export function ThinkingEffortControl() {
             selected={option.value === effort}
             title={option.label}
             description={option.hint}
+            meta={
+              option.value === effort ? (
+                <span className="thinking-effort__check" aria-hidden="true">
+                  ✓
+                </span>
+              ) : null
+            }
             onSelect={() => void choose(option.value)}
           />
         ))}
-        <MenuSeparator />
-        <MenuItem title="打开模型设置…" description="上下文窗口与最大输出也在那里改" onSelect={gotoSettings} />
       </Menu>
     </div>
   );

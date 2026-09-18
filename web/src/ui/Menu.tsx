@@ -37,7 +37,9 @@ export function Menu({
 
   useEffect(() => {
     if (!open) return;
-    menuItems(panelRef.current)[0]?.focus();
+    const items = menuItems(panelRef.current);
+    const active = items.find((el) => el.getAttribute("aria-checked") === "true");
+    (active ?? items[0])?.focus();
   }, [open]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

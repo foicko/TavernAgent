@@ -60,7 +60,12 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  outline: none;
   transition: var(--transition-fast);
+}
+
+.ui-menu__item:focus {
+  outline: none;
 }
 
 .ui-menu__item:hover:not(:disabled),
