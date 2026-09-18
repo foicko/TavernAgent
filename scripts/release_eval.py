@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from config_v2 import configure_slot
 from eval_metrics import DEFAULT_CONSECUTIVE_K, summarize
 from eval_protocol import Client, SEED_INPUTS, evaluate_sample, result_content
 from gemini_meter import MODEL, utc
@@ -71,12 +72,12 @@ class Evaluation:
         return {key: ledger[key] for key in ("used", "remaining", "limit")}
 
     def configure(self, reflection=True):
+        # 配置 v2：每个槽位指向独立实例（它们的 baseUrl 不同），密钥由 TAVERNAGENT_KEY_<SLOT> 注入。
         for slot in ("primary", "assist", "reflection"):
-            self.client.must("PUT", "/api/v1/config/provider", {
-                "slot": slot, "enabled": reflection if slot == "reflection" else True,
-                "kind": "openai-chat", "baseUrl": f"http://127.0.0.1:{self.args.meter_port}/{slot}/v1",
-                "model": MODEL, "temperature": 0.4, "maxTokens": 4096, "contextWindow": 32768,
-            })
+            configure_slot(self.client, slot, name=f"release-{slot}", kind="openai-chat",
+                           base_url=f"http://127.0.0.1:{self.args.meter_port}/{slot}/v1", model=MODEL,
+                           temperature=0.4, max_tokens=4096, context_window=32768,
+                           enabled=reflection if slot == "reflection" else True)
 
     def start(self):
         env = os.environ.copy()

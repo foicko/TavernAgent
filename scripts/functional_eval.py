@@ -40,6 +40,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from config_v2 import configure_slot  # noqa: E402  配置 API v2（实例 + 槽位引用）
 from eval_protocol import Client, result_content  # noqa: E402  复用既有 HTTP 客户端
 
 DEFAULT_BINARY = ROOT / "build/browser" / ("tavernagent.exe" if os.name == "nt" else "tavernagent")
@@ -88,17 +89,23 @@ class Provider:
         return f"{self.model} @ {self.base_url}（kind={self.kind}，来源：{self.source}）"
 
 
-def resolve_provider(args) -> Provider:
-    settings = load_json(ROOT / "data/config/settings.json")
-    secrets = load_json(ROOT / "data/config/secrets.json")
+def resolve_provider(args, root: Path = ROOT) -> Provider:
+    """解析被测供应商。root 可覆盖，便于测试用临时配置夹具（不依赖本机 data/）。
+
+    配置形态是 v2：settings.json 里 models 是唯一携带连接信息的地方，
+    slots.primary.modelId 指向其中一个实例；密钥存在 secrets.json 的 apiKeyRef 下。
+    """
+    settings = load_json(root / "data/config/settings.json")
+    secrets = load_json(root / "data/config/secrets.json")
+    models = settings.get("models") or {}
 
     if args.provider == "gemini":
         model = args.model
         if not model:
-            for profile in (settings.get("profiles") or {}).values():
-                config = profile.get("config") or {}
-                if "8045" in str(config.get("baseUrl", "")) and config.get("model"):
-                    model = config["model"]
+            # 本地网关（端口 8045）的实例优先，其次回退到脚本默认模型。
+            for instance in models.values():
+                if "8045" in str(instance.get("baseUrl", "")) and instance.get("model"):
+                    model = instance["model"]
                     break
         env_name = args.key_env or "TAVERNAGENT_EVAL_GATEWAY_KEY"
         key = os.environ.get(env_name, "")
@@ -111,12 +118,13 @@ def resolve_provider(args) -> Provider:
         return Provider(kind=args.kind or "openai-chat", base_url=args.base_url or "http://127.0.0.1:8045/v1",
                         model=model or "gemini-3.5-flash-lite", key=key, label="gemini", source=f"env {env_name}")
 
-    primary = (settings.get("providers") or {}).get("primary") or {}
+    primary_id = ((settings.get("slots") or {}).get("primary") or {}).get("modelId") or ""
+    primary = models.get(primary_id) or {}
     env_name = args.key_env or "TAVERNAGENT_KEY_PRIMARY"
     from_env = os.environ.get(env_name, "")
-    key = from_env or str(secrets.get(primary.get("apiKeyRef") or "primary", ""))
+    key = from_env or str(secrets.get(primary.get("apiKeyRef") or "", ""))
     if not (args.base_url or primary.get("baseUrl")):
-        raise SystemExit("data/config/settings.json 里没有 primary 供应商，请先在界面配置模型，或用 --base-url/--model/--key-env 指定。")
+        raise SystemExit("data/config/settings.json 里没有 primary 模型实例，请先在界面配置模型，或用 --base-url/--model/--key-env 指定。")
     return Provider(
         kind=args.kind or primary.get("kind") or "openai-chat",
         base_url=args.base_url or primary.get("baseUrl") or "",
@@ -202,11 +210,10 @@ class Server:
         self.log.close()
 
     def set_slot(self, slot: str, window: int, max_tokens: int = 4096) -> None:
-        Client(self.base_url).must("PUT", "/api/v1/config/provider", {
-            "slot": slot, "enabled": True, "kind": self.provider.kind,
-            "baseUrl": self.provider.base_url, "model": self.provider.model,
-            "temperature": 0.6, "maxTokens": max_tokens, "contextWindow": window,
-        })
+        # 配置 v2：槽位不再内联连接信息，先建实例再指派槽位。
+        configure_slot(Client(self.base_url), slot, name=f"functional-{slot}",
+                       kind=self.provider.kind, base_url=self.provider.base_url, model=self.provider.model,
+                       temperature=0.6, max_tokens=max_tokens, context_window=window)
 
     def configure(self, window: int = NORMAL_WINDOW, max_tokens: int = 4096) -> dict:
         # 应用要求窗口与输出预算留出至少 2048 输入 token，收紧窗口时必须同步降输出预算。
@@ -1019,12 +1026,14 @@ def main() -> int:
     args = parser.parse_args()
 
     binary = args.binary.resolve()
-    if not binary.is_file():
-        raise SystemExit(f"找不到被测二进制 {binary}；先执行 powershell -ExecutionPolicy Bypass -File scripts/build.ps1 -Version dev")
+    # 先校验纯输入（场景名），再检查外部依赖（二进制）：非法参数应当在
+    # 动文件系统之前就报错，也让测试无需先构建产物。
     selected = [name.strip() for name in args.scenarios.split(",") if name.strip()]
     unknown = [name for name in selected if name not in SCENARIOS]
     if unknown:
         raise SystemExit("未知场景：" + ", ".join(unknown))
+    if not binary.is_file():
+        raise SystemExit(f"找不到被测二进制 {binary}；先执行 powershell -ExecutionPolicy Bypass -File scripts/build.ps1 -Version dev")
 
     provider = resolve_provider(args)
     print(f"供应商：{provider.describe()}", flush=True)

@@ -119,10 +119,35 @@ class ProviderSelectionTests(unittest.TestCase):
             os.environ.pop("TAVERNAGENT_EVAL_GATEWAY_KEY", None)
 
     def test_configured_reads_the_app_settings_and_secrets(self):
-        provider = fe.resolve_provider(self.args())
-        self.assertTrue(provider.base_url, "应能从 data/config/settings.json 读出 baseUrl")
-        self.assertTrue(provider.model)
+        # 不依赖开发者本机 data/：用临时 v2 配置夹具，CI 上同样可复现。
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "data/config"
+            config.mkdir(parents=True)
+            (config / "settings.json").write_text(json.dumps({
+                "version": 2,
+                "models": {"m_test": {
+                    "id": "m_test", "name": "Gemini", "kind": "openai-responses",
+                    "baseUrl": "http://127.0.0.1:8045/v1", "model": "gemini-3.8-flash", "apiKeyRef": "key_test",
+                }},
+                "slots": {"primary": {"enabled": True, "modelId": "m_test"}},
+            }), encoding="utf-8")
+            (config / "secrets.json").write_text(json.dumps({"key_test": "sk-test-token"}), encoding="utf-8")
+            provider = fe.resolve_provider(self.args(), root=root)
+        self.assertEqual(provider.base_url, "http://127.0.0.1:8045/v1")
+        self.assertEqual(provider.model, "gemini-3.8-flash")
+        self.assertEqual(provider.kind, "openai-responses")
+        self.assertEqual(provider.key, "sk-test-token")
         self.assertEqual(provider.label, "configured")
+
+    def test_configured_without_primary_instance_reports_a_hint(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/config").mkdir(parents=True)
+            (root / "data/config/settings.json").write_text(json.dumps({"version": 2, "models": {}, "slots": {}}), encoding="utf-8")
+            with self.assertRaises(SystemExit) as failure:
+                fe.resolve_provider(self.args(), root=root)
+        self.assertIn("primary", str(failure.exception))
 
     def test_overrides_win(self):
         provider = fe.resolve_provider(self.args(base_url="http://127.0.0.1:9999/v1", model="custom-model", kind="openai-responses"))

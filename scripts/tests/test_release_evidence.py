@@ -24,8 +24,9 @@ class EvidenceTests(unittest.TestCase):
 
     def test_interrupted_second_protocol_cannot_publish_passing_report(self):
         with tempfile.TemporaryDirectory() as directory:
+            # 每个 kind：POST /config/models → PUT /config/provider → POST probe。
             with self.assertRaises(RuntimeError):
-                self.run_suite(directory, [{}, {"ok": True}, RuntimeError("second protocol interrupted")])
+                self.run_suite(directory, [{"id": "m1"}, {}, {"ok": True}, {"id": "m2"}, RuntimeError("second protocol interrupted")])
             report = json.loads((Path(directory)/"compatibility.json").read_text(encoding="utf-8"))
             self.assertFalse(report["passed"])
             self.assertFalse(report.get("completed", False))
@@ -34,7 +35,7 @@ class EvidenceTests(unittest.TestCase):
     def test_failed_probe_returns_failure_exit_status(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(SystemExit) as failure:
-                self.run_suite(directory, [{}, {"ok": True}, {}, {"ok": False}])
+                self.run_suite(directory, [{"id": "m1"}, {}, {"ok": True}, {"id": "m2"}, {}, {"ok": False}])
             self.assertEqual(failure.exception.code, 1)
             report = json.loads((Path(directory)/"compatibility.json").read_text(encoding="utf-8"))
             self.assertTrue(report["completed"])

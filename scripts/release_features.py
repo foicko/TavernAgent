@@ -12,6 +12,7 @@ import urllib.request
 import uuid
 import zlib
 
+from config_v2 import configure_slot
 from eval_protocol import result_content
 from gemini_meter import utc
 
@@ -284,9 +285,9 @@ class Features:
         session = self.client.must("GET", "/api/v1/sessions/"+original["sessionId"])
         self.e.configure(reflection=True)
         for slot, window, output in (("primary", 8192, 4096), ("reflection", 131072, 4096)):
-            self.client.must("PUT", "/api/v1/config/provider", {"slot": slot, "enabled": True, "kind": "openai-chat",
-                "baseUrl": f"http://127.0.0.1:{self.e.args.meter_port}/{slot}/v1", "model": "gemini-3.8-flash-high",
-                "temperature": 0.4, "contextWindow": window, "maxTokens": output})
+            configure_slot(self.client, slot, name=f"tail-{slot}", kind="openai-chat",
+                           base_url=f"http://127.0.0.1:{self.e.args.meter_port}/{slot}/v1", model="gemini-3.8-flash-high",
+                           temperature=0.4, context_window=window, max_tokens=output)
         self.report["budgets"] = {"primary": {"contextWindow": 8192, "maxTokens": 4096}, "reflection": {"contextWindow": 131072, "maxTokens": 4096}}
         database = f"file:{self.e.directory / 'data/storage.db'}?mode=ro"
         with sqlite3.connect(database, uri=True) as db:
@@ -312,9 +313,9 @@ class Features:
                 break
         self.check("new real summary persisted with exact source range", bool(new_summaries), {"newCount": len(new_summaries), "existingCount": len(previous_summaries)})
         for window in (8192, 32768, 131072):
-            self.client.must("PUT", "/api/v1/config/provider", {"slot": "primary", "enabled": True, "kind": "openai-chat",
-                "baseUrl": f"http://127.0.0.1:{self.e.args.meter_port}/primary/v1", "model": "gemini-3.8-flash-high",
-                "temperature": 0.4, "contextWindow": window, "maxTokens": 4096})
+            configure_slot(self.client, "primary", name=f"window-{window}", kind="openai-chat",
+                           base_url=f"http://127.0.0.1:{self.e.args.meter_port}/primary/v1", model="gemini-3.8-flash-high",
+                           temperature=0.4, context_window=window, max_tokens=4096)
             turn = self.turn(session, "请回忆备用钥匙放在哪里，以及最初约定什么时候、到哪里会合。", f"continuity with {window} window")
             prose = "\n".join(block["text"] for block in result_content(turn).get("blocks", []))
             self.check(f"facts with {window} window", "蓝" in prose and "盒" in prose and "北码头" in prose and "明晚" in prose, prose)
@@ -347,8 +348,9 @@ def compatibility(evaluation):
     suite = Features(evaluation, "compatibility")
     try:
         for kind in ("openai-responses", "anthropic-messages"):
-            evaluation.client.must("PUT", "/api/v1/config/provider", {"slot": "assist", "enabled": True,
-                "kind": kind, "baseUrl": f"http://127.0.0.1:{evaluation.args.meter_port}/assist/v1", "model": "gemini-3.8-flash-high", "maxTokens": 1024, "contextWindow": 32768})
+            configure_slot(evaluation.client, "assist", name=f"compat-{kind}", kind=kind,
+                           base_url=f"http://127.0.0.1:{evaluation.args.meter_port}/assist/v1", model="gemini-3.8-flash-high",
+                           max_tokens=1024, context_window=32768)
             result = evaluation.client.must("POST", "/api/v1/config/provider/probe", {"slot": "assist", "format": True})
             suite.check(kind + " real compatibility", bool(result.get("ok")), result)
         suite.report["completed"] = True

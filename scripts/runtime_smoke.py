@@ -18,6 +18,7 @@ import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from config_v2 import configure_slot
 from eval_protocol import Client
 from mock_model_server import script
 
@@ -115,7 +116,9 @@ def smoke(binary, output):
                 pass
         fixture_server = ThreadingHTTPServer(("127.0.0.1", 0), Fixture)
         threading.Thread(target=fixture_server.serve_forever, daemon=True).start()
-        client.must("PUT", "/api/v1/config/provider", {"slot": "primary", "kind": "openai-chat", "enabled": True, "baseUrl": f"http://127.0.0.1:{fixture_server.server_port}/v1", "model": "deterministic-fixture", "maxTokens": 1024, "contextWindow": 32768})
+        configure_slot(client, "primary", name="smoke-fixture", kind="openai-chat",
+                       base_url=f"http://127.0.0.1:{fixture_server.server_port}/v1",
+                       model="deterministic-fixture", max_tokens=1024, context_window=32768)
         pending = submit("[[release:crash]]")
         deadline = time.monotonic()+15
         saved = False
