@@ -130,3 +130,45 @@ func TestShutdownWaitsForInFlightHandler(t *testing.T) {
 		t.Fatal("Serve 在 handler 收尾前返回：调用方紧接着关存储就会写到已关闭的库")
 	}
 }
+
+// requestDrain 的契约：stop 之后不再接收新请求，因此 wait 的判定不会被后续的
+// 计数增加破坏。原先用 sync.WaitGroup 时，新请求的 Add 会与 Wait 并发——那正是
+// `go test -race` 在 TestShutdownWaitsForInFlightHandler 上报出来的竞争。
+func TestRequestDrainRefusesNewRequestsAfterStop(t *testing.T) {
+	d := newRequestDrain()
+	if !d.begin() {
+		t.Fatal("关停前应接受请求")
+	}
+	d.stop()
+	if d.begin() {
+		t.Fatal("stop 之后不应再接受新请求")
+	}
+
+	waited := make(chan error, 1)
+	go func() { waited <- d.wait(2 * time.Second) }()
+	select {
+	case err := <-waited:
+		t.Fatalf("仍有在途请求时不应立即返回: %v", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+	d.end()
+	select {
+	case err := <-waited:
+		if err != nil {
+			t.Fatalf("在途请求结束后应正常返回: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("在途请求结束后 wait 仍未返回")
+	}
+}
+
+// 超时必须返回错误：调用方据此决定是否继续等 handler 收尾（并提醒存储尚未关闭）。
+func TestRequestDrainTimesOutWithInFlightRequests(t *testing.T) {
+	d := newRequestDrain()
+	d.begin()
+	d.stop()
+	if err := d.wait(20 * time.Millisecond); err == nil {
+		t.Fatal("超时应返回错误")
+	}
+	d.end()
+}

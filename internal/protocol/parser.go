@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"strings"
+	"sync/atomic"
 	"unicode/utf8"
 )
 
@@ -45,6 +46,23 @@ type StreamParser struct {
 	onFrame        func(frame any) error
 	onDelta        func(seq int, kind BlockKind, speakerID *string, delta string) error
 	curTextEmitted int
+
+	// inflight 是当前未完成块的快照，供**其它 goroutine** 读取：
+	// 刷新/重连的客户端会通过 GET /turns/{id} 取回正在写的这一段。
+	//
+	// 为什么用原子快照而不是给解析器加锁：Feed 在生成热路径上（每个 chunk 一次），
+	// 而读侧是轮询（约每秒一次）。让热路径去争一把互斥锁，等于把 HTTP 读的延迟
+	// 带进流式解析；反过来，把读侧要的那一小段在写入时就地发布出去，两边都不必等。
+	// 发布的值正是 Feed 本来就要算的那一次 extractInFlightBlock，没有额外开销。
+	inflight atomic.Pointer[inFlightSnapshot]
+}
+
+// inFlightSnapshot 是未完成块的不可变快照（指针整体替换，读侧永不见到半成品）。
+type inFlightSnapshot struct {
+	seq       int
+	kind      BlockKind
+	speakerID *string
+	text      string
 }
 
 // NewStreamParser 构造增量解析器。
@@ -100,6 +118,7 @@ func (p *StreamParser) Feed(chunk []byte) error {
 		if p.Mode() == ModeNarrative {
 			// 已降级：丢弃剩余行缓冲（原文已完整保留在 raw 中）。
 			p.buf = p.buf[:0]
+			p.clearInFlight()
 			return nil
 		}
 		idx := bytes.IndexByte(p.buf, '\n')
@@ -108,12 +127,13 @@ func (p *StreamParser) Feed(chunk []byte) error {
 			if len(p.buf) > MaxFrameBytes*8 {
 				return ErrTooLarge
 			}
-			// 行内实时正文增量提取
-			if p.onDelta != nil && len(p.buf) > 0 {
-				if seq, kind, sp, text, _ := extractInFlightBlock(p.buf); len(text) > p.curTextEmitted {
-					_ = p.onDelta(seq, kind, sp, text[p.curTextEmitted:])
-					p.curTextEmitted = len(text)
-				}
+			// 行内实时正文增量提取。这里算出的那一小段**正是**“正在写的块”，
+			// 既用于行内增量回调，也作为快照发布给其它 goroutine（它们只能从这里拿到它）。
+			seq, kind, sp, text, _ := extractInFlightBlock(p.buf)
+			p.publishInFlight(seq, kind, sp, text)
+			if p.onDelta != nil && len(text) > p.curTextEmitted {
+				_ = p.onDelta(seq, kind, sp, text[p.curTextEmitted:])
+				p.curTextEmitted = len(text)
 			}
 			return nil
 		}
@@ -124,6 +144,8 @@ func (p *StreamParser) Feed(chunk []byte) error {
 			line = p.buf[:idx]
 		}
 		p.buf = p.buf[idx+1:]
+		// 整行已被消费：此时“正在写的块”消失，直到下一段残行出现。
+		p.clearInFlight()
 		p.lineNo++
 		if len(bytes.TrimSpace(line)) == 0 {
 			continue // 空行跳过（心跳/空帧无业务语义）
@@ -141,6 +163,18 @@ func (p *StreamParser) Feed(chunk []byte) error {
 		}
 	}
 }
+
+// publishInFlight 发布当前未完成块的快照（text 为空即视为“没有正在写的块”）。
+func (p *StreamParser) publishInFlight(seq int, kind BlockKind, speakerID *string, text string) {
+	if text == "" {
+		p.clearInFlight()
+		return
+	}
+	p.inflight.Store(&inFlightSnapshot{seq: seq, kind: kind, speakerID: speakerID, text: text})
+}
+
+// clearInFlight 清空快照：读侧据此知道“现在没有正在写的块”。
+func (p *StreamParser) clearInFlight() { p.inflight.Store(nil) }
 
 // extractInFlightBlock 提取未闭合 JSON 块帧中的行内正文与元数据。
 func extractInFlightBlock(line []byte) (seq int, kind BlockKind, speakerID *string, text string, closed bool) {
@@ -250,14 +284,13 @@ func extractInFlightBlock(line []byte) (seq int, kind BlockKind, speakerID *stri
 // durable 事件回放，行内增量是 Sequence 0 的临时事件、不会重放，
 // 因此缺字只会发生在当前块，而这里正是它的权威文本。
 func (p *StreamParser) InFlight() (seq int, kind BlockKind, speakerID *string, text string, ok bool) {
-	if len(p.buf) == 0 {
+	// 只读原子快照，不碰 buf：本方法会被生成 goroutine 之外的轮询调用
+	// （见 StreamParser.inflight 的说明）。
+	snap := p.inflight.Load()
+	if snap == nil {
 		return 0, "", nil, "", false
 	}
-	seq, kind, speakerID, text, _ = extractInFlightBlock(p.buf)
-	if text == "" {
-		return 0, "", nil, "", false
-	}
-	return seq, kind, speakerID, text, true
+	return snap.seq, snap.kind, snap.speakerID, snap.text, true
 }
 
 // Finish 结束流：结构化模式必须包含 final，且丢弃未完成尾行；
@@ -287,6 +320,7 @@ func (p *StreamParser) Finish() (TurnDraft, error) {
 		}
 	}
 	p.buf = p.buf[:0]
+	p.clearInFlight()
 
 	if p.Mode() == ModeNarrative {
 		return p.narrativeDraft()
