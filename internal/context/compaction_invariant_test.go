@@ -198,7 +198,7 @@ func TestBudgetReportReachesObserver(t *testing.T) {
 
 	var got ctxpkg.BudgetReport
 	seen := 0
-	compiler := f.compiler.WithBudget(4096, 1024).WithBudgetObserver(func(report ctxpkg.BudgetReport) {
+	compiler := f.compiler.WithBudget(4608, 1024).WithBudgetObserver(func(report ctxpkg.BudgetReport) {
 		got = report
 		seen++
 	})
@@ -229,11 +229,11 @@ func TestTokenCalibrationScalesBudgetDecisions(t *testing.T) {
 	state := domain.NewWorldState()
 
 	var rawReport, calReport ctxpkg.BudgetReport
-	raw := f.compiler.WithBudget(4096, 1024).WithBudgetObserver(func(r ctxpkg.BudgetReport) { rawReport = r })
+	raw := f.compiler.WithBudget(4608, 1024).WithBudgetObserver(func(r ctxpkg.BudgetReport) { rawReport = r })
 	if _, err := raw.Compile(context.Background(), testSessionID, head, "我继续往前。", state, nil); err != nil {
 		t.Fatalf("raw compile: %v", err)
 	}
-	calibrated := f.compiler.WithBudget(4096, 1024).WithTokenCalibration(0.5).
+	calibrated := f.compiler.WithBudget(4608, 1024).WithTokenCalibration(0.5).
 		WithBudgetObserver(func(r ctxpkg.BudgetReport) { calReport = r })
 	if _, err := calibrated.Compile(context.Background(), testSessionID, head, "我继续往前。", state, nil); err != nil {
 		t.Fatalf("calibrated compile: %v", err)

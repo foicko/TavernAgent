@@ -250,7 +250,8 @@ func TestCompileLedgerWithRelationshipAndSecretTrajectory(t *testing.T) {
 // T4.3: 验证主动 Token 压缩阈值在达到预算/窗口压力时主动置位 PrepareCompression。
 func TestProactiveTokenCompressionThreshold(t *testing.T) {
 	opts := ctxpkg.DefaultOptions()
-	opts.ContextWindow = 4500
+	// v2 重写扮演准则（+347 token）后由 4500 上调，保持“超过 75% 但装得下”的区间。
+	opts.ContextWindow = 4700
 	opts.ReservedOutput = 500
 	opts.SafetyMargin = 200
 	// inputBudget = 4500 - 500 - 200 = 3800

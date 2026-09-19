@@ -38,7 +38,7 @@ def fence(body: str) -> str:
 # 具名提示词常量：文档里逐字展示，是真正用来做 prompt engineering 的地方。
 CONSTANTS = [
     ("叙事核心", "internal/context/director.go", "NarratorRoleInstruction",
-     "主线叙事的角色准则。缺失它时模型会退回通用助手口吻，把卡片设定当背景资料。"),
+     "主线叙事的角色准则：最高优先级的中文语言规范 + 核心扮演准则 + 交互与推进准则 + 沉浸感与底线禁令。缺失它时模型会退回通用助手口吻，把卡片设定当背景资料。"),
     ("叙事核心", "internal/context/prompts.go", "FrameProtocolInstruction",
      "输出协议 v1：逐行 JSON 帧的字段名、枚举与硬性规则。必须与 internal/protocol 解析器一致。"),
     ("叙事核心", "internal/context/external_content.go", "ExternalBoundaryInstruction",
