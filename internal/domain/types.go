@@ -115,15 +115,33 @@ type PlotNode struct {
 
 // TurnContent 是一轮玩家输入及其完整回复（在同一节点提交，C01）。
 type TurnContent struct {
-	InputKind  string          `json:"inputKind"` // text | option
-	InputText  string          `json:"inputText"`
-	OptionRef  *OptionRef      `json:"optionRef,omitempty"`
-	ActionRef  string          `json:"actionRef,omitempty"`
-	Blocks     []TextBlock     `json:"blocks"`
-	Options    []Option        `json:"options"`
-	Mood       *Mood           `json:"mood,omitempty"`
-	Checks     []CheckResult   `json:"checks,omitempty"`
-	Provenance *TurnProvidence `json:"provenance,omitempty"`
+	InputKind string `json:"inputKind"` // text | option
+	InputText string `json:"inputText"`
+	// InputNote 是玩家的「注记」：对本次演绎的要求，不是角色的言行。
+	// 它与 InputText 分开存，回看时才能分清“当时发生了什么”与“当时要求怎么演”。
+	InputNote string        `json:"inputNote,omitempty"`
+	OptionRef *OptionRef    `json:"optionRef,omitempty"`
+	ActionRef string        `json:"actionRef,omitempty"`
+	Blocks    []TextBlock   `json:"blocks"`
+	Options   []Option      `json:"options"`
+	Mood      *Mood         `json:"mood,omitempty"`
+	Checks    []CheckResult `json:"checks,omitempty"`
+	// Changes 是本轮生效的状态变化摘要（由领域事件推导，不由模型书写）。
+	Changes []StateChange `json:"changes,omitempty"`
+	// InjectedMemories 是本次生成实际注入上下文的记忆（文本快照）。
+	// 这是“为什么它会这么演”的主要依据：没有它，读者无法判断角色是“不知道”
+	// 还是“知道了没用上”。
+	InjectedMemories []MemoryRef `json:"injectedMemories,omitempty"`
+	// OptionsMode 是本次采用的选项呈现模式（auto/always/never）。
+	// 记下来是为了可归因：回看旧回合时应当能分辨“当时本来就没有选项”，
+	// 而不是“选项渲染丢了”。
+	OptionsMode string `json:"optionsMode,omitempty"`
+	// SuppressedOptions 是模型给出了、但按“只在关键节点”规则未呈现的选项条数。
+	//
+	// 记下它而不是默默丢掉：读者要能分清“这一轮本来没有抉择”与“系统收起了台阶”。
+	// 两者对“我现在该做什么”的含义完全不同。
+	SuppressedOptions int             `json:"suppressedOptions,omitempty"`
+	Provenance        *TurnProvidence `json:"provenance,omitempty"`
 }
 
 // TextBlock 是已提交正文的有类型块。
@@ -261,9 +279,45 @@ type TurnRequest struct {
 }
 
 // TurnInput 是回合输入载荷（持久化于 TurnRequest.InputJSON）。
+// 选项呈现模式：直接决定"这一轮要不要给玩家选项"。
+//
+// 默认 auto（只在关键节点给）。选项给得太密会把玩家训练成"点选项"而不是扮演，
+// 而扮演才是这类产品的留存来源；但完全去掉又会让卡住的玩家没有台阶。
+const (
+	// OptionsAuto 只在关键节点（真的需要表态、且选择会改变走向）给选项。
+	OptionsAuto = "auto"
+	// OptionsAlways 每轮都给，适合习惯先看候选项再决定的玩法。
+	OptionsAlways = "always"
+	// OptionsNever 从不给。服务端会强制清空选项，是硬保证而非提示词约定。
+	OptionsNever = "never"
+)
+
+// OptionsModes 返回全部合法选项模式。
+func OptionsModes() []string { return []string{OptionsAuto, OptionsAlways, OptionsNever} }
+
+// NormalizeOptionsMode 把外部传入的取值归一到合法集合；未知值一律回到 auto。
+func NormalizeOptionsMode(mode string) string {
+	switch mode {
+	case OptionsAlways, OptionsNever:
+		return mode
+	default:
+		return OptionsAuto
+	}
+}
+
 type TurnInput struct {
-	Kind      string     `json:"kind"` // text | option
-	Text      string     `json:"text"`
+	Kind string `json:"kind"` // text | option
+	Text string `json:"text"`
+	// Note 是玩家的「注记」：对本次演绎的要求（节奏、侧重、克制程度……），
+	// 不是角色的言行，也不会出现在正文里。
+	//
+	// 单独开一个通道而不是让玩家写进 Text，是因为二者语义完全不同：写进 Text
+	// 会被当作角色说过的话，污染剧情且无法与真正的台词区分。
+	Note string `json:"note,omitempty"`
+	// Options 是本回合的选项呈现模式（auto/always/never，空值等同 auto）。
+	// 它是“演绎方式”的指令而不是剧情输入，但必须随请求一起走：模型看不到
+	// 客户端的偏好，服务端也不能凭猜。
+	Options   string     `json:"options,omitempty"`
 	OptionRef *OptionRef `json:"optionRef,omitempty"`
 	ActionRef string     `json:"actionRef,omitempty"` // explicit player action, checked by ruleset
 }

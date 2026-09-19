@@ -42,6 +42,13 @@ type planContext struct {
 	HistoryExcerpts []domain.EvidenceExcerpt
 	VisibleMemories []*domain.MemoryRecord
 	CurrentTurn     int
+	// InjectedMemories 是本次生成注入上下文的记忆（展示快照）。
+	// 它随节点落库，是“为什么它会这么演”的依据。
+	InjectedMemories []domain.MemoryRef
+	// PreviousTurnHadOptions 表示上一层回合是否**呈现过**选项。
+	// auto 模式据此避免连续两轮都给选项——抉择之后必有一轮承接后果，
+	// 那本身就不再是新的抉择点（详见 buildPlan 里的门槛）。
+	PreviousTurnHadOptions bool
 }
 
 func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.TurnInput, mode, nodeID string, pc planContext) (*planData, error) {
@@ -60,6 +67,21 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 			// 不能进入授权面，否则 M4 引入动作执行后会被误执行。
 			ActionRef: authorizeActionRef(o.ActionRef, ruleset),
 		})
+	}
+	// OptionsNever 是硬保证：明确要求关闭选项时，即使模型仍写了四个也一律清空。
+	// 仅在提示词里约定是不够的——模型不听话时，玩家看到的就是“我明明关了还在弹”。
+	//
+	// auto 另有一道**确定性**门槛：不连续两轮都给选项。提示词里的判据（“只在关键
+	// 节点给”）在真实模型上不够硬——紧张场景里它倾向于认为每轮都是抉择点，而读者
+	// 得到的体验就是选项变成了固定配菜。抉择之后必然有一轮要承接后果，那本身就不是
+	// 新的抉择点，所以这条规则是叙事上的，不是随手挑的窗口。
+	optionsMode := domain.NormalizeOptionsMode(input.Options)
+	suppressed := 0
+	if optionsMode == domain.OptionsNever {
+		pd.Options = nil
+	} else if optionsMode == domain.OptionsAuto && pc.PreviousTurnHadOptions && len(pd.Options) > 0 {
+		suppressed = len(pd.Options)
+		pd.Options = nil
 	}
 
 	// 关系增量同轮同角色同维度聚合（契约 §5.1）。
@@ -286,9 +308,17 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 
 	// 提交内容 JSON。
 	tc := domain.TurnContent{
-		InputKind: input.Kind, InputText: input.Text, OptionRef: input.OptionRef, ActionRef: input.ActionRef,
+		InputKind: input.Kind, InputText: input.Text, InputNote: input.Note,
+		OptionRef: input.OptionRef, ActionRef: input.ActionRef,
 		Blocks: pd.Blocks, Options: pd.Options, Mood: pd.Mood, Checks: pc.Checks,
-		Provenance: &domain.TurnProvidence{Mode: normalizeMode(mode)},
+		// 变化摘要从**已生效的事件**推导，与真正落库的东西同源：
+		// 这一层是给玩家核验用的，一旦与事件不一致就从证据变成了掩护。
+		Changes:          domain.SummarizeChanges(pd.Events, pd.NewState),
+		InjectedMemories: pc.InjectedMemories,
+		OptionsMode:      optionsMode,
+		// 收起台阶也要留痕：读者分得出“本轮本无抉择”与“系统没有摆出选项”。
+		SuppressedOptions: suppressed,
+		Provenance:        &domain.TurnProvidence{Mode: normalizeMode(mode)},
 	}
 	cb, err := json.Marshal(tc)
 	if err != nil {

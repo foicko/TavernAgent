@@ -26,13 +26,22 @@ func affectionScript(delta int) []mock.Item {
 // acceptAndWait 以分支当前头为基准受理一轮并等待提交。
 func acceptAndWait(t *testing.T, svc *TurnService, st *sqlite.Store, sessionID, branchID, key, text string) *domain.TurnRequest {
 	t.Helper()
+	return acceptAndWaitWith(t, svc, st, sessionID, branchID, key, domain.TurnInput{Kind: "text", Text: text})
+}
+
+// acceptAndWaitWith 同上，但可以指定演绎指令（注记 / 选项模式）。
+//
+// 需要它的场景很具体：默认的 auto 模式**不会连续两轮都给选项**，所以想构造
+// “连着两轮都有选项”的夹具就必须显式用 always，而不是指望默认策略恰好如此。
+func acceptAndWaitWith(t *testing.T, svc *TurnService, st *sqlite.Store, sessionID, branchID, key string, in domain.TurnInput) *domain.TurnRequest {
+	t.Helper()
 	br, err := st.GetBranch(branchID)
 	if err != nil {
 		t.Fatalf("branch: %v", err)
 	}
 	tr, err := svc.Accept(context.Background(), sessionID, branchID, &TurnAcceptRequest{
 		IdempotencyKey: key, ExpectedHeadID: br.HeadNodeID, ExpectedVersion: br.Version,
-		Input: domain.TurnInput{Kind: "text", Text: text},
+		Input: in,
 	})
 	if err != nil {
 		t.Fatalf("accept %s: %v", key, err)

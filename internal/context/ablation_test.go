@@ -67,7 +67,7 @@ func TestAblationRemovesInjectedMaterials(t *testing.T) {
 		ab.Apply(&opts)
 		f := newFixtureWithOpening(t, books, "故事开始了。", opts)
 		head := f.seedMemory(t, testRootID, remember("m1", "她来自北方，很怕冷。"))
-		req, err := f.compiler.Compile(context.Background(), testSessionID, head, "她来自北方，很怕冷，站在钟楼前。", nil, nil)
+		req, err := f.compiler.Compile(context.Background(), testSessionID, head, "她来自北方，很怕冷，站在钟楼前。", ctxpkg.TurnDirectives{}, nil, nil)
 		if err != nil {
 			t.Fatalf("compile(%q): %v", ablationSpec, err)
 		}

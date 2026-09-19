@@ -121,11 +121,23 @@ func DefaultOptions() CompilerOptions {
 }
 
 // Compiler 编译上下文请求。
+// TurnDirectives 是本回合的演绎指令：玩家注记与选项呈现模式。
+//
+// 与输入文本分开传，是因为二者语义不同：文本是"角色做了什么"，注记是"玩家要求怎么演"。
+// 它只作用于本次生成——不进历史前缀（见 turnDirectiveBlock），也不改变角色准则本身。
+type TurnDirectives struct {
+	Note        string
+	OptionsMode string
+}
+
 type Compiler struct {
 	store               ports.CompileDeps
 	options             CompilerOptions
 	planningInstruction string
 	planningMessages    []ports.ChatMessage
+	// directives 是本次编译的演绎指令。它由 Compile 按值写入副本，
+	// 不驻留在共享实例上（见 Compile 开头的说明）。
+	directives TurnDirectives
 }
 
 // MinInputBudget 是小窗口测试的参考值，不是 InputBudget 的强制下限。
@@ -262,7 +274,12 @@ func New(store ports.Store, options CompilerOptions) *Compiler {
 // checks 是**准备阶段已经定下**的检定结果（技术契约 §5.2）。模型只能引用它们
 // 并按结果演绎，**不能自己编一个结果**——随机性在后端，模型与客户端都无权指定。
 // 传空切片表示本回合没有检定。
-func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText string, state *domain.WorldState, checks []domain.CheckResult) (ports.ChatRequest, error) {
+func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText string, directives TurnDirectives, state *domain.WorldState, checks []domain.CheckResult) (ports.ChatRequest, error) {
+	// 演绎指令只属于这一次编译。TurnService 的 Compiler 是跨回合共享的，
+	// 就地写字段会让并发请求互相串味；按值复制一份再写，代价是一个结构体。
+	scoped := *c
+	scoped.directives = directives
+	c = &scoped
 	req := ports.ChatRequest{
 		Model:     "primary",
 		MaxTokens: 2048,
@@ -321,6 +338,7 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 
 	// 注入清单随请求上行：提交时据此判定 lastMeaningfulMentionTurn（§8.1）。
 	req.InjectedMemoryIDs = memoryIDsOf(memories)
+	req.InjectedMemories = memoryRefsOf(memories)
 
 	// 相关摘要（技术契约 §9.2）：只采用来源区间仍在当前路径上的（T24）。
 	// 只折叠摘要确实覆盖且位于保护尾部之外的回合；区间之间的空缺保留原文。
@@ -369,6 +387,7 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 		c.options.OnBudget(breport)
 	}
 	req.InjectedMemoryIDs = memoryIDsOf(memories)
+	req.InjectedMemories = memoryRefsOf(memories)
 	req.InputBudget = breport.Budget
 	req.EstimatedInputTokens = breport.Total
 	req.NeedsCompaction = breport.PrepareCompression

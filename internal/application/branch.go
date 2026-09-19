@@ -81,6 +81,12 @@ type DeriveRequest struct {
 	IdempotencyKey string
 	Label          string // 候选分支的展示名后缀
 	Recheck        bool
+	// Note 是重生成时的引导（非叙事要求）：改节奏、换侧重、让 NPC 先开口……
+	// 留空表示“按原来的条件重演”。重生成原本只能盲重掷或手工改写正文，
+	// 中间那段“演得不对但说不清怎么改”的处境无路可走。
+	Note string
+	// Options 覆盖本回合的选项呈现模式；留空则沿用原回合的设置。
+	Options string
 	// ExpectedCharacterID 透传给回合受理的角色归属校验（M4l，契约 §11.2）。
 	ExpectedCharacterID string
 }
@@ -106,12 +112,19 @@ func (s *BranchService) DeriveTurn(ctx context.Context, sessionID string, req De
 		return nil, err
 	}
 
-	input := domain.TurnInput{Kind: tc.InputKind, Text: tc.InputText, OptionRef: tc.OptionRef, ActionRef: tc.ActionRef}
+	input := domain.TurnInput{Kind: tc.InputKind, Text: tc.InputText, Note: tc.InputNote, Options: tc.OptionsMode, OptionRef: tc.OptionRef, ActionRef: tc.ActionRef}
 	if req.Input != nil {
 		input = *req.Input
 		if strings.TrimSpace(input.Text) == "" {
 			return nil, Err("INPUT_REQUIRED", "编辑后的输入不能为空", 400)
 		}
+	}
+	// 显式给出的引导与选项模式覆盖原回合的设置；留空表示“按原来的条件重演”。
+	if strings.TrimSpace(req.Note) != "" {
+		input.Note = req.Note
+	}
+	if strings.TrimSpace(req.Options) != "" {
+		input.Options = req.Options
 	}
 
 	key := req.IdempotencyKey

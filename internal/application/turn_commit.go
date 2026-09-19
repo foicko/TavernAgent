@@ -12,10 +12,10 @@ import (
 )
 
 // commitDraft 校验提议并提交（runGenerate / runContinue 共享尾部）。
-// commitDraft 的 injectedMemoryIDs 是本次生成注入上下文的记忆（可为空）：
-// 提交时据此判定 lastMeaningfulMentionTurn（技术契约 §8.1）。直接提交路径
-// （SubmitBlocks）没有编译过程，因此传 nil。
-func (s *TurnService) commitDraft(ctx context.Context, turn *domain.TurnRequest, draft protocol.TurnDraft, baseState *domain.WorldState, mode string, injectedMemoryIDs []string) (*domain.PlotNode, error) {
+// commitDraft 的 injected 是本次生成注入上下文的记忆（可为空）：其 ID 用于判定
+// lastMeaningfulMentionTurn（技术契约 §8.1），其文本快照随节点落库供读者回看依据。
+// 直接提交路径（SubmitBlocks）没有编译过程，因此传 nil。
+func (s *TurnService) commitDraft(ctx context.Context, turn *domain.TurnRequest, draft protocol.TurnDraft, baseState *domain.WorldState, mode string, injected []domain.MemoryRef) (*domain.PlotNode, error) {
 	parent, err := s.store.GetNode(turn.ExpectedHeadID)
 	if err != nil {
 		s.fail(ctx, turn.TurnID, "STATE_MISSING", "父节点缺失", false)
@@ -26,16 +26,32 @@ func (s *TurnService) commitDraft(ctx context.Context, turn *domain.TurnRequest,
 		Kind: domain.NodeKindTurn, Depth: parent.Depth + 1, TurnNumber: parent.TurnNumber + 1,
 		SchemaVersion: 1,
 	}
-	plan, err := s.buildCommitPlan(ctx, turn, draft, baseState, mode, newNode, injectedMemoryIDs)
+	plan, err := s.buildCommitPlan(ctx, turn, draft, baseState, mode, newNode, injected)
 	if err != nil {
 		return nil, err
 	}
 	return s.settleCommit(ctx, turn, plan, newNode)
 }
 
+// previousTurnHadOptions 报告上一层回合是否呈现过选项。
+//
+// 只看最近一个回合节点：更早的回合与“上一轮刚给过没有”无关。读失败一律按“没给过”
+// 处理（fail-open）：选项是给读者的台阶，宁可多摆一次，也不要因为一次读取失败把台阶抽掉。
+func (s *TurnService) previousTurnHadOptions(turn *domain.TurnRequest) bool {
+	nodes, err := s.store.RecentTurnNodes(turn.ExpectedHeadID, 1)
+	if err != nil || len(nodes) == 0 {
+		return false
+	}
+	var tc domain.TurnContent
+	if err := json.Unmarshal([]byte(nodes[len(nodes)-1].ContentJSON), &tc); err != nil {
+		return false
+	}
+	return len(tc.Options) > 0
+}
+
 // buildCommitPlan 组装并校验提交计划：收据、规则、历史证据、记忆配额与状态推演。
 // 这一层只读不写（除了填充 newNode 的内容），失败一律把回合落到失败终态。
-func (s *TurnService) buildCommitPlan(ctx context.Context, turn *domain.TurnRequest, draft protocol.TurnDraft, baseState *domain.WorldState, mode string, newNode *domain.PlotNode, injectedMemoryIDs []string) (*ports.CommitPlan, error) {
+func (s *TurnService) buildCommitPlan(ctx context.Context, turn *domain.TurnRequest, draft protocol.TurnDraft, baseState *domain.WorldState, mode string, newNode *domain.PlotNode, injected []domain.MemoryRef) (*ports.CommitPlan, error) {
 	turnID := turn.TurnID
 	// 先定节点 ID 再构建计划：记忆的 source_node_id 与 ID 都由它派生，
 	// 保证记忆可回溯且 ID 全局唯一。
@@ -63,6 +79,10 @@ func (s *TurnService) buildCommitPlan(ctx context.Context, turn *domain.TurnRequ
 		HistoryExcerpts: historyExcerpts,
 		VisibleMemories: visibleMemories,
 		CurrentTurn:     newNode.TurnNumber,
+		// 注入清单随节点落库：读者据此判断角色是“不知道”还是“知道了没用上”。
+		InjectedMemories: injected,
+		// 上一层回合是否摆过选项：auto 模式据此避免连续两轮都给（见 buildPlan）。
+		PreviousTurnHadOptions: s.previousTurnHadOptions(turn),
 	}
 	pd, err := buildPlan(baseState, draft, inputOf(turn), mode, newNode.NodeID, pc)
 	if err != nil {
@@ -95,7 +115,7 @@ func (s *TurnService) buildCommitPlan(ctx context.Context, turn *domain.TurnRequ
 		ExpectedVersion: turn.ExpectedVersion, BaseStateHash: baseState.HashID(),
 		RulesetVersion: rulesetOf(turn), Node: newNode, Events: pd.Events,
 		Memories:           pd.Memories,
-		MentionedMemoryIDs: injectedMemoryIDs,
+		MentionedMemoryIDs: memoryRefIDs(injected),
 		NewStateHash:       pd.NewState.HashID(), NewStateJSON: newStateJSON,
 		// 准备阶段掷的骰在这里生效。结算只改状态、不改结果；
 		// 已经 committed 的收据不会被重复结算（契约 §5.2）。

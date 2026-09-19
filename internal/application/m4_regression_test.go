@@ -171,7 +171,7 @@ func TestM4NativeRulesRecheckDeriveAndPack(t *testing.T) {
 	}
 	snap, _ := st.StateAt(rerolledNode)
 	ws, _ := domain.UnmarshalWorld(snap.StateJSON)
-	req, err := ctxpkg.New(st, ctxpkg.DefaultOptions()).Compile(context.Background(), imported.Session.SessionID, rerolledNode, "继续", ws, nil)
+	req, err := ctxpkg.New(st, ctxpkg.DefaultOptions()).Compile(context.Background(), imported.Session.SessionID, rerolledNode, "继续", ctxpkg.TurnDirectives{}, ws, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -100,7 +100,7 @@ func TestPrefixCacheStability(t *testing.T) {
 	}
 
 	// 在第 20 轮编译上下文
-	req20, err := f.compiler.Compile(context.Background(), testSessionID, head, "第21轮输入", state, nil)
+	req20, err := f.compiler.Compile(context.Background(), testSessionID, head, "第21轮输入", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile at turn 20: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestPrefixCacheStability(t *testing.T) {
 	}
 
 	// 在第 25 轮重新编译上下文
-	req25, err := f.compiler.Compile(context.Background(), testSessionID, head, "第26轮输入", state, nil)
+	req25, err := f.compiler.Compile(context.Background(), testSessionID, head, "第26轮输入", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile at turn 25: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestCompileLedgerWithRelationshipAndSecretTrajectory(t *testing.T) {
 	head = commitTurnWithEvents(t, f.store, testBranchID, head, "我相信你。", []domain.TextBlock{{Kind: "dialogue", Text: "我们一起去吧。"}}, []*domain.DomainEvent{ev3}, state)
 
 	// 在 Turn 3 编译上下文
-	req, err := f.compiler.Compile(context.Background(), testSessionID, head, "准备出发。", state, nil)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, head, "准备出发。", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile at turn 3: %v", err)
 	}
@@ -250,8 +250,9 @@ func TestCompileLedgerWithRelationshipAndSecretTrajectory(t *testing.T) {
 // T4.3: 验证主动 Token 压缩阈值在达到预算/窗口压力时主动置位 PrepareCompression。
 func TestProactiveTokenCompressionThreshold(t *testing.T) {
 	opts := ctxpkg.DefaultOptions()
-	// v2 重写扮演准则（+347 token）后由 4500 上调，保持“超过 75% 但装得下”的区间。
-	opts.ContextWindow = 4700
+	// v3 是一次“必修前缀”增长（扮演准则 + 选项判定 + <player_note> 声明累计 +615 token），
+	// 这里保持“超过 75% 但装得下”的区间，故由 4500 上调。
+	opts.ContextWindow = 4900
 	opts.ReservedOutput = 500
 	opts.SafetyMargin = 200
 	// inputBudget = 4500 - 500 - 200 = 3800
@@ -266,7 +267,7 @@ func TestProactiveTokenCompressionThreshold(t *testing.T) {
 
 	// 构造恰好使 BeforeTrim 超过 75% budget 但不超过 3300 的输入
 	longInput := strings.Repeat("这是一段用于测试长输入主动触发压缩的文本。", 75)
-	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, longInput, state, nil)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, longInput, ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -283,11 +284,11 @@ func TestContinueRequestMessageStability(t *testing.T) {
 	head := commitTurnWithEvents(t, f.store, testBranchID, testRootID, "第一步", []domain.TextBlock{{Kind: "narration", Text: "剧情发展。"}}, nil, state)
 
 	// 模拟同一基准下多次重试/续写编译
-	req1, err := f.compiler.Compile(context.Background(), testSessionID, head, "续写输入", state, nil)
+	req1, err := f.compiler.Compile(context.Background(), testSessionID, head, "续写输入", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile 1: %v", err)
 	}
-	req2, err := f.compiler.Compile(context.Background(), testSessionID, head, "续写输入", state, nil)
+	req2, err := f.compiler.Compile(context.Background(), testSessionID, head, "续写输入", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile 2: %v", err)
 	}

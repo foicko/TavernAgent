@@ -104,7 +104,7 @@ func (s *TurnService) runContinue(ctx context.Context, turn *domain.TurnRequest)
 		s.fail(ctx, turnID, "STORAGE_UNAVAILABLE", err.Error(), true)
 		return
 	}
-	req, err := compiler.ReserveInput(extraTokens).Compile(ctx, turn.SessionID, turn.ExpectedHeadID, inputTextOf(turn), baseState, checks)
+	req, err := compiler.ReserveInput(extraTokens).Compile(ctx, turn.SessionID, turn.ExpectedHeadID, inputTextOf(turn), directivesOf(turn), baseState, checks)
 	if err != nil {
 		s.fail(ctx, turnID, contextCodeOf(err), err.Error(), true)
 		return
@@ -131,5 +131,5 @@ func (s *TurnService) runContinue(ctx context.Context, turn *domain.TurnRequest)
 		OnChunk: func(chunk []byte) error { return parser.Feed(chunk) },
 		OnUsage: func(u ports.TokenUsage) { usage = u },
 	})
-	s.afterStream(ctx, turn, attempt2, parser, baseState, streamErr, req.InjectedMemoryIDs, usage, req.EstimatedInputTokens, provCfg)
+	s.afterStream(ctx, turn, attempt2, parser, baseState, streamErr, req.InjectedMemories, usage, req.EstimatedInputTokens, provCfg)
 }

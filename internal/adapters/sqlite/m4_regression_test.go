@@ -234,7 +234,7 @@ func TestM4NoFTSFallbackAndBudgetWithSummaries(t *testing.T) {
 	stateSnap, _ := s.StateAt(head)
 	state, _ := domain.UnmarshalWorld(stateSnap.StateJSON)
 	c := ctxpkg.New(noFTSStore{s}, ctxpkg.DefaultOptions())
-	req, err := c.Compile(context.Background(), sess.SessionID, head, "铜钥匙在哪里", state, nil)
+	req, err := c.Compile(context.Background(), sess.SessionID, head, "铜钥匙在哪里", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil || len(req.InjectedMemoryIDs) != 1 || req.InjectedMemoryIDs[0] != "key" {
 		t.Fatalf("fallback=%+v %v", req.InjectedMemoryIDs, err)
 	}
@@ -250,7 +250,7 @@ func TestM4NoFTSFallbackAndBudgetWithSummaries(t *testing.T) {
 	for _, split := range []bool{true, false} {
 		opts := ctxpkg.DefaultOptions()
 		opts.SplitDynamicContext = split
-		req, err := ctxpkg.New(s, opts).WithBudget(65536, 2048).Compile(context.Background(), sess.SessionID, head, "继续", state, nil)
+		req, err := ctxpkg.New(s, opts).WithBudget(65536, 2048).Compile(context.Background(), sess.SessionID, head, "继续", ctxpkg.TurnDirectives{}, state, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -267,7 +267,7 @@ func TestM4NoFTSFallbackAndBudgetWithSummaries(t *testing.T) {
 	}
 	// 反向：窗口收窄到装不下这条承重摘要时，必须显式报错而不是悄悄丢掉摘要。
 	// 摘要区间覆盖第 1 个回合（在折叠区内），因此它是那段历史唯一的载体。
-	_, narrowErr := ctxpkg.New(s, ctxpkg.DefaultOptions()).WithBudget(8192, 2048).Compile(context.Background(), sess.SessionID, head, "继续", state, nil)
+	_, narrowErr := ctxpkg.New(s, ctxpkg.DefaultOptions()).WithBudget(8192, 2048).Compile(context.Background(), sess.SessionID, head, "继续", ctxpkg.TurnDirectives{}, state, nil)
 	if narrowErr == nil {
 		t.Fatal("承重摘要装不下时必须报错")
 	}

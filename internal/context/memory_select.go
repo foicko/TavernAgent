@@ -145,6 +145,39 @@ func memoryIDsOf(memories []*domain.MemoryRecord) []string {
 	return out
 }
 
+// memoryRefDisplayRunes 是单条展示引用的文本上限。
+//
+// 引用会被抄进节点内容，而节点内容会整包导出：不设上限时，一条异常长的
+// 记忆会产生“每个回合都背一份”的体积放大。截断是展示层的取舍，并会显式补省略号，
+// 读者不会把它误当成完整原文（完整原文在记忆面板里，带证据链）。
+const memoryRefDisplayRunes = 240
+
+// memoryRefsOf 把注入的记忆转成随节点落库的展示快照。
+func memoryRefsOf(memories []*domain.MemoryRecord) []domain.MemoryRef {
+	if len(memories) == 0 {
+		return nil
+	}
+	out := make([]domain.MemoryRef, 0, len(memories))
+	for _, m := range memories {
+		if m == nil {
+			continue
+		}
+		out = append(out, domain.MemoryRef{MemoryID: m.MemoryID, Text: truncateRunes(m.Content, memoryRefDisplayRunes), Kind: string(m.Kind)})
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func truncateRunes(s string, limit int) string {
+	runes := []rune(s)
+	if len(runes) <= limit {
+		return s
+	}
+	return string(runes[:limit]) + "…"
+}
+
 // effectiveMemoryIDs 解析路径上的 copy-on-write 覆盖关系（纠正/置顶/隐藏），
 // 返回在当前路径上仍然生效的记录 ID 集合。
 func effectiveMemoryIDs(cands []*ports.MemoryCandidate) map[string]bool {

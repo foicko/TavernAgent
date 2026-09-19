@@ -185,7 +185,7 @@ func TestSecretUnlockFlowThroughCommitAndView(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	prompt, err := compiler.Compile(context.Background(), sessID, newHead, "现在说说看。", state, nil)
+	prompt, err := compiler.Compile(context.Background(), sessID, newHead, "现在说说看。", ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}

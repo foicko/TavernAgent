@@ -393,7 +393,7 @@ func (s *DirectorService) runDiscussion(ctx context.Context, r *domain.DirectorR
 		messages = append(messages, ports.ChatMessage{Role: "user", Content: prior.Text}, ports.ChatMessage{Role: "assistant", Content: prior.Reply})
 	}
 	compiler := s.compiler.WithBudget(cfg.ContextWindow, cfg.MaxTokens).ForDirectorDiscussion(directorPlanningInstruction, messages)
-	request, err := compiler.Compile(ctx, r.SessionID, r.BaseNodeID, r.Text, state, nil)
+	request, err := compiler.Compile(ctx, r.SessionID, r.BaseNodeID, r.Text, ctxpkg.TurnDirectives{}, state, nil)
 	if err != nil {
 		fail(err)
 		return

@@ -101,7 +101,7 @@ func (f *fixture) compileMessages(t *testing.T, nodeID, input string, state *dom
 // compileMessagesWithChecks 允许带上准备阶段已定的检定结果（契约 §5.2）。
 func (f *fixture) compileMessagesWithChecks(t *testing.T, nodeID, input string, state *domain.WorldState, checks []domain.CheckResult) []ports.ChatMessage {
 	t.Helper()
-	req, err := f.compiler.Compile(context.Background(), testSessionID, nodeID, input, state, checks)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, nodeID, input, ctxpkg.TurnDirectives{}, state, checks)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -266,7 +266,7 @@ func TestLorebookHitFromRecentHistory(t *testing.T) {
 		t.Fatalf("历史正文中的关键词未触发注入:\n%s", got)
 	}
 	// 同一轮编译器仍应把历史作为消息带入。
-	req, err := f.compiler.Compile(context.Background(), testSessionID, turn.NodeID, "我停下来。", nil, nil)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, turn.NodeID, "我停下来。", ctxpkg.TurnDirectives{}, nil, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -284,7 +284,7 @@ func TestLorebookHitFromRecentHistory(t *testing.T) {
 // 世界书内容只进注入块，不进入历史消息（不污染正文）。
 func TestLorebookNotInjectedIntoHistoryMessages(t *testing.T) {
 	f := newFixture(t, book(entry("e1", true, "钟楼每逢午夜会敲响十三下。", "钟楼")), ctxpkg.DefaultOptions())
-	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "钟楼前。", nil, nil)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "钟楼前。", ctxpkg.TurnDirectives{}, nil, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -526,7 +526,7 @@ func TestCompileReportsInjectedMemoryIDs(t *testing.T) {
 	f := newFixture(t, nil, ctxpkg.DefaultOptions())
 	head := f.seedMemory(t, testRootID, remember("m1", "她来自北方，很怕冷。"))
 
-	req, err := f.compiler.Compile(context.Background(), testSessionID, head, "你来自北方吗？", nil, nil)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, head, "你来自北方吗？", ctxpkg.TurnDirectives{}, nil, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -534,7 +534,7 @@ func TestCompileReportsInjectedMemoryIDs(t *testing.T) {
 		t.Fatalf("注入清单 = %v, want [m1]", req.InjectedMemoryIDs)
 	}
 
-	req2, err := f.compiler.Compile(context.Background(), testSessionID, head, "我在路边买了些水果。", nil, nil)
+	req2, err := f.compiler.Compile(context.Background(), testSessionID, head, "我在路边买了些水果。", ctxpkg.TurnDirectives{}, nil, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -913,7 +913,7 @@ func TestSplitDynamicContext(t *testing.T) {
 	})
 	f := newFixtureWithOpening(t, books, "故事开始了，风雨交加。", opts)
 
-	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "我看见了钟楼上的那座老铜钟。", nil, []domain.CheckResult{{
+	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "我看见了钟楼上的那座老铜钟。", ctxpkg.TurnDirectives{}, nil, []domain.CheckResult{{
 		RollID: "roll_1", ActionID: "check.perception", Attribute: "perception",
 		AttributeVal: 15, AttributeMod: 2, Natural: 14, Total: 16, DC: 10,
 		Outcome: domain.OutcomeSuccess, RulesetVer: "ruleset.simplified.v1",
@@ -991,7 +991,7 @@ func TestDefaultOptionsKeepCacheFriendlySplit(t *testing.T) {
 // 易变内容确实排在历史之后：缓存前缀才能覆盖"静态 system + 开场白 + 历史"。
 func TestDefaultOptionsSplitPlacesVolatileStateAfterHistory(t *testing.T) {
 	f := newFixtureWithOpening(t, nil, "开场。", ctxpkg.DefaultOptions())
-	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "继续。", nil, nil)
+	req, err := f.compiler.Compile(context.Background(), testSessionID, testRootID, "继续。", ctxpkg.TurnDirectives{}, nil, nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}

@@ -128,7 +128,7 @@ func TestCompactorService_RunOnceAndCompile(t *testing.T) {
 		t.Fatalf("unmarshal world: %v", err)
 	}
 
-	req, err := compiler.Compile(context.Background(), setup.Session.SessionID, headID, "继续。", baseState, nil)
+	req, err := compiler.Compile(context.Background(), setup.Session.SessionID, headID, "继续。", ctxpkg.TurnDirectives{}, baseState, nil)
 	if err != nil {
 		t.Fatalf("compile error: %v", err)
 	}

@@ -19,14 +19,41 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/PROMPTS.md"
 
 
+def unescape_go_string(s: str) -> str:
+    """还原 Go 双引号字符串里的转义。
+
+    只处理会出现在提示词里的那几种（\\n / \\t / \\" / \\\\）；其余原样保留反斜杠，
+    避免把本来就不是转义的写法弄丢。
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c != "\\" or i + 1 >= len(s):
+            out.append(c)
+            i += 1
+            continue
+        nxt = s[i + 1]
+        out.append({"n": "\n", "t": "\t", '"': '"', "\\": "\\"}.get(nxt, "\\" + nxt))
+        i += 2
+    return "".join(out)
+
+
 def extract(rel_path: str, const_name: str) -> str:
-    """抓取 `const Name = `...`` 或 `Name = `...`` 的原始字符串字面量正文。"""
+    """抓取提示词常量正文：支持 `const Name = `...``（原始字符串）与 `Name = "..."` 两种写法。
+
+    两种都要支持：长提示词用反引号写更易读，短指令用普通字符串更省事；
+    只支持其中一种，另一种就会变成“脚本找不到常量”的假故障。
+    """
     text = (ROOT / rel_path).read_text(encoding="utf-8")
-    pattern = re.compile(r"^[ \t]*(?:const |var )?" + re.escape(const_name) + r"[ \t]*=[ \t]*`([^`]*)`", re.M)
-    match = pattern.search(text)
-    if not match:
-        raise SystemExit(f"未找到提示词常量 {const_name}（{rel_path}）")
-    return match.group(1)
+    prefix = r"^[ \t]*(?:const |var )?" + re.escape(const_name) + r"[ \t]*=[ \t]*"
+    raw = re.search(prefix + r"`([^`]*)`", text, re.M)
+    if raw:
+        return raw.group(1)
+    quoted = re.search(prefix + r'"((?:[^"\\]|\\.)*)"', text, re.M)
+    if quoted:
+        return unescape_go_string(quoted.group(1))
+    raise SystemExit(f"未找到提示词常量 {const_name}（{rel_path}）")
 
 
 def fence(body: str) -> str:
@@ -57,6 +84,10 @@ CONSTANTS = [
      "后台心智提取器的 system 提示词：只输出 SubmitCognitivePlan JSON。"),
     ("探测", "internal/context/prompts.go", "FrameProbeInstruction",
      "格式探测用的最小帧序列要求（application.frameProbeSystem 直接引用它，不另存一份）。"),
+    ("叙事核心", "internal/context/prompts.go", "OptionsAlwaysDirective",
+     "选项呈现模式 always 的显式指令；默认的 auto（只在关键节点给）由【输出协议】自身的规则表达，不需要额外指令。"),
+    ("叙事核心", "internal/context/prompts.go", "OptionsNeverDirective",
+     "选项呈现模式 never 的显式指令。never 另有一道服务端硬保证（提交时清空 options）。"),
 ]
 
 # 动态拼装的连接语句（模板）。这些不是常量，是写死在渲染函数里的固定文案；
@@ -104,6 +135,8 @@ TEMPLATES = [
      "【前序剧情交接快照】 / 【故事开场白】 / 【待折叠的历史剧情片段】（--- 第 N 轮 --- / 玩家: / 叙述/助手:）+ 结尾「仅总结上述指定区间的资料，输出 <story_checkpoint>…</story_checkpoint> XML。已验证的记忆修订优先于旧叙述。」"),
     ("探测", "internal/application/providers.go:probe",
      "system=FrameProbeInstruction（格式探测）；user=「连通性测试：请只回复 OK。」或「请执行协议格式输出测试：严格只按系统提示要求输出两行 JSON…」"),
+    ("本回合演绎指令", "internal/context/prompts.go:turnDirectiveBlock",
+     "附在玩家输入之后（不进历史前缀）：<player_note>…</player_note> 玩家注记 + 选项要求（always/never）。"),
 ]
 
 BOUNDARY_MARKERS = [
@@ -111,6 +144,8 @@ BOUNDARY_MARKERS = [
     ("</external_content>", "外部资料边界结束"),
     ("<system-reminder>", "框架注入的状态块开始（不是玩家发言）"),
     ("</system-reminder>", "框架注入的状态块结束"),
+    ("<player_note>", "玩家注记开始：对**本次演绎方式**的要求，不是角色言行，也不属于故事内容"),
+    ("</player_note>", "玩家注记结束"),
     ("trust=\"untrusted\"", "用户从外部导入、未经审核"),
     ("trust=\"derived\"", "由本系统从既往叙事派生、来源可复核"),
 ]

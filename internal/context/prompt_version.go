@@ -29,7 +29,10 @@ const (
 	// 变更记录：
 	//   v1 -> v2：重写 NarratorRoleInstruction（叙事核心）——新增最高优先级的中文语言规范，
 	//             拆为【核心扮演准则】【交互与推进准则】【沉浸感与底线禁令】三段。
-	PromptVersion = 2
+	//   v2 -> v3：选项改为“只在关键节点给”（FrameProtocolInstruction 增加判定条件）；
+	//             新增玩家注记的边界标记 <player_note>（更新 ExternalBoundaryInstruction）；
+	//             新增选项呈现模式的显式指令（always / never）。
+	PromptVersion = 3
 )
 
 // promptTemplate 是被纳入指纹的提示词模板。Name 只用于组装哈希输入与排障展示。
@@ -53,6 +56,9 @@ var promptTemplates = []promptTemplate{
 	{"summary_prompt", CompactionSystemPrompt},
 	{"system_reminder", SystemReminderOpen + SystemReminderClose},
 	{"external_content", externalContentOpen + externalContentClose},
+	{"player_note", playerNoteOpen + playerNoteClose},
+	{"options_always", OptionsAlwaysDirective},
+	{"options_never", OptionsNeverDirective},
 }
 
 // PromptFingerprint 返回提示词模板集合的短指纹（12 位十六进制）。

@@ -60,8 +60,10 @@ func TestRoundTripEquivalence(t *testing.T) {
 	st, turnSvc, _, sessionID, branchID, _ := newTestServices(t, packScript())
 	svc := NewArchiveService(st, "test")
 
-	acceptAndWait(t, turnSvc, st, sessionID, branchID, "rt-1", "你好。")
-	second := acceptAndWait(t, turnSvc, st, sessionID, branchID, "rt-2", "继续。")
+	// 两轮都显式用 always：默认的 auto 不会连续两轮给选项（见 commitplan.go 的冷却），
+	// 而本用例要验的是往返保真，需要两轮都带选项。
+	acceptAndWaitWith(t, turnSvc, st, sessionID, branchID, "rt-1", domain.TurnInput{Kind: "text", Text: "你好。", Options: domain.OptionsAlways})
+	second := acceptAndWaitWith(t, turnSvc, st, sessionID, branchID, "rt-2", domain.TurnInput{Kind: "text", Text: "继续。", Options: domain.OptionsAlways})
 
 	exported := exportPack(t, svc, sessionID, "")
 	if exported.Manifest.Counts["nodes"] == 0 {

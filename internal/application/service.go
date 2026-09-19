@@ -166,6 +166,27 @@ func inputTextOf(turn *domain.TurnRequest) string {
 	return inputOf(turn).Text
 }
 
+// memoryRefIDs 取出注入记忆的 ID 清单（提交时判定“正文是否真的提到它”用）。
+func memoryRefIDs(refs []domain.MemoryRef) []string {
+	if len(refs) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(refs))
+	for _, r := range refs {
+		out = append(out, r.MemoryID)
+	}
+	return out
+}
+
+// directivesOf 取出本回合的演绎指令（玩家注记与选项呈现模式）。
+//
+// 与 inputTextOf 分开取：输入是“角色做了什么”，指令是“玩家要求怎么演”。
+// 两者在提示词里必须能被分别标注，所以流向编译器的路径也要分开。
+func directivesOf(turn *domain.TurnRequest) ctxpkg.TurnDirectives {
+	in := inputOf(turn)
+	return ctxpkg.TurnDirectives{Note: in.Note, OptionsMode: in.Options}
+}
+
 // rulesetOf 返回本次尝试采用的规则版本。
 // 迁移前的旧回合没有记录，回退到当前常量（T20 之前的历史数据）。
 func rulesetOf(turn *domain.TurnRequest) string {

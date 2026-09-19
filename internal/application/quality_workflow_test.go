@@ -170,7 +170,7 @@ func TestQualityStoryMemoryInventoryStatusCompressionAndRecovery(t *testing.T) {
 	}
 	opts := ctxpkg.DefaultOptions()
 	opts.CompactionPolicy = policy
-	compiled, err := ctxpkg.New(st, opts).WithBudget(8192, 1024).Compile(ctx, sid, head, "艾莲娜来自哪里？我还有多少旅行茶？", stateAt(head), nil)
+	compiled, err := ctxpkg.New(st, opts).WithBudget(8192, 1024).Compile(ctx, sid, head, "艾莲娜来自哪里？我还有多少旅行茶？", ctxpkg.TurnDirectives{}, stateAt(head), nil)
 	if err != nil {
 		t.Fatal(err)
 	}

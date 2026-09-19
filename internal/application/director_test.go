@@ -186,7 +186,7 @@ func TestDirectorCompilerVisibilityBudgetAndAtomicProgress(t *testing.T) {
 		opts := ctxpkg.DefaultOptions()
 		opts.SplitDynamicContext = split
 		compiler := ctxpkg.New(st, opts)
-		req, err := compiler.Compile(context.Background(), sid, activated.NodeID, "你好", world, nil)
+		req, err := compiler.Compile(context.Background(), sid, activated.NodeID, "你好", ctxpkg.TurnDirectives{}, world, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -197,7 +197,7 @@ func TestDirectorCompilerVisibilityBudgetAndAtomicProgress(t *testing.T) {
 		if !strings.Contains(prompt, "请她说出旅人的旧称呼") || strings.Contains(prompt, "银色狐狸") || strings.Contains(prompt, "自然修复关系") {
 			t.Fatal("incorrect director prompt visibility")
 		}
-		_, err = compiler.WithBudget(600, 100).Compile(context.Background(), sid, activated.NodeID, "你好", world, nil)
+		_, err = compiler.WithBudget(600, 100).Compile(context.Background(), sid, activated.NodeID, "你好", ctxpkg.TurnDirectives{}, world, nil)
 		if err == nil {
 			t.Fatal("mandatory plan silently dropped to fit budget")
 		}
@@ -519,7 +519,7 @@ func TestDirectorPauseAndCompletionRestoreFreeStory(t *testing.T) {
 		t.Helper()
 		snap, _ := st.StateAt(nodeID)
 		world, _ := domain.UnmarshalWorld(snap.StateJSON)
-		req, err := ctxpkg.New(st, ctxpkg.DefaultOptions()).Compile(context.Background(), sid, nodeID, "继续探索", world, nil)
+		req, err := ctxpkg.New(st, ctxpkg.DefaultOptions()).Compile(context.Background(), sid, nodeID, "继续探索", ctxpkg.TurnDirectives{}, world, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

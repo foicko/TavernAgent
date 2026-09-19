@@ -20,7 +20,7 @@ import (
 //
 // 若只是注释、重命名、不改变渲染结果的纯重构，指纹本就不会变，
 // 此时本测试应当依旧通过——它失败就说明渲染结果确实变了。
-const promptFingerprintGolden = "d2be89c8a92f"
+const promptFingerprintGolden = "55e9b9db88af"
 
 func TestPromptFingerprintIsLocked(t *testing.T) {
 	got := ctxpkg.PromptFingerprint()
@@ -42,7 +42,8 @@ func TestPromptFingerprintCoversEverySharedTemplate(t *testing.T) {
 	for _, want := range []string{
 		"narrator_role", "frame_protocol", "frame_probe", "external_boundary",
 		"director_head", "director_mid", "director_tail", "summary_prompt",
-		"system_reminder", "external_content",
+		"system_reminder", "external_content", "player_note",
+		"options_always", "options_never",
 	} {
 		if !containsName(names, want) {
 			t.Fatalf("提示词模板 %q 未纳入指纹（当前：%s）；新增模板必须登记进 promptTemplates", want, names)

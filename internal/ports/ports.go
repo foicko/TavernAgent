@@ -459,11 +459,17 @@ type ChatRequest struct {
 	// 它随请求向上回传，供提交时判定 lastMeaningfulMentionTurn（契约 §8.1）：
 	// 只有「被注入」且「提交的正文确实提到」的记忆才算一次有意义提及。
 	// 仅被召回（但正文没提）不计——契约明确要求召回动作本身不更新。
-	InjectedMemoryIDs    []string `json:"-"`
-	InputBudget          int      `json:"-"`
-	EstimatedInputTokens int      `json:"-"`
-	NeedsCompaction      bool     `json:"-"`
-	ProtectedTurns       int      `json:"-"`
+	InjectedMemoryIDs []string `json:"-"`
+	// InjectedMemories 是同一批记忆的展示快照（ID + 当时的文本）。
+	//
+	// 与 ID 清单同源同批，但用途不同：ID 清单用于提交时核验“正文有没有真提到它”，
+	// 快照则落进节点内容，供读者回看“这次演绎当时参考了哪几句话”。
+	// 两者必须一起产生，否则展示与判定就会各说各话。
+	InjectedMemories     []domain.MemoryRef `json:"-"`
+	InputBudget          int                `json:"-"`
+	EstimatedInputTokens int                `json:"-"`
+	NeedsCompaction      bool               `json:"-"`
+	ProtectedTurns       int                `json:"-"`
 }
 
 // TokenUsage 是模型调用的真实计量（来自供应商 usage 对象）。

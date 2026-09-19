@@ -110,8 +110,8 @@ func TestCompileErrorsWhenLoadBearingSummaryDoesNotFit(t *testing.T) {
 	// 摘要覆盖前 3 轮；to_node 落在尾部窗口之外，保证被折叠。
 	saveSummary(t, f, testRootID, ids[2], repeatRunes(99, 1500))
 
-	compiler := f.compiler.WithBudget(4096, 1024) // 输入预算 = 4096-1024-max(512,204) = 2560
-	req, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", domain.NewWorldState(), nil)
+	compiler := f.compiler.WithBudget(4608, 1024) // 输入预算 = 4608-1024-512 = 3072；随必修前缀增长上调
+	req, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, domain.NewWorldState(), nil)
 	if err == nil {
 		t.Fatalf("承重摘要装不下时必须显式报错，实际编译成功（messages=%d，tokens≈%d）；"+
 			"这正是「摘要与原文一起消失」的旧行为", len(req.Messages), ctxpkg.MessageTokens(req.Messages))
@@ -143,7 +143,7 @@ func TestCompileDropsRedundantSummaryBeforeHistory(t *testing.T) {
 	// 预算必须落进"装得下 4 轮正文历史、装不下那条 3000 字摘要"的区间，
 	// 必修部分增删约 300 token 就要同步挪动窗口。
 	compiler := f.compiler.WithBudget(5632, 1024)
-	req, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", domain.NewWorldState(), nil)
+	req, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, domain.NewWorldState(), nil)
 	if err != nil {
 		t.Fatalf("冗余摘要应被优先淘汰而不是整轮失败：%v", err)
 	}
@@ -178,7 +178,7 @@ func TestCompileErrorsWhenSummaryRangeIsOlderThanLoadedHistory(t *testing.T) {
 	saveSummary(t, f, testRootID, ids[2], repeatRunes(99, 3000))
 
 	compiler := f.compiler.WithBudget(4608, 1024)
-	_, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", domain.NewWorldState(), nil)
+	_, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, domain.NewWorldState(), nil)
 	if err == nil {
 		t.Fatalf("区间早于加载窗口的摘要装不下时必须显式报错，不能静默丢弃")
 	}
@@ -202,7 +202,7 @@ func TestBudgetReportReachesObserver(t *testing.T) {
 		got = report
 		seen++
 	})
-	_, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", domain.NewWorldState(), nil)
+	_, err := compiler.Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, domain.NewWorldState(), nil)
 	if err != nil {
 		t.Fatalf("compile: %v", err)
 	}
@@ -230,12 +230,12 @@ func TestTokenCalibrationScalesBudgetDecisions(t *testing.T) {
 
 	var rawReport, calReport ctxpkg.BudgetReport
 	raw := f.compiler.WithBudget(4608, 1024).WithBudgetObserver(func(r ctxpkg.BudgetReport) { rawReport = r })
-	if _, err := raw.Compile(context.Background(), testSessionID, head, "我继续往前。", state, nil); err != nil {
+	if _, err := raw.Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, state, nil); err != nil {
 		t.Fatalf("raw compile: %v", err)
 	}
 	calibrated := f.compiler.WithBudget(4608, 1024).WithTokenCalibration(0.5).
 		WithBudgetObserver(func(r ctxpkg.BudgetReport) { calReport = r })
-	if _, err := calibrated.Compile(context.Background(), testSessionID, head, "我继续往前。", state, nil); err != nil {
+	if _, err := calibrated.Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, state, nil); err != nil {
 		t.Fatalf("calibrated compile: %v", err)
 	}
 	if rawReport.BeforeTrim == 0 || calReport.BeforeTrim == 0 {

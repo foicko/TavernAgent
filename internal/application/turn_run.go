@@ -59,7 +59,7 @@ func (s *TurnService) run(ctx context.Context, turn *domain.TurnRequest) {
 		s.fail(ctx, turnID, "STORAGE_UNAVAILABLE", err.Error(), true)
 		return
 	}
-	req, err := compiler.Compile(ctx, turn.SessionID, turn.ExpectedHeadID, inputTextOf(turn), baseState, checks)
+	req, err := compiler.Compile(ctx, turn.SessionID, turn.ExpectedHeadID, inputTextOf(turn), directivesOf(turn), baseState, checks)
 	if err != nil {
 		s.fail(ctx, turnID, contextCodeOf(err), err.Error(), true)
 		return
@@ -135,7 +135,7 @@ func (s *TurnService) runGenerate(ctx context.Context, turn *domain.TurnRequest,
 		OnChunk: func(chunk []byte) error { return parser.Feed(chunk) },
 		OnUsage: func(u ports.TokenUsage) { usage = u },
 	})
-	s.afterStream(ctx, turn, attemptID, parser, baseState, streamErr, req.InjectedMemoryIDs, usage, req.EstimatedInputTokens, provCfg)
+	s.afterStream(ctx, turn, attemptID, parser, baseState, streamErr, req.InjectedMemories, usage, req.EstimatedInputTokens, provCfg)
 }
 
 // attachFrameSink 注册帧落盘 + block 事件推送。
@@ -199,12 +199,12 @@ func (s *TurnService) recordUsage(turnID, attemptID string, usage ports.TokenUsa
 
 // afterStream 结算一次流式生成后的统一终止路径：
 // 取消 > 协议错误 > 供应商截断/缺 final → 续写态 > 供应商错误 > 正常提交。
-func (s *TurnService) afterStream(ctx context.Context, turn *domain.TurnRequest, attemptID string, parser *protocol.StreamParser, baseState *domain.WorldState, streamErr error, injectedMemoryIDs []string, usage ports.TokenUsage, estimatedTokens int, provCfg ports.ProviderConfig) {
+func (s *TurnService) afterStream(ctx context.Context, turn *domain.TurnRequest, attemptID string, parser *protocol.StreamParser, baseState *domain.WorldState, streamErr error, injected []domain.MemoryRef, usage ports.TokenUsage, estimatedTokens int, provCfg ports.ProviderConfig) {
 	turnID := turn.TurnID
 
 	// 用量台账：观测数据，先落地且**失败不影响回合提交**。
 	s.recordUsage(turnID, attemptID, usage, estimatedTokens, provCfg)
-	s.metrics.addMemories(len(injectedMemoryIDs))
+	s.metrics.addMemories(len(injected))
 
 	if isCancel, _ := s.store.HasCancelIntent(turnID); isCancel {
 		rt, _ := s.store.GetTurn(turnID)
@@ -271,7 +271,7 @@ func (s *TurnService) afterStream(ctx context.Context, turn *domain.TurnRequest,
 		s.fail(ctx, turnID, "PROTOCOL_INVALID", "结构化回合缺少 final 帧", false)
 		return
 	}
-	_, _ = s.commitDraft(ctx, turn, draft, baseState, parser.Mode(), injectedMemoryIDs)
+	_, _ = s.commitDraft(ctx, turn, draft, baseState, parser.Mode(), injected)
 }
 
 func (s *TurnService) fail(ctx context.Context, turnID, code, message string, retryable bool) {

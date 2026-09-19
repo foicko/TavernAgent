@@ -433,6 +433,10 @@ type regenerateRequest struct {
 	Recheck        bool   `json:"recheck,omitempty"`
 	IdempotencyKey string `json:"idempotencyKey,omitempty"`
 	Name           string `json:"name,omitempty"`
+	// Note 是重生成引导（非叙事要求）：让“演得不对”可以表达成一句可执行的方向，
+	// 而不是只能盲重掷或手工改正文。
+	Note    string `json:"note,omitempty"`
+	Options string `json:"options,omitempty"`
 	// ExpectedCharacterID 角色归属校验（M4l，契约 §11.2）。空表示不校验。
 	ExpectedCharacterID string `json:"expectedCharacterId,omitempty"`
 }
@@ -452,6 +456,7 @@ func (s *Server) regenerateTurn(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := s.branches.DeriveTurn(r.Context(), sessionID, application.DeriveRequest{
 		NodeID: req.NodeID, IdempotencyKey: req.IdempotencyKey, Label: req.Name, Recheck: req.Recheck,
+		Note: req.Note, Options: req.Options,
 		ExpectedCharacterID: req.ExpectedCharacterID,
 	})
 	if err != nil {

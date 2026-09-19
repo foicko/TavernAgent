@@ -27,6 +27,8 @@ dialogue 需要把 speakerId 填为说话角色 ID，narration 与 inner_monolog
 {"optionId":"o1","intent":"clever","text":"玩家可以采取的具体行动"}
 intent 只能是 aggressive、clever、emotional、chaotic 四者之一。
 
+options 是**关键节点**的提示，不是每轮的固定配菜：只有此刻确实需要玩家表态、且选择会明显改变走向（定去留、换立场、决定信不信、担不担这个风险）时才给。以下情形一律写 "options":[]（这是常态，不是例外）：玩家刚说完话或刚做完动作、场景只是自然往下走（尤其是他刚选完选项）；本回合以描写、过渡、情绪沉淀为主；你已在正文里留下明确的下一情境。凑不出真正不同的选择时，空数组比四条相似的选项有用得多。
+
 proposals 的元素格式如下。没有状态变化时写空数组 []，不要使用未列出的类型：
 1. 关系变化（好感/信任/戒备的增减）：
 {"proposalId":"p1","type":"relationship_delta","characterId":"角色ID","field":"affection","delta":2,"evidenceBlockSeqs":[1]}
@@ -52,6 +54,57 @@ sourceQuote 必须直接逐字复制最近几轮对话或本轮正文中的原�
 4. 每个 text 字段内不要出现换行符，单块不超过 2048 个字符。
 5. 除上述 JSON 行以外，不要输出任何其他文字。
 `
+
+// ---- 本回合的演绎指令（玩家注记与选项要求）----
+
+// 玩家注记的边界标记。与外部资料同理，靠标记而不是靠位置表达语义：
+// 标记留在静态前缀里声明语义（见 ExternalBoundaryInstruction），
+// 动态内容随本轮输入一起进来，从而不破坏历史前缀的字节稳定性。
+const (
+	playerNoteOpen  = "<player_note>"
+	playerNoteClose = "</player_note>"
+)
+
+// OptionsAlwaysDirective / OptionsNeverDirective 是选项呈现模式的显式指令。
+//
+// auto（关键时刻才给）不需要额外指令：那就是【输出协议】里的默认规则。
+// never 另有一道服务端硬保证（提交时清空 options），这里的指令是为了让模型不必
+// 白写四个选项——省下的代价直接反映在正文切分上。
+const (
+	OptionsAlwaysDirective = "【本次选项要求】每轮都给出选项，即使不是关键节点。"
+	OptionsNeverDirective  = "【本次选项要求】不要给出选项：final 帧的 options 一律写成空数组 []。"
+)
+
+// playerNoteBlock 包装玩家的注记（非叙事要求）。
+func playerNoteBlock(note string) string {
+	note = strings.TrimSpace(neutralizeBoundaryTags(note))
+	if note == "" {
+		return ""
+	}
+	return playerNoteOpen + "\n" + note + "\n" + playerNoteClose
+}
+
+// turnDirectiveBlock 渲染本回合的演绎指令（玩家注记 + 选项要求）。
+//
+// 为什么附在玩家输入之后、且不写进历史：它只约束**这一次**演绎。历史重放继续用
+// tc.InputText，因此既往回合的前缀字节稳定，KV Cache 不会被一次注记打穿；
+// 而"当时要求怎么演"仍然留在节点内容里（TurnContent.InputNote）供人回看。
+func turnDirectiveBlock(note, optionsMode string) string {
+	parts := make([]string, 0, 2)
+	if block := playerNoteBlock(note); block != "" {
+		parts = append(parts, block)
+	}
+	switch domain.NormalizeOptionsMode(optionsMode) {
+	case domain.OptionsAlways:
+		parts = append(parts, OptionsAlwaysDirective)
+	case domain.OptionsNever:
+		parts = append(parts, OptionsNeverDirective)
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return "\n\n" + strings.Join(parts, "\n")
+}
 
 // FrameProbeInstruction 是供应商连通性探测用的最小帧序列要求。
 //
@@ -119,6 +172,9 @@ func (c *Compiler) buildMessages(lore []lorebookHit, memories []*domain.MemoryRe
 	if sc.PlayerName != "" && c.planningInstruction == "" {
 		inputText = fmt.Sprintf("%s：%s", sc.PlayerName, inputText)
 	}
+	// 本回合的演绎指令紧跟在玩家输入之后：它是“怎么演”的要求，
+	// 与“做了什么”必须能分开读，而且不进历史（见 turnDirectiveBlock）。
+	inputText += turnDirectiveBlock(c.directives.Note, c.directives.OptionsMode)
 	req.Messages = append(req.Messages, ports.ChatMessage{Role: "user", Content: inputText})
 
 	// 尾部状态块（ADS-2.7-02 / 2.7-03）：框架注入的易变状态必须是上下文的**最后一条**
@@ -606,6 +662,6 @@ func (c *Compiler) buildPlanningMessages(lore []lorebookHit, memories []*domain.
 	}
 	msgs := []ports.ChatMessage{{Role: "system", Content: b.String()}}
 	msgs = append(msgs, c.planningMessages...)
-	msgs = append(msgs, ports.ChatMessage{Role: "user", Content: inputText})
+	msgs = append(msgs, ports.ChatMessage{Role: "user", Content: inputText + turnDirectiveBlock(c.directives.Note, c.directives.OptionsMode)})
 	return msgs
 }

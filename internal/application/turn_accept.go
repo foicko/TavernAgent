@@ -3,6 +3,9 @@ package application
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
+	"unicode/utf8"
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/util/id"
@@ -238,11 +241,22 @@ func authorizeActionRef(ref string, rs domain.Ruleset) string {
 // 返回值里的 *Option 是命中的选项（含其后端授权过的动作引用），供受理阶段
 // 判断"这一轮要不要先掷骰"。自由输入时为 nil。
 func (s *TurnService) validateTurnInput(headID string, in domain.TurnInput) (domain.TurnInput, *domain.Option, error) {
+	// 注记与选项模式都是“演绎方式”的指令，它们不参与选项引用校验，但必须一路带着走到提交。
+	note, err := normalizePlayerNote(in.Note)
+	if err != nil {
+		return domain.TurnInput{}, nil, err
+	}
+	options, err := normalizeOptionsMode(in.Options)
+	if err != nil {
+		return domain.TurnInput{}, nil, err
+	}
+	in.Note, in.Options = note, options
+
 	if in.Kind == "action" {
 		if in.ActionRef == "" {
 			return domain.TurnInput{}, nil, Err("ACTION_REQUIRED", "缺少规则动作", 400)
 		}
-		return domain.TurnInput{Kind: "action", Text: in.Text, ActionRef: in.ActionRef}, &domain.Option{ActionRef: in.ActionRef}, nil
+		return domain.TurnInput{Kind: "action", Text: in.Text, Note: in.Note, Options: in.Options, ActionRef: in.ActionRef}, &domain.Option{ActionRef: in.ActionRef}, nil
 	}
 	if in.Kind != "option" {
 		return in, nil, nil
@@ -282,11 +296,47 @@ func (s *TurnService) validateTurnInput(headID string, in domain.TurnInput) (dom
 		return domain.TurnInput{}, nil, Err("STALE_OPTION", "该选项不存在于当前回合", 409)
 	}
 	if in.Text != matched.Text {
-		return domain.TurnInput{Kind: "text", Text: in.Text}, nil, nil
+		return domain.TurnInput{Kind: "text", Text: in.Text, Note: in.Note, Options: in.Options}, nil, nil
 	}
 	return domain.TurnInput{
 		Kind:      "option",
 		Text:      matched.Text,
+		Note:      in.Note,
+		Options:   in.Options,
 		OptionRef: &domain.OptionRef{NodeID: ref.NodeID, OptionID: ref.OptionID},
 	}, matched, nil
+}
+
+// maxPlayerNoteRunes 是玩家注记的长度上限。
+//
+// 注记会随每轮请求进入上下文，且会抄进节点内容：不设上限时，一段粘贴进来的长文
+// 会变成“每个回合都背一份”的预算消耗。超限直接拒绝而不是静默截断——玩家写的
+// 要求被悄悄削掉一半，比明确报错更坑。
+const maxPlayerNoteRunes = 2000
+
+func normalizePlayerNote(note string) (string, error) {
+	note = strings.TrimSpace(note)
+	if note == "" {
+		return "", nil
+	}
+	if utf8.RuneCountInString(note) > maxPlayerNoteRunes {
+		return "", Err("NOTE_TOO_LONG", fmt.Sprintf("注记最多 %d 个字符", maxPlayerNoteRunes), 400)
+	}
+	return note, nil
+}
+
+// normalizeOptionsMode 校验选项呈现模式。
+//
+// 未知取值一律拒绝而不是归一到 auto：模式决定“要不要给玩家选择”，猜错了会直接
+// 改变玩法体验，而客户端却以为自己设置生效了。
+func normalizeOptionsMode(mode string) (string, error) {
+	if strings.TrimSpace(mode) == "" {
+		return domain.OptionsAuto, nil
+	}
+	switch mode {
+	case domain.OptionsAuto, domain.OptionsAlways, domain.OptionsNever:
+		return mode, nil
+	default:
+		return "", Err("BAD_REQUEST", "选项模式只能是 auto、always 或 never", 400)
+	}
 }
