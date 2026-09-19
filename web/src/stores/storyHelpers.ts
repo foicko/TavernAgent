@@ -302,7 +302,11 @@ export function messagesFromNodes(view: SessionView, turnThinkingMap?: Record<st
       blocks: tc.blocks ?? [],
       options: opts,
       inputText: tc.inputText,
+      inputNote: tc.inputNote,
       checks: tc.checks,
+      changes: tc.changes,
+      injectedMemories: tc.injectedMemories,
+      suppressedOptions: tc.suppressedOptions,
       turnNumber: n.turnNumber,
       thinking,
     });

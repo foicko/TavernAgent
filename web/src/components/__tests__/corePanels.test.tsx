@@ -57,7 +57,24 @@ describe("inventory, character state and memory panels", () => {
     await user.click(screen.getByRole("button", { name: "饮用两份旅行茶" }));
     expect((document.getElementById("story-input") as HTMLTextAreaElement).value).toBe("饮用两份旅行茶");
     await user.click(screen.getByRole("button", { name: "推进剧情" }));
-    expect(send).toHaveBeenCalledExactlyOnceWith("饮用两份旅行茶", "drink.tea");
+    // 第三个参数是本轮注记（非叙事要求）：本次没有写，所以是空串。
+    expect(send).toHaveBeenCalledExactlyOnceWith("饮用两份旅行茶", "drink.tea", "");
+  });
+
+  it("本轮注记与正文分开送，且发完即清空", async () => {
+    const send = vi.fn().mockResolvedValue(undefined);
+    useStory.setState({ send });
+    const user = userEvent.setup();
+    render(<ComposerShelf />);
+    await user.type(document.getElementById("story-input") as HTMLTextAreaElement, "我推门进去。");
+    await user.click(screen.getByRole("button", { name: /注记/ }));
+    const note = screen.getByPlaceholderText(/本轮怎么演/) as HTMLInputElement;
+    await user.type(note, "放慢节奏，多写环境。");
+    await user.click(screen.getByRole("button", { name: "推进剧情" }));
+    // 注记走独立参数：混进正文会被当成角色说过的话。
+    expect(send).toHaveBeenCalledExactlyOnceWith("我推门进去。", undefined, "放慢节奏，多写环境。");
+    // 注记只作用于这一轮，发完就清（留着它会让人以为还在生效）。
+    expect(note.value).toBe("");
   });
 
   it("keeps the relationship bars and mood on the same character", () => {

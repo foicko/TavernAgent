@@ -230,7 +230,7 @@ export const api = {
       expectedHeadId: string;
       expectedVersion: number;
       expectedCharacterId: string;
-      input: { kind: string; text: string; optionRef?: unknown };
+      input: { kind: string; text: string; note?: string; options?: string; optionRef?: unknown };
     },
   ) =>
     http<AcceptResult>(
@@ -269,7 +269,7 @@ export const api = {
   regenerateTurn: (
     sessionId: string,
     branchId: string,
-    req: { nodeId: string; idempotencyKey?: string; name?: string; expectedCharacterId: string; recheck?: boolean },
+    req: { nodeId: string; idempotencyKey?: string; name?: string; expectedCharacterId: string; recheck?: boolean; note?: string; options?: string },
   ) =>
     http<DeriveResult>(
       "POST",

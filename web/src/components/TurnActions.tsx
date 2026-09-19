@@ -18,8 +18,9 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
   const groups = useStory((s) => s.view?.candidateGroups);
   const viewAt = useStory((s) => s.viewAt);
 
-  const [mode, setMode] = useState<null | "text" | "input">(null);
+  const [mode, setMode] = useState<null | "text" | "input" | "regen">(null);
   const [draft, setDraft] = useState("");
+  const [guidance, setGuidance] = useState("");
 
   const group = msg.parentId ? groups?.[msg.parentId] : undefined;
   const hasCandidates = !!(group && group.length > 1);
@@ -52,6 +53,40 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
             className="btn-quiet"
             onClick={() => setMode(null)}
           >
+            取消
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 重生成引导：原有的两条路只有盲重掷与手工改正文，而“演得不对但说不清怎么改”
+  // 才是最常见的处境。这里让它可以被表达成一句可执行的方向。
+  if (mode === "regen") {
+    return (
+      <div className="turn-editor">
+        <div>
+          ✎ 带要求重演 · 从上一轮状态重新演绎这一段（原时间线保留，可来回对比）
+        </div>
+        <textarea
+          value={guidance}
+          rows={2}
+          onChange={(e) => setGuidance(e.target.value)}
+          placeholder="这一次要怎么演：更克制些、别替我做决定、让 NPC 先开口、跳过路途直接到场…"
+        />
+        <div>
+          <button
+            className="btn-solid"
+            disabled={busy || !guidance.trim()}
+            onClick={() => {
+              void regenerate(msg.id, false, guidance.trim());
+              setMode(null);
+              setGuidance("");
+            }}
+          >
+            按此要求重演
+          </button>
+          <button className="btn-quiet" onClick={() => setMode(null)}>
             取消
           </button>
         </div>
@@ -139,6 +174,17 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
             🎲 重新掷骰
           </button>
         )}
+        <button
+          className="btn-quiet"
+          disabled={busy}
+          onClick={() => {
+            setGuidance("");
+            setMode("regen");
+          }}
+          title="带着一句要求重演这一段（例如：更克制些、让 NPC 先开口）"
+        >
+          ✎ 带要求重演
+        </button>
         <button
           className="btn-quiet"
           disabled={busy}

@@ -50,6 +50,9 @@ export const ComposerShelf: React.FC = () => {
 
   const char = CHARACTER_PRESETS[activeCharKey ?? "custom"] || CHARACTER_PRESETS.custom;
   const [inputText, setInputText] = useState("");
+  // 本轮注记（非叙事要求）。与正文分开存：它不是角色说的话，也不该被当成台词。
+  const [note, setNote] = useState("");
+  const [noteOpen, setNoteOpen] = useState(false);
   const [activeTag, setActiveTag] = useState<"dialogue" | "action" | "subtext" | null>(null);
   const [recentlyUsedTag, setRecentlyUsedTag] = useState<string | null>(null);
   const [showCheckMenu, setShowCheckMenu] = useState(false);
@@ -105,13 +108,16 @@ export const ComposerShelf: React.FC = () => {
     // 立即清空输入框与已选检定，使玩家操作零延迟响应（文字已立即上屏挂载到对话流中）
     setInputText("");
     setSelectedAction(undefined);
+    const attachedNote = note.trim();
+    setNote("");
     try {
-      await sendStory(text, action);
+      await sendStory(text, action, attachedNote);
     } catch {
       // 若异常抛出，安全恢复输入内容
       if (!sessionId || useStory.getState().view?.sessionId === sessionId) {
         setInputText(text);
         setSelectedAction(action);
+        setNote(attachedNote);
       }
       return;
     }
@@ -190,6 +196,7 @@ export const ComposerShelf: React.FC = () => {
 
   const selectedActionObj = selectedAction ? actions.find((a) => a.actionId === selectedAction) : undefined;
   const directorActive = view?.director?.status === "active";
+  const noteAttached = note.trim().length > 0;
 
   return (
     <footer className="composer-shelf">
@@ -210,6 +217,19 @@ export const ComposerShelf: React.FC = () => {
               <span className="btn-icon">🎬</span>
               <span>{directorOpening ? "正在准备工作区…" : "导演模式"}</span>
               {directorActive && <span className="director-pulse-indicator" title="大纲活跃推进中" />}
+            </button>
+
+            <span className="composer-toolbar-divider" aria-hidden="true" />
+
+            <button
+              type="button"
+              className={`composer-tag-btn note-entry ${noteOpen ? "active" : ""} ${noteAttached ? "has-note" : ""}`}
+              onClick={() => setNoteOpen((v) => !v)}
+              title="写一条本轮注记：对这次演绎的要求（不会出现在正文里）"
+              aria-expanded={noteOpen}
+            >
+              <span className="btn-icon">✎</span>
+              <span>{noteAttached ? "已写注记" : "注记"}</span>
             </button>
 
             <span className="composer-toolbar-divider" aria-hidden="true" />
@@ -305,6 +325,34 @@ export const ComposerShelf: React.FC = () => {
             </span>
             <button type="button" className="btn-quiet btn-action-cancel" onClick={() => setSelectedAction(undefined)}>
               ✕ 取消检定
+            </button>
+          </div>
+        )}
+
+        {/* 本轮注记（非叙事）：与正文分开送，提示词里才能分别标注——
+            混进正文会被当成角色说过的话，污染剧情。 */}
+        {noteOpen && (
+          <div className="composer-note-row">
+            <span className="composer-note-label" title="注记只作用于这一轮，不会出现在正文里">✎ 注记</span>
+            <input
+              className="composer-note-input"
+              value={note}
+              maxLength={2000}
+              placeholder="本轮怎么演（不会出现在正文里）：放慢节奏、多写环境、让 NPC 先开口…"
+              onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setNote("");
+                  setNoteOpen(false);
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn-quiet btn-note-clear"
+              onClick={() => { setNote(""); setNoteOpen(false); }}
+            >
+              ✕
             </button>
           </div>
         )}

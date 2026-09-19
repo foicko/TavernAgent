@@ -1,0 +1,154 @@
+/* TurnEvidence：回合依据（变化 / 检定 / 参考记忆）。
+   基调是"安静地摆在那儿"：不抢正文，但一眼能看见结果，想看细节随时展开。 */
+
+.turn-evidence {
+  margin: 10px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.turn-evidence-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.evidence-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--r-m, 8px);
+  background: var(--bg-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 100%;
+}
+
+.evidence-chip-label {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.evidence-chip-text {
+  color: var(--text-main);
+  overflow-wrap: anywhere;
+}
+
+/* 正向变化用成功色、负向用危险色；无色则说明这条变化没有方向（如场景切换）。 */
+.evidence-chip.is-up {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--border-light));
+}
+
+.evidence-chip.is-up .evidence-chip-text {
+  color: var(--color-success);
+}
+
+.evidence-chip.is-down {
+  border-color: color-mix(in srgb, var(--color-danger-text) 40%, var(--border-light));
+}
+
+.evidence-chip.is-down .evidence-chip-text {
+  color: var(--color-danger-text);
+}
+
+.dice-chip {
+  background: var(--accent-subtle, var(--bg-subtle));
+}
+
+/* 玩家注记是“要求”而不是“结果”，用虚线与斜体与其它筹码分开。 */
+.note-chip {
+  border-style: dashed;
+  background: transparent;
+  font-style: italic;
+}
+
+.note-chip .evidence-chip-text {
+  font-style: normal;
+}
+
+.turn-evidence-toggle {
+  align-self: flex-start;
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: var(--r-s, 4px);
+}
+
+.turn-evidence-toggle:hover {
+  color: var(--accent-solid);
+}
+
+.turn-evidence-toggle:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+.turn-evidence-panel {
+  border: 1px solid var(--border-light);
+  border-radius: var(--r-m, 8px);
+  background: var(--bg-subtle);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.evidence-section > h4 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  text-transform: none;
+}
+
+.evidence-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.evidence-row-title {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.evidence-row-text {
+  color: var(--text-main);
+  overflow-wrap: anywhere;
+}
+
+.evidence-row-note {
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.evidence-footnote {
+  margin: 2px 0 0;
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* 被收起的选项：用中性虚线标记，别让它看起来像一条"结果"。 */
+.muted-chip {
+  border-style: dotted;
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.muted-chip .evidence-chip-text {
+  color: var(--text-dim);
+}

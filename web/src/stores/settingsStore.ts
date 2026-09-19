@@ -11,6 +11,13 @@ import type { ModelInstance, ProbeResult, ProviderConfig } from "../app/types";
 
 export type OptionMode = "direct" | "fill-edit";
 
+/**
+ * 选项呈现频率。默认 auto（只在关键节点给）：选项太密会把玩家训练成“点选项”
+ * 而不是扮演，而扮演才是这类产品的留存来源；但完全去掉又会让卡住的玩家没有台阶。
+ * 取值必须与后端 domain.OptionsModes 一致。
+ */
+export type OptionsFrequency = "auto" | "always" | "never";
+
 interface SettingsState {
   // 实例与槽位
   models: ModelInstance[];
@@ -21,6 +28,7 @@ interface SettingsState {
   probes: Record<string, ProbeResult>;
   // 偏好
   optionMode: OptionMode;
+  optionsFrequency: OptionsFrequency;
   autoContinue: boolean;
   settingsOpen: boolean;
 
@@ -32,6 +40,7 @@ interface SettingsState {
   setReasoningEffort: (effort: string) => Promise<void>;
   probeModel: (modelId: string, format: boolean) => Promise<ProbeResult | undefined>;
   setOptionMode: (m: OptionMode) => void;
+  setOptionsFrequency: (m: OptionsFrequency) => void;
   setAutoContinue: (v: boolean) => void;
   openSettings: () => void;
   closeSettings: () => void;
@@ -45,6 +54,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   probing: {},
   probes: {},
   optionMode: "direct",
+  optionsFrequency: "auto",
   autoContinue: false,
   settingsOpen: false,
 
@@ -116,6 +126,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   },
 
   setOptionMode: (m) => set({ optionMode: m }),
+  setOptionsFrequency: (m) => set({ optionsFrequency: m }),
   setAutoContinue: (v) => set({ autoContinue: v }),
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),

@@ -5,10 +5,11 @@
 import { useState, type ReactNode } from "react";
 import type { ModelInstance } from "../app/types";
 import { connectionTitle, windowLabel, type Role } from "../lib/modelLabels";
-import { slotsUsingModel, useSettings } from "../stores/settingsStore";
+import { slotsUsingModel, useSettings, type OptionsFrequency } from "../stores/settingsStore";
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
+import { Field, Select } from "../ui/Field";
 import { Section } from "../ui/Section";
 import { Switch } from "../ui/Switch";
 import { ConnectionForm } from "./ConnectionForm";
@@ -23,8 +24,10 @@ export function ModelSettingsPage() {
   const providers = useSettings((s) => s.providers);
   const saving = useSettings((s) => s.saving);
   const optionMode = useSettings((s) => s.optionMode);
+  const optionsFrequency = useSettings((s) => s.optionsFrequency);
   const autoContinue = useSettings((s) => s.autoContinue);
   const setOptionMode = useSettings((s) => s.setOptionMode);
+  const setOptionsFrequency = useSettings((s) => s.setOptionsFrequency);
   const setAutoContinue = useSettings((s) => s.setAutoContinue);
 
   const [editing, setEditing] = useState<Editing>(null);
@@ -180,6 +183,16 @@ export function ModelSettingsPage() {
           checked={autoContinue}
           onChange={setAutoContinue}
         />
+        <Field label="剧情选项" hint="选项是关键时刻的提示，不是每轮的固定配菜：给得太密会把人训练成“点选项”而不是扮演">
+          <Select
+            value={optionsFrequency}
+            onChange={(e) => setOptionsFrequency(e.target.value as OptionsFrequency)}
+          >
+            <option value="auto">只在关键节点给（推荐）</option>
+            <option value="always">每轮都给</option>
+            <option value="never">从不给</option>
+          </Select>
+        </Field>
       </Section>
     </div>
   );

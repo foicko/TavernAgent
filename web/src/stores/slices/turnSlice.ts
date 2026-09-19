@@ -272,7 +272,7 @@ export async function openDerivedBranch(sessionId: string, branchId: string, tur
 }
 
 export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
-  send: async (text: string, actionRef?: string) => {
+  send: async (text: string, actionRef?: string, note?: string) => {
     if (get().viewNodeId) { set({ error: "历史快照为只读，请先返回最新进度或从此处新建分支" }); return; }
     if (!text.trim() || isTurnBusy(get().phase) || get().directorCommanding) return;
     const key = useUi.getState().activeCharKey;
@@ -291,7 +291,18 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     }
     if (resolveCharKeyFromSession(view) !== useUi.getState().activeCharKey) { set({ error: "角色归属已变化，请重新打开会话" }); return; }
     const owner = scope();
-    const input: TurnInput = { kind: actionRef ? "action" : "text", text, ...(actionRef ? { actionRef } : {}) };
+    // 注记与选项模式是本回合的演绎指令：与正文分开送，提示词里才能分别标注
+    // （混进 text 会被当成角色说过的话）。选项模式取当前偏好，逐回合随请求走。
+    const trimmedNote = (note ?? "").trim();
+    const optionsFrequency = useSettings.getState().optionsFrequency;
+    const input: TurnInput = {
+      kind: actionRef ? "action" : "text", text,
+      ...(actionRef ? { actionRef } : {}),
+      ...(trimmedNote ? { note: trimmedNote } : {}),
+      // 只在偏离默认时带上：auto 是两端一致的默认值，省略它能让请求载荷与
+      // 审计记录都保持最小（服务端缺省即 auto）。
+      ...(optionsFrequency !== "auto" ? { options: optionsFrequency } : {}),
+    };
     set({ phase: "generating", error: null, pendingInput: null, lastInput: input });
     try {
       await startTurn(view, `k_${Date.now()}_${incrementSendSeq()}`, input, owner);

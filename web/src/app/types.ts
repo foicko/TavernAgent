@@ -23,12 +23,43 @@ export interface CheckResult {
 export interface TurnContent {
   inputKind: string;
   inputText: string;
+  /** 玩家注记（非叙事）：只约束这一次演绎，不会出现在正文里。 */
+  inputNote?: string;
+  /** 本回合采用的选项呈现模式（auto/always/never）。 */
+  optionsMode?: string;
+  /** 模型给出但按“只在关键节点”规则未呈现的选项条数。 */
+  suppressedOptions?: number;
+  /** 本轮生效的状态变化摘要（由服务端从领域事件推导，不由模型书写）。 */
+  changes?: StateChange[];
+  /** 本轮实际注入上下文的记忆（当时的文本快照）。 */
+  injectedMemories?: MemoryRef[];
   // 后端在 contentJson 里附带的溯源信息（回合 ID），历史卡片据此关联思考过程。
   provenance?: { turnId?: string };
 	checks?: CheckResult[];
   blocks: TextBlock[];
   options: Option[];
   mood?: { characterId: string; moodCode: string; text: string } | null;
+}
+
+/**
+ * 一条已生效的世界变化。由服务端从领域事件推导，不是模型的叙述。
+ * delta 有方向时（关系、物品数量）前端据此上色。
+ */
+export interface StateChange {
+  kind: "relationship" | "mood" | "goal" | "promise" | "item" | "scene" | "milestone" | "secret";
+  label: string;
+  text: string;
+  delta?: number;
+}
+
+/**
+ * 本轮参考的一条记忆。text 是**当时的文本快照**：记忆会被修订，
+ * 只存 ID 的话回看旧回合看到的就不是当时真正影响演绎的那句话了。
+ */
+export interface MemoryRef {
+  memoryId: string;
+  text: string;
+  kind?: string;
 }
 
 export interface PlotNode {

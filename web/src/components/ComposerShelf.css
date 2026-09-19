@@ -19,3 +19,51 @@
     padding: 0 6px;
   }
 }
+
+/* ---- 本轮注记（非叙事要求） ----
+   刻意做成"输入框上方的一条窄带"：它约束的是这一轮怎么演，而不是剧情内容，
+   视觉上必须与正文输入区分开，否则玩家会以为自己在写台词。 */
+.composer-note-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 2px 0;
+  padding: 5px 10px;
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--r-m, 8px);
+  background: var(--bg-subtle);
+}
+
+.composer-note-label {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.composer-note-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 12px;
+  font-family: var(--font);
+  line-height: 1.7;
+  outline: none;
+}
+
+.composer-note-input::placeholder {
+  color: var(--text-dim);
+}
+
+.composer-note-row .btn-note-clear {
+  flex: none;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.composer-tag-btn.note-entry.has-note {
+  color: var(--accent-solid);
+}

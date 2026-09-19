@@ -4,6 +4,7 @@ import { renderInlineMarkdown } from "../lib/inlineMarkdown";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { useStory } from "../stores/storyStore";
 import { TurnActions } from "./TurnActions";
+import { TurnEvidence } from "./TurnEvidence";
 import "./HistoricalStory.css";
 
 /** 历史已提交回合的思考过程折叠组件 */
@@ -114,13 +115,6 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       </div>
                       <span className="turn-time-stamp">回合 #{msg.turnNumber ?? idx}</span>
                     </div>
-                    {msg.checks?.map(check => (
-                      <div key={check.rollId} className="memory-evidence" aria-label="规则检定结果">
-                        🎲 {check.attribute}：d20 = {check.natural}，修正 {check.attributeModifier >= 0 ? "+" : ""}{check.attributeModifier}，总值 {check.total} / DC {check.dc}
-                        {" · "}{({ success: "成功", failure: "失败", critical_success: "大成功", critical_failure: "大失败" })[check.outcome]}
-                        {check.permanentEffect && <div>永久影响：{check.permanentEffect}</div>}
-                      </div>
-                    ))}
                     {msg.thinking && <CommittedThinkingSection thinking={msg.thinking} />}
                     <div className="dialogue-content-text">
                       {msg.blocks.map((b, bi) => {
@@ -149,9 +143,11 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       })}
                     </div>
 
+                    {/* 本轮依据：检定 / 状态变化 / 参考记忆（为什么这样演） */}
+                    {!msg.draft && <TurnEvidence msg={msg} />}
+
                     {/* 回合微操作与候选切换条 (技术契约 §7) */}
                     {!msg.draft && <TurnActions msg={msg} />}
-
                     {/* 最新回合意图抉择卡 */}
                     {idx === storyMessages.length - 1 &&
                       phase === "idle" &&

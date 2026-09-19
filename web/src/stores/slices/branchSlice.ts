@@ -12,6 +12,7 @@ import {
   toErr,
 } from "../storyHelpers";
 import { detachTurnStream, openDerivedBranch, recoverActiveTurn } from "./turnSlice";
+import { useSettings } from "../settingsStore";
 import { emptyDirectorState } from "./directorSlice";
 
 export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
@@ -65,17 +66,25 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     }), "返回当前进度");
   },
 
-  regenerate: async (nodeId: string, recheck = false) => {
+  // regenerate 的 guidance 是"重生成引导"：原有的两条路只有盲重掷与手工改正文，
+  // 而"演得不对但说不清怎么改"才是最常见的处境。引导随请求走，并留在节点内容里
+  // （TurnContent.InputNote），回看时能分辨这是不是一次带要求的重演。
+  regenerate: async (nodeId: string, recheck = false, guidance?: string) => {
     const owner = scope();
     const view = get().view;
     if (!view || isTurnBusy(get().phase)) return;
     set({ phase: "generating", error: null });
     try {
+      const note = (guidance ?? "").trim();
       const res = await api.regenerateTurn(view.sessionId, view.branch.branchId, {
         nodeId,
         expectedCharacterId: view.characterId,
         idempotencyKey: `rg_${Date.now()}_${incrementSendSeq()}`,
         recheck,
+        ...(note ? { note } : {}),
+        ...(useSettings.getState().optionsFrequency !== "auto"
+          ? { options: useSettings.getState().optionsFrequency }
+          : {}),
       });
       if (!owns(owner)) return;
       await openDerivedBranch(view.sessionId, res.branchId, res.turnId);

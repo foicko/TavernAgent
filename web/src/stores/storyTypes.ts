@@ -1,10 +1,12 @@
 // storyTypes: 统一状态与契约类型定义
 import type {
   CheckResult,
+  MemoryRef,
   MemoryView,
   MemoryUsage,
   SessionSummary,
   SessionView,
+  StateChange,
   TextBlock,
   WorldState,
 } from "../app/types";
@@ -27,7 +29,15 @@ export interface StoryMessage {
   options: OptionView[];
   draft?: boolean;
   inputText?: string;
+  /** 玩家注记（非叙事）：回看时要能分清“当时要求怎么演”。 */
+  inputNote?: string;
   checks?: CheckResult[];
+  /** 已生效的状态变化（服务端从领域事件推导）。 */
+  changes?: StateChange[];
+  /** 本轮实际注入上下文的记忆快照。 */
+  injectedMemories?: MemoryRef[];
+  /** 模型给出但按"只在关键节点"规则未呈现的选项条数。 */
+  suppressedOptions?: number;
   turnNumber?: number;
   thinking?: string;
 }
@@ -53,6 +63,10 @@ export interface CreateSessionOpts {
 export interface TurnInput {
   kind: string;
   text: string;
+  /** 玩家注记（非叙事）：对本次演绎的要求，不会出现在正文里。 */
+  note?: string;
+  /** 本回合的选项呈现模式（auto/always/never）。 */
+  options?: string;
   actionRef?: string;
   optionRef?: { nodeId: string; optionId: string };
 }
@@ -120,7 +134,7 @@ export interface StoryState extends DirectorSliceState {
   clearPackError: () => void;
 
   // Turn Actions
-  send: (text: string, actionRef?: string) => Promise<void>;
+  send: (text: string, actionRef?: string, note?: string) => Promise<void>;
   chooseOption: (o: OptionView) => Promise<void>;
   cancel: () => Promise<void>;
   continueTurn: () => Promise<void>;
@@ -139,7 +153,7 @@ export interface StoryState extends DirectorSliceState {
   switchBranch: (branchId: string) => Promise<void>;
   viewAt: (nodeId: string) => Promise<void>;
   backToHead: () => Promise<void>;
-  regenerate: (nodeId: string, recheck?: boolean) => Promise<void>;
+  regenerate: (nodeId: string, recheck?: boolean, guidance?: string) => Promise<void>;
   editPlayerInput: (nodeId: string, text: string) => Promise<void>;
   editAssistantText: (nodeId: string, blocks: TextBlock[]) => Promise<void>;
   forkFrom: (nodeId: string, name?: string) => Promise<void>;
