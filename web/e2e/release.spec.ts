@@ -175,12 +175,16 @@ test("story graph opens immutable history and the memory graph restores focus", 
   await expect(page.locator(".history-read-banner")).toHaveCount(0);
   await expect(input).toBeEnabled();
   if (info.project.name === "narrow") await page.getByLabel("角色立绘与状态").click();
-  const trigger = page.getByTitle("全景心智星图预览");
-  await trigger.click();
+  // 星图入口现在位于**认知记忆库弹窗**里（不再挂在右栏）：必须先把记忆库打开。
+  // 弹窗会先于星图关掉（触发按钮随之卸载），所以关闭星图后焦点回到记忆库的入口磁贴。
+  const memoryTile = page.getByTitle("点击查看并修订亲历观察、推测记忆与心智星图");
+  await memoryTile.click();
+  await expect(page.getByRole("dialog", { name: "认知记忆库" })).toBeVisible();
+  await page.getByTitle("全景心智星图预览").click();
   await expect(page.getByRole("dialog", { name: "心智与实体星图" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "心智与实体星图" })).toHaveCount(0);
-  await expect(trigger).toBeFocused();
+  await expect(memoryTile).toBeFocused();
 });
 
 test("metered Gemini story package renders long history and retained facts", async ({ page }, info) => {

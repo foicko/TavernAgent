@@ -12,6 +12,20 @@ async function seed(page: Page, title: string, cardId: string) {
   return await created.json() as { sessionId: string; branchId: string };
 }
 
+// seedCard 把卡片真正放进**服务端**卡库，并返回服务端认可的 cardId。
+//
+// 这里不再 poke localStorage：卡库已是服务端真相，本地那份只是离线缓存，而且会被
+// 服务端列表覆盖——只写 localStorage 的卡片根本不会出现在名册里（旧写法就是这么
+// 失效的）。返回服务端给的 ID 而不是回传入参：ID 可能由内容派生，测试不该猜它。
+async function seedCard(page: Page, cardId: string): Promise<string> {
+  const created = await page.request.post("/api/v1/cards", {
+    data: JSON.stringify({ ...fixture, cardId }),
+    headers: { "Content-Type": "application/json" },
+  });
+  expect(created.status()).toBe(200);
+  return (await created.json() as { cardId: string }).cardId;
+}
+
 async function sessionIds(page: Page): Promise<string[]> {
   const body = await (await page.request.get("/api/v1/sessions")).json();
   return (body.sessions ?? []).map((s: { sessionId: string }) => s.sessionId);
@@ -67,16 +81,10 @@ test("删除故事：两步确认后服务端与列表同时消失", async ({ pa
 });
 
 test("删除角色卡：只从卡库移除，已有存档照常打开", async ({ page }, info) => {
-  const cardId = `relcard_${unique(info.project.name)}`;
+  const tag = unique(info.project.name);
+  const cardId = await seedCard(page, `relcard_${tag}`);
   const sessionTitle = `卡库里的故事 ${cardId}`;
   const session = await seed(page, sessionTitle, cardId);
-  // 角色卡库是纯前端 localStorage：这里直接铺一张卡进去，不绕道导入流程
-  // （导入流程另有 release.spec 覆盖）。
-  await page.addInitScript(([id]) => {
-    window.localStorage.setItem("tavernagent_imported_character_cards", JSON.stringify([
-      { cardId: id, characterId: id, name: "验收角色卡", shortName: "验收角色卡", characterJson: "", importedAt: new Date().toISOString() },
-    ]));
-  }, [cardId]);
   await page.goto("/");
   await expect(page.locator(".composer-textarea")).toBeEnabled();
   await openTab(page, info.project.name, "characters");

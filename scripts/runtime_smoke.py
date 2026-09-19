@@ -49,9 +49,12 @@ def smoke(binary, output):
     startup = None
     flags = 0
     if os.name == "nt":
-        # A hidden console lets the test deliver the same Ctrl+C as a user.
-        # CREATE_NO_WINDOW has no console to receive control events.
-        flags = subprocess.CREATE_NEW_CONSOLE
+        # 目标必须自成控制台 + 自成进程组，否则无法**定向**投递控制事件：
+        #   * CREATE_NEW_CONSOLE 给它一个可接收事件的真实控制台（CREATE_NO_WINDOW
+        #     根本没有控制台，GenerateConsoleCtrlEvent 无处可去）；
+        #   * CREATE_NEW_PROCESS_GROUP 让它成为进程组根（组 ID = 进程 ID）。
+        #     代价是 CTRL+C 在该组内被禁用——所以下面发的是 CTRL_BREAK（见注释）。
+        flags = subprocess.CREATE_NEW_CONSOLE | subprocess.CREATE_NEW_PROCESS_GROUP
         startup = subprocess.STARTUPINFO()
         startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startup.wShowWindow = 0
@@ -145,12 +148,20 @@ def smoke(binary, output):
             check("SQLite integrity", db.execute("PRAGMA integrity_check").fetchone()[0] == "ok")
             check("branch lock released", db.execute("SELECT active_turn_id FROM branches WHERE branch_id=?", (bid,)).fetchone()[0] == "")
         if os.name == "nt":
+            # 用 CTRL_BREAK 定向投递给子进程组，而不是发 CTRL_C 到整个控制台：
+            # CTRL_C 无法限定到某个进程组（dwProcessGroupId 对它无效），而且会先
+            # 经过控制台宿主，在非真实控制台的环境（pty / CI 壳层 / 沙箱）里既不可靠
+            # 也可能被上游吞掉——表现为“信号发了但进程不退出”。CTRL_BREAK 是本函数
+            # 文档支持的唯一可定向事件，Go 运行时同样把它作为 os.Interrupt 投递，
+            # 因此优雅关停路径不变。
+            # 这段代码必须先 FreeConsole 再 AttachConsole：未依附到目标控制台时
+            # GenerateConsoleCtrlEvent 会直接失败。
             signal_script = """import ctypes,sys
 k=ctypes.windll.kernel32
 k.FreeConsole()
 if not k.AttachConsole(int(sys.argv[1])): raise OSError(ctypes.get_last_error())
 k.SetConsoleCtrlHandler(None, True)
-if not k.GenerateConsoleCtrlEvent(0, 0): raise OSError(ctypes.get_last_error())
+if not k.GenerateConsoleCtrlEvent(1, int(sys.argv[1])): raise OSError(ctypes.get_last_error())
 """
             subprocess.run([sys.executable, "-c", signal_script, str(process.pid)], check=True, timeout=10, creationflags=subprocess.CREATE_NO_WINDOW)
         else:

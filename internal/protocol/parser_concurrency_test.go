@@ -16,7 +16,6 @@ func TestStreamParserInFlightIsSafeDuringConcurrentFeed(t *testing.T) {
 	p := NewStreamParser()
 	var wg sync.WaitGroup
 	stop := make(chan struct{})
-	rr := strings.NewReader("")
 
 	reader := func() {
 		defer wg.Done()
@@ -40,7 +39,7 @@ func TestStreamParserInFlightIsSafeDuringConcurrentFeed(t *testing.T) {
 	// 逐字节喂入（最坏切分），同时让读侧一直并发地读。
 	for seq := 1; seq <= 6; seq++ {
 		line := mkBlock(seq, BlockNarration, "潮水漫过甲板，远处的灯塔亮了一次。") + "\n"
-		rr = strings.NewReader(line)
+		rr := strings.NewReader(line)
 		for {
 			b, err := rr.ReadByte()
 			if err != nil {
