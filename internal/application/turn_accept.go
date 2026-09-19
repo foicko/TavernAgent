@@ -32,6 +32,10 @@ type acceptPrepared struct {
 	payloadHash string
 	inputJSON   string
 	sess        *domain.Session
+	// baseHeadID/baseVersion 是本次回合真正追加到的位置（受理时解析出的分支头）。
+	// 它与客户端声明的 base 可能差几个维护节点，见 headMatchesClient。
+	baseHeadID  string
+	baseVersion int64
 }
 
 // Accept 受理回合并调度执行。幂等键相同且载荷一致时返回既有回合（T01）。
@@ -95,25 +99,41 @@ func (s *TurnService) acceptPreflight(sessionID, branchID string, req *TurnAccep
 	inputJSON, _ := json.Marshal(req.Input)
 	payloadHash := acceptPayloadHash(req)
 	if existing != nil {
-		if err := checkReplayMatches(existing, branchID, req, payloadHash, string(inputJSON)); err != nil {
+		if err := s.checkReplayMatches(existing, branchID, req, payloadHash, string(inputJSON)); err != nil {
 			return nil, err
 		}
 		return &acceptPrepared{existing: existing}, nil
 	}
-	if branch.HeadNodeID != req.ExpectedHeadID || branch.Version != req.ExpectedVersion {
+	if !headMatchesClient(s.store, branch, req.ExpectedHeadID, req.ExpectedVersion) {
 		return nil, Err("HEAD_CONFLICT", "分支已变化，请刷新当前节点", 409)
 	}
 	if req.Recheck && (matched == nil || matched.ActionRef == "") {
 		return nil, Err("CHECK_REQUIRED", "该回合没有可重新掷骰的规则动作", 400)
 	}
-	return &acceptPrepared{input: input, matched: matched, payloadHash: payloadHash, inputJSON: string(inputJSON), sess: sess}, nil
+	// 基准取**当前分支头**而不是客户端声明值：客户端读到视图之后、提交之前，
+	// 后台维护写入（认知/记忆）完全可能已经落地并抬高 head 与 version。
+	// 回合的父节点、状态推演与提交 CAS 都必须基于真实的分支头，否则受理能过、
+	// 提交却会撞车——读者白花一次生成，最后只拿到"分支已变化"。
+	return &acceptPrepared{input: input, matched: matched, payloadHash: payloadHash, inputJSON: string(inputJSON), sess: sess,
+		baseHeadID: branch.HeadNodeID, baseVersion: branch.Version}, nil
 }
 
 // checkReplayMatches 校验重放请求与既有回合一致（同分支、同基准、同载荷），
 // 不一致即 409——幂等键不能复用到别的内容上。
-func checkReplayMatches(existing *domain.TurnRequest, branchID string, req *TurnAcceptRequest, payloadHash, inputJSON string) error {
+//
+// 基准比较沿用受理时的口径：回合记录里存的是**受理时解析出的位置**，而重放请求
+// 带的是客户端原本声明的头——两者相差几个维护节点是正常的（认知落地在前、
+// 客户端刷新在后），不能因此把客户端的原样重试判成"换了内容"。
+func (s *TurnService) checkReplayMatches(existing *domain.TurnRequest, branchID string, req *TurnAcceptRequest, payloadHash, inputJSON string) error {
 	legacy := req.DeriveNodeID == "" && !req.Recheck && req.ReuseRollID == "" && existing.PayloadHash == hashString(inputJSON) && existing.Mode == acceptMode(req.Mode)
-	if existing.BranchID != branchID || existing.ExpectedHeadID != req.ExpectedHeadID || existing.ExpectedVersion != req.ExpectedVersion || (existing.PayloadHash != payloadHash && !legacy) {
+	baseMatches := existing.ExpectedHeadID == req.ExpectedHeadID && existing.ExpectedVersion == req.ExpectedVersion
+	if !baseMatches {
+		// 两个方向都看：重放可能落后于既有回合的基准（最常见的原样重试），
+		// 也可能因为客户端刷新过而走到前面去。
+		baseMatches = headMatchesClient(s.store, &domain.Branch{HeadNodeID: existing.ExpectedHeadID, Version: existing.ExpectedVersion}, req.ExpectedHeadID, req.ExpectedVersion) ||
+			headMatchesClient(s.store, &domain.Branch{HeadNodeID: req.ExpectedHeadID, Version: req.ExpectedVersion}, existing.ExpectedHeadID, existing.ExpectedVersion)
+	}
+	if existing.BranchID != branchID || !baseMatches || (existing.PayloadHash != payloadHash && !legacy) {
 		return Err("IDEMPOTENCY_CONFLICT", "相同幂等键不能用于不同内容", 409)
 	}
 	return nil
@@ -136,7 +156,7 @@ func (s *TurnService) persistAcceptedTurn(ctx context.Context, sessionID, branch
 	turn := &domain.TurnRequest{
 		TurnID: id.New(), SessionID: sessionID, BranchID: branchID,
 		IdempotencyKey: req.IdempotencyKey, PayloadHash: prep.payloadHash,
-		ExpectedHeadID: req.ExpectedHeadID, ExpectedVersion: req.ExpectedVersion,
+		ExpectedHeadID: prep.baseHeadID, ExpectedVersion: prep.baseVersion,
 		AfterTurnID: req.AfterTurnID, Status: domain.TurnQueued, Mode: mode,
 		RulesetVersion: ruleset,
 		InputJSON:      prep.inputJSON,

@@ -180,8 +180,19 @@ func (s *MemoryService) OverlayContext(ctx context.Context, sessionID, branchID,
 	if head == nil || head.SessionID != sessionID {
 		return nil, Err("NOT_FOUND", "分支不存在", 404)
 	}
-	if (patch.ExpectedHeadID != "" && patch.ExpectedHeadID != head.HeadNodeID) || (patch.ExpectedVersion != nil && *patch.ExpectedVersion != head.Version) {
-		return nil, Err("HEAD_CONFLICT", "分支已变化，请刷新后修订", 409)
+	// 与受理回合同一口径：只追加了维护节点（后台认知/导演事件）不算分支变化，
+	// 否则读者刚改完一条记忆、认知节点恰好落地，就会被要求刷新重做。
+	if patch.ExpectedHeadID != "" || patch.ExpectedVersion != nil {
+		expectedHead, expectedVersion := head.HeadNodeID, head.Version
+		if patch.ExpectedHeadID != "" {
+			expectedHead = patch.ExpectedHeadID
+		}
+		if patch.ExpectedVersion != nil {
+			expectedVersion = *patch.ExpectedVersion
+		}
+		if !headMatchesClient(s.store, head, expectedHead, expectedVersion) {
+			return nil, Err("HEAD_CONFLICT", "分支已变化，请刷新后修订", 409)
+		}
 	}
 
 	visible, err := s.store.ProjectedMemories(head.HeadNodeID)
