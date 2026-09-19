@@ -159,6 +159,12 @@ export const api = {
     http<{ authenticated: boolean; required: boolean }>("GET", "/api/v1/auth/status"),
   pair: (pin: string) =>
     http<{ ok: boolean; token: string }>("POST", "/api/v1/auth/pair", { pin }),
+  // 桌面壳桥（浏览器部署下 desktop=false / theme 返回 404）：
+  // 窗口跑在 loopback 源上，拿不到 Wails 注入的 window.runtime，
+  // 原生窗口配色只能由前端通过同源接口回传。
+  desktopInfo: () => http<{ desktop: boolean }>("GET", "/api/v1/desktop"),
+  setDesktopTheme: (mode: "light" | "dark") =>
+    http<void>("POST", "/api/v1/desktop/theme", { mode }),
   listSessions: () => http<{ sessions: SessionSummary[] }>("GET", "/api/v1/sessions"),
   // 永久删除一个故事及其全部数据。不可撤销，调用方必须先与用户确认；
   // 仍有进行中的回合时服务端返回 409 SESSION_BUSY。

@@ -2,7 +2,7 @@
 //
 // 无头服务入口（cmd/tavernagent）与桌面壳（cmd/tavernagent-desktop）共用它，
 // 这样"桌面端"与"命令行端"必定是同一个后端——桌面模式不是另写一套装配，
-// 只是换个方式承载同一个 http.Handler（进程内资源服务 vs TCP 监听）。
+// 而是同一个 http.Handler 承载在同一个 loopback 监听上，只是多开了一个原生窗口。
 //
 // 分层说明：组合根是唯一允许同时依赖全部适配器的地方；应用层/领域层依旧不知道
 // 数据库、网络与模型 SDK 的存在。
@@ -37,9 +37,8 @@ type Config struct {
 	FallbackKind string
 	// PIN 是局域网配对码；留空表示不启用配对鉴权（仅适合不开放 TCP 的单机桌面模式）。
 	PIN string
-	// EmbeddedHost 是嵌入式桌面壳的虚拟主机名（Windows 下 Wails 用 wails.localhost）。
-	// 它只在进程内由桌面壳的资源服务提供，不对外监听；留空表示纯网络服务模式。
-	EmbeddedHost string
+	// SetNativeTheme 是桌面壳注入的原生窗口配色回调（浏览器部署留空）。
+	SetNativeTheme func(mode string)
 	// AllowedOrigins 是额外放行的浏览器来源（开发代理等）。
 	AllowedOrigins []string
 	// Ablation 是启动期生效的消融开关（评估用）。
@@ -164,7 +163,7 @@ func Bootstrap(cfg Config) (*App, error) {
 		Cards:          cardSvc,
 		StaticFS:       staticFS,
 		AuthPIN:        cfg.PIN,
-		EmbeddedHost:   cfg.EmbeddedHost,
+		SetNativeTheme: cfg.SetNativeTheme,
 		AllowedOrigins: cfg.AllowedOrigins,
 		Metrics:        metrics,
 		Usage:          store,
