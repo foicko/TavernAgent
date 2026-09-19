@@ -122,12 +122,16 @@ describe("inventory, character state and memory panels", () => {
     await user.click(screen.getByRole("button", { name: "📌 置顶" }));
     expect(reviseMemory).toHaveBeenLastCalledWith("memory", { pinned: true });
     await user.click(screen.getByRole("button", { name: "隐藏" }));
-    expect(screen.queryByText("向导来自南方的港口。")).toBeNull();
-    await user.click(screen.getByRole("button", { name: "隐藏 (1)" }));
-    await user.click(screen.getByRole("button", { name: "恢复" }));
-    expect(reviseMemory).toHaveBeenLastCalledWith("memory", { hidden: false });
-    await user.click(screen.getByRole("button", { name: "生效 (1)" }));
-    expect(screen.getByText("向导来自南方的港口。")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText("向导来自南方的港口。")).toBeNull());
+    // 展开隐藏组、恢复、再展开生效组：这三步的按钮都是**异步状态更新之后**才出现的（或
+    // 计数会变），所以用 findByRole 等它到位、用 waitFor 等 mock 收到调用。直接 getByRole +
+    // 立即断言在共享/慢 runner（如 macos-15-intel）上会偶发失败——只在慢机器上出现的红灯
+    // 比没有断言更糟，因为它训练人忽略红灯。
+    await user.click(await screen.findByRole("button", { name: "隐藏 (1)" }));
+    await user.click(await screen.findByRole("button", { name: "恢复" }));
+    await waitFor(() => expect(reviseMemory).toHaveBeenLastCalledWith("memory", { hidden: false }));
+    await user.click(await screen.findByRole("button", { name: "生效 (1)" }));
+    await waitFor(() => expect(screen.getByText("向导来自南方的港口。")).toBeTruthy());
   });
 
   it("closes a staged item menu and disables memory edits when entering history", async () => {
