@@ -62,13 +62,17 @@ def main():
         parser.error("--smoke requires exactly this host's target: " + host_target())
     if not args.skip_install:
         run(["pnpm", "install", "--frozen-lockfile"], ROOT/"web")
+    # 前端产物必须在**任何 Go 命令之前**生成：web/embed.go 用 `//go:embed all:dist`
+    # 把界面嵌进二进制，干净检出（dist 是生成物、不入库）下 go test / go vet 会直接
+    # 报 “pattern all:dist: no matching files found”。此前这一段排在检查之后，于是
+    # 每个平台的矩阵作业都在第一步就挂掉——而它在本地永远不会重现，因为本地跑过
+    # 一次前端构建后 dist 就一直留在磁盘上了。
+    run(["pnpm", "build"], ROOT/"web")
     if not args.skip_checks:
         for command in (["pnpm", "typecheck"], ["pnpm", "lint"], ["pnpm", "test"]):
             run(command, ROOT/"web")
         run(["go", "test", "-count=1", "./..."])
         run(["go", "vet", "./..."])
-    # Always rebuild before embedding, including when checks are skipped.
-    run(["pnpm", "build"], ROOT/"web")
     files = sources()
     manifest = {name: digest(ROOT/name) for name in files}
     source_hash = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
