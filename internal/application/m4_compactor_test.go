@@ -115,7 +115,7 @@ func TestM4CompactorPressureSurvivesNormalTrigger(t *testing.T) {
 	defer c.Close()
 	c.TriggerPressure(sid, bid, head, 4)
 	c.TriggerAsync(sid, bid, head)
-	deadline := time.Now().Add(3 * time.Second)
+	deadline := time.Now().Add(asyncWaitBudget)
 	for time.Now().Before(deadline) {
 		sums, _ := st.SummariesOnPath(head)
 		if len(sums) > 0 {

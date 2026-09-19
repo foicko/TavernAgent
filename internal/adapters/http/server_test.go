@@ -11,6 +11,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -418,9 +420,23 @@ func patchJSON(t *testing.T, url, body string) (int, string) {
 	return resp.StatusCode, string(b)
 }
 
+// asyncWaitBudget 是"等异步工作落到预期状态"的预算（回合提交、在途快照出现……）。
+//
+// 这类等待测的是**最终会发生**，不是延迟。几秒在开发机上绰绰有余，但在共享 CI runner
+// （尤其 Windows）上会变成偶发红灯——而只在慢机器上出现的失败比没有断言更糟：它训练人
+// 忽略红灯。所以给足预算，并留一个环境变量给更慢的环境继续调大。
+var asyncWaitBudget = func() time.Duration {
+	if raw := os.Getenv("TAVERNAGENT_TEST_WAIT_SECONDS"); raw != "" {
+		if seconds, err := strconv.Atoi(raw); err == nil && seconds > 0 {
+			return time.Duration(seconds) * time.Second
+		}
+	}
+	return 60 * time.Second
+}()
+
 func waitTurnDone(t *testing.T, base, turnID string) {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(asyncWaitBudget)
 	for time.Now().Before(deadline) {
 		_, body := getJSON(t, base+"/api/v1/turns/"+turnID)
 		if strings.Contains(body, `"committed"`) {

@@ -62,7 +62,7 @@ func TestTurnViewExposesInFlightDraft(t *testing.T) {
 	}
 	json.Unmarshal([]byte(resp2.body), &accepted)
 
-	deadline := time.Now().Add(3 * time.Second)
+	deadline := time.Now().Add(asyncWaitBudget)
 	var draft struct {
 		AttemptID string `json:"attemptId"`
 		InFlight  *struct {

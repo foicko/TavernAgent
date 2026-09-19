@@ -77,12 +77,12 @@ func TestPartialDraftExposesInFlightBlock(t *testing.T) {
 	}
 	select {
 	case <-prov.started:
-	case <-time.After(3 * time.Second):
+	case <-time.After(asyncWaitBudget):
 		t.Fatal("provider 未开始输出")
 	}
 
 	var partial *PartialTurn
-	deadline := time.Now().Add(3 * time.Second)
+	deadline := time.Now().Add(asyncWaitBudget)
 	for time.Now().Before(deadline) {
 		if p, ok := turnSvc.PartialDraft(tr.TurnID); ok {
 			partial = p
@@ -107,7 +107,7 @@ func TestPartialDraftExposesInFlightBlock(t *testing.T) {
 		t.Fatalf("cancel: %v", err)
 	}
 	waitTurn(t, turnSvc, tr.TurnID, domain.TurnCancelled)
-	deadline = time.Now().Add(3 * time.Second)
+	deadline = time.Now().Add(asyncWaitBudget)
 	for time.Now().Before(deadline) {
 		if _, ok := turnSvc.PartialDraft(tr.TurnID); !ok {
 			if _, stale := turnSvc.PartialDraft("turn_never_existed"); stale {

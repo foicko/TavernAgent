@@ -67,7 +67,7 @@ func commandTestDirector(t *testing.T, s *DirectorService, st *sqlite.Store, sid
 }
 func waitDirector(t *testing.T, s *DirectorService, requestID string) *domain.DirectorRequest {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
+	deadline := time.Now().Add(asyncWaitBudget)
 	for time.Now().Before(deadline) {
 		r, err := s.GetRequest(requestID)
 		if err != nil {
