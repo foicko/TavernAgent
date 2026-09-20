@@ -128,9 +128,13 @@ describe("inventory, character state and memory panels", () => {
     // 立即断言在共享/慢 runner（如 macos-15-intel）上会偶发失败——只在慢机器上出现的红灯
     // 比没有断言更糟，因为它训练人忽略红灯。
     await user.click(await screen.findByRole("button", { name: "隐藏 (1)" }));
-    await user.click(await screen.findByRole("button", { name: "恢复" }));
+    const restoreBtn = await screen.findByRole("button", { name: "恢复" });
+    await waitFor(() => expect((restoreBtn as HTMLButtonElement).disabled).toBe(false));
+    await user.click(restoreBtn);
     await waitFor(() => expect(reviseMemory).toHaveBeenLastCalledWith("memory", { hidden: false }));
-    await user.click(await screen.findByRole("button", { name: "生效 (1)" }));
+    const effectiveBtn = await screen.findByRole("button", { name: "生效 (1)" });
+    await waitFor(() => expect((effectiveBtn as HTMLButtonElement).disabled).toBe(false));
+    await user.click(effectiveBtn);
     await waitFor(() => expect(screen.getByText("向导来自南方的港口。")).toBeTruthy());
   });
 
