@@ -16,21 +16,21 @@
 
 ---
 
-## 🌟 项目亮点
+## 项目亮点
 
 **TavernAgent** 是一个专为 AI 角色扮演、交互跑团与非线性剧情推演设计的现代化桌面/Web 应用。采用 **Go 高性能无头服务 + SQLite 嵌入式存储 + React 19 现代化单页应用** 架构，将数据完全保留在你的本地设备上。
 
-- 🎨 **Liquid Glass 灵动流光设计系统**：现代玻璃毛玻璃微光材质（Backdrop Blur / Specular Highlight / Fluid Responsive），沉浸而不喧宾夺主。
-- 🎭 **零内置冗余 · 纯净卡片生态**：完整兼容 **SillyTavern V2 / V3 角色卡**（PNG 及 JSON 格式），支持动态立绘、宏变量替换（`{{char}}`/`{{user}}`）、世界书联动与物品规则。
-- 🧠 **CoW 认知记忆银行 (Cognitive Memory Bank)**：基于 Copy-on-Write 因果树的结构化记忆系统，具备五层递进引文溯源校验、实体消歧与置信度治理，支持手动锁定、修订与屏蔽。
-- 🎬 **导演模式 (Story Director)**：跳脱单次回合的一问一答，与 AI 宏观讨论剧情走向，编排多阶段大纲（Beats），由 AI 自动根据正文推演完成进度。
-- 🌿 **因果树分支拓扑 (Causal Branching Graph)**：时光回溯无需重新开局，在可视化的叙事树上随时回溯历史节点、开辟平行时间线分叉。
-- ⚡ **三槽位模型解耦架构**：主线对话 (Primary)、导演协商 (Assist)、记忆反思 (Reflection) 三槽独立指派，全面支持 OpenAI Compatible、Anthropic Messages、DeepSeek、Gemini、Ollama 等协议。
-- 📦 **便携安全离线存档**：无需配置外部数据库，单键导出 `.tavernpack` 剧情包，数据随身携带；支持局域网配对安全游玩。
+- **Liquid Glass 设计系统**：现代玻璃毛玻璃微光材质（Backdrop Blur / Specular Highlight / Fluid Responsive），沉浸而不喧宾夺主。
+- **纯净卡片生态**：完整兼容 **SillyTavern V2 / V3 角色卡**（PNG 及 JSON 格式），支持动态立绘、宏变量替换（`{{char}}`/`{{user}}`）、世界书联动与物品规则。
+- **CoW 认知记忆银行 (Cognitive Memory Bank)**：基于 Copy-on-Write 因果树的结构化记忆系统，具备五层递进引文溯源校验、实体消歧与置信度治理，支持手动锁定、修订与屏蔽。
+- **导演模式 (Story Director)**：跳脱单次回合的一问一答，与 AI 宏观讨论剧情走向，编排多阶段大纲（Beats），由 AI 自动根据正文推演完成进度。
+- **因果树分支拓扑 (Causal Branching Graph)**：时光回溯无需重新开局，在可视化的叙事树上随时回溯历史节点、开辟平行时间线分叉。
+- **三槽位模型解耦架构**：主线对话 (Primary)、导演协商 (Assist)、记忆反思 (Reflection) 三槽独立指派，全面支持 OpenAI Compatible、Anthropic Messages、DeepSeek、Gemini、Ollama 等协议。
+- **便携安全离线存档**：无需配置外部数据库，单键导出 `.tavernpack` 剧情包，数据随身携带；支持局域网配对安全游玩。
 
 ---
 
-## 📸 核心界面导览
+## 核心界面导览
 
 ### 1. 灵动舞台与流光输入台
 - **对白 / 动作 / 心声结构化渲染**：输入台自带快捷动作标记（`「对白」`、`*动作描写*`、`（潜台词）`）与 TRPG 规则技能检定（D20 / DC）。
@@ -49,7 +49,7 @@
 
 ---
 
-## 🚀 快速上手
+## 快速上手
 
 ### 环境准备
 - **Go**: 1.22 或更高版本
@@ -87,14 +87,14 @@ go run ./cmd/tavernagent -provider mock
 go run ./cmd/tavernagent -data ./data -addr 127.0.0.1:8890
 ```
 
-1. 打开浏览器进入系统界面，点击左侧栏底部的 **⚙️ 设置** 按钮。
+1. 打开浏览器进入系统界面，点击左侧栏底部的 **设置** 按钮。
 2. 在「连接管理」中点击「添加连接」，选择预设服务商（如 DeepSeek、OpenAI、Anthropic、Ollama、OneAPI 等），填入模型名称与 API Key。
 3. 将新建的连接分别指派给 **主线生成 (Primary)**、**导演模式 (Assist)**、**记忆反思 (Reflection)**。
 4. 在左侧栏「角色库」点击 **「+ 导入 / 创建角色卡」**，拖入你的 PNG / JSON 角色卡，填写你的玩家身份，即可开启专属于你的冒险推演！
 
 ---
 
-## 🛠️ 项目架构
+## 项目架构
 
 ```
 TavernAgent/
@@ -122,7 +122,7 @@ TavernAgent/
 
 ---
 
-## 🧪 自动化测试与工程门禁
+## 自动化测试与工程门禁
 
 本项目践行严格的自动化测试与发布准入机制，确保高可用与代码健壮性：
 
@@ -145,7 +145,7 @@ python scripts/release_audit.py --strict
 
 ---
 
-## 📖 进阶功能与配置
+## 进阶功能与配置
 
 - **局域网共享与配对**：支持绑定 `-addr 0.0.0.0:8890`，终端自动输出 6 位一次性安全 PIN 配对码，供移动设备或平板在家庭局域网内安全访问。
 - **剧情包离线归档**：可随时导出当前故事为 `.tavernpack` 文件，包含完整事件流、快照、因果树结构与记忆库，方便设备迁移与归档分享。
@@ -153,7 +153,7 @@ python scripts/release_audit.py --strict
 
 ---
 
-## 📄 开源许可证
+## 开源许可证
 
 本项目基于 [MIT 许可证](LICENSE) 开源。  
 第三方组件与依赖协议请参见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 与 [docs/ASSET_LICENSES.md](docs/ASSET_LICENSES.md)。

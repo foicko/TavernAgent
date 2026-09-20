@@ -107,28 +107,30 @@
   height: 36px;
   padding: 0 16px;
   border-radius: var(--radius-full);
-  background: var(--glass-bg, var(--bg-surface));
-  backdrop-filter: var(--glass-blur-sm, blur(10px));
-  -webkit-backdrop-filter: var(--glass-blur-sm, blur(10px));
+  background: var(--bg-surface);
   border: 1px solid var(--glass-border, var(--border-mid));
-  box-shadow: var(--glass-specular-top), 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-specular-top);
   color: var(--text-main);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease;
 }
 
 .btn-primary-send.roster-import-btn:hover {
-  background: var(--glass-bg-hover, var(--bg-elevated));
+  background: var(--bg-elevated);
   border-color: var(--accent-solid);
   color: var(--accent-solid);
-  transform: translateY(-1px);
-  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-specular-top);
 }
 
 .btn-primary-send.roster-import-btn:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 .char-card-thumb.char-card-thumb--fallback {

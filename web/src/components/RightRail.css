@@ -27,46 +27,46 @@
   gap: var(--space-3);
   padding: 10px 14px;
   background: var(--glass-bg-subtle, rgba(255, 255, 255, 0.45));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--glass-border, var(--border-light));
   border-radius: var(--radius-lg, 12px);
-  box-shadow: 0 2px 8px -2px var(--glass-shadow, rgba(0, 0, 0, 0.05)),
-              inset 0 1px 0 var(--glass-specular, rgba(255, 255, 255, 0.6));
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-specular-top);
   cursor: pointer;
+  touch-action: manipulation;
   text-align: left;
   width: 100%;
   color: var(--text-main);
-  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease;
   position: relative;
   overflow: hidden;
   font-family: inherit;
 }
 
 [data-theme="dark"] .hud-nav-tile {
-  background: var(--glass-bg-subtle, rgba(20, 20, 26, 0.55));
-  border-color: var(--glass-border, rgba(255, 255, 255, 0.08));
-  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.35),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg-subtle);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-specular-top);
 }
 
 .hud-nav-tile:hover {
-  background: var(--glass-bg-hover, rgba(255, 255, 255, 0.7));
-  border-color: var(--accent-glow, rgba(120, 150, 200, 0.4));
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 16px -3px var(--glass-shadow-hover, rgba(0, 0, 0, 0.08)),
-              inset 0 1px 0 var(--glass-specular, rgba(255, 255, 255, 0.8));
+  background: var(--glass-bg-elevated);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-specular-top);
 }
 
 [data-theme="dark"] .hud-nav-tile:hover {
-  background: var(--glass-bg-hover, rgba(28, 28, 36, 0.75));
-  border-color: var(--accent-glow, rgba(150, 180, 255, 0.35));
-  box-shadow: 0 6px 18px -3px rgba(0, 0, 0, 0.5),
-              inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: var(--glass-bg-elevated);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-specular-top);
 }
 
 .hud-nav-tile:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 .hud-nav-tile-icon {
@@ -687,22 +687,19 @@
 .rail-right .meter-bar-fill {
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+  transition: width var(--duration-fast, 250ms) var(--ease-smooth-out);
 }
 
 .rail-right #meter-fill-aff {
-  background: linear-gradient(90deg, #f43f5e, #fb7185);
-  box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+  background: #e11d48;
 }
 
 .rail-right #meter-fill-trust {
-  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
-  box-shadow: 0 0 8px rgba(14, 165, 233, 0.35);
+  background: #0284c7;
 }
 
 .rail-right #meter-fill-alert {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+  background: #d97706;
 }
 
 /* 背包与契约现代微晶空状态卡片 */

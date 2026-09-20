@@ -1,4 +1,5 @@
-/* 下拉菜单：唯一实现（替代 .menu / .check-popover-menu / .probe-* 三套）。 */
+/* 下拉菜单：唯一实现（替代 .menu / .check-popover-menu / .probe-* 三套）。
+   融合 transitions.dev 锚点感知进入动效与 shadcn 极简菜单排版 */
 .ui-menu {
   position: absolute;
   z-index: var(--z-dropdown);
@@ -10,37 +11,71 @@
   padding: var(--space-1);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  background: var(--glass-bg);
+  background: var(--glass-bg-elevated);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-shadow-lg), inset 0 1px 1.5px 0 var(--glass-specular-top);
+  box-shadow: var(--shadow-float), inset 0 1px 1.5px 0 var(--glass-specular-top);
+  transform-origin: top left;
+  animation: ui-menu-in var(--duration-fast, 250ms) var(--ease-smooth-out);
 }
 
 .ui-menu--up {
   bottom: calc(100% + var(--space-2));
+  transform-origin: bottom left;
+  animation-name: ui-menu-up-in;
 }
 
 .ui-menu--down {
   top: calc(100% + var(--space-2));
+  transform-origin: top left;
 }
 
 .ui-menu--align-end {
   right: 0;
+  transform-origin: top right;
+}
+
+.ui-menu--up.ui-menu--align-end {
+  transform-origin: bottom right;
 }
 
 .ui-menu--align-start {
   left: 0;
 }
 
+@keyframes ui-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes ui-menu-up-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .ui-menu__header {
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border-light);
   font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
   color: var(--text-dim);
 }
 
 .ui-menu__empty {
-  padding: var(--space-3);
+  padding: var(--space-4);
   font-size: var(--fs-sm);
   color: var(--text-dim);
   text-align: center;
@@ -52,16 +87,19 @@
   justify-content: space-between;
   gap: var(--space-3);
   width: 100%;
-  padding: var(--space-2) var(--space-3);
+  padding: 7px var(--space-3);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-main);
   font: inherit;
   text-align: left;
   cursor: pointer;
   outline: none;
-  transition: var(--transition-fast);
+  touch-action: manipulation;
+  transition: background-color var(--duration-quick, 150ms) ease,
+              transform var(--duration-micro, 80ms) ease,
+              color var(--duration-quick, 150ms) ease;
 }
 
 .ui-menu__item:focus {
@@ -72,11 +110,11 @@
 .ui-menu__item:focus-visible {
   background: var(--glass-pill-bg-hover);
   outline: none;
-  transform: translateX(2px);
+  transform: translateX(1px);
 }
 
 .ui-menu__item:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--accent-solid);
+  box-shadow: inset 0 0 0 1.5px var(--accent-solid);
 }
 
 .ui-menu__item--active {
@@ -86,8 +124,9 @@
 }
 
 .ui-menu__item:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
 }
 
 .ui-menu__text {
@@ -99,7 +138,7 @@
 }
 
 .ui-menu__item-title {
-  font-size: var(--fs-md);
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -132,4 +171,13 @@
   font-size: var(--fs-xs);
   color: var(--text-dim);
   line-height: var(--lh-tight);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-menu {
+    animation: none !important;
+  }
+  .ui-menu__item:hover:not(:disabled) {
+    transform: none !important;
+  }
 }

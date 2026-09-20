@@ -1,8 +1,8 @@
-/* 状态胶囊 / 标签 / 状态点：参考 LiquidGlassBarKit.kt GlassPillChip 规范 */
+/* 状态胶囊 / 标签 / 状态点：参考 beautifului.dev tool chips 与 shadcn badge 规范 */
 .ui-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   border-radius: var(--radius-full);
   border: 1px solid var(--glass-border);
   background: var(--glass-pill-bg);
@@ -14,10 +14,10 @@
   max-width: 100%;
   min-width: 0;
   box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top);
-  transition: transform 0.2s var(--glass-spring-ease),
-              background-color 0.16s ease,
-              border-color 0.16s ease,
-              color 0.16s ease;
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              border-color var(--duration-quick, 150ms) ease,
+              color var(--duration-quick, 150ms) ease;
 }
 
 .ui-pill--sm {
@@ -29,24 +29,24 @@
   background: var(--glass-pill-bg-active);
   border-color: var(--glass-pill-bg-active);
   color: var(--glass-pill-text-active);
-  box-shadow: 0 2px 8px -1px var(--glass-shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .ui-pill--success {
-  border-color: var(--color-success);
-  background: transparent;
+  border-color: rgba(46, 125, 50, 0.3);
+  background: rgba(46, 125, 50, 0.08);
   color: var(--color-success);
 }
 
 .ui-pill--warning {
-  border-color: var(--color-warning);
-  background: transparent;
+  border-color: rgba(237, 108, 2, 0.3);
+  background: rgba(237, 108, 2, 0.08);
   color: var(--color-warning);
 }
 
 .ui-pill--info {
-  border-color: var(--color-info);
-  background: transparent;
+  border-color: rgba(2, 136, 209, 0.3);
+  background: rgba(2, 136, 209, 0.08);
   color: var(--color-info);
 }
 
@@ -64,8 +64,8 @@
 
 .ui-status-dot {
   flex-shrink: 0;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--text-dim);
 }

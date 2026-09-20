@@ -64,19 +64,21 @@
   color: var(--text-dim);
 }
 
-/* 单张抉择卡：Liquid Glass 悬浮卡片 + 意图色胶囊发光标 + 顶层镜面高光 */
+/* 单张抉择卡：Liquid Glass 悬浮卡片 + 意图色胶囊发光标 + 顶层镜面高光 (参考 rareui.com 规范) */
 .decision-card-btn {
   position: relative;
   overflow: hidden;
   padding: 10px 14px 10px 18px;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md, 8px);
-  background: var(--glass-bg, var(--bg-surface));
-  backdrop-filter: var(--glass-blur-sm, blur(8px));
-  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
-  box-shadow: var(--glass-specular-top), 0 2px 8px rgba(0, 0, 0, 0.03);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-specular-top);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease;
 }
 
 .decision-card-btn::before {
@@ -88,15 +90,18 @@
   width: 3.5px;
   border-radius: var(--radius-full);
   background: var(--decision-accent, var(--accent-solid));
-  box-shadow: 0 0 6px var(--decision-accent, transparent);
-  transition: all 0.2s ease;
+  transition: opacity var(--duration-quick, 150ms) ease;
 }
 
 .decision-card-btn:hover {
-  background: var(--glass-bg-hover, var(--bg-elevated));
+  background: var(--bg-elevated);
   border-color: var(--border-mid);
-  transform: translateY(-2px);
-  box-shadow: var(--glass-specular-top), 0 6px 18px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-specular-top);
+}
+
+.decision-card-btn:active {
+  transform: scale(0.98);
 }
 
 .decision-card-btn:hover::before {

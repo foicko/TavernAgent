@@ -1,4 +1,5 @@
-/* 折叠区：把"高级参数"这类低频内容收起来。 */
+/* 折叠区：把"高级参数"这类低频内容收起来。
+   遵循 transitions.dev 顺滑旋转指示器与 shadcn 手风琴排版 */
 .ui-disclosure {
   border-top: 1px solid var(--border-light);
 }
@@ -8,7 +9,7 @@
   align-items: center;
   gap: var(--space-2);
   width: 100%;
-  padding: var(--space-2) 0;
+  padding: 10px 0;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -16,6 +17,8 @@
   font-size: var(--fs-sm);
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
+  transition: color var(--duration-quick, 150ms) ease;
 }
 
 .ui-disclosure__trigger:hover {
@@ -23,14 +26,16 @@
 }
 
 .ui-disclosure__trigger:focus-visible {
-  outline: 2px solid var(--accent-solid);
-  outline-offset: 2px;
+  outline: 2px solid var(--ring);
+  outline-offset: var(--ring-offset, 2px);
+  border-radius: var(--radius-sm);
 }
 
 .ui-disclosure__caret {
   flex-shrink: 0;
   font-size: 10px;
-  transition: var(--transition-fast);
+  display: inline-block;
+  transition: transform var(--duration-fast, 250ms) var(--ease-smooth-out);
 }
 
 .ui-disclosure__caret--open {
@@ -42,6 +47,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: var(--fw-medium);
 }
 
 .ui-disclosure__spacer {
@@ -52,6 +58,7 @@
   flex-shrink: 0;
   color: var(--text-dim);
   font-size: var(--fs-xs);
+  font-family: var(--font-mono);
 }
 
 .ui-disclosure__body {
@@ -59,4 +66,16 @@
   flex-direction: column;
   gap: var(--space-3);
   padding-bottom: var(--space-3);
+  animation: ui-disclosure-in var(--duration-fast, 250ms) var(--ease-smooth-out);
+}
+
+@keyframes ui-disclosure-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

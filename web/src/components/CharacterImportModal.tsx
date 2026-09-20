@@ -180,7 +180,7 @@ export const CharacterImportModal: React.FC = () => {
       // creating 期间拦截关闭入口：按钮可见但禁用，Esc 与遮罩点击同样无效。
       dismissible={!creating}
       closeDisabled={creating}
-      title={<span id="char-import-title" className="char-import-title">🎭 选择角色，开始新故事</span>}
+      title={<span id="char-import-title" className="char-import-title">选择角色，开始新故事</span>}
     >
       {/* 拖拽上传区 */}
       <div
@@ -226,7 +226,7 @@ export const CharacterImportModal: React.FC = () => {
             )}
             <div className="char-import-preview__main">
               <div className="char-import-preview__title-row">
-                <span className="char-import-preview__name">✨ 解析就绪：{importedPreview.name}</span>
+                <span className="char-import-preview__name">解析就绪：{importedPreview.name}</span>
                 {importedPreview.format && (
                   <span className="char-import-preview__format">{importedPreview.format}</span>
                 )}
@@ -261,7 +261,7 @@ export const CharacterImportModal: React.FC = () => {
           </label>}
           {importedPreview.warnings && importedPreview.warnings.length > 0 && (
             <div className="char-import-preview__warnings">
-              ⚠️ 兼容提示：{importedPreview.warnings.join("；")}
+              兼容提示：{importedPreview.warnings.join("；")}
             </div>
           )}
           <div className="btn-row char-import-preview__actions">

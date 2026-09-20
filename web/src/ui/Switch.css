@@ -1,4 +1,5 @@
-/* 开关：真实 checkbox 语义 + 轨道外观，保留 label 可访问名。 */
+/* 开关：真实 checkbox 语义 + 轨道外观，保留 label 可访问名。
+   遵循 transitions.dev 顺滑物理移动与 shadcn 聚焦规范 */
 .ui-switch-wrap {
   display: flex;
   flex-direction: column;
@@ -13,6 +14,7 @@
   font-size: var(--fs-sm);
   color: var(--text-main);
   user-select: none;
+  touch-action: manipulation;
 }
 
 .ui-switch input {
@@ -26,12 +28,14 @@
 .ui-switch__track {
   position: relative;
   flex-shrink: 0;
-  width: 30px;
-  height: 17px;
+  width: 32px;
+  height: 18px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-mid);
   background: var(--bg-subtle);
-  transition: var(--transition-fast);
+  transition: background-color var(--duration-fast, 250ms) var(--ease-smooth-out),
+              border-color var(--duration-fast, 250ms) var(--ease-smooth-out),
+              box-shadow var(--duration-quick, 150ms) ease;
 }
 
 .ui-switch__track::after {
@@ -39,11 +43,13 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--text-dim);
-  transition: var(--transition-fast);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform var(--duration-fast, 250ms) var(--ease-smooth-out),
+              background-color var(--duration-fast, 250ms) ease;
 }
 
 .ui-switch input:checked + .ui-switch__track {
@@ -52,17 +58,18 @@
 }
 
 .ui-switch input:checked + .ui-switch__track::after {
-  left: 15px;
+  transform: translateX(14px);
   background: var(--accent-contrast);
 }
 
 .ui-switch input:focus-visible + .ui-switch__track {
-  outline: 2px solid var(--accent-solid);
-  outline-offset: 2px;
+  outline: 2px solid var(--ring);
+  outline-offset: var(--ring-offset, 2px);
 }
 
 .ui-switch input:disabled + .ui-switch__track {
   opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .ui-switch--disabled {
@@ -80,5 +87,5 @@
 .ui-switch__hint {
   font-size: var(--fs-xs);
   color: var(--text-dim);
-  padding-left: 38px;
+  padding-left: 40px;
 }

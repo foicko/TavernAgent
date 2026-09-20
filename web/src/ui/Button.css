@@ -1,4 +1,5 @@
-/* 按钮：唯一来源的四态（primary / quiet / ghost / danger）× 两尺寸。 */
+/* 按钮：唯一来源的四态（primary / quiet / ghost / danger）× 两尺寸。
+   融合 transitions.dev 触感响应 (active: scale(0.98)) 与 shadcn 聚焦规范 */
 .ui-btn {
   display: inline-flex;
   align-items: center;
@@ -15,18 +16,25 @@
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  transition: var(--transition-fast);
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease,
+              opacity var(--duration-quick, 150ms) ease;
 }
 
 .ui-btn--md {
-  height: 30px;
+  height: 32px;
   padding: 0 var(--space-3);
 }
 
 .ui-btn--sm {
-  height: 24px;
+  height: 25px;
   padding: 0 var(--space-2);
   font-size: var(--fs-sm);
+  border-radius: var(--radius-sm);
 }
 
 .ui-btn--block {
@@ -34,27 +42,36 @@
 }
 
 .ui-btn:focus-visible {
-  outline: 2px solid var(--accent-solid);
-  outline-offset: 2px;
+  outline: 2px solid var(--ring);
+  outline-offset: var(--ring-offset, 2px);
 }
 
 .ui-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
+}
+
+.ui-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .ui-btn--primary {
   background: var(--accent-solid);
   border-color: var(--accent-solid);
   color: var(--accent-contrast);
-  box-shadow: 0 2px 8px -1px var(--glass-shadow), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
-  transition: transform 0.2s var(--glass-spring-ease), box-shadow 0.16s ease, opacity 0.16s ease;
+  box-shadow: var(--shadow-sm), inset 0 1px 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .ui-btn--primary:hover:not(:disabled) {
   opacity: 0.94;
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px -1px var(--glass-shadow), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-md), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.32);
+}
+
+.ui-btn--primary:active:not(:disabled) {
+  transform: scale(0.98);
+  opacity: 0.90;
 }
 
 .ui-btn--quiet {
@@ -62,23 +79,19 @@
   background: var(--glass-bg-subtle);
   backdrop-filter: var(--glass-blur-subtle);
   -webkit-backdrop-filter: var(--glass-blur-subtle);
-  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top), 0 1px 2px var(--glass-shadow);
-  transition: transform 0.2s var(--glass-spring-ease),
-              background-color 0.16s ease,
-              border-color 0.16s ease,
-              color 0.16s ease,
-              box-shadow 0.16s ease;
+  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top), var(--shadow-sm);
 }
 
 .ui-btn--quiet:hover:not(:disabled) {
   border-color: var(--glass-border-hover);
   background: var(--glass-bg-elevated);
-  transform: translateY(-0.5px) scale(1.02);
-  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 3px 8px -1px var(--glass-shadow);
+  transform: translateY(-0.5px);
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), var(--shadow-md);
 }
 
 .ui-btn--quiet:active:not(:disabled) {
-  transform: translateY(0.5px) scale(0.98);
+  transform: scale(0.98);
+  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top);
 }
 
 .ui-btn--ghost {
@@ -91,6 +104,11 @@
   color: var(--text-main);
 }
 
+.ui-btn--ghost:active:not(:disabled) {
+  transform: scale(0.98);
+  background: var(--bg-elevated);
+}
+
 .ui-btn--danger {
   border-color: var(--color-warn-border);
   color: var(--color-danger-text);
@@ -98,16 +116,21 @@
 
 .ui-btn--danger:hover:not(:disabled) {
   background: var(--color-danger-bg);
+  border-color: var(--color-danger-text);
+}
+
+.ui-btn--danger:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 /* 图标按钮：正方形、无内边距、以 label 作为可访问名 */
 .ui-icon-btn {
-  width: 30px;
+  width: 32px;
   padding: 0;
 }
 
 .ui-icon-btn.ui-btn--sm {
-  width: 24px;
+  width: 25px;
 }
 
 .ui-btn__spinner {
@@ -127,6 +150,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ui-btn,
+  .ui-btn:hover,
+  .ui-btn:active {
+    transform: none !important;
+    transition: none !important;
+  }
   .ui-btn__spinner {
     animation-duration: 2s;
   }

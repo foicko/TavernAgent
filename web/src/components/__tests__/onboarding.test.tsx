@@ -109,7 +109,7 @@ describe("character onboarding", () => {
     await upload(user, "first.json");
     await upload(user, "second.json");
     await act(async () => { first.resolve(preview); });
-    expect(screen.getByText("✨ 解析就绪：后选择的角色")).toBeTruthy();
+    expect(screen.getByText("解析就绪：后选择的角色")).toBeTruthy();
     await upload(user, "closed.json");
     await user.click(screen.getByLabelText("关闭角色导入"));
     await act(async () => { useUi.getState().setCharImportOpen(true); afterClose.resolve(preview); });
@@ -137,7 +137,7 @@ describe("character onboarding", () => {
     useStory.setState({ createSession });
     const user = userEvent.setup();
     render(<CharacterImportModal />);
-    expect(await screen.findByText("✨ 解析就绪：库中角色")).toBeTruthy();
+    expect(await screen.findByText("解析就绪：库中角色")).toBeTruthy();
     expect(mocks.getCard).toHaveBeenCalledWith("card_lib");
     expect(mocks.preview).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "开启冒险" }));

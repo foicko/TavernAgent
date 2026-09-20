@@ -6,7 +6,7 @@
   overflow: hidden;
   border-radius: var(--radius-xl, 18px);
   border: 1px solid var(--glass-border, var(--border-light));
-  box-shadow: var(--glass-specular-top), 0 24px 60px rgba(0, 0, 0, 0.16);
+  box-shadow: var(--glass-specular-top), 0 16px 36px -8px rgba(0, 0, 0, 0.16), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }
 
 /* 恢复原有内容区留白（Modal 默认 space-4 / space-3）。 */

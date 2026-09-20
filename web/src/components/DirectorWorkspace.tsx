@@ -196,7 +196,7 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
         }
       }}>
       <header className="director-header">
-        <div><p className="director-eyebrow">STORY DIRECTOR</p><h2 id="director-title">导演模式</h2><p>先商量故事的方向，再让角色走进下一幕。</p></div>
+        <div><h2 id="director-title">导演模式</h2><p>先商量故事的方向，再让角色走进下一幕。</p></div>
         <button type="button" className="btn-quiet" onClick={() => void close()}>返回剧情 ×</button>
       </header>
       {readonly && <div className="director-notice">正在查看历史大纲，此处只读。回到当前节点或从此处分叉后，可以调整未来安排。</div>}

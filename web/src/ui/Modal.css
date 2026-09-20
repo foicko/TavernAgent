@@ -1,4 +1,5 @@
-/* 弹窗：唯一实现，具备液态玻璃背景折射与水晶高光边框 */
+/* 弹窗：唯一实现，具备液态玻璃背景折射与水晶高光边框
+   融合 transitions.dev 模态框升起动效与 shadcn 优雅卡片海拔 */
 .ui-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -7,9 +8,10 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
-  background: rgba(14, 15, 18, 0.45);
+  background: rgba(14, 15, 18, 0.50);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  animation: ui-modal-backdrop-in var(--duration-fast, 250ms) var(--ease-smooth-out);
 }
 
 .ui-modal {
@@ -21,9 +23,30 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  box-shadow: var(--glass-shadow-lg), inset 0 1px 1.5px 0 var(--glass-specular-top);
+  border-radius: var(--radius-xl, 18px);
+  box-shadow: var(--shadow-float), inset 0 1px 1.5px 0 var(--glass-specular-top);
   outline: none;
+  animation: ui-modal-in var(--duration-fast, 250ms) var(--ease-smooth-out);
+}
+
+@keyframes ui-modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .ui-modal--sm {
@@ -79,10 +102,11 @@
   font-weight: var(--fw-semibold);
   color: var(--text-main);
   line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
 }
 
 .ui-modal__description {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   font-size: var(--fs-sm);
   color: var(--text-muted);
   line-height: var(--lh-tight);
@@ -127,6 +151,13 @@
 
   .ui-modal {
     max-height: 94vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-xl, 18px) var(--radius-xl, 18px) 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-modal-backdrop,
+  .ui-modal {
+    animation: none !important;
   }
 }
