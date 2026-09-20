@@ -8,7 +8,10 @@ async function seed(page: Page, title: string) {
     playerName: "测试旅人", openingVariantId: "harbor",
   } });
   expect(created.status()).toBe(201);
-  const result = await created.json();
+  const result = await created.json() as { sessionId: string; rootNodeId: string };
+  await page.addInitScript((id) => {
+    try { window.localStorage.setItem("tavernagent.lastSessionId", id); } catch {}
+  }, result.sessionId);
   await page.goto("/");
   await expect(page.locator(".breadcrumb-title")).toHaveText(title);
   return result;
@@ -129,6 +132,8 @@ test("Chinese composition never submits on IME confirmation; network retry prese
   await page.getByRole("button", { name: /重试/ }).last().click();
   await expect(page.getByText(/生成受阻/)).toHaveCount(0);
   await expect(page.locator(".player-speech-text").last()).toContainText("断线后只提交一次");
+  await expect(page.locator(".active-streaming-turn")).toHaveCount(0);
+  await expect(input).toBeEnabled();
   expect(requests).toBe(2);
 });
 
