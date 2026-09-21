@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	_ "modernc.org/sqlite"
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
 )
@@ -55,7 +54,7 @@ func Open(dataDir string, clock ports.Clock) (*Store, error) {
 		"&_pragma=journal_mode(WAL)" +
 		"&_pragma=busy_timeout(5000)" +
 		"&_pragma=synchronous(FULL)"
-	db, err := sql.Open("sqlite", dsn)
+	db, err := sql.Open(DriverName, dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +90,7 @@ func Open(dataDir string, clock ports.Clock) (*Store, error) {
 		"?_pragma=query_only(1)" +
 		"&_pragma=journal_mode(WAL)" +
 		"&_pragma=busy_timeout(5000)"
-	reader, err := sql.Open("sqlite", readerDSN)
+	reader, err := sql.Open(DriverName, readerDSN)
 	if err != nil {
 		db.Close()
 		return nil, fmt.Errorf("open sqlite reader pool: %w", err)
@@ -168,8 +167,10 @@ func (s *Store) Checkpoint() error {
 
 func (s *Store) SystemInfo() (ports.SystemInfo, error) {
 	info := ports.SystemInfo{}
+	var sqliteVer string
 	row := s.db.QueryRow("SELECT sqlite_version()")
-	_ = row.Scan(&info.DriverVersion)
+	_ = row.Scan(&sqliteVer)
+	info.DriverVersion = fmt.Sprintf("%s (SQLite %s)", DriverKind, sqliteVer)
 	_, err := s.db.Exec("CREATE VIRTUAL TABLE IF NOT EXISTS temp.fts5_probe USING fts5(x)")
 	info.FTS5Available = err == nil
 	if err != nil {
@@ -243,3 +244,45 @@ func UnmarshalState(data string) (*domain.WorldState, error) {
 
 // SaveSummary 写入摘要产物（实现见 summaries.go，此处满足 ports.Store 组合）。
 // SaveSummary 由 summaries.go 提供。
+
+// IntegrityCheck runs SQLite PRAGMA integrity_check and foreign_key_check.
+func (s *Store) IntegrityCheck() ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var issues []string
+	rows, err := s.db.Query("PRAGMA integrity_check")
+	if err != nil {
+		return nil, fmt.Errorf("integrity_check: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var res string
+		if err := rows.Scan(&res); err != nil {
+			return nil, err
+		}
+		if res != "ok" {
+			issues = append(issues, "integrity_check: "+res)
+		}
+	}
+
+	fkRows, err := s.db.Query("PRAGMA foreign_key_check")
+	if err != nil {
+		return nil, fmt.Errorf("foreign_key_check: %w", err)
+	}
+	defer fkRows.Close()
+
+	for fkRows.Next() {
+		var table, parent string
+		var rowid int64
+		var fkid int
+		if err := fkRows.Scan(&table, &rowid, &parent, &fkid); err != nil {
+			return nil, err
+		}
+		issues = append(issues, fmt.Sprintf("foreign_key_violation in table %s, rowid %d -> parent %s", table, rowid, parent))
+	}
+
+	return issues, nil
+}
+

@@ -328,6 +328,7 @@ type OpsStore interface {
 	// 同一份数据集在不同 WAL 状态下测出的延迟会明显不同。
 	Checkpoint() error
 	SystemInfo() (SystemInfo, error)
+	IntegrityCheck() ([]string, error)
 	Close() error
 }
 

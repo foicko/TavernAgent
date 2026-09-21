@@ -11,6 +11,54 @@
   gap: var(--space-3);
 }
 
+/* ---- 弹窗头部分段标签页 ---- */
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.settings-modal-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-main);
+}
+
+.settings-modal-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-surface-subtle, rgba(255, 255, 255, 0.05));
+  padding: 3px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+}
+
+.settings-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.settings-tab-btn.is-active {
+  color: var(--text-main);
+  background: var(--bg-surface-raised, rgba(255, 255, 255, 0.12));
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 /* ---- 角色区 ---- */
 .role-list {
   display: flex;

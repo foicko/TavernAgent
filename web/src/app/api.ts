@@ -23,6 +23,7 @@ import type {
   WorldState,
   GraphView,
   LorebookPage,
+  TTSVoice,
 } from "./types";
 
 const BASE = ""; // Vite 代理 /api → 后端
@@ -536,3 +537,66 @@ export function parseSSEBlock(raw: string, prevId: string): SSEEvent | null {
   }
   return { id, event, data: parsed };
 }
+
+export async function getTTSVoices(): Promise<TTSVoice[]> {
+  try {
+    const data = await http<{ voices: TTSVoice[] }>("GET", "/api/v1/tts/voices");
+    return data.voices || [];
+  } catch {
+    return [];
+  }
+}
+
+export interface TTSSynthesizeParams {
+  text: string;
+  voice?: string;
+  engine?: string;
+  baseUrl?: string;
+  apiKey?: string;
+  model?: string;
+  speed?: number;
+}
+
+export async function synthesizeTTS(
+  voiceOrParams: string | TTSSynthesizeParams,
+  fallbackText?: string
+): Promise<Blob> {
+  const body: TTSSynthesizeParams =
+    typeof voiceOrParams === "string"
+      ? { voice: voiceOrParams, text: fallbackText || "" }
+      : voiceOrParams;
+
+  const res = await binaryRequest("/api/v1/tts/synthesize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return res.blob();
+}
+
+export interface GenerateImageParams {
+  prompt: string;
+  negativePrompt?: string;
+  engine?: string;
+  baseUrl?: string;
+  apiKey?: string;
+  model?: string;
+  size?: string;
+  quality?: string;
+  style?: string;
+}
+
+export interface GeneratedImageResult {
+  id: string;
+  url: string;
+  prompt: string;
+  mimeType: string;
+  createdAt: string;
+}
+
+export async function generateImage(params: GenerateImageParams): Promise<GeneratedImageResult> {
+  return http<GeneratedImageResult>("POST", "/api/v1/images/generate", params);
+}
+
+
+

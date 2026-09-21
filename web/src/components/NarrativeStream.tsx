@@ -6,6 +6,7 @@ import { renderInlineMarkdown } from "../lib/inlineMarkdown";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
 import { Button } from "../ui/Button";
+import { TTSPlayButton } from "./TTSButton";
 import { useShallow } from "zustand/react/shallow";
 import "./NarrativeStream.css";
 
@@ -284,6 +285,16 @@ export const NarrativeStream: React.FC = () => {
           /* 3. 初始开场序幕卡片 (全新剧场就绪，无假对话) */
           <div className="story-turn initial-prologue-turn">
             <div className="dialogue-turn-wrap prologue-card">
+              <div className="turn-quick-toolbar">
+                <TTSPlayButton text={expand(char.prologue)} />
+                <button
+                  className="turn-tool-btn"
+                  onClick={() => handleCopy(expand(char.prologue))}
+                  title="复制文学正文"
+                >
+                  ⎘ 复制
+                </button>
+              </div>
               <div className="dialogue-meta-header">
                 <div className="speaker-label">
                   <img src={char.avatar} alt={char.name} />

@@ -12,10 +12,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"tavernagent/internal/adapters/config"
 	httpadapter "tavernagent/internal/adapters/http"
+	"tavernagent/internal/adapters/image"
 	"tavernagent/internal/adapters/providers/anthropic"
 	"tavernagent/internal/adapters/providers/mock"
 	"tavernagent/internal/adapters/providers/openai"
@@ -55,9 +57,18 @@ type Config struct {
 // App 是一个已装配、可运行的实例。
 type App struct {
 	// Server 是需要被承载的 HTTP 适配器：无头模式用 TCP 监听，桌面模式交给资源服务。
-	Server *httpadapter.Server
-	Addr   string
-	PIN    string
+	Server   *httpadapter.Server
+	Addr     string
+	PIN      string
+	DataDir  string
+	Store    ports.Store
+	Sessions *application.SessionService
+	Turns    *application.TurnService
+	Memories *application.MemoryService
+	Cards    *application.CardService
+	Archive  *application.ArchiveService
+	Compiler *ctxpkg.Compiler
+	Manager  *application.ProviderManager
 
 	closers []func()
 }
@@ -165,9 +176,15 @@ func Bootstrap(cfg Config) (*App, error) {
 	// 之所以不是 OTel SDK：见 internal/ports/trace.go 的包注释。
 	tracer := trace.NewRecorder(trace.DefaultCapacity)
 
+	imgSvc, err := image.NewService(filepath.Join(cfg.DataDir, "images"))
+	if err != nil {
+		log.Printf("生图服务初始化失败: %v", err)
+	}
+
 	server, err := httpadapter.New(httpadapter.Deps{
-		Director: directorSvc,
-		Sessions: sessionSvc, Turns: turnSvc, Branches: branchSvc,
+		Director:     directorSvc,
+		ImageService: imgSvc,
+		Sessions:     sessionSvc, Turns: turnSvc, Branches: branchSvc,
 		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: cfg.Addr,
 		Cards:          cardSvc,
 		StaticFS:       staticFS,
@@ -184,6 +201,15 @@ func Bootstrap(cfg Config) (*App, error) {
 		return nil, err
 	}
 	out.Server = server
+	out.DataDir = cfg.DataDir
+	out.Store = store
+	out.Sessions = sessionSvc
+	out.Turns = turnSvc
+	out.Memories = memorySvc
+	out.Cards = cardSvc
+	out.Archive = archiveSvc
+	out.Compiler = compiler
+	out.Manager = manager
 	assembled = true
 	return out, nil
 }

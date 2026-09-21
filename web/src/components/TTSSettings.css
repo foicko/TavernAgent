@@ -1,0 +1,39 @@
+/* TTSSettings.css: TTS 语音配置页面样式 */
+
+.tts-settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tts-preset-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.tts-preset-label {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.tts-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.tts-speed-slider {
+  width: 100%;
+  accent-color: var(--color-primary, #6366f1);
+  cursor: pointer;
+}
+
+.tts-action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

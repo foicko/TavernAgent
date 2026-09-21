@@ -465,3 +465,13 @@ export interface GoalEntry {
   characterId: string;
   text: string;
 }
+
+/** TTS 音色配置。 */
+export interface TTSVoice {
+  id: string;
+  name: string;
+  gender: string;
+  locale: string;
+  description: string;
+}
+

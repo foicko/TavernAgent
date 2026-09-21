@@ -7,7 +7,7 @@
 
 /* Global responsive visibility utility classes */
 .mobile-only {
-  display: none !important;
+  display: none;
 }
 
 .mobile-drawer-backdrop {
@@ -55,11 +55,11 @@
   }
 
   .mobile-only {
-    display: inline-flex !important;
+    display: inline-flex;
   }
 
   .header-actions .header-btn-text {
-    display: none !important;
+    display: none;
   }
 }
 
@@ -72,7 +72,7 @@
   }
 
   .mobile-only {
-    display: inline-flex !important;
+    display: inline-flex;
   }
 
   /* 移动端顶栏紧凑布局 */
@@ -96,7 +96,7 @@
   }
 
   .scene-breadcrumb {
-    display: none !important; /* 手机端隐藏过长面包屑，保证顶栏清爽 */
+    display: none; /* 手机端隐藏过长面包屑，保证顶栏清爽 */
   }
 
   .view-mode-tabs {
@@ -119,7 +119,7 @@
   }
 
   .header-actions .header-btn-text {
-    display: none !important;
+    display: none;
   }
 
   .header-actions .btn-quiet {
@@ -131,21 +131,21 @@
 
   /* 移动端主工作区：单列占满视口 */
   .workspace-layout {
-    display: flex !important;
-    flex-direction: column !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-    width: 100% !important;
-    height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px)) !important;
-    position: relative !important;
-    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    grid-template-rows: none;
+    width: 100%;
+    height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px));
+    position: relative;
+    overflow: hidden;
   }
 
   .stage-main {
-    flex: 1 1 auto !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    height: 100% !important;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
   }
 
   /* ------------------------------------------------------------------------
@@ -157,147 +157,147 @@
 
   /* 移动端全屏半透明抽屉背景蒙版（各断点共用） */
   .mobile-drawer-backdrop.active {
-    display: block !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background: rgba(0, 0, 0, 0.45) !important;
-    backdrop-filter: blur(3px) !important;
-    -webkit-backdrop-filter: blur(3px) !important;
-    z-index: 990 !important;
-    animation: fadeIn 0.2s ease !important;
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 990;
+    animation: fadeIn 0.2s ease;
   }
 
   /* ------------------------------------------------------------------------
      剧情叙事流 (Narrative Stream)
      ------------------------------------------------------------------------ */
   .floating-rail-trigger-right {
-    display: none !important;
+    display: none;
   }
 
   .scene-bar {
-    padding: 6px 10px !important;
-    gap: 6px !important;
+    padding: 6px 10px;
+    gap: 6px;
   }
 
   .scene-sub-telemetry {
-    display: none !important; /* 节省手机纵向高度 */
+    display: none; /* 节省手机纵向高度 */
   }
 
   .scene-bar-actions .btn-quiet {
-    padding: 2px 8px !important;
-    font-size: 11px !important;
+    padding: 2px 8px;
+    font-size: 11px;
   }
 
   .scene-bar-actions .btn-quiet:last-child {
-    display: none !important; /* 手机端隐藏冗余的重新讲述按钮 */
+    display: none; /* 手机端隐藏冗余的重新讲述按钮 */
   }
 
   .char-avatar-frame {
-    width: 32px !important;
-    height: 32px !important;
+    width: 32px;
+    height: 32px;
   }
 
   .char-main-name {
-    font-size: 13.5px !important;
+    font-size: 13.5px;
   }
 
   .stage-scroll-area {
-    padding: 10px 10px 18px !important;
-    overscroll-behavior: contain !important;
-    -webkit-overflow-scrolling: touch !important;
+    padding: 10px 10px 18px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .dialogue-turn-wrap {
-    padding: 12px 14px !important;
-    border-radius: var(--radius-sm) !important;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
   }
 
   .block-narration,
   .dialogue-content-text,
   .player-speech-text {
-    font-size: 15px !important;
-    line-height: 1.8 !important;
+    font-size: 15px;
+    line-height: 1.8;
   }
 
   .choice-grid,
   .decision-grid {
-    grid-template-columns: 1fr !important;
-    gap: 6px !important;
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .player-turn-container {
-    max-width: 95% !important;
+    max-width: 95%;
   }
 
   /* ------------------------------------------------------------------------
      底部输入决策中枢 (Composer Shelf)
      ------------------------------------------------------------------------ */
   .composer-shelf {
-    padding: 6px 10px max(10px, env(safe-area-inset-bottom, 0px)) 10px !important;
-    gap: 6px !important;
+    padding: 6px 10px max(10px, env(safe-area-inset-bottom, 0px)) 10px;
+    gap: 6px;
   }
 
   .composer-toolbar {
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
-    padding-bottom: 2px !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
   .composer-toolbar::-webkit-scrollbar {
-    display: none !important;
+    display: none;
   }
 
   .mode-switch-group {
-    flex-shrink: 0 !important;
+    flex-shrink: 0;
   }
 
   .composer-tag-btn {
-    padding: 3px 8px !important;
-    font-size: 11px !important;
-    white-space: nowrap !important;
+    padding: 3px 8px;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
   .quick-macro-pills {
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
-    scrollbar-width: none !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
   .quick-macro-pills::-webkit-scrollbar {
-    display: none !important;
+    display: none;
   }
 
   .macro-pill {
-    padding: 2px 7px !important;
-    font-size: 11px !important;
-    white-space: nowrap !important;
+    padding: 2px 7px;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
   .composer-input-wrapper {
-    padding: 6px 10px !important;
-    gap: 8px !important;
+    padding: 6px 10px;
+    gap: 8px;
   }
 
   .composer-textarea {
-    font-size: 16px !important; /* 必须 >= 16px，严禁 iOS Safari 在 focus 时视口自动放大！ */
-    line-height: 1.4 !important;
-    min-height: 38px !important;
-    max-height: 100px !important;
+    font-size: 16px; /* 必须 >= 16px，严禁 iOS Safari 在 focus 时视口自动放大！ */
+    line-height: 1.4;
+    min-height: 38px;
+    max-height: 100px;
   }
 
   .composer-shortcut-hint {
-    display: none !important;
+    display: none;
   }
 
   .btn-primary-send {
-    height: 36px !important;
-    padding: 0 14px !important;
-    font-size: 12.5px !important;
-    min-width: 68px !important;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    min-width: 68px;
   }
   .char-import-window,
 
@@ -306,15 +306,15 @@
   /* 全身立绘灯箱转上下纵向排布 */
 
   .tachie-lightbox-stage {
-    flex: none !important;
-    height: 36vh !important;
-    min-height: 220px !important;
+    flex: none;
+    height: 36vh;
+    min-height: 220px;
   }
 
   .tachie-lightbox-dossier {
-    flex: 1 1 auto !important;
-    padding: 16px !important;
-    overflow-y: visible !important;
+    flex: 1 1 auto;
+    padding: 16px;
+    overflow-y: visible;
   }
 
   /* --------------------------------------------------------------------------
@@ -323,15 +323,15 @@
      手机端会渲染出图标轨、抽屉头部也会消失（连关闭按钮都没有）。
      -------------------------------------------------------------------------- */
   .rail-left .rail-collapsed-view {
-    display: none !important;
+    display: none;
   }
   .rail-left .rail-full-view {
-    display: flex !important;
-    height: 100% !important;
+    display: flex;
+    height: 100%;
   }
 
   .mobile-drawer-header {
-    display: flex !important;
+    display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 14px;
@@ -353,7 +353,7 @@
   }
 
   .rail-collapse-handle-btn {
-    display: none !important;
+    display: none;
   }
 }
 
@@ -364,56 +364,56 @@
    -------------------------------------------------------------------------- */
 @media (min-width: 481px) and (max-width: 768px) {
 .rail-left {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  bottom: 0 !important;
-  width: min(86vw, 320px) !important;
-  height: 100dvh !important;
-  height: -webkit-fill-available !important;
-  z-index: 1000 !important;
-  background: var(--bg-surface) !important;
-  border-right: 1px solid var(--border-mid) !important;
-  box-shadow: 6px 0 28px rgba(0, 0, 0, 0.3) !important;
-  transform: translateX(-105%) !important;
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  padding-top: env(safe-area-inset-top, 0px) !important;
-  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(86vw, 320px);
+  height: 100dvh;
+  height: -webkit-fill-available;
+  z-index: 1000;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-mid);
+  box-shadow: 6px 0 28px rgba(0, 0, 0, 0.3);
+  transform: translateX(-105%);
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 body:not(.rail-left-collapsed) .rail-left {
-  transform: translateX(0) !important;
+  transform: translateX(0);
 }
 
 /* ------------------------------------------------------------------------
    右侧角色档案栏：移动端原生抽屉 (Off-canvas Slide Drawer)
    ------------------------------------------------------------------------ */
 .rail-right {
-  position: fixed !important;
-  top: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: min(88vw, 360px) !important;
-  height: 100dvh !important;
-  height: -webkit-fill-available !important;
-  z-index: 1000 !important;
-  background: var(--bg-surface) !important;
-  border-left: 1px solid var(--border-mid) !important;
-  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.3) !important;
-  transform: translateX(105%) !important;
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  padding-top: env(safe-area-inset-top, 0px) !important;
-  padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)) !important;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(88vw, 360px);
+  height: 100dvh;
+  height: -webkit-fill-available;
+  z-index: 1000;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-mid);
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.3);
+  transform: translateX(105%);
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  pointer-events: auto;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
 }
 
 body:not(.rail-right-collapsed) .rail-right {
-  transform: translateX(0) !important;
+  transform: translateX(0);
 }
 
 body.rail-right-collapsed .rail-right {
-  transform: translateX(105%) !important;
-  width: min(88vw, 360px) !important;
+  transform: translateX(105%);
+  width: min(88vw, 360px);
 }
 }

@@ -107,19 +107,22 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
   网关额度不可逆，`preflight` 会先查余额再决定是否开始。
 - **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
   （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
-- **样式层**：`!important` 存量 245 处（集中在 481~768px 断点与工作区折叠两段），门禁只保证不再增长；
-  逐条消除需要能验证计算样式的回归手段，属后续工作。
+- **样式层**：`!important` 存量已从 245 处降至 14 处（已彻底消除 `shell.css` 与 `responsive.css` 中全部 231 处层叠覆盖，仅保留无障碍与高危确认原语，门禁基线收紧锁定在 14）。
 - **桌面端系统托盘**：未实现。自启（`-autostart`）与局域网第二屏（`-lan`）已可用，
   托盘是"常驻 + 一键开关"的壳层，需要真机 GUI 会话验证后才能落地（见 `DESKTOP.md`）。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
-## 7. 待做功能
+## 7. 待做功能与近期完成
 
-1. **发布闭环**：完成真实模型协议/叙事验收与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
-2. **逐步偿还技术债**：按“改到哪、拆到哪”拆分大函数/大文件；样式层按需消除 `!important`。
-3. **M5 规划**：群像聚光灯、Edge-TTS 流式发音、立绘联动、外部受控 MCP、多 NPC 视角隔离。
-   - Windows 桌面壳（Wails v2 + WebView2）已落地，见 [桌面端说明](DESKTOP.md)；
-     剩系统托盘、原生保存对话框与代码签名（自启与局域网第二屏已完成）。
+1. **近期完成 (P1/P2/P3 路线图)**：
+   - **P1-A CSS 治理**：消除 231 处 `!important`，收紧 `css-baseline.json`（245 → 14）。
+   - **P1-B 智能拟真语音**：轻量级 Edge-TTS 适配器 (`internal/adapters/tts`)、后端 `/api/v1/tts/*` 端点与前端 `TTSPlayButton` / `ttsPlayer` 语音播报。
+   - **P2-A MCP 协议服务**：`internal/adapters/mcp` 提供标准 JSON-RPC 2.0 stdio 服务，支持外部 AI (Claude Desktop, Cursor) 读取会话、状态、记忆与提示词。
+   - **P2-B 单二进制 CLI 工具链**：`cmd/tavernctl` 提供 `audit`（数据库自检）、`prompt`（上下文提示词解析）、`mcp`（启动 MCP 服务）、`pack`（归档导入导出）。
+   - **P3-A SQLite 双轨编译**：默认无依赖纯 Go (`modernc.org/sqlite`)，可选支持高性能 CGO 原生驱动 (`-tags cgo`，`mattn/go-sqlite3`)。
+   - **P3-B 混合向量检索接口**：`internal/ports/vector.go` 与 `internal/search/hybrid.go` 提供向量嵌入端口与 RRF (Reciprocal Rank Fusion) 混合重排能力。
+2. **发布闭环**：完成真实模型协议/叙事验收与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
+3. **M5 后续规划**：群像聚光灯、立绘动作表情联动、多 NPC 视角隔离。
 4. **LAN 增强**：第二设备网络/防火墙实机验证（HTTPS 通道与配对流程已有自动化冒烟：
    `python scripts/lan_smoke.py --binary <exe> --host <私网IP> --out <报告> --tls`）。
 

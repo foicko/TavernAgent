@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"tavernagent/internal/adapters/image"
+	"tavernagent/internal/adapters/tts"
 	"tavernagent/internal/application"
 	ctxpkg "tavernagent/internal/context"
 	"tavernagent/internal/domain"
@@ -25,6 +27,8 @@ import (
 // 用具名结构体而不是一长串位置参数：参数变多时调用点仍然可读，
 // 也不会因为顺序写错而把两个服务对调。
 type Deps struct {
+	TTSService     *tts.Service
+	ImageService   *image.Service
 	Director       *application.DirectorService
 	Sessions       *application.SessionService
 	Turns          *application.TurnService
@@ -78,6 +82,8 @@ type Server struct {
 	staticFS       fs.FS
 	authPIN        string
 	authToken      string
+	ttsService     *tts.Service
+	imageService   *image.Service
 	setNativeTheme func(mode string)
 	pairFails      map[string]pairFailure
 	now            func() time.Time
@@ -101,6 +107,14 @@ func New(deps Deps) (*Server, error) {
 	if tracer == nil {
 		tracer = ports.NoopTracer{}
 	}
+	ttsSvc := deps.TTSService
+	if ttsSvc == nil {
+		ttsSvc = tts.NewService()
+	}
+	imgSvc := deps.ImageService
+	if imgSvc == nil {
+		imgSvc, _ = image.NewService("data/images")
+	}
 	return &Server{
 		director: deps.Director,
 		sessions: deps.Sessions, turns: deps.Turns,
@@ -116,6 +130,8 @@ func New(deps Deps) (*Server, error) {
 		staticFS:       deps.StaticFS,
 		authPIN:        pin,
 		authToken:      token,
+		ttsService:     ttsSvc,
+		imageService:   imgSvc,
 		tracer:         tracer,
 		tlsConfig:      deps.TLSConfig,
 		pairFails:      make(map[string]pairFailure), now: time.Now,
@@ -125,6 +141,10 @@ func New(deps Deps) (*Server, error) {
 // Handler 返回 http.Handler（供测试直接使用）。
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/tts/voices", s.listTTSVoices)
+	mux.HandleFunc("POST /api/v1/tts/synthesize", s.security(s.synthesizeTTS))
+	mux.HandleFunc("POST /api/v1/images/generate", s.security(s.generateImage))
+	mux.HandleFunc("GET /api/v1/images/{filename}", s.serveImageFile)
 	mux.HandleFunc("GET /api/v1/sessions/{id}/branches/{branchId}/director", s.directorRoute(s.getDirector))
 	mux.HandleFunc("PUT /api/v1/sessions/{id}/branches/{branchId}/director/draft", s.directorRoute(s.saveDirectorDraft))
 	mux.HandleFunc("POST /api/v1/sessions/{id}/branches/{branchId}/director/messages", s.directorRoute(s.directorMessage))

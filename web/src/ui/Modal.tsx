@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useDialogFocus } from "../lib/useDialogFocus";
 import { IconButton } from "./Button";
 import "./Modal.css";
@@ -63,7 +64,7 @@ export function Modal({
 
   if (!open) return null;
 
-  return (
+  const content = (
     <div
       className={["ui-modal-backdrop", className].filter(Boolean).join(" ")}
       id={id}
@@ -99,4 +100,9 @@ export function Modal({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") {
+    return content;
+  }
+  return createPortal(content, document.body);
 }

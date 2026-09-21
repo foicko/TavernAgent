@@ -13,7 +13,12 @@ const mocks = vi.hoisted(() => ({
   probeModel: vi.fn(),
 }));
 
-vi.mock("../../app/api", () => ({ api: mocks }));
+vi.mock("../../app/api", () => ({
+  api: mocks,
+  getTTSVoices: vi.fn().mockResolvedValue([]),
+  synthesizeTTS: vi.fn().mockResolvedValue(new Blob([])),
+  generateImage: vi.fn().mockResolvedValue({ id: "img_test", url: "/test.png" }),
+}));
 
 function instance(over: Partial<ModelInstance> = {}): ModelInstance {
   return {
@@ -182,4 +187,31 @@ describe("SettingsModal · 角色与连接", () => {
     fireEvent.click(screen.getByLabelText("关闭"));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("switches to the TTS settings tab and shows voice options", async () => {
+    render(<SettingsModal onClose={() => {}} />);
+    await waitFor(() => expect(screen.getByRole("heading", { name: "角色" })).toBeTruthy());
+
+    const ttsTab = screen.getByRole("tab", { name: "语音设置 (TTS)" });
+    expect(ttsTab).toBeTruthy();
+
+    fireEvent.click(ttsTab);
+
+    expect(screen.getByText("TTS 语音引擎")).toBeTruthy();
+    expect(screen.getByLabelText(/只播报角色对白/)).toBeTruthy();
+  });
+
+  it("switches to the Image settings tab and shows image options", async () => {
+    render(<SettingsModal onClose={() => {}} />);
+    await waitFor(() => expect(screen.getByRole("heading", { name: "角色" })).toBeTruthy());
+
+    const imageTab = screen.getByRole("tab", { name: "图像生成" });
+    expect(imageTab).toBeTruthy();
+
+    fireEvent.click(imageTab);
+
+    expect(screen.getByText("生图引擎配置")).toBeTruthy();
+    expect(screen.getByText("快捷预设：")).toBeTruthy();
+  });
 });
+

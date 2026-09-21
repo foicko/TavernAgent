@@ -5,6 +5,9 @@ import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { useStory } from "../stores/storyStore";
 import { TurnActions } from "./TurnActions";
 import { TurnEvidence } from "./TurnEvidence";
+import { TTSPlayButton } from "./TTSButton";
+import { TurnIllustration } from "./TurnIllustration";
+import { IllustrationModal } from "./IllustrationModal";
 import "./HistoricalStory.css";
 
 /** 历史已提交回合的思考过程折叠组件 */
@@ -48,12 +51,28 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
   // 与实时流共用同一套宏替换：历史回合里同样不该出现 {{char}}/{{user}}。
   const playerName = useStory((s) => s.view?.state?.characters?.["player"]?.name) || DEFAULT_PLAYER_NAME;
   const expand = (text?: string) => replaceMacros(text ?? "", { charName: characterName, userName: playerName });
+
+  const [illustrationTarget, setIllustrationTarget] = useState<{
+    turnId: string;
+    blocks?: StoryMessage["blocks"];
+    fallbackText?: string;
+  } | null>(null);
+
   return <>{storyMessages.map((msg, idx) => (
             <div key={msg.id} className={`story-turn ${msg.role === "opening" ? "opening-turn" : ""}`}>
               {/* 开场序章节点 */}
               {msg.role === "opening" ? (
                 <div className="dialogue-turn-wrap">
                   <div className="turn-quick-toolbar">
+                    <TTSPlayButton blocks={msg.blocks} fallbackText={msg.blocks.map((b) => b.text).join("\n")} />
+                    <button
+                      type="button"
+                      className="turn-tool-btn"
+                      onClick={() => setIllustrationTarget({ turnId: msg.id, blocks: msg.blocks, fallbackText: msg.blocks.map((b) => b.text).join("\n") })}
+                      title="生成本幕场景插画"
+                    >
+                      🎨 生图
+                    </button>
                     <button
                       className="turn-tool-btn"
                       onClick={() => handleCopy(msg.blocks.map((b) => b.text).join("\n"))}
@@ -75,6 +94,10 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       </p>
                     ))}
                   </div>
+                  <TurnIllustration
+                    turnId={msg.id}
+                    onOpenModal={() => setIllustrationTarget({ turnId: msg.id, blocks: msg.blocks, fallbackText: msg.blocks.map((b) => b.text).join("\n") })}
+                  />
                 </div>
               ) : (
                 /* 回合节点：玩家输入卡 + 角色文学回复卡 */
@@ -93,6 +116,15 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
 
                   <div className="dialogue-turn-wrap">
                     <div className="turn-quick-toolbar">
+                      <TTSPlayButton blocks={msg.blocks} fallbackText={msg.blocks.map((b) => b.text).join("\n")} />
+                      <button
+                        type="button"
+                        className="turn-tool-btn"
+                        onClick={() => setIllustrationTarget({ turnId: msg.id, blocks: msg.blocks, fallbackText: msg.blocks.map((b) => b.text).join("\n") })}
+                        title="生成本幕场景插画"
+                      >
+                        🎨 生图
+                      </button>
                       <button
                         className="turn-tool-btn"
                         onClick={() => handleQuote(characterName, msg.blocks.map((b) => b.text).join("\n"))}
@@ -142,6 +174,11 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                         );
                       })}
                     </div>
+
+                    <TurnIllustration
+                      turnId={msg.id}
+                      onOpenModal={() => setIllustrationTarget({ turnId: msg.id, blocks: msg.blocks, fallbackText: msg.blocks.map((b) => b.text).join("\n") })}
+                    />
 
                     {/* 本轮依据：检定 / 状态变化 / 参考记忆（为什么这样演） */}
                     {!msg.draft && <TurnEvidence msg={msg} />}
@@ -202,5 +239,16 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                 </>
               )}
             </div>
-          ))}</>;
+          ))}
+          {illustrationTarget && (
+            <IllustrationModal
+              open={Boolean(illustrationTarget)}
+              onClose={() => setIllustrationTarget(null)}
+              turnId={illustrationTarget.turnId}
+              blocks={illustrationTarget.blocks}
+              fallbackText={illustrationTarget.fallbackText}
+              characterName={characterName}
+            />
+          )}
+        </>;
 });

@@ -256,6 +256,12 @@
   transform: scale(0.96);
 }
 
+.turn-tool-btn.is-playing {
+  color: var(--accent-solid);
+  background: var(--glass-pill-bg-hover);
+  font-weight: 600;
+}
+
 /* 正文世界书专有名词高亮与即显悬停卡 (Lore Hover Popover) */
 .lore-term {
   border-bottom: 1.5px dotted var(--text-dim);
