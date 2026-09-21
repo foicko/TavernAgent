@@ -67,6 +67,27 @@ func logHint() string {
 	return "\n\n详细日志：" + logFile
 }
 
+// logSink 把每条日志写向所有目标，并**忽略单个目标的写入错误**。
+//
+// 不能用 io.MultiWriter：它遇到第一个写失败的 writer 就 return，后面的全部跳过。
+// 而桌面壳是 GUI 子系统程序，双击/开机自启启动时 stderr 是一个无效句柄，写 stderr
+// 必然失败——于是"日志文件"那份副本也被连带吞掉，文件恒为空。偏偏这正是最需要
+// 日志的场景（没有控制台，文件是唯一的排障入口）。
+//
+// 返回 len(p), nil 而不是真实写入长度：日志是尽力而为的旁路，不该因为某个目标
+// 不可写就影响调用方（log 包对短写会 panic 式重试）。
+type logSink []io.Writer
+
+func (s logSink) Write(p []byte) (int, error) {
+	for _, w := range s {
+		if w == nil {
+			continue
+		}
+		_, _ = w.Write(p)
+	}
+	return len(p), nil
+}
+
 // setupLogging 把日志接到数据目录下的文件，同时保留 stderr。
 //
 // 桌面壳是 GUI 子系统程序（构建时 -H windowsgui）：进程不分配控制台，双击启动时
@@ -93,7 +114,7 @@ func setupLogging(dataDir string) {
 	}
 	logFile = path
 	// 句柄故意不关：日志要活到进程退出，退出时由内核回收。
-	log.SetOutput(io.MultiWriter(os.Stderr, f))
+	log.SetOutput(logSink{os.Stderr, f})
 }
 
 // fatalDialog 用原生消息框报告启动失败。
@@ -196,11 +217,34 @@ func run() error {
 	dataDir := flag.String("data", defaultDataDir(), "数据目录")
 	addr := flag.String("addr", defaultAddr, "监听地址（本地偏好按源隔离，请保持端口稳定）")
 	fallbackKind := flag.String("provider", "", "未配置时回退的开发供应商（mock）")
+	// 局域网第二屏（默认关闭）：开启后另起一个监听并强制配对码，详见 lan_windows.go。
+	lan := flag.Bool("lan", false, "允许局域网第二屏访问（另起监听，强制配对码）")
+	lanAddr := flag.String("lan-addr", defaultLANAddr, "第二屏监听地址（-lan 时生效）")
+	pin := flag.String("pin", "", "第二屏配对码（-lan 时留空则自动生成 6 位数字码）")
+	tlsSpec := flag.String("tls", "off", "第二屏加密传输：off（明文）/ auto（自签证书）/ files")
+	tlsCert := flag.String("tls-cert", "", "加密传输=files 时的证书路径（PEM）")
+	tlsKey := flag.String("tls-key", "", "加密传输=files 时的私钥路径（PEM）")
+	autostartSpec := flag.String("autostart", "", "开机自启：on / off（执行后立即退出，不打开窗口）")
 	flag.Parse()
 	if *fallbackKind != "" && *fallbackKind != "mock" {
 		return fmt.Errorf("不支持的开发供应商 %q；可使用 mock 或留空", *fallbackKind)
 	}
 	setupLogging(*dataDir)
+	// 自启开关是脚本化入口（执行完即退出、不开窗口），必须排在单实例判定之前，
+	// 否则"已有一份在跑"时连 `-autostart off` 都会变成唤起窗口。
+	if *autostartSpec != "" {
+		return applyAutostart(*autostartSpec)
+	}
+
+	// 单实例判定必须早于 listen 与 app.Bootstrap：Bootstrap 会抢数据目录的独占锁，
+	// 而 wails.Run 里的 SingleInstanceLock 在那之后才生效。放在后面的话，第二个实例
+	// 会先撞上"数据目录已被其他进程使用"并弹错误框——见 single_instance_windows.go。
+	if unique, err := acquireSingleInstance(); err != nil {
+		return err
+	} else if !unique {
+		wakeExistingWindow()
+		return nil
+	}
 
 	// 先占端口再装配：Addr 要写进 Config（服务端据此判断同源写请求），
 	// 而"端口被占用"这类失败应该在打开窗口之前就报出来。
@@ -215,8 +259,9 @@ func run() error {
 		DataDir:      *dataDir,
 		Addr:         networkAddr,
 		FallbackKind: *fallbackKind,
-		// 只监听 loopback，没有第二屏需要配对：配对码留空即关闭鉴权（与无头模式的
-		// 本机免检一致）。将来若要开放局域网共享，必须同时启用 PIN。
+		// 窗口只监听 loopback，本机访问免检（与无头模式一致），因此这里留空。
+		// 局域网第二屏走独立的监听与独立的配对码（见下方 startLAN），
+		// 不把"本机免检"扩大到整个网段。
 		PIN:            "",
 		SetNativeTheme: setNativeTheme,
 		AppVersion:     appVersion,
@@ -228,7 +273,8 @@ func run() error {
 	// wails.Run 返回（窗口关闭）后按依赖逆序释放：监听 → worker → 存储 → 数据目录锁。
 	defer instance.Close()
 
-	httpSrv := &http.Server{Handler: instance.Server.Handler()}
+	handler := instance.Server.Handler()
+	httpSrv := &http.Server{Handler: handler}
 	go func() {
 		if err := httpSrv.Serve(ln); err != nil && err != http.ErrServerClosed {
 			log.Printf("HTTP 服务退出: %v", err)
@@ -237,6 +283,29 @@ func run() error {
 	defer func() { _ = httpSrv.Close() }()
 
 	log.Printf("桌面端服务就绪：%s（数据目录 %s）", origin, *dataDir)
+
+	// 局域网第二屏：默认关闭；开启时另起一个监听并强制配对码（可选加密传输）。
+	second, err := startLAN(*lan, *dataDir, *lanAddr, *pin, *tlsSpec, *tlsCert, *tlsKey)
+	if err != nil {
+		return err
+	}
+	if second != nil {
+		defer second.Close()
+		lanSrv := &http.Server{Handler: handler}
+		go func() {
+			if err := lanSrv.Serve(second.listener); err != nil && err != http.ErrServerClosed {
+				log.Printf("第二屏服务退出: %v", err)
+			}
+		}()
+		defer func() { _ = lanSrv.Close() }()
+		log.Printf("📱 第二屏已开启（%s），配对码 %s", second.scheme, second.pin)
+		for _, url := range second.URLs() {
+			log.Printf("   在手机/平板上访问：%s", url)
+		}
+		if len(second.URLs()) == 0 {
+			log.Printf("   未找到私网地址：请确认已连上局域网（本机 %s 仍可直接访问）", *lanAddr)
+		}
+	}
 
 	return wails.Run(&options.App{
 		Title:     "SillyDog · TavernAgent",
@@ -256,20 +325,10 @@ func run() error {
 			appCtx = ctx
 			appCtxMu.Unlock()
 		},
-		SingleInstanceLock: &options.SingleInstanceLock{
-			// 第二个实例不再去抢数据目录锁（那会报错），而是唤起已有窗口。
-			UniqueId: "tavernagent-desktop",
-			OnSecondInstanceLaunch: func(options.SecondInstanceData) {
-				appCtxMu.Lock()
-				ctx := appCtx
-				appCtxMu.Unlock()
-				if ctx == nil {
-					return
-				}
-				runtime.WindowUnminimise(ctx)
-				runtime.WindowShow(ctx)
-			},
-		},
+		// 这里刻意**不设** SingleInstanceLock：它的判定发生在 wails.Run 内部，
+		// 而那时 app.Bootstrap 早就抢过数据目录锁了，第二个实例根本走不到这里
+		// （会先弹"数据目录已被其他进程使用"的错误框）。单实例改由 run() 开头的
+		// acquireSingleInstance 承担——它排在 Bootstrap 之前，见 single_instance_windows.go。
 		Windows: &wailswindows.Options{
 			// WebView2 的 localStorage（角色库缓存等）与数据目录放在一起，便于整体备份/迁移。
 			WebviewUserDataPath: filepath.Join(*dataDir, "webview"),
