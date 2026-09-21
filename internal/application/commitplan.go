@@ -51,17 +51,21 @@ type planContext struct {
 	PreviousTurnHadOptions bool
 }
 
-func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.TurnInput, mode, nodeID string, pc planContext) (*planData, error) {
-	rulesetVersion := pc.RulesetVersion
-	ruleset := pc.ruleset
-	pd := &planData{NewState: base.Clone()}
-	pd.Blocks = make([]domain.TextBlock, 0, len(draft.Blocks))
+// charField 是同轮同角色同维度聚合的键（契约 §5.1）。
+type charField struct {
+	char  string
+	field domain.RelationshipField
+}
+
+// preparePlanBlocksAndOptions 处理正文块转换以及选项的授权与节流（Never/Auto）。
+func preparePlanBlocksAndOptions(draft protocol.TurnDraft, input domain.TurnInput, ruleset domain.Ruleset, prevHadOptions bool) ([]domain.TextBlock, []domain.Option, string, int) {
+	blocks := make([]domain.TextBlock, 0, len(draft.Blocks))
 	for _, b := range draft.Blocks {
-		pd.Blocks = append(pd.Blocks, domain.TextBlock{Kind: string(b.Kind), SpeakerID: derefStr(b.SpeakerID), Text: b.Text})
+		blocks = append(blocks, domain.TextBlock{Kind: string(b.Kind), SpeakerID: derefStr(b.SpeakerID), Text: b.Text})
 	}
-	pd.Options = make([]domain.Option, 0, len(draft.Options))
+	options := make([]domain.Option, 0, len(draft.Options))
 	for _, o := range draft.Options {
-		pd.Options = append(pd.Options, domain.Option{
+		options = append(options, domain.Option{
 			OptionID: o.OptionID, Intent: o.Intent, Text: o.Text,
 			// 未授权的动作引用不写入选项（技术契约 §4）：模型自造的 actionRef
 			// 不能进入授权面，否则 M4 引入动作执行后会被误执行。
@@ -78,29 +82,127 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 	optionsMode := domain.NormalizeOptionsMode(input.Options)
 	suppressed := 0
 	if optionsMode == domain.OptionsNever {
-		pd.Options = nil
-	} else if optionsMode == domain.OptionsAuto && pc.PreviousTurnHadOptions && len(pd.Options) > 0 {
-		suppressed = len(pd.Options)
-		pd.Options = nil
+		options = nil
+	} else if optionsMode == domain.OptionsAuto && prevHadOptions && len(options) > 0 {
+		suppressed = len(options)
+		options = nil
+	}
+	return blocks, options, optionsMode, suppressed
+}
+
+// processMemoryProposal 处理来源化认知记录提议（M3）：实体消歧、证据校验、生命周期与覆盖链。
+func processMemoryProposal(p protocol.Proposal, probe *domain.WorldState, pd *planData, pc planContext, nodeID string, input domain.TurnInput, draft protocol.TurnDraft, rulesetVersion string) error {
+	content := strings.TrimSpace(p.Text)
+	if content == "" {
+		return nil
+	}
+	kind := normalizeMemoryKind(p.Confidence)
+	if p.MemoryKind != "" {
+		kind = normalizeMemoryKind(p.MemoryKind)
+	}
+	if kind == domain.MemoryInferred && strings.TrimSpace(p.Reasoning) == "" && strings.TrimSpace(p.SourceQuote) != "" {
+		kind = domain.MemoryObserved
 	}
 
-	// 关系增量同轮同角色同维度聚合（契约 §5.1）。
-	type charField struct {
-		char  string
-		field domain.RelationshipField
+	resolvedEntities := make([]string, 0, len(p.EntityIDs))
+	for _, eid := range p.EntityIDs {
+		resolved := domain.ResolveEntityID(eid, probe)
+		if _, ok := probe.Characters[resolved]; ok {
+			resolvedEntities = append(resolvedEntities, resolved)
+		} else if _, ok := probe.Items[resolved]; ok {
+			resolvedEntities = append(resolvedEntities, resolved)
+		} else if _, ok := probe.Promises[resolved]; ok {
+			resolvedEntities = append(resolvedEntities, resolved)
+		}
 	}
-	aggDeltas := map[charField][]int{}
-	proposalOrder := []charField{}
+	resolvedOwners := make([]string, 0, len(p.Participants))
+	for _, oid := range p.Participants {
+		resolved := domain.ResolveEntityID(oid, probe)
+		if _, ok := probe.Characters[resolved]; ok {
+			resolvedOwners = append(resolvedOwners, resolved)
+		}
+	}
 
-	probe := pd.NewState.Clone()
-	ruleEvents, err := validatedRuleEvents(base, pc.Checks, rulesetVersion)
+	excerpts := make([]domain.EvidenceExcerpt, 0, len(pc.HistoryExcerpts)+1+len(draft.Blocks))
+	excerpts = append(excerpts, pc.HistoryExcerpts...)
+	excerpts = append(excerpts, domain.EvidenceExcerpt{NodeID: nodeID, Text: input.Text})
+	for _, b := range draft.Blocks {
+		excerpts = append(excerpts, domain.EvidenceExcerpt{NodeID: nodeID, Text: b.Text})
+	}
+	mem, err := domain.ValidateCognitiveMemory(domain.CognitiveMemory{
+		Content: content, EntityIDs: resolvedEntities,
+		OwnerIDs: resolvedOwners, SourceQuote: p.SourceQuote, Reasoning: p.Reasoning,
+		Confidence: p.EvidenceConfidence, SubjectKey: p.SubjectKey,
+	}, kind, probe, excerpts)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("invalid memory proposal: %w", err)
 	}
-	pd.Events = append(pd.Events, ruleEvents...)
-	if _, err := domain.ApplyEvents(probe, ruleEvents); err != nil {
-		return nil, err
+	mem.MemoryID, mem.SourceNodeID = "mem_"+nodeID+"_"+p.ProposalID, nodeID
+	mem.CreatedTurn = pc.CurrentTurn
+	mem.ValidFromTurn = pc.CurrentTurn
+
+	if mem.SubjectKey != "" {
+		var supersededID string
+		for _, prev := range pd.Memories {
+			if prev.SubjectKey == mem.SubjectKey {
+				supersededID = prev.MemoryID
+				prev.ValidUntilTurn = pc.CurrentTurn
+			}
+		}
+		if supersededID == "" && len(pc.VisibleMemories) > 0 {
+			activePath := domain.ApplyMemoryOverlays(pc.VisibleMemories)
+			for _, prev := range activePath {
+				if prev.SubjectKey == mem.SubjectKey {
+					supersededID = prev.MemoryID
+					break
+				}
+			}
+		}
+		if supersededID != "" {
+			mem.Supersedes = supersededID
+		}
 	}
+
+	pd.Memories = append(pd.Memories, mem)
+	payload, _ := json.Marshal(domain.MemoryAddPayload{Memory: *mem})
+	pd.Events = append(pd.Events, &domain.DomainEvent{
+		Type: domain.EventMemoryAdd, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
+	})
+	return nil
+}
+
+// processPromiseProposal 处理约定提议生成。
+func processPromiseProposal(p protocol.Proposal, probe *domain.WorldState, pd *planData, nodeID string, rulesetVersion string) {
+	content := strings.TrimSpace(p.Text)
+	if content == "" {
+		return
+	}
+	promID := "prom_" + nodeID + "_" + p.ProposalID
+	if _, exists := probe.Promises[promID]; exists {
+		return
+	}
+	participants := nonNilStrings(p.Participants)
+	if len(participants) == 0 && p.CharacterID != "" {
+		participants = []string{p.CharacterID}
+	}
+	prom := domain.Promise{
+		PromiseID:      promID,
+		ParticipantIDs: participants,
+		Content:        content,
+		SourceNodeID:   nodeID,
+		State:          domain.PromiseProposed,
+	}
+	probe.Promises[promID] = prom
+	payload, _ := json.Marshal(domain.PromiseProposePayload{Promise: prom})
+	pd.Events = append(pd.Events, &domain.DomainEvent{
+		Type: domain.EventPromisePropose, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
+	})
+}
+
+// processProposalStream 遍历草稿提议，执行校验与事件暂存，并收集关系增量。
+func processProposalStream(draft protocol.TurnDraft, probe *domain.WorldState, pd *planData, pc planContext, nodeID string, input domain.TurnInput, rulesetVersion string) ([]charField, map[charField][]int, error) {
+	aggDeltas := map[charField][]int{}
+	var proposalOrder []charField
 
 	for _, p := range draft.Proposals {
 		switch p.Type {
@@ -130,111 +232,16 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 				Type: domain.EventMoodSet, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
 			})
 		case "memory_add":
-			// 来源化认知记录（M3）：写入 memory_records 并留事件。
-			content := strings.TrimSpace(p.Text)
-			if content == "" {
-				continue
+			if err := processMemoryProposal(p, probe, pd, pc, nodeID, input, draft, rulesetVersion); err != nil {
+				return nil, nil, err
 			}
-			kind := normalizeMemoryKind(p.Confidence)
-			if p.MemoryKind != "" {
-				kind = normalizeMemoryKind(p.MemoryKind)
-			}
-			if kind == domain.MemoryInferred && strings.TrimSpace(p.Reasoning) == "" && strings.TrimSpace(p.SourceQuote) != "" {
-				kind = domain.MemoryObserved
-			}
-
-			resolvedEntities := make([]string, 0, len(p.EntityIDs))
-			for _, eid := range p.EntityIDs {
-				resolved := domain.ResolveEntityID(eid, probe)
-				if _, ok := probe.Characters[resolved]; ok {
-					resolvedEntities = append(resolvedEntities, resolved)
-				} else if _, ok := probe.Items[resolved]; ok {
-					resolvedEntities = append(resolvedEntities, resolved)
-				} else if _, ok := probe.Promises[resolved]; ok {
-					resolvedEntities = append(resolvedEntities, resolved)
-				}
-			}
-			resolvedOwners := make([]string, 0, len(p.Participants))
-			for _, oid := range p.Participants {
-				resolved := domain.ResolveEntityID(oid, probe)
-				if _, ok := probe.Characters[resolved]; ok {
-					resolvedOwners = append(resolvedOwners, resolved)
-				}
-			}
-
-			excerpts := make([]domain.EvidenceExcerpt, 0, len(pc.HistoryExcerpts)+1+len(draft.Blocks))
-			excerpts = append(excerpts, pc.HistoryExcerpts...)
-			excerpts = append(excerpts, domain.EvidenceExcerpt{NodeID: nodeID, Text: input.Text})
-			for _, b := range draft.Blocks {
-				excerpts = append(excerpts, domain.EvidenceExcerpt{NodeID: nodeID, Text: b.Text})
-			}
-			mem, err := domain.ValidateCognitiveMemory(domain.CognitiveMemory{
-				Content: content, EntityIDs: resolvedEntities,
-				OwnerIDs: resolvedOwners, SourceQuote: p.SourceQuote, Reasoning: p.Reasoning,
-				Confidence: p.EvidenceConfidence, SubjectKey: p.SubjectKey,
-			}, kind, probe, excerpts)
-			if err != nil {
-				return nil, fmt.Errorf("invalid memory proposal: %w", err)
-			}
-			mem.MemoryID, mem.SourceNodeID = "mem_"+nodeID+"_"+p.ProposalID, nodeID
-			mem.CreatedTurn = pc.CurrentTurn
-			mem.ValidFromTurn = pc.CurrentTurn
-
-			if mem.SubjectKey != "" {
-				var supersededID string
-				for _, prev := range pd.Memories {
-					if prev.SubjectKey == mem.SubjectKey {
-						supersededID = prev.MemoryID
-						prev.ValidUntilTurn = pc.CurrentTurn
-					}
-				}
-				if supersededID == "" && len(pc.VisibleMemories) > 0 {
-					activePath := domain.ApplyMemoryOverlays(pc.VisibleMemories)
-					for _, prev := range activePath {
-						if prev.SubjectKey == mem.SubjectKey {
-							supersededID = prev.MemoryID
-							break
-						}
-					}
-				}
-				if supersededID != "" {
-					mem.Supersedes = supersededID
-				}
-			}
-
-			pd.Memories = append(pd.Memories, mem)
-			payload, _ := json.Marshal(domain.MemoryAddPayload{Memory: *mem})
-			pd.Events = append(pd.Events, &domain.DomainEvent{
-				Type: domain.EventMemoryAdd, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
-			})
 		case "item_grant", "item_transfer", "item_consume":
 			if !authorizedItemProposal(p, pc.Checks) {
-				return nil, fmt.Errorf("%w: item change requires an exact rule receipt", ErrOperationRejected)
+				return nil, nil, fmt.Errorf("%w: item change requires an exact rule receipt", ErrOperationRejected)
 			}
 			// The authoritative effect was already added from the receipt.
 		case "promise_propose":
-			content := strings.TrimSpace(p.Text)
-			if content != "" {
-				promID := "prom_" + nodeID + "_" + p.ProposalID
-				if _, exists := probe.Promises[promID]; !exists {
-					participants := nonNilStrings(p.Participants)
-					if len(participants) == 0 && p.CharacterID != "" {
-						participants = []string{p.CharacterID}
-					}
-					prom := domain.Promise{
-						PromiseID:      promID,
-						ParticipantIDs: participants,
-						Content:        content,
-						SourceNodeID:   nodeID,
-						State:          domain.PromiseProposed,
-					}
-					probe.Promises[promID] = prom
-					payload, _ := json.Marshal(domain.PromiseProposePayload{Promise: prom})
-					pd.Events = append(pd.Events, &domain.DomainEvent{
-						Type: domain.EventPromisePropose, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
-					})
-				}
-			}
+			processPromiseProposal(p, probe, pd, nodeID, rulesetVersion)
 		case "goal_set":
 			if _, ok := probe.Characters[p.CharacterID]; !ok || p.CharacterID == "player" || len([]rune(strings.TrimSpace(p.Text))) > 400 {
 				continue
@@ -249,7 +256,11 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 			continue
 		}
 	}
+	return proposalOrder, aggDeltas, nil
+}
 
+// applyAggregatedDeltas 应用同轮同角色同维度的聚合关系变化并生成事件。
+func applyAggregatedDeltas(probe *domain.WorldState, pd *planData, proposalOrder []charField, aggDeltas map[charField][]int, rulesetVersion string) error {
 	for _, cf := range proposalOrder {
 		sum := domain.AggregateDeltas(aggDeltas[cf])
 		if sum == 0 {
@@ -257,7 +268,7 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 		}
 		applied, err := probe.ApplyRelationshipDelta(cf.char, cf.field, sum, domain.AffectionMax, domain.AffectionMax)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		payload, _ := json.Marshal(domain.RelationshipDeltaPayload{
 			CharacterID: cf.char, Field: string(cf.field), Delta: sum, Applied: applied,
@@ -265,6 +276,87 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 		pd.Events = append(pd.Events, &domain.DomainEvent{
 			Type: domain.EventRelationshipDelta, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
 		})
+	}
+	return nil
+}
+
+// evaluateSecretUnlocks 在本回合效果生效后评估条件秘密，触发解锁事件（M4d）。
+func evaluateSecretUnlocks(pd *planData, pc planContext, rulesetVersion string) error {
+	var unlockEvents []*domain.DomainEvent
+	for _, def := range pc.Secrets {
+		if def.RevealWhen == nil || pd.NewState.IsSecretUnlocked(def.SecretID) {
+			continue
+		}
+		ok, err := def.RevealWhen.Eval(ruleContextOf(pd.NewState))
+		if err != nil {
+			return fmt.Errorf("%w: 秘密 %q 条件求值失败: %v", ErrOperationRejected, def.SecretID, err)
+		}
+		if !ok {
+			continue
+		}
+		payload, _ := json.Marshal(domain.SecretUnlockPayload{SecretID: def.SecretID, Title: def.Title})
+		unlockEvents = append(unlockEvents, &domain.DomainEvent{
+			Type: domain.EventSecretUnlock, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
+		})
+	}
+	if len(unlockEvents) > 0 {
+		if _, err := domain.ApplyEvents(pd.NewState, unlockEvents); err != nil {
+			return fmt.Errorf("apply secret unlock events: %w", err)
+		}
+		pd.Events = append(pd.Events, unlockEvents...)
+	}
+	return nil
+}
+
+// assembleTurnContentJSON 组装已提交回合的元数据与展示证据并生成 JSON。
+func assembleTurnContentJSON(input domain.TurnInput, pd *planData, pc planContext, optionsMode string, suppressed int, mode string) error {
+	tc := domain.TurnContent{
+		InputKind: input.Kind, InputText: input.Text, InputNote: input.Note,
+		OptionRef: input.OptionRef, ActionRef: input.ActionRef,
+		Blocks: pd.Blocks, Options: pd.Options, Mood: pd.Mood, Checks: pc.Checks,
+		// 变化摘要从**已生效的事件**推导，与真正落库的东西同源：
+		// 这一层是给玩家核验用的，一旦与事件不一致就从证据变成了掩护。
+		Changes:          domain.SummarizeChanges(pd.Events, pd.NewState),
+		InjectedMemories: pc.InjectedMemories,
+		OptionsMode:      optionsMode,
+		// 收起台阶也要留痕：读者分得出“本轮本无抉择”与“系统没有摆出选项”。
+		SuppressedOptions: suppressed,
+		Provenance:        &domain.TurnProvidence{Mode: normalizeMode(mode)},
+	}
+	cb, err := json.Marshal(tc)
+	if err != nil {
+		return err
+	}
+	pd.ContentJSON = string(cb)
+	return nil
+}
+
+func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.TurnInput, mode, nodeID string, pc planContext) (*planData, error) {
+	rulesetVersion := pc.RulesetVersion
+	ruleset := pc.ruleset
+	pd := &planData{NewState: base.Clone()}
+
+	var optionsMode string
+	var suppressed int
+	pd.Blocks, pd.Options, optionsMode, suppressed = preparePlanBlocksAndOptions(draft, input, ruleset, pc.PreviousTurnHadOptions)
+
+	probe := pd.NewState.Clone()
+	ruleEvents, err := validatedRuleEvents(base, pc.Checks, rulesetVersion)
+	if err != nil {
+		return nil, err
+	}
+	pd.Events = append(pd.Events, ruleEvents...)
+	if _, err := domain.ApplyEvents(probe, ruleEvents); err != nil {
+		return nil, err
+	}
+
+	proposalOrder, aggDeltas, err := processProposalStream(draft, probe, pd, pc, nodeID, input, rulesetVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := applyAggregatedDeltas(probe, pd, proposalOrder, aggDeltas, rulesetVersion); err != nil {
+		return nil, err
 	}
 
 	// 状态只有一处实现：用与重放完全相同的入口应用本次事件。
@@ -282,49 +374,13 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 	// 之前就编译完了，里面根本没有这条内容（T25 的另一半）。
 	//
 	// 求值失败必须让整轮失败：静默跳过会让秘密永远无法揭示，而且没人知道为什么。
-	var unlockEvents []*domain.DomainEvent
-	for _, def := range pc.Secrets {
-		if def.RevealWhen == nil || pd.NewState.IsSecretUnlocked(def.SecretID) {
-			continue
-		}
-		ok, err := def.RevealWhen.Eval(ruleContextOf(pd.NewState))
-		if err != nil {
-			return nil, fmt.Errorf("%w: 秘密 %q 条件求值失败: %v", ErrOperationRejected, def.SecretID, err)
-		}
-		if !ok {
-			continue
-		}
-		payload, _ := json.Marshal(domain.SecretUnlockPayload{SecretID: def.SecretID, Title: def.Title})
-		unlockEvents = append(unlockEvents, &domain.DomainEvent{
-			Type: domain.EventSecretUnlock, PayloadJSON: string(payload), RulesetVersion: rulesetVersion,
-		})
-	}
-	if len(unlockEvents) > 0 {
-		if _, err := domain.ApplyEvents(pd.NewState, unlockEvents); err != nil {
-			return nil, fmt.Errorf("apply secret unlock events: %w", err)
-		}
-		pd.Events = append(pd.Events, unlockEvents...)
-	}
-
-	// 提交内容 JSON。
-	tc := domain.TurnContent{
-		InputKind: input.Kind, InputText: input.Text, InputNote: input.Note,
-		OptionRef: input.OptionRef, ActionRef: input.ActionRef,
-		Blocks: pd.Blocks, Options: pd.Options, Mood: pd.Mood, Checks: pc.Checks,
-		// 变化摘要从**已生效的事件**推导，与真正落库的东西同源：
-		// 这一层是给玩家核验用的，一旦与事件不一致就从证据变成了掩护。
-		Changes:          domain.SummarizeChanges(pd.Events, pd.NewState),
-		InjectedMemories: pc.InjectedMemories,
-		OptionsMode:      optionsMode,
-		// 收起台阶也要留痕：读者分得出“本轮本无抉择”与“系统没有摆出选项”。
-		SuppressedOptions: suppressed,
-		Provenance:        &domain.TurnProvidence{Mode: normalizeMode(mode)},
-	}
-	cb, err := json.Marshal(tc)
-	if err != nil {
+	if err := evaluateSecretUnlocks(pd, pc, rulesetVersion); err != nil {
 		return nil, err
 	}
-	pd.ContentJSON = string(cb)
+
+	if err := assembleTurnContentJSON(input, pd, pc, optionsMode, suppressed, mode); err != nil {
+		return nil, err
+	}
 	return pd, nil
 }
 

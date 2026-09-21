@@ -105,9 +105,8 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 - **真实模型质量未闭环**：口径、归因、预算闸与手动评测工作流（`.github/workflows/model-eval.yml`）
   都已就位，**结论本身仍需**用 `scripts/release_eval.py` 在能连到网关的机器上跑 100 例产出证据；
   网关额度不可逆，`preflight` 会先查余额再决定是否开始。
-- **大函数/大文件**：`internal/application/commitplan.go:buildPlan`、`internal/adapters/sqlite/import.go:ImportSession`、
-  `internal/context` 若干函数等；只在需要改动时再拆。
-  （`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，两项已偿还。）
+- **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
+  （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
 - **样式层**：`!important` 存量 245 处（集中在 481~768px 断点与工作区折叠两段），门禁只保证不再增长；
   逐条消除需要能验证计算样式的回归手段，属后续工作。
 - **桌面端系统托盘**：未实现。自启（`-autostart`）与局域网第二屏（`-lan`）已可用，
