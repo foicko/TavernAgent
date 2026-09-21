@@ -35,6 +35,31 @@ Windows PowerShell 使用 `./tavernagent.exe`。macOS 构建未签名、未公�
 
 浏览器写请求仅接受同源地址。开发代理可以显式设置 `-allow-origin http://localhost:5173`；多个来源用逗号分隔，不能使用通配符。服务不支持公网多租户部署、用户账户或租户隔离。
 
+### 加密传输（HTTPS）
+
+明文 HTTP 在公共或不可信局域网里会把正文与配对令牌摊开给同网段的人。加一个 `-tls` 即可：
+
+```powershell
+tavernagent.exe -addr 0.0.0.0:8890 -tls auto     # 自签证书，落在 <数据目录>/tls/
+tavernagent.exe -tls files -tls-cert cert.pem -tls-key key.pem   # 用你自己的证书
+```
+
+- 自签证书覆盖本机的回环地址、私网地址与主机名；**地址变化（换 Wi-Fi、插网线）时会自动重签**，
+  免得出现“昨天能用、今天提示证书不匹配”。重启不会换证书。
+- 启动日志会打印证书路径与 SHA-256 指纹，请在设备上加信任时逐字比对：
+  自签证书的信任动作如果没得比对，“装的是不是这台机器的证书”就只能靠猜。
+- 首次访问需要信任：把 `<数据目录>/tls/server.crt` 传到手机/平板并安装为受信任根证书
+  （iOS：设置 → 通用 → VPN 与设备管理 → 安装描述文件，再到“关于本机 → 证书信任设置”里启用；
+  Android：设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书）。
+- 启用加密且绑定非回环地址时**必须**提供配对码（`-pin`），否则拒绝启动：
+  加密只解决“传输被看”，不解决“谁能进”。
+- 自签证书是给内网用的。要对外提供服务，请在前面放一个真正的反向代理并申请正式证书。
+
+### 第二屏（桌面端）
+
+桌面壳默认只监听 loopback。要保留“手机/平板连 PC 游玩”，用 `-lan` 显式开启
+（详见 [桌面端说明](DESKTOP.md)）：它会另起一个监听、强制配对码，并可与 `-tls auto` 叠加。
+
 ## 备份与剧情包
 
 分享单个故事可导出 `.tavernpack`，包含分支、事件、模板和记忆，不包含密钥、进行中的草稿及未启用的导演讨论。导入分配新的会话/节点 ID，不覆盖原故事；损坏或与事件不一致的包会被拒绝。
@@ -60,6 +85,32 @@ Windows PowerShell 使用 `./tavernagent.exe`。macOS 构建未签名、未公�
 
 历史事件不会静默重写。发现“快照与事件重放不一致”时保留原库与剧情包，在副本上定位不一致节点后提交脱敏复现；应用会拒绝导入不一致的剧情包，但不会静默重写已有故事。新版本修复了稀疏检查点重放中相邻节点排序的问题，但不自动替换旧版本可能已保存的不一致快照。
 
+## 真实模型验收（100 例）
+
+常规 CI 不调用付费模型；这一步在能连到评测网关的机器上手动执行（或走
+`.github/workflows/model-eval.yml` 的手动触发）。额度**不可逆**，所以顺序是固定的：
+
+```powershell
+# 0) 先构建被测二进制（前端必须先 build：dist 被 //go:embed 嵌进二进制）
+Set-Location web; pnpm install --frozen-lockfile; pnpm build; Set-Location ..
+go build -o build/release-eval/tavernagent.exe ./cmd/tavernagent
+
+# 1) 凭据只走环境变量（绝不写进仓库）
+$env:TAVERNAGENT_EVAL_GATEWAY_KEY = "<网关密钥>"
+$env:TAVERNAGENT_EVAL_TOKEN = "<被测实例使用的令牌>"
+$env:TAVERNAGENT_EVAL_MODEL = "gemini-3.8-flash-high"   # 可选；默认值即此
+
+python scripts/release_eval.py start                 # 起本地网关 + 隔离实例
+python scripts/release_eval.py ledger                # 查余额（不可逆，先看清）
+python scripts/release_eval.py preflight             # 内含预算闸：余额不足直接拒绝开始
+python scripts/release_eval.py protocol --samples 5  # 先用小样本探路，确认协议与模型标签
+python scripts/release_eval.py protocol --samples 100
+```
+
+- 报告落在 `output/release-readiness/gemini/`（不入库）。门槛：首过 ≥95、含一次修复 ≥99。
+- `preflight` 会先读台账余额：不足 `samples + 修复余量` 就拒绝启动，避免跑到一半收到 429。
+- 结论摘要请登记回 `docs/PROJECT_STATUS.md` §6（脱敏，只写数字与指纹，不写凭据）。
+
 ## 故障排查
 
 | 提示或现象 | 处理 |
@@ -72,6 +123,9 @@ Windows PowerShell 使用 `./tavernagent.exe`。macOS 构建未签名、未公�
 | 正文等待续写 | 继续已保存草稿，或明确放弃；分支仍被该回合占用 |
 | 分支或草稿冲突 | 重新读取最新进度并合并修改；旧工作线程不能覆盖新结果 |
 | 请求过大 | 缩小角色卡、剧情包或 JSON 内容；API 返回 413 |
+| 手机提示“连接不安全 / 证书不受信任” | 这是自签证书的正常首次状态：按上文把 `tls/server.crt` 装成受信任根证书，并核对启动日志里的 SHA-256 指纹 |
+| 换网络后手机访问提示证书不匹配 | 证书会在下次启动时按新地址自动重签；重签后需要重新在设备上信任一次 |
+| `-tls` 写错取值 | 启动直接失败并提示可用取值（off / auto / files）——这是刻意的，静默退回明文比启动失败危险得多 |
 | 历史记忆翻页 | 页码绑定查询节点；切换搜索/分类会刷新到第一页 |
 | 正在生成时刷新页面 | 会自动回到上次打开的故事并接着显示当前段落（含正在写的那一块）；若本地存储被禁用，则回退到列表第一条 |
 | 退出时正在生成 | Ctrl+C 先取消在途生成并等待后台任务与请求收尾，再关闭数据库；日志出现“仍有在途请求未收尾”说明有请求超过等待上限，请附日志报告 |

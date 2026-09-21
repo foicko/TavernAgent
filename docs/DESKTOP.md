@@ -39,7 +39,9 @@ powershell -ExecutionPolicy Bypass -File scripts/build.ps1 -Version dev -Desktop
 没有控制台之后，日志不能只写 stderr：
 
 - 日志同时写 `<dataDir>/logs/tavernagent-desktop.log`（超过 2 MiB 滚动一次，保留上一份）
-  与 stderr，因此从终端启动或重定向时照样能直接看。
+  与 stderr，因此从终端启动或重定向时照样能直接看。两个目标用 `logSink` 而不是
+  `io.MultiWriter` 串起来：后者遇到第一个写失败的 writer 就 return，而无控制台启动时
+  stderr 是无效句柄——那样会让日志文件那份副本也被吞掉，文件恒为空。
 - **启动期失败**（数据目录被另一个实例独占锁住、端口无法监听等）会弹原生消息框说明
   原因并指向日志文件。少了这一步，“双击后什么都没发生”是最难排查的故障形态。
   窗口起来之后的错误仍走前端提示。
@@ -80,8 +82,13 @@ powershell -ExecutionPolicy Bypass -File scripts/build.ps1 -Version dev -Desktop
   （localStorage）按**源**隔离，而源包含端口。换端口就等于换了源——上次打开的会话、
   卡片缓存、导演草稿备份会全部读不到。因此固定端口被占用时会大声降级到随机端口
   并写明后果，而不是静默换一个。
-- **单实例**：`options.SingleInstanceLock` 让第二次启动唤起已有窗口，而不是去抢
-  数据目录锁（那会直接报错）。
+- **单实例**：由 `run()` 开头的 `acquireSingleInstance`（见 `single_instance_windows.go`）
+  用命名互斥体判定，检测到已有实例就按窗口标题唤起它并安静退出。
+  **这条判定必须排在 `app.Bootstrap` 之前**：Bootstrap 会抢数据目录的独占锁，而
+  `wails.Run` 里的 `options.SingleInstanceLock` 在那之后才生效——放在后面的话，第二个
+  实例会先撞上"数据目录已被其他进程使用"并弹错误框，`SingleInstanceLock` 永远轮不到
+  执行。所以这里刻意**不再设** `options.SingleInstanceLock`（同一判断的重复实现，且位置
+  过晚）。`-autostart on/off` 是脚本化入口，排在单实例判定之前，不受影响。
 - **退出顺序**：`wails.Run` 返回后 `App.Close()` 按依赖逆序释放
   （监听 → worker → 存储 → 数据目录锁），与无头模式的 `defer` 链一致。
 
@@ -92,15 +99,35 @@ WebView2，**不需要 cgo**，因此能保持本项目 `CGO_ENABLED=0` 的构�
 `cmd/tavernagent-desktop` 用 `//go:build windows` 隔离，非 Windows 平台由一个
 stub 文件兜底，保证 `go build ./...`、`go vet ./...` 仍可通过。
 
+## 开机自启与局域网第二屏
+
+两者都不需要打开窗口，直接执行后退出（便于脚本化与断言）：
+
+```powershell
+build\tavernagent-desktop.exe -autostart on    # 写 HKCU\...\Run（任务管理器可见、可关）
+build\tavernagent-desktop.exe -autostart off
+# 局域网第二屏：另起一个监听，强制配对码；-tls=auto 时叠加自签证书
+build\tavernagent-desktop.exe -lan -tls auto
+```
+
+- 自启实现见 `internal/util/autostart`：HKCU 而非 HKLM（不需要提权），命令带引号
+  （安装路径常含空格，不带引号会被拆成“程序 + 参数”，表现为开机什么都没发生）。
+- 第二屏见 `cmd/tavernagent-desktop/lan_windows.go`：**独立端口**（默认 8892）而不是
+  复用窗口那个——窗口的源必须稳定在 `127.0.0.1`（localStorage 按源隔离），而且自签
+  证书会让 WebView 弹证书警告；分开之后加密只作用在第二屏，桌面窗口完全不受影响。
+- 开启第二屏时配对码是强制的：没有配对码的局域网暴露等于把故事库交给同网段所有设备。
+  日志会打印配对码与可直接在手机上输入的地址。
+
 ## 已知待办
 
+- **系统托盘常驻**：未实现。托盘需要在 Wails 的消息循环之外自建一个 Win32 隐藏窗口 +
+  `Shell_NotifyIcon` 消息循环（社区 systray 库在 Windows 侧带 cgo，会破坏
+  `CGO_ENABLED=0`），而这类代码**必须**在真机 GUI 会话里验证过才能合入——只编译通过
+  不足以证明它不与 Wails 的循环打架。目前"常驻"需求由 `-autostart` 覆盖，
+  开关由 `-lan` / `-autostart` 两个命令行入口承担。
 - **导出改用原生保存对话框**：`web/src/lib/packFile.ts` 的 `downloadBlob()` 依赖
   `a.download`；WebView2 能下载，但不如原生对话框可控（`.tavernpack` 导出建议接
   Wails dialog）。
-- **托盘常驻与开机自启**：尚未接入。
 - **代码签名**：未签名时 Windows SmartScreen 会拦截首次运行。
-- **局域网第二屏**：桌面端只在 loopback 上监听（`127.0.0.1`），局域网无法访问。若要
-  保留“手机/平板连 PC 游玩”，需加一个显式开关：开启时监听局域网地址并**强制启用
-  配对码**（`Config.PIN`），否则任何本机进程都能直接操作数据。
 - **完全无边框的自定义标题栏**：当前用的是原生标题栏 + 配色对齐；若想彻底统一视觉，
   可改 `Frameless: true` 并在前端自绘标题栏（Wails 已支持无边框拖拽与边缘缩放）。

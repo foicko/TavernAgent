@@ -4,6 +4,9 @@
 
 1. 在独立分支上修改，测试使用临时数据目录。不要使用日常故事库或把模型凭据提交到仓库。
 2. 前端运行 `pnpm install --frozen-lockfile`、`pnpm typecheck`、`pnpm lint`、`pnpm test` 和 `pnpm build`。`web/dist` 是生成物、不入库，但被 Go 编译期嵌入，所以第 2 步必须先于第 3 步完成。
+   改动样式时另有两件事：`pnpm lint` 里包含 CSS 四项门禁（文件行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名），
+   以及用 `pnpm build:parity && pnpm css:parity` 证明“这次只是结构改动、声明集合没变”。
+   有意改变视觉之后才 `pnpm css:snapshot` 落新基线；收紧门禁基线用 `node scripts/check.mjs --update-css-baseline`（放宽的条目会被打印出来要求解释）。
 3. 根目录运行 `go test -count=1 ./...`、`go vet ./...` 和 `golangci-lint run`。Linux 还需 `go test -race -count=1 ./...`。
 4. 浏览器测试前先构建嵌入最新前端的 `build/browser/tavernagent`（Windows 加 `.exe`），再在 `web` 运行 `pnpm exec playwright install chromium` 和 `pnpm test:browser`。测试服务使用 18891 端口及新建数据目录。
 5. 修改事件、状态转换、迁移或异步归属时，补充能够复现原问题的回归。保留失败和复测证据。

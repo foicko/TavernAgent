@@ -48,8 +48,11 @@ internal/
 | 剧情包 | 导出/导入往返、引用重映射、损坏与路径穿越拒绝、导入后续写 |
 | 模型配置 | 模型实例 CRUD + primary/assist/reflection 三槽位；服务商预设；密钥脱敏；探测；用量台账 |
 | 协议适配 | Chat Completions、Responses、Anthropic Messages；思考链增量；截断归类；超时/取消区分 |
-| 局域网 | 可绑定 `0.0.0.0`、随机配对码、恒时鉴权、来源白名单、请求限额、SSE 截止时间 |
-| 前端 | 双主题设计系统 + 原语；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试 |
+| 局域网 | 可绑定 `0.0.0.0`、随机配对码、恒时鉴权、来源白名单、请求限额、SSE 截止时间；**自签 HTTPS**（`-tls=auto`，证书持久化 + 指纹可比对） |
+| 前端 | 双主题设计系统 + 原语；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；<480px 贴底抽屉与 44px 触控目标 |
+| 样式结构 | `styles.css` 退化为 `@import` 入口，按功能域拆成 18 个文件；四项 CSS 门禁（行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名） |
+| 观测 | 请求级关联 ID（`X-Request-ID` 回显）、进程内追踪记录器、`/api/status` 的 `trace` 段（最近/最慢请求 + 分段打点） |
+| 桌面端（Windows） | 单实例锁、原生标题栏配色、日志滚动、**开机自启**（`-autostart on/off`）、**局域网第二屏**（`-lan`，强制配对码，可叠加加密） |
 
 ## 4. 运行与构建
 
@@ -77,6 +80,15 @@ python scripts/release_audit.py --strict       # 许可证/合规审计
 Set-Location web; pnpm typecheck; pnpm lint; pnpm test; pnpm build
 ```
 
+样式改动另有三道专门的门禁与一件证据工具（都在 `web/` 下执行）：
+
+```powershell
+pnpm lint                                  # 含 CSS 四项门禁：行数棘轮 / !important 棘轮 / 跨文件重复选择器 / 死类名
+pnpm build:parity; pnpm css:parity         # 样式等价性：比对构建产物的声明集合（纯结构改动的证据）
+pnpm css:snapshot                          # 落新的基线快照（有意改变视觉之后才该做）
+node scripts/check.mjs --update-css-baseline  # 收紧门禁基线；放宽的条目会打印出来要求解释
+```
+
 CI（`.github/workflows/quality.yml`）在 Ubuntu 跑 `go test -race`、`govulncheck`、浏览器测试，并在五平台构建 + 解压冒烟。真实模型验收由 `scripts/release_eval.py` 与 `scripts/gemini_meter.py` 负责，普通 CI 不调用付费模型。
 
 评估报告同时给出 `passAtK`（能力上限）与 `passPowerK`（业务可靠性）两个口径，失败按类别聚簇
@@ -90,21 +102,27 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 
 ## 6. 已知技术债
 
-- **真实模型质量未闭环**：当前主要是确定性回归与 Mock 链路；真实模型的成功率有了口径与归因
-  （`scripts/eval_metrics.py` 的 Pass@k / Pass^k、失败聚簇、多种子波动），但**结论本身仍需**
-  用 `scripts/release_eval.py` 跑真实网关产出 100 例证据。
-- **大函数/大文件**：`internal/adapters/http/server.go`、`internal/application/commitplan.go:buildPlan`、`internal/domain/state.go:ApplyEvent`、`internal/adapters/sqlite/import.go:ImportSession`、`internal/context` 若干函数等；只在需要改动时再拆。
-- **前端样式体积**：`web/src/styles.css` 单文件 5340 行，改动时优先拆分或收敛。
+- **真实模型质量未闭环**：口径、归因、预算闸与手动评测工作流（`.github/workflows/model-eval.yml`）
+  都已就位，**结论本身仍需**用 `scripts/release_eval.py` 在能连到网关的机器上跑 100 例产出证据；
+  网关额度不可逆，`preflight` 会先查余额再决定是否开始。
+- **大函数/大文件**：`internal/application/commitplan.go:buildPlan`、`internal/adapters/sqlite/import.go:ImportSession`、
+  `internal/context` 若干函数等；只在需要改动时再拆。
+  （`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，两项已偿还。）
+- **样式层**：`!important` 存量 245 处（集中在 481~768px 断点与工作区折叠两段），门禁只保证不再增长；
+  逐条消除需要能验证计算样式的回归手段，属后续工作。
+- **桌面端系统托盘**：未实现。自启（`-autostart`）与局域网第二屏（`-lan`）已可用，
+  托盘是"常驻 + 一键开关"的壳层，需要真机 GUI 会话验证后才能落地（见 `DESKTOP.md`）。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
 ## 7. 待做功能
 
 1. **发布闭环**：完成真实模型协议/叙事验收与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
-2. **逐步偿还技术债**：按“改到哪、拆到哪”拆分大函数/大文件。
+2. **逐步偿还技术债**：按“改到哪、拆到哪”拆分大函数/大文件；样式层按需消除 `!important`。
 3. **M5 规划**：群像聚光灯、Edge-TTS 流式发音、立绘联动、外部受控 MCP、多 NPC 视角隔离。
    - Windows 桌面壳（Wails v2 + WebView2）已落地，见 [桌面端说明](DESKTOP.md)；
-     剩托盘/开机自启、原生保存对话框、代码签名与局域网第二屏开关。
-4. **LAN 增强**：确有手机访问需求时推进第二设备网络/防火墙验证。
+     剩系统托盘、原生保存对话框与代码签名（自启与局域网第二屏已完成）。
+4. **LAN 增强**：第二设备网络/防火墙实机验证（HTTPS 通道与配对流程已有自动化冒烟：
+   `python scripts/lan_smoke.py --binary <exe> --host <私网IP> --out <报告> --tls`）。
 
 ## 8. 相关文件
 
