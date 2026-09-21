@@ -177,7 +177,7 @@ func TestM4ReceiptAtomicAcrossStoreInstances(t *testing.T) {
 
 func TestM4LegacyV8MigrationBindsIdentityAndTimestamp(t *testing.T) {
 	dir := t.TempDir()
-	db, err := sql.Open("sqlite", filepath.Join(dir, "storage.db"))
+	db, err := sql.Open(DriverName, filepath.Join(dir, "storage.db"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -30,7 +30,7 @@ func TestMigrationBackupIsConsistentAndFailureRollsBack(t *testing.T) {
 		t.Fatalf("backups=%v err=%v", backups, err)
 	}
 	for _, path := range []string{filepath.Join(dir, "storage.db"), backups[0]} {
-		db, err := sql.Open("sqlite", "file:"+path+"?mode=ro")
+		db, err := sql.Open(DriverName, "file:"+path+"?mode=ro")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func TestNewerSchemaIsRejectedWithoutChanges(t *testing.T) {
 		unexpected.Close()
 		t.Fatal("newer database was opened")
 	}
-	db, err := sql.Open("sqlite", "file:"+filepath.Join(dir, "storage.db")+"?mode=ro")
+	db, err := sql.Open(DriverName, "file:"+filepath.Join(dir, "storage.db")+"?mode=ro")
 	if err != nil {
 		t.Fatal(err)
 	}
