@@ -49,4 +49,44 @@ describe("ttsPlayer", () => {
     await ttsPlayer.play("Toggle me");
     expect(ttsPlayer.getCurrentText()).toBeNull();
   });
+
+  it("passes instruction and retains tags when engine is MiMo and directorMode is true", async () => {
+    const { useTTSSettings } = await import("../../stores/ttsSettingsStore");
+    useTTSSettings.getState().applyMiMoPreset();
+    useTTSSettings.getState().setDirectorMode(true);
+
+    const synthSpy = vi.spyOn(api, "synthesizeTTS").mockResolvedValue(new Blob(["mock-mp3"], { type: "audio/mpeg" }));
+    global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+
+    await ttsPlayer.play("(冷峻)你想带我走？[停顿片刻]滚出去。", {
+      instruction: "【角色】岑家大当家\n【指导】极慢，实音重",
+    });
+
+    expect(synthSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        engine: "mimo",
+        text: "(冷峻)你想带我走？[停顿片刻]滚出去。",
+        instruction: "【角色】岑家大当家\n【指导】极慢，实音重",
+      })
+    );
+  });
+
+  it("automatically strips audio tags when engine is edge-tts to avoid reading tags aloud", async () => {
+    const { useTTSSettings } = await import("../../stores/ttsSettingsStore");
+    useTTSSettings.getState().resetToDefaults();
+
+    const synthSpy = vi.spyOn(api, "synthesizeTTS").mockResolvedValue(new Blob(["mock-mp3"], { type: "audio/mpeg" }));
+    global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+
+    await ttsPlayer.play("(冷峻)你想带我走？[停顿片刻]滚出去。");
+
+    expect(synthSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        engine: "edge",
+        text: "你想带我走？滚出去。",
+        instruction: undefined,
+      })
+    );
+  });
 });
+

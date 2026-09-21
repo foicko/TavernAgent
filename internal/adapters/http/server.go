@@ -145,6 +145,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/tts/synthesize", s.security(s.synthesizeTTS))
 	mux.HandleFunc("POST /api/v1/images/generate", s.security(s.generateImage))
 	mux.HandleFunc("GET /api/v1/images/{filename}", s.serveImageFile)
+	mux.HandleFunc("POST /api/v1/embeddings/probe", s.security(s.probeEmbedding))
+	mux.HandleFunc("POST /api/v1/embeddings", s.security(s.computeEmbeddings))
 	mux.HandleFunc("GET /api/v1/sessions/{id}/branches/{branchId}/director", s.directorRoute(s.getDirector))
 	mux.HandleFunc("PUT /api/v1/sessions/{id}/branches/{branchId}/director/draft", s.directorRoute(s.saveDirectorDraft))
 	mux.HandleFunc("POST /api/v1/sessions/{id}/branches/{branchId}/director/messages", s.directorRoute(s.directorMessage))

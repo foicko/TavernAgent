@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type TTSEngine = "edge" | "openai" | "web-speech";
+export type TTSEngine = "edge" | "openai" | "mimo" | "web-speech";
 
 export interface TTSSettingsState {
   engine: TTSEngine;
@@ -12,6 +12,7 @@ export interface TTSSettingsState {
   customVoice: string;
   speed: number;
   dialogueOnly: boolean;
+  directorMode: boolean; // 情境感知演播模式 (宏观指导与细粒度标签)
 
   setEngine: (engine: TTSEngine) => void;
   setEdgeVoice: (voice: string) => void;
@@ -21,6 +22,8 @@ export interface TTSSettingsState {
   setCustomVoice: (voice: string) => void;
   setSpeed: (speed: number) => void;
   setDialogueOnly: (dialogueOnly: boolean) => void;
+  setDirectorMode: (directorMode: boolean) => void;
+  applyMiMoPreset: () => void;
   resetToDefaults: () => void;
 }
 
@@ -33,6 +36,7 @@ export const DEFAULT_TTS_SETTINGS = {
   customVoice: "alloy",
   speed: 1.0,
   dialogueOnly: true, // 核心需求：只播报人物说的话，旁白不读（默认开启）
+  directorMode: true, // 核心需求：情境感知演播（导演模式，默认开启）
 };
 
 export const useTTSSettings = create<TTSSettingsState>()(
@@ -47,6 +51,14 @@ export const useTTSSettings = create<TTSSettingsState>()(
       setCustomVoice: (customVoice) => set({ customVoice }),
       setSpeed: (speed) => set({ speed }),
       setDialogueOnly: (dialogueOnly) => set({ dialogueOnly }),
+      setDirectorMode: (directorMode) => set({ directorMode }),
+      applyMiMoPreset: () =>
+        set({
+          engine: "mimo",
+          customBaseUrl: "https://api.xiaomimimo.com/v1",
+          customModel: "mimo-v2.5-tts",
+          customVoice: "mimo_default",
+        }),
       resetToDefaults: () => set({ ...DEFAULT_TTS_SETTINGS }),
     }),
     {

@@ -116,7 +116,15 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
 
                   <div className="dialogue-turn-wrap">
                     <div className="turn-quick-toolbar">
-                      <TTSPlayButton blocks={msg.blocks} fallbackText={msg.blocks.map((b) => b.text).join("\n")} />
+                      <TTSPlayButton
+                        blocks={msg.blocks}
+                        fallbackText={msg.blocks.map((b) => b.text).join("\n")}
+                        mood={
+                          msg.changes?.find((c) => c.kind === "mood")
+                            ? { text: msg.changes.find((c) => c.kind === "mood")!.text }
+                            : undefined
+                        }
+                      />
                       <button
                         type="button"
                         className="turn-tool-btn"

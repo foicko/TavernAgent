@@ -549,6 +549,7 @@ export async function getTTSVoices(): Promise<TTSVoice[]> {
 
 export interface TTSSynthesizeParams {
   text: string;
+  instruction?: string;
   voice?: string;
   engine?: string;
   baseUrl?: string;
@@ -598,5 +599,40 @@ export async function generateImage(params: GenerateImageParams): Promise<Genera
   return http<GeneratedImageResult>("POST", "/api/v1/images/generate", params);
 }
 
+export interface EmbeddingProbeRequest {
+  baseUrl: string;
+  apiKey?: string;
+  model: string;
+  sampleText?: string;
+}
 
+export interface EmbeddingProbeResponse {
+  ok: boolean;
+  model: string;
+  dimension: number;
+  latencyMs: number;
+  preview?: number[];
+  error?: string;
+}
 
+export async function probeEmbedding(req: EmbeddingProbeRequest): Promise<EmbeddingProbeResponse> {
+  return http<EmbeddingProbeResponse>("POST", "/api/v1/embeddings/probe", req);
+}
+
+export interface EmbeddingComputeRequest {
+  texts: string[];
+  baseUrl?: string;
+  apiKey?: string;
+  model?: string;
+  dimension?: number;
+}
+
+export interface EmbeddingComputeResponse {
+  model: string;
+  dimension: number;
+  embeddings: number[][];
+}
+
+export async function computeEmbeddings(req: EmbeddingComputeRequest): Promise<EmbeddingComputeResponse> {
+  return http<EmbeddingComputeResponse>("POST", "/api/v1/embeddings", req);
+}

@@ -109,4 +109,31 @@ describe("TTSPlayButton", () => {
 
     expect(stopSpy).toHaveBeenCalled();
   });
+
+  it("invokes director mode with instruction and enriched audio tags when MiMo engine is active", async () => {
+    useTTSSettings.getState().applyMiMoPreset();
+    useTTSSettings.getState().setDirectorMode(true);
+
+    const playSpy = vi.spyOn(ttsPlayer, "play").mockImplementation(async () => {});
+    const blocks: TextBlock[] = [
+      { kind: "narration", text: "她站在祠堂阴影深处。" },
+      { kind: "dialogue", speakerId: "matriarch", text: "你想带我走？" },
+    ];
+
+    render(<TTSPlayButton blocks={blocks} />);
+    const btn = screen.getByRole("button", { name: "朗读角色台词" });
+
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+
+    expect(playSpy).toHaveBeenCalled();
+    const [callText, callOptions] = playSpy.mock.calls[0] as [string, { instruction?: string }];
+    expect(callText).toContain("你想带我走？");
+    expect(callOptions).toBeDefined();
+    expect(callOptions?.instruction).toContain("【角色】");
+    expect(callOptions?.instruction).toContain("【场景】");
+    expect(callOptions?.instruction).toContain("【指导】");
+  });
 });
+

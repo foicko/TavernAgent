@@ -9,13 +9,14 @@ import (
 )
 
 type ttsSynthesizeRequest struct {
-	Voice   string  `json:"voice"`
-	Text    string  `json:"text"`
-	Engine  string  `json:"engine,omitempty"`
-	BaseURL string  `json:"baseUrl,omitempty"`
-	APIKey  string  `json:"apiKey,omitempty"`
-	Model   string  `json:"model,omitempty"`
-	Speed   float64 `json:"speed,omitempty"`
+	Voice       string  `json:"voice"`
+	Text        string  `json:"text"`
+	Instruction string  `json:"instruction,omitempty"`
+	Engine      string  `json:"engine,omitempty"`
+	BaseURL     string  `json:"baseUrl,omitempty"`
+	APIKey      string  `json:"apiKey,omitempty"`
+	Model       string  `json:"model,omitempty"`
+	Speed       float64 `json:"speed,omitempty"`
 }
 
 func (s *Server) listTTSVoices(w http.ResponseWriter, r *http.Request) {
@@ -48,13 +49,14 @@ func (s *Server) synthesizeTTS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	audio, err := ttsSvc.SynthesizeWithOptions(r.Context(), tts.SynthesizeOptions{
-		Engine:  req.Engine,
-		Voice:   req.Voice,
-		Text:    text,
-		BaseURL: req.BaseURL,
-		APIKey:  req.APIKey,
-		Model:   req.Model,
-		Speed:   req.Speed,
+		Engine:      req.Engine,
+		Voice:       req.Voice,
+		Text:        text,
+		Instruction: req.Instruction,
+		BaseURL:     req.BaseURL,
+		APIKey:      req.APIKey,
+		Model:       req.Model,
+		Speed:       req.Speed,
 	})
 	if err != nil {
 		writeError(w, http.StatusServiceUnavailable, "TTS_UNAVAILABLE", err.Error(), true, "")

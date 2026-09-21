@@ -1,7 +1,13 @@
 import { synthesizeTTS } from "../app/api";
 import { useTTSSettings } from "../stores/ttsSettingsStore";
+import { stripAudioTags, isMiMoEngine } from "./ttsDirector";
 
 type PlaybackListener = (currentText: string | null) => void;
+
+export interface TTSPlayOptions {
+  voice?: string;
+  instruction?: string;
+}
 
 class TTSAudioPlayer {
   private currentAudio: HTMLAudioElement | null = null;
@@ -38,7 +44,7 @@ class TTSAudioPlayer {
     this.notify();
   }
 
-  async play(text: string, voiceOverride?: string): Promise<void> {
+  async play(text: string, voiceOrOptions?: string | TTSPlayOptions): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed) return;
 
@@ -52,31 +58,49 @@ class TTSAudioPlayer {
     this.currentText = trimmed;
     this.notify();
 
+    let voiceOverride: string | undefined;
+    let instruction: string | undefined;
+    if (typeof voiceOrOptions === "string") {
+      voiceOverride = voiceOrOptions;
+    } else if (voiceOrOptions && typeof voiceOrOptions === "object") {
+      voiceOverride = voiceOrOptions.voice;
+      instruction = voiceOrOptions.instruction;
+    }
+
     const settings = useTTSSettings.getState();
     const engine = settings.engine;
     const speed = settings.speed;
 
+    const isMiMo = isMiMoEngine(settings);
+
+    // 若引擎不支持高级标签，或用户未启用导演模式，自动剥离括号/标签避免念出标记词
+    const shouldStripTags = !isMiMo || !settings.directorMode;
+    const textToSynthesize = shouldStripTags ? stripAudioTags(trimmed) : trimmed;
+    const activeInstruction = isMiMo && settings.directorMode ? instruction : undefined;
+
     // 浏览器原生 Web Speech API
     if (engine === "web-speech") {
-      this.playWebSpeech(trimmed, speed);
+      this.playWebSpeech(stripAudioTags(trimmed), speed);
       return;
     }
 
     const voice =
       voiceOverride ||
-      (engine === "openai" ? settings.customVoice : settings.edgeVoice);
-    const cacheKey = `${engine}:${voice}:${speed}:${settings.customBaseUrl}:${trimmed}`;
+      (engine === "openai" || engine === "mimo" ? settings.customVoice : settings.edgeVoice);
+    const cacheKey = `${engine}:${voice}:${speed}:${settings.customBaseUrl}:${activeInstruction || ""}:${textToSynthesize}`;
 
     try {
       let objectUrl = this.audioCache.get(cacheKey);
       if (!objectUrl) {
+        const needsCustomCredentials = engine === "openai" || engine === "mimo";
         const blob = await synthesizeTTS({
           engine,
           voice,
-          text: trimmed,
-          baseUrl: engine === "openai" ? settings.customBaseUrl : undefined,
-          apiKey: engine === "openai" ? settings.customApiKey : undefined,
-          model: engine === "openai" ? settings.customModel : undefined,
+          text: textToSynthesize,
+          instruction: activeInstruction,
+          baseUrl: needsCustomCredentials ? settings.customBaseUrl : undefined,
+          apiKey: needsCustomCredentials ? settings.customApiKey : undefined,
+          model: needsCustomCredentials ? settings.customModel : undefined,
           speed,
         });
         objectUrl = URL.createObjectURL(blob);
@@ -135,7 +159,7 @@ class TTSAudioPlayer {
 
   private fallbackSpeechSynthesis(text: string) {
     const speed = useTTSSettings.getState().speed;
-    this.playWebSpeech(text, speed);
+    this.playWebSpeech(stripAudioTags(text), speed);
   }
 }
 

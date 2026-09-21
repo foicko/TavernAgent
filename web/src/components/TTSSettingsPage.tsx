@@ -19,6 +19,7 @@ export function TTSSettingsPage() {
   const customVoice = useTTSSettings((s) => s.customVoice);
   const speed = useTTSSettings((s) => s.speed);
   const dialogueOnly = useTTSSettings((s) => s.dialogueOnly);
+  const directorMode = useTTSSettings((s) => s.directorMode);
 
   const setEngine = useTTSSettings((s) => s.setEngine);
   const setEdgeVoice = useTTSSettings((s) => s.setEdgeVoice);
@@ -28,6 +29,8 @@ export function TTSSettingsPage() {
   const setCustomVoice = useTTSSettings((s) => s.setCustomVoice);
   const setSpeed = useTTSSettings((s) => s.setSpeed);
   const setDialogueOnly = useTTSSettings((s) => s.setDialogueOnly);
+  const setDirectorMode = useTTSSettings((s) => s.setDirectorMode);
+  const applyMiMoPreset = useTTSSettings((s) => s.applyMiMoPreset);
   const resetToDefaults = useTTSSettings((s) => s.resetToDefaults);
 
   const [voices, setVoices] = useState<TTSVoice[]>([]);
@@ -87,6 +90,7 @@ export function TTSSettingsPage() {
             onChange={(e) => setEngine(e.target.value as TTSEngine)}
           >
             <option value="edge">微软 Edge-TTS (高质量 · 免配置 · 推荐)</option>
+            <option value="mimo">小米 MiMo (mimo-v2.5-tts · 电影级导演控制)</option>
             <option value="openai">OpenAI 兼容 / 本地模型 (GPT-SoVITS / CosyVoice / Kokoro 等)</option>
             <option value="web-speech">浏览器原生语音 (离线 · 系统内置音色)</option>
           </Select>
@@ -121,10 +125,13 @@ export function TTSSettingsPage() {
         </Section>
       )}
 
-      {engine === "openai" && (
-        <Section title="自定义端点与本地模型" description="配置 OpenAI 规范的 TTS 接口（/v1/audio/speech）。">
+      {(engine === "openai" || engine === "mimo") && (
+        <Section title="自定义端点与本地模型" description="配置 小米 MiMo / OpenAI 兼容语音合成接口与声音模型。">
           <div className="tts-preset-chips">
             <span className="tts-preset-label">快捷填充：</span>
+            <Button size="sm" variant="quiet" onClick={applyMiMoPreset}>
+              小米 MiMo (mimo-v2.5-tts)
+            </Button>
             <Button size="sm" variant="quiet" onClick={applyLocalPreset}>
               本地端点 (GPT-SoVITS / CosyVoice)
             </Button>
@@ -133,16 +140,16 @@ export function TTSSettingsPage() {
             </Button>
           </div>
 
-          <Field label="接口 Base URL" hint="支持本地 127.0.0.1 端口或远程 OpenAI 兼容端点。">
+          <Field label="接口 Base URL" hint="支持小米 MiMo (https://api.xiaomimimo.com/v1)、本地端口或远程端点。">
             <TextInput
               type="text"
-              placeholder="http://127.0.0.1:9880/v1"
+              placeholder="https://api.xiaomimimo.com/v1"
               value={customBaseUrl}
               onChange={(e) => setCustomBaseUrl(e.target.value)}
             />
           </Field>
 
-          <Field label="API Key (可选)" hint="本地开源模型通常留空；在线服务填入 API Key。">
+          <Field label="API Key (可选)" hint="本地开源模型通常留空；小米 MiMo 或 OpenAI 在线服务需填入 API Key。">
             <TextInput
               type="password"
               placeholder="sk-..."
@@ -152,19 +159,19 @@ export function TTSSettingsPage() {
           </Field>
 
           <div className="tts-two-col">
-            <Field label="模型标识 (Model)" hint="例如 tts-1, cosyvoice, kokoro">
+            <Field label="模型标识 (Model)" hint="例如 mimo-v2.5-tts, tts-1, cosyvoice">
               <TextInput
                 type="text"
-                placeholder="tts-1"
+                placeholder="mimo-v2.5-tts"
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
               />
             </Field>
 
-            <Field label="音色标识 (Voice)" hint="例如 alloy, shimmer 或本地音色名">
+            <Field label="音色标识 (Voice)" hint="小米 MiMo 可填 mimo_default, 冰糖, 茉莉, 苏打, 白桦, Mia, Chloe">
               <TextInput
                 type="text"
-                placeholder="alloy"
+                placeholder="mimo_default"
                 value={customVoice}
                 onChange={(e) => setCustomVoice(e.target.value)}
               />
@@ -187,6 +194,13 @@ export function TTSSettingsPage() {
           onChange={setDialogueOnly}
           label="只播报角色对白（跳过旁白）"
           hint="开启后朗读时自动跳过环境描写、旁白与心理活动，只读出角色所说的话。"
+        />
+
+        <Switch
+          checked={directorMode}
+          onChange={setDirectorMode}
+          label="情境感知演播 (导演模式)"
+          hint="根据角色人设、立绘神态与场景氛围动态生成自然声音指导（含深呼吸、停顿等标签，非 MiMo 引擎将自动剥离保持自然播报）。"
         />
 
         <Field label={`语速调节 (${speed.toFixed(1)}x)`} hint="0.5x (慢速) ~ 2.0x (倍速)">

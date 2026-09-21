@@ -1,0 +1,99 @@
+/* EmbeddingSettings.css: 向量检索与嵌入模型配置面板样式 */
+
+.embedding-settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.embedding-preset-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.embedding-preset-label {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.embedding-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.embedding-action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.embedding-slider {
+  width: 100%;
+  accent-color: var(--color-primary, #6366f1);
+  cursor: pointer;
+}
+
+.embedding-probe-card {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-surface-subtle, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.embedding-probe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.embedding-probe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+}
+
+.embedding-probe-meta span strong {
+  color: var(--text-primary);
+}
+
+.embedding-preview-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--fs-xs);
+  padding: var(--space-2);
+  background: var(--bg-code, rgba(0, 0, 0, 0.25));
+  border-radius: var(--radius-sm, 4px);
+  color: var(--text-dim);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.embedding-tip-box {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-primary, #6366f1);
+  background: var(--bg-surface-subtle, rgba(255, 255, 255, 0.02));
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.embedding-tip-box code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: var(--bg-code, rgba(0, 0, 0, 0.2));
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: var(--text-primary);
+}

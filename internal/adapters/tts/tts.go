@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -114,13 +115,14 @@ func (s *Service) Voices() []Voice {
 
 // SynthesizeOptions 包含 TTS 引擎选择、自定义地址、模型与语速。
 type SynthesizeOptions struct {
-	Engine  string  `json:"engine,omitempty"`  // "edge" | "openai"
-	Voice   string  `json:"voice,omitempty"`
-	Text    string  `json:"text"`
-	BaseURL string  `json:"baseUrl,omitempty"` // 例如 "http://127.0.0.1:9880/v1" 或 "https://api.openai.com/v1"
-	APIKey  string  `json:"apiKey,omitempty"`
-	Model   string  `json:"model,omitempty"`   // 例如 "tts-1" 或本地模型标识
-	Speed   float64 `json:"speed,omitempty"`   // 0.5 ~ 2.0
+	Engine      string  `json:"engine,omitempty"` // "edge" | "openai" | "mimo"
+	Voice       string  `json:"voice,omitempty"`
+	Text        string  `json:"text"`
+	Instruction string  `json:"instruction,omitempty"` // 导演指示 (注入 role: user，用于小米 MiMo 等高级 TTS 模型)
+	BaseURL     string  `json:"baseUrl,omitempty"`     // 例如 "http://127.0.0.1:9880/v1" 或 "https://api.openai.com/v1"
+	APIKey      string  `json:"apiKey,omitempty"`
+	Model       string  `json:"model,omitempty"` // 例如 "tts-1" 或 "mimo-v2.5-tts"
+	Speed       float64 `json:"speed,omitempty"` // 0.5 ~ 2.0
 }
 
 // Synthesize 将指定文本合成为 MP3 音频字节流（默认使用 Edge-TTS）。
@@ -161,7 +163,7 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 		speed = 1.0
 	}
 
-	cachePrefix := fmt.Sprintf("%s:%s:%.2f:%s", engine, voice, speed, opts.BaseURL)
+	cachePrefix := fmt.Sprintf("%s:%s:%.2f:%s:%s", engine, voice, speed, opts.BaseURL, opts.Instruction)
 	h := md5.Sum([]byte(cachePrefix + ":" + text))
 	key := hex.EncodeToString(h[:])
 
@@ -188,7 +190,9 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 
 	var data []byte
 	var err error
-	if engine == "openai" {
+	if engine == "mimo" || strings.Contains(strings.ToLower(opts.Model), "mimo") || strings.Contains(strings.ToLower(opts.BaseURL), "xiaomimimo") {
+		data, err = s.synthesizeMiMo(ctx, opts, voice, text)
+	} else if engine == "openai" {
 		data, err = s.synthesizeOpenAI(ctx, opts, voice, text, speed)
 	} else {
 		data, err = s.synthesizeEdgeWS(ctx, voice, text)
@@ -254,6 +258,107 @@ func (s *Service) synthesizeOpenAI(ctx context.Context, opts SynthesizeOptions, 
 	}
 
 	return io.ReadAll(io.LimitReader(resp.Body, 20*1024*1024))
+}
+
+func (s *Service) synthesizeMiMo(ctx context.Context, opts SynthesizeOptions, voice, text string) ([]byte, error) {
+	baseURL := strings.TrimRight(strings.TrimSpace(opts.BaseURL), "/")
+	if baseURL == "" {
+		baseURL = "https://api.xiaomimimo.com/v1"
+	}
+	endpoint := baseURL
+	if !strings.HasSuffix(endpoint, "/chat/completions") {
+		endpoint = baseURL + "/chat/completions"
+	}
+
+	model := strings.TrimSpace(opts.Model)
+	if model == "" {
+		model = "mimo-v2.5-tts"
+	}
+	if voice == "" || voice == "alloy" {
+		voice = "mimo_default"
+	}
+
+	messages := make([]map[string]string, 0, 2)
+	if instruction := strings.TrimSpace(opts.Instruction); instruction != "" {
+		messages = append(messages, map[string]string{
+			"role":    "user",
+			"content": instruction,
+		})
+	}
+	messages = append(messages, map[string]string{
+		"role":    "assistant",
+		"content": text,
+	})
+
+	payload := map[string]any{
+		"model":    model,
+		"messages": messages,
+		"audio": map[string]string{
+			"format": "mp3",
+			"voice":  voice,
+		},
+	}
+
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("marshal mimo request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("create mimo request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if opts.APIKey != "" {
+		req.Header.Set("api-key", opts.APIKey)
+		req.Header.Set("Authorization", "Bearer "+opts.APIKey)
+	}
+
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request to %s failed: %w", endpoint, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
+	if err != nil {
+		return nil, fmt.Errorf("read mimo response: %w", err)
+	}
+
+	var parsed struct {
+		Choices []struct {
+			Message struct {
+				Audio struct {
+					Data string `json:"data"`
+				} `json:"audio"`
+			} `json:"message"`
+		} `json:"choices"`
+		Error *struct {
+			Code    any    `json:"code"`
+			Message string `json:"message"`
+			Type    string `json:"type"`
+		} `json:"error,omitempty"`
+	}
+
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return nil, fmt.Errorf("mimo response parse error (HTTP %d): %s", resp.StatusCode, string(respBody))
+	}
+
+	if parsed.Error != nil && parsed.Error.Message != "" {
+		return nil, fmt.Errorf("小米 MiMo 错误 [%v]: %s", parsed.Error.Code, parsed.Error.Message)
+	}
+
+	if len(parsed.Choices) == 0 || parsed.Choices[0].Message.Audio.Data == "" {
+		return nil, fmt.Errorf("mimo response contains no audio data: %s", string(respBody))
+	}
+
+	audioBytes, err := base64.StdEncoding.DecodeString(parsed.Choices[0].Message.Audio.Data)
+	if err != nil {
+		return nil, fmt.Errorf("decode audio base64: %w", err)
+	}
+
+	return audioBytes, nil
 }
 
 func (s *Service) synthesizeEdgeWS(ctx context.Context, voice, text string) ([]byte, error) {
