@@ -59,14 +59,27 @@
   font-weight: var(--fw-semibold);
 }
 
-/* 面包屑：标题 + 分支胶囊，横向对齐 */
-.scene-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
+/* 命令面板触发器：按钮外壳沿用 .btn-quiet，这里只补"⌘"与快捷键徽标。
+   （.btn-quiet 在 styles/shell.css 里更晚进入产物，所以这里不重复声明高度/内边距。） */
+.command-trigger-glyph {
+  font-size: var(--fs-md);
+  line-height: 1;
 }
 
+.command-trigger-key {
+  padding: 1px 5px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* 面包屑：标题 + 分支胶囊，横向对齐。
+   主轴规则在 styles/shell.css（本文件更早进入产物，同属性必被它覆盖），
+   这里只保留它没有声明的那一条，避免两处各写半份、改一处忘一处。 */
 .breadcrumb-icon {
   flex-shrink: 0;
   font-size: var(--fs-md);

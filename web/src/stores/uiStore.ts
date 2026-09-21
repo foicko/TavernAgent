@@ -57,6 +57,8 @@ interface UiState {
   pendingCardId: string | null;
   mindGraphOpen: boolean;
   blueprintOpen: boolean;
+  /** 命令面板（Ctrl/Cmd+K）。它是最上层浮层：Esc 链里排在所有弹窗之前。 */
+  paletteOpen: boolean;
 
   // 互动浮层
   meterDeltas: MeterDelta[];
@@ -94,6 +96,8 @@ interface UiState {
   openCharImportWithCard: (cardId: string) => void;
   setMindGraphOpen: (open: boolean) => void;
   setBlueprintOpen: (open: boolean) => void;
+  setPaletteOpen: (open: boolean) => void;
+  togglePalette: () => void;
   dossierModalOpen: boolean;
   setDossierModalOpen: (open: boolean) => void;
   promisesModalOpen: boolean;
@@ -138,6 +142,7 @@ export const useUi = create<UiState>((set, get) => ({
   pendingCardId: null,
   mindGraphOpen: false,
   blueprintOpen: false,
+  paletteOpen: false,
   dossierModalOpen: false,
   promisesModalOpen: false,
   memoryModalOpen: false,
@@ -252,6 +257,8 @@ export const useUi = create<UiState>((set, get) => ({
   openCharImportWithCard: (cardId) => set({ charImportOpen: true, pendingCardId: cardId }),
   setMindGraphOpen: (open) => set({ mindGraphOpen: open }),
   setBlueprintOpen: (open) => set({ blueprintOpen: open }),
+  setPaletteOpen: (open) => set({ paletteOpen: open }),
+  togglePalette: () => set((s) => ({ paletteOpen: !s.paletteOpen })),
   setDossierModalOpen: (open) => set({ dossierModalOpen: open }),
   setPromisesModalOpen: (open) => set({ promisesModalOpen: open }),
   setMemoryModalOpen: (open) => set({ memoryModalOpen: open }),

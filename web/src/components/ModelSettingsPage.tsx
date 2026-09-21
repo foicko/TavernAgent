@@ -8,6 +8,7 @@ import { connectionTitle, windowLabel, type Role } from "../lib/modelLabels";
 import { slotsUsingModel, useSettings, type OptionsFrequency } from "../stores/settingsStore";
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
+import { Disclosure } from "../ui/Disclosure";
 import { EmptyState } from "../ui/EmptyState";
 import { Field, Select } from "../ui/Field";
 import { Section } from "../ui/Section";
@@ -18,6 +19,13 @@ import { ModelPicker } from "./ModelPicker";
 import "./ModelSettings.css";
 
 type Editing = { id: string } | "new" | null;
+
+/** 选项频率的短标签：折叠行要在一眼之内说清"现在是什么设置"。 */
+const FREQUENCY_LABEL: Record<OptionsFrequency, string> = {
+  auto: "关键节点",
+  always: "每轮",
+  never: "从不",
+};
 
 export function ModelSettingsPage() {
   const models = useSettings((s) => s.models);
@@ -170,29 +178,36 @@ export function ModelSettingsPage() {
         )}
       </Section>
 
-      <Section title="写作偏好">
-        <Switch
-          label="选项“填入编辑”模式"
-          hint="点击选项先填入输入框，不立即发出请求"
-          checked={optionMode === "fill-edit"}
-          onChange={(checked) => setOptionMode(checked ? "fill-edit" : "direct")}
-        />
-        <Switch
-          label="截断自动续写"
-          hint="生成被截断时自动接着写下去"
-          checked={autoContinue}
-          onChange={setAutoContinue}
-        />
-        <Field label="剧情选项" hint="选项是关键时刻的提示，不是每轮的固定配菜：给得太密会把人训练成“点选项”而不是扮演">
-          <Select
-            value={optionsFrequency}
-            onChange={(e) => setOptionsFrequency(e.target.value as OptionsFrequency)}
-          >
-            <option value="auto">只在关键节点给（推荐）</option>
-            <option value="always">每轮都给</option>
-            <option value="never">从不给</option>
-          </Select>
-        </Field>
+      <Section title="写作偏好" description="只影响之后新开的回合，随时可以改。">
+        {/* 偏好是"设一次就不动"的一组：默认收起，收起行用当前值摘要替代整组表单，
+            避免打开设置页先被三行开关淹没。 */}
+        <Disclosure
+          summary="选项与续写"
+          value={`选项：${FREQUENCY_LABEL[optionsFrequency]} · 自动续写：${autoContinue ? "开" : "关"}`}
+        >
+          <Switch
+            label="选项“填入编辑”模式"
+            hint="点击选项先填入输入框，不立即发出请求"
+            checked={optionMode === "fill-edit"}
+            onChange={(checked) => setOptionMode(checked ? "fill-edit" : "direct")}
+          />
+          <Switch
+            label="截断自动续写"
+            hint="生成被截断时自动接着写下去"
+            checked={autoContinue}
+            onChange={setAutoContinue}
+          />
+          <Field label="剧情选项" hint="选项是关键时刻的提示，不是每轮的固定配菜：给得太密会把人训练成“点选项”而不是扮演">
+            <Select
+              value={optionsFrequency}
+              onChange={(e) => setOptionsFrequency(e.target.value as OptionsFrequency)}
+            >
+              <option value="auto">只在关键节点给（推荐）</option>
+              <option value="always">每轮都给</option>
+              <option value="never">从不给</option>
+            </Select>
+          </Field>
+        </Disclosure>
       </Section>
     </div>
   );

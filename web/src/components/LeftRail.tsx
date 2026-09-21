@@ -18,6 +18,7 @@ import {
   refreshImportedCards,
   deleteImportedCardRemote,
 } from "../lib/characterCardStore";
+import { openCard } from "../lib/cardLaunch";
 import "./LeftRail.css";
 
 function formatSessionTime(isoString?: string): string {
@@ -481,13 +482,8 @@ export const LeftRail: React.FC = () => {
                         playerName={playerName}
                         confirming={confirmCardId === card.cardId}
                         onOpen={() => {
-                          const matchedSession = sessions.find(s => s.characterId === card.characterId || s.characterId === card.cardId);
-                          if (matchedSession) {
-                            void openSession(matchedSession.sessionId);
-                          } else {
-                            // 卡已在服务端：直接预填开局弹窗，不必重新上传文件。
-                            useUi.getState().openCharImportWithCard(card.cardId);
-                          }
+                          // 与命令面板共用同一套判定（有存档直接进故事，没有则预填开局弹窗）。
+                          openCard(card);
                           if (typeof window !== "undefined" && window.innerWidth <= 768) {
                             toggleLeftRail();
                           }

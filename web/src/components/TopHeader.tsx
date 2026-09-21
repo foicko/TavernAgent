@@ -18,6 +18,7 @@ export const TopHeader: React.FC = () => {
     toggleRightRail,
     isLeftRailCollapsed,
     isRightRailCollapsed,
+    togglePalette,
   } = useUi();
   const view = useStory((s) => s.view);
   const openSettings = useSettings((s) => s.openSettings);
@@ -84,6 +85,21 @@ export const TopHeader: React.FC = () => {
       </nav>
 
       <div className="header-actions">
+        {/* 命令面板入口：键盘用户走 Ctrl/Cmd+K，这里给鼠标与触屏一个可发现的入口 */}
+        <button
+          className="btn-quiet header-command-trigger"
+          onClick={togglePalette}
+          id="command-palette-btn"
+          title="打开命令面板 (Ctrl+K)"
+          aria-label="命令面板"
+        >
+          <span className="command-trigger-glyph" aria-hidden="true">
+            ⌘
+          </span>
+          <span className="header-btn-text">命令</span>
+          <kbd className="command-trigger-key header-btn-text">Ctrl K</kbd>
+        </button>
+
         {/* 移动端/平板快速呼出右侧角色立绘与状态 */}
         <button
           className={`btn-quiet mobile-rail-toggle mobile-only ${!isRightRailCollapsed ? "active" : ""}`}

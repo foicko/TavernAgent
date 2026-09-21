@@ -5,6 +5,8 @@ import { useSettings } from "./stores/settingsStore";
 import { useUi } from "./stores/uiStore";
 import { api, onAuthRequired } from "./app/api";
 import { applyNativeTheme } from "./lib/desktopShell";
+import { buildCommands } from "./lib/commandRegistry";
+import { CommandPalette } from "./ui/CommandPalette";
 
 import { TopHeader } from "./components/TopHeader";
 import { LeftRail } from "./components/LeftRail";
@@ -44,6 +46,8 @@ export default function App() {
     setCharImportOpen,
     mindGraphOpen,
     setMindGraphOpen,
+    paletteOpen,
+    setPaletteOpen,
     toastMessage,
   } = useUi();
 
@@ -102,17 +106,23 @@ export default function App() {
     else document.body.classList.remove("mode-reading");
   }, [isLeftRailCollapsed, isRightRailCollapsed, viewMode]);
 
-  // 全局快捷键支持: Ctrl+[ (左栏), Ctrl+] (右栏), Esc (退出编年模式或关闭弹窗)
+  // 全局快捷键支持: Ctrl+K (命令面板), Ctrl+[ (左栏), Ctrl+] (右栏), Esc (自上层向下关闭)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "[") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        // 浏览器里 Ctrl+K 是"跳到地址栏"，必须拦下来才轮得到我们。
+        e.preventDefault();
+        setPaletteOpen(!useUi.getState().paletteOpen);
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "[") {
         e.preventDefault();
         toggleLeftRail();
       } else if ((e.ctrlKey || e.metaKey) && e.key === "]") {
         e.preventDefault();
         toggleRightRail();
       } else if (e.key === "Escape") {
-        if (mindGraphOpen) {
+        if (paletteOpen) {
+          setPaletteOpen(false);
+        } else if (mindGraphOpen) {
           setMindGraphOpen(false);
         } else if (fullTachieOpen) {
           setFullTachieOpen(false);
@@ -133,6 +143,8 @@ export default function App() {
   }, [
     toggleLeftRail,
     toggleRightRail,
+    paletteOpen,
+    setPaletteOpen,
     mindGraphOpen,
     setMindGraphOpen,
     fullTachieOpen,
@@ -179,6 +191,9 @@ export default function App() {
       {/* 微交互悬浮浮层 */}
       <LorePopover />
       <InventoryActionBubble />
+
+      {/* 全局命令面板：只在打开时构建命令清单（构建会读各 store 的当前快照）。 */}
+      {paletteOpen && <CommandPalette commands={buildCommands()} onClose={() => setPaletteOpen(false)} />}
 
       {/* 弹窗集合 */}
       <FullTachieModal />

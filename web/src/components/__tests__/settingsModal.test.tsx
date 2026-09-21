@@ -159,14 +159,26 @@ describe("SettingsModal · 角色与连接", () => {
     expect(mocks.saveModel.mock.calls.at(-1)?.[0]).toMatchObject({ reasoningEffort: "high" });
   });
 
-  it("keeps the writing preferences in their own section and closes from the close button", async () => {
+  it("keeps the writing preferences collapsed with a value summary, and closes from the close button", async () => {
     const onClose = vi.fn();
     render(<SettingsModal onClose={onClose} />);
     expect(await screen.findByRole("heading", { name: "写作偏好" })).toBeTruthy();
+
+    // 默认收起：收起行必须把当前值讲清楚，否则"藏起来"只是让人多点一次。
+    const trigger = screen.getByRole("button", { name: /选项与续写/ });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(trigger.textContent).toContain("选项：关键节点");
+    expect(trigger.textContent).toContain("自动续写：关");
+    expect(screen.queryByLabelText("截断自动续写")).toBeNull();
+
+    fireEvent.click(trigger);
     fireEvent.click(screen.getByLabelText("选项“填入编辑”模式"));
     expect(useSettings.getState().optionMode).toBe("fill-edit");
     fireEvent.click(screen.getByLabelText("截断自动续写"));
     expect(useSettings.getState().autoContinue).toBe(true);
+    // 改动后收起行的摘要要跟着变。
+    expect(trigger.textContent).toContain("自动续写：开");
+
     fireEvent.click(screen.getByLabelText("关闭"));
     expect(onClose).toHaveBeenCalled();
   });
