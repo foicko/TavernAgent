@@ -44,14 +44,15 @@ type cliOptions struct {
 	allowedOrigins string
 	showVersion    bool
 	ablation       ctxpkg.Ablation
+	tls            tlsOptions
 }
 
 // parseFlags 声明并解析全部命令行开关。
 //
-// 消融开关用 flag.Func 绑定解析：取值非法时由 flag 包直接报错退出，
+// 消融开关与 TLS 开关都在解析期校验取值：非法时直接报错退出，
 // 因此不会出现"解析失败却被忽略、最后跑成生产形态"的静默降级——
-// 对基线评估来说，静默降级比启动失败危险得多（ADS-7.8-01）。
-func parseFlags() cliOptions {
+// 对基线评估与加密传输来说，静默降级都比启动失败危险得多（ADS-7.8-01）。
+func parseFlags() (cliOptions, error) {
 	addr := flag.String("addr", "127.0.0.1:8890", "监听地址")
 	dataDir := flag.String("data", "data", "数据目录")
 	fallbackKind := flag.String("provider", "", "未配置时回退的开发供应商（留空表示强制在设置中配置真实模型）")
@@ -68,15 +69,27 @@ func parseFlags() cliOptions {
 			ablation = parsed
 			return nil
 		})
+	// TLS 开关同样在解析期校验：取值写错就直接退出，绝不"悄悄跑成明文"。
+	tlsSpec := flag.String("tls", "off", "局域网加密传输：off（默认，明文 HTTP）/ auto（自动生成自签证书）/ files（使用 -tls-cert/-tls-key）")
+	tlsCert := flag.String("tls-cert", "", "-tls=files 时的证书文件路径（PEM）")
+	tlsKey := flag.String("tls-key", "", "-tls=files 时的私钥文件路径（PEM）")
 	flag.Parse()
+	mode, err := parseTLSMode(*tlsSpec)
+	if err != nil {
+		return cliOptions{}, err
+	}
 	return cliOptions{
 		addr: *addr, dataDir: *dataDir, fallbackKind: *fallbackKind, pin: *pin,
 		allowedOrigins: *allowedOrigins, showVersion: *showVersion, ablation: ablation,
-	}
+		tls: tlsOptions{mode: mode, cert: *tlsCert, key: *tlsKey},
+	}, nil
 }
 
 func run() error {
-	opts := parseFlags()
+	opts, err := parseFlags()
+	if err != nil {
+		return err
+	}
 	if opts.showVersion {
 		fmt.Printf("%s commit=%s built=%s prompt=%s\n", appVersion, buildCommit, buildTime, ctxpkg.PromptManifest())
 		return nil
@@ -99,6 +112,12 @@ func run() error {
 	log.Printf("🔑 局域网配对码 (LAN PIN): %s", pin)
 	log.Printf("📱 局域网设备首次访问请输入该配对码建立安全连接（本机 127.0.0.1 访问自动免检）")
 
+	// TLS 装配放在取锁与开库之前：证书写不进去、或选项自相矛盾时要尽早失败。
+	tlsConfig, err := buildTLSConfig(opts.tls, opts.dataDir, opts.addr, pin)
+	if err != nil {
+		return err
+	}
+
 	instance, err := app.Bootstrap(app.Config{
 		DataDir:        opts.dataDir,
 		Addr:           opts.addr,
@@ -107,15 +126,20 @@ func run() error {
 		AllowedOrigins: strings.FieldsFunc(opts.allowedOrigins, func(r rune) bool { return r == ',' }),
 		Ablation:       opts.ablation,
 		AppVersion:     appVersion,
+		TLSConfig:      tlsConfig,
 	})
 	if err != nil {
 		return err
 	}
 	defer instance.Close()
 
-	logMsg := fmt.Sprintf("SillyDog 服务就绪：http://%s （模型：配置驱动）", opts.addr)
+	scheme := "http"
+	if tlsConfig != nil {
+		scheme = "https"
+	}
+	logMsg := fmt.Sprintf("SillyDog 服务就绪：%s://%s （模型：配置驱动）", scheme, opts.addr)
 	if opts.fallbackKind != "" {
-		logMsg = fmt.Sprintf("SillyDog 服务就绪：http://%s （模型：配置驱动，兜底 %s）", opts.addr, opts.fallbackKind)
+		logMsg = fmt.Sprintf("SillyDog 服务就绪：%s://%s （模型：配置驱动，兜底 %s）", scheme, opts.addr, opts.fallbackKind)
 	}
 	log.Println(logMsg)
 	return instance.Server.ListenAndServeContext(ctx)
