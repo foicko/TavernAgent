@@ -88,6 +88,39 @@ test("历史导航失败时回滚位置并保持输入台可用", async ({ page 
   await expect(input).toBeEnabled();
 });
 
+// 生成失败时，错误卡要让长错误文本自己换行，而不是把重试按钮挤扁。
+// 旧实现的按钮是 flex 子项、默认可收缩，且没有 white-space: nowrap：供应商原文一长，
+// 它就被压到只剩两个字宽而竖排（"重"/"试" 分两行）。CSS 四项门禁查不出这类布局回归。
+test("生成失败时重试按钮不被长错误文本挤扁", async ({ page }) => {
+  await seed(page, "错误卡故事");
+  await page.goto("/");
+  await expect(page.locator(".breadcrumb-title")).toHaveText("错误卡故事");
+
+  await page.route("**/api/v1/sessions/**/turns", route => route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({
+      code: "PROVIDER_UNAVAILABLE",
+      retryable: true,
+      message: "供应商返回 503 (overloaded_error): No available accounts: Token acquisition timeout (5s) - system too busy or deadlock detected",
+    }),
+  }));
+
+  const input = page.locator(".composer-textarea");
+  await input.fill("我查看海港地图，询问灯塔的方向。");
+  await input.press("Enter");
+
+  const retry = page.locator(".error-turn__retry");
+  await expect(retry).toBeVisible();
+  // 竖排时高度会翻倍：用"内容不溢出自身高度"钉住单行。
+  expect(await retry.evaluate(el => {
+    const node = el as HTMLElement;
+    return node.scrollHeight <= node.clientHeight + 1;
+  })).toBe(true);
+  const box = await retry.boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThan(30);
+});
+
 // 刷新后必须重放已提交的正文与选项：断线期间的完整块靠 durable 事件回放，
 // 正在写的那一块靠 GET /turns/{id} 的 draft 快照（服务端与 store 各有单测钉住）。
 test("刷新后正文与选项完整重放", async ({ page }, info) => {

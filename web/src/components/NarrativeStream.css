@@ -247,22 +247,59 @@
 /* ==========================================================================
    5. 错误提示卡
    ========================================================================== */
+/* 失败提示：圆形警示标 +「标题 / 详情」两行 + 重试动作。
+   这里必须自己写全 border（不能只写 border-color）：.decision-deck-box 的基础规则
+   只有 margin/flex/gap，非阅读模式下没有边框，只给颜色等于没有边框。
+   布局的关键是重试按钮 flex: none——错误详情可能很长（例如供应商返回的原文），
+   它是 flex 子项、默认可收缩，会被文本挤到只剩两个字宽而竖排。 */
 .error-turn .decision-deck-box {
-  border-color: var(--color-warn-border);
+  border: 1px solid var(--color-warn-border);
+  border-radius: var(--radius-md);
   background: var(--color-warn-bg);
-  padding: 10px 14px;
+  padding: var(--space-3) var(--space-4);
 }
-.error-turn .decision-deck-box > div {
+.error-turn__row {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.error-turn__icon {
+  flex: none;
+  display: inline-flex;
   align-items: center;
-}
-.error-turn .decision-deck-box > div > span:first-child {
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--color-danger-bg);
   color: var(--color-danger-text);
-  font-weight: var(--fw-semibold);
-  font-size: var(--fs-sm);
-}
-.error-turn .decision-deck-box > div > .probe-btn {
   font-size: var(--fs-xs);
-  padding: 3px 10px;
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+}
+.error-turn__text {
+  /* min-width: 0：让长错误串在自己的范围内换行，而不是把重试按钮挤出容器 */
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.error-turn__title {
+  color: var(--color-danger-text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+.error-turn__detail {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+.error-turn__retry {
+  flex: none;
+  align-self: center;
 }

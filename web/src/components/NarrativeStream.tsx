@@ -5,6 +5,7 @@ import { characterPresentation } from "../lib/characterPresentation";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
+import { Button } from "../ui/Button";
 import { useShallow } from "zustand/react/shallow";
 import "./NarrativeStream.css";
 
@@ -455,16 +456,20 @@ export const NarrativeStream: React.FC = () => {
         {(phase === "failed" || error) && (
           <div className="story-turn error-turn">
             <div className="decision-deck-box">
-              <div>
-                <span>
-                  ✕ 生成受阻：{error || "网络通信异常"}
-                </span>
-                <button
-                  className="probe-btn"
+              <div className="error-turn__row">
+                <span className="error-turn__icon" aria-hidden="true">✕</span>
+                <div className="error-turn__text">
+                  <span className="error-turn__title">生成受阻</span>
+                  <p className="error-turn__detail">{error || "网络通信异常"}</p>
+                </div>
+                <Button
+                  className="error-turn__retry"
+                  variant="danger"
+                  size="sm"
                   onClick={() => void retry()}
                 >
                   重试
-                </button>
+                </Button>
               </div>
             </div>
           </div>
