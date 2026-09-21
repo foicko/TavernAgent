@@ -570,141 +570,19 @@ type MemoryAddPayload struct {
 
 // applier 将事件负载应用到状态副本。
 // 返回已应用事件的紧凑记录（用于 hash 与重放等价验证）。
+//
+// 三个域的事件类型集合互不重叠，所以「谁处理」与「处理顺序」都不会因拆分而改变；
+// 没有任何域认领的事件类型仍然落到 no applier 报错（与拆分前一致）。
 func ApplyEvent(s *WorldState, ev *DomainEvent) (string, error) {
-	switch ev.Type {
-	case EventRelationshipDelta:
-		var p RelationshipDeltaPayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		_, err := s.ApplyRelationshipDelta(p.CharacterID, RelationshipField(p.Field), p.Applied, AffectionMax, AffectionMax)
-		return fmt.Sprintf("rel:%s/%s/%d", p.CharacterID, p.Field, p.Applied), err
-	case EventItemTransfer:
-		var p ItemTransferPayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if err := s.ValidateItemTransfer(p.ItemID, p.From, p.To, p.Quantity); err != nil {
-			return "", err
-		}
-		s.ApplyItemTransfer(p.ItemID, p.To, p.Quantity)
-		return fmt.Sprintf("transfer:%s->%s,%d", p.From, p.To, p.Quantity), nil
-	case EventItemConsume:
-		var p ItemTransferPayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if p.To != "" && p.To != "consumed" {
-			return "", fmt.Errorf("consumption cannot transfer ownership")
-		}
-		if err := s.validateItemQuantity(p.ItemID, p.From, p.Quantity); err != nil {
-			return "", err
-		}
-		it := s.Items[p.ItemID]
-		it.Quantity -= p.Quantity
-		if it.Quantity == 0 {
-			it.OwnerID, it.LocationID = "consumed", ""
-		}
-		s.Items[p.ItemID] = it
-		return fmt.Sprintf("consume:%s,%d", p.ItemID, p.Quantity), nil
-	case EventItemGrant:
-		var p ItemGrantPayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if err := s.ApplyItemGrant(p.Item); err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("grant:%s", p.Item.InstanceID), nil
-	case EventPromisePropose:
-		var p PromiseProposePayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if _, exists := s.Promises[p.Promise.PromiseID]; exists {
-			return "", fmt.Errorf("promise %q already exists", p.Promise.PromiseID)
-		}
-		s.Promises[p.Promise.PromiseID] = p.Promise
-		return fmt.Sprintf("promise:%s", p.Promise.PromiseID), nil
-	case EventPromiseSettle:
-		var p PromiseSettlePayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		promise, ok := s.Promises[p.PromiseID]
-		if !ok {
-			return "", fmt.Errorf("unknown promise %s", p.PromiseID)
-		}
-		if promise.State != PromiseProposed && promise.State != PromiseActive {
-			return "", fmt.Errorf("promise already settled")
-		}
-		if p.State != PromiseActive && p.State != PromiseFulfilled && p.State != PromiseBroken && p.State != PromiseCancelled {
-			return "", fmt.Errorf("invalid promise transition")
-		}
-		promise.State, promise.SettledByRec = p.State, p.ReceiptID
-		s.Promises[p.PromiseID] = promise
-		return "promise-settle", nil
-	case EventScenePropose:
-		var p ScenePayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if p.Scene.SceneID == "" {
-			return "", fmt.Errorf("scene id required")
-		}
-		s.Scene = &p.Scene
-		return "scene", nil
-	case EventMilestonePropose:
-		var p MilestonePayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if p.MilestoneID == "" || strings.TrimSpace(p.Description) == "" {
-			return "", fmt.Errorf("milestone id and description required")
-		}
-		s.Milestones[p.MilestoneID] = p.Description
-		return "milestone", nil
-	case EventMoodSet:
-		var p struct {
-			CharacterID string        `json:"characterId"`
-			Mood        CharacterMood `json:"mood"`
-		}
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		s.Moods[p.CharacterID] = p.Mood
-		return "mood", nil
-	case EventMemoryAdd, EventMemoryRevised, EventMemoryPinned, EventMemoryHidden:
-		return "memory", nil // 记忆不进入世界状态投影（C04：认知与状态分离）
-	case EventDirectorChange:
-		return "director", nil // Intentions have their own projection; world hashes stay unchanged.
-	case EventGoalSet:
-		var p struct {
-			GoalID      string `json:"goalId"`
-			CharacterID string `json:"characterId"`
-			Text        string `json:"text"`
-		}
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		if _, ok := s.Characters[p.CharacterID]; !ok {
-			return "", fmt.Errorf("unknown goal character")
-		}
-		if p.GoalID == "" {
-			p.GoalID = "goal_" + p.CharacterID
-		}
-		s.Goals[p.GoalID] = Goal{CharacterID: p.CharacterID, Text: p.Text}
-		return "goal", nil
-	case EventSecretUnlock:
-		var p SecretUnlockPayload
-		if err := json.Unmarshal([]byte(ev.PayloadJSON), &p); err != nil {
-			return "", err
-		}
-		s.UnlockSecret(p.SecretID)
-		return "secret:" + p.SecretID, nil
-	default:
-		return "", fmt.Errorf("event %q has no applier", ev.Type)
+	switch {
+	case isItemEvent(ev.Type):
+		return applyItemEvent(s, ev)
+	case isSocialEvent(ev.Type):
+		return applySocialEvent(s, ev)
+	case isDirectorEvent(ev.Type):
+		return applyDirectorEvent(s, ev)
 	}
+	return "", fmt.Errorf("event %q has no applier", ev.Type)
 }
 
 // ApplyEvents 在副本上顺序应用事件，返回每事件的效果标签。

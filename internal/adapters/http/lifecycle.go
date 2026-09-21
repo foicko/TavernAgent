@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"log"
 	"net"
@@ -101,6 +102,11 @@ func (s *Server) ListenAndServeContext(ctx context.Context) error {
 	listener, err := net.Listen("tcp", s.addr)
 	if err != nil {
 		return err
+	}
+	// TLS 包在监听层而不是 handler 层：这样关停、连接排空与 SSE 的写截止时间
+	// 走的还是同一条路径，不需要为 HTTPS 再维护一份生命周期。
+	if s.tlsConfig != nil {
+		listener = tls.NewListener(listener, s.tlsConfig)
 	}
 	return s.Serve(ctx, listener)
 }

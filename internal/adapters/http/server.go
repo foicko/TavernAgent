@@ -4,12 +4,10 @@ package http
 
 import (
 	"context"
-	"encoding/json"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -52,6 +50,12 @@ type Deps struct {
 	// （未关闭任何特性），它随 /api/status 一起暴露，使基线评估的产物
 	// 自带"这一轮关了什么"的自证，而不必依赖运行者的记忆。
 	Ablation ctxpkg.Ablation
+	// Tracer 是追踪端口（T0.2 观测）。留空时退化为 no-op——
+	// 观测不该成为启动的前置条件，缺了它服务照常可用，只是没有分段读数。
+	Tracer ports.Tracer
+	// TLSConfig 非空时监听套接字会被包成 TLS（局域网 HTTPS）。
+	// 只影响 ListenAndServeContext 自己创建的监听；桌面壳自带 loopback 监听，不受影响。
+	TLSConfig *tls.Config
 }
 
 // Server 是 HTTP 适配器。
@@ -77,6 +81,8 @@ type Server struct {
 	setNativeTheme func(mode string)
 	pairFails      map[string]pairFailure
 	now            func() time.Time
+	tracer         ports.Tracer
+	tlsConfig      *tls.Config
 	mu             sync.Mutex
 }
 
@@ -90,6 +96,10 @@ func New(deps Deps) (*Server, error) {
 			return nil, fmt.Errorf("生成配对 Token 失败: %w", err)
 		}
 		token = generated
+	}
+	tracer := deps.Tracer
+	if tracer == nil {
+		tracer = ports.NoopTracer{}
 	}
 	return &Server{
 		director: deps.Director,
@@ -106,6 +116,8 @@ func New(deps Deps) (*Server, error) {
 		staticFS:       deps.StaticFS,
 		authPIN:        pin,
 		authToken:      token,
+		tracer:         tracer,
+		tlsConfig:      deps.TLSConfig,
 		pairFails:      make(map[string]pairFailure), now: time.Now,
 	}, nil
 }
@@ -164,7 +176,7 @@ func (s *Server) Handler() http.Handler {
 	if s.staticFS != nil {
 		mux.Handle("/", spaHandler(s.staticFS))
 	}
-	return withLogging(mux)
+	return withLogging(mux, s.tracer)
 }
 
 func spaHandler(staticFS fs.FS) http.Handler {
@@ -197,168 +209,6 @@ func spaHandler(staticFS fs.FS) http.Handler {
 func (s *Server) ListenAndServe() error {
 	return s.ListenAndServeContext(context.Background())
 }
-
-// ---- 安全：回环与局域网私有地址绑定 + 来源校验（T28 相关，支持 LAN 访问）----
-
-func (s *Server) security(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		host := r.Host
-		// 允许本机/私有局域网。
-		if !isLANHost(host) {
-			writeError(w, 403, "FORBIDDEN", "只允许本机或局域网私有网络访问", false, "")
-			return
-		}
-
-		// 局域网鉴权（SEC-01）：本机免检；非本机 LAN 访问若启用了 AuthPIN，则必须携带合法授权 Token
-		if !isLoopbackPeer(r) && s.authPIN != "" {
-			token := extractToken(r)
-			if token == "" || !secureEqual(token, s.authToken) {
-				writeError(w, 401, "AUTH_REQUIRED", "局域网访问需要配对码授权", false, "")
-				return
-			}
-		}
-
-		if isWrite(r) {
-			o := r.Header.Get("Origin")
-			if o != "" && !s.allowedOrigin(r) {
-				writeError(w, 403, "FORBIDDEN", "跨来源写请求被拒绝", false, "")
-				return
-			}
-		}
-		h(w, r)
-	}
-}
-
-func extractToken(r *http.Request) string {
-	auth := r.Header.Get("Authorization")
-	if strings.HasPrefix(auth, "Bearer ") {
-		return strings.TrimPrefix(auth, "Bearer ")
-	}
-	if tok := r.Header.Get("X-Auth-Token"); tok != "" {
-		return tok
-	}
-	return ""
-}
-
-func (s *Server) pairAuth(w http.ResponseWriter, r *http.Request) {
-	if !isLANHost(r.Host) || (isWrite(r) && !s.allowedOrigin(r)) {
-		writeError(w, 403, "FORBIDDEN", "请求来源不受支持", false, "")
-		return
-	}
-	if s.authPIN == "" {
-		writeJSON(w, 200, map[string]any{"ok": true, "token": ""})
-		return
-	}
-	ip := clientIP(r)
-
-	var req struct {
-		PIN string `json:"pin"`
-	}
-	if err := decodeJSON(w, r, &req, 1024); err != nil {
-		writeBodyError(w, err)
-		return
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	now := s.now()
-	for address, failure := range s.pairFails {
-		if !now.Before(failure.Expires) {
-			delete(s.pairFails, address)
-		}
-	}
-	failure := s.pairFails[ip]
-	if failure.Count >= 10 {
-		w.Header().Set("Retry-After", strconv.Itoa(max(1, int(failure.Expires.Sub(now).Seconds()))))
-		writeError(w, 429, "TOO_MANY_ATTEMPTS", "尝试次数过多，请五分钟后重试", false, "")
-		return
-	}
-	if !secureEqual(strings.TrimSpace(req.PIN), s.authPIN) {
-		if failure.Count == 0 {
-			failure.Expires = now.Add(5 * time.Minute)
-		}
-		failure.Count++
-		s.pairFails[ip] = failure
-		writeError(w, 401, "INVALID_PIN", "配对码错误", false, "")
-		return
-	}
-
-	delete(s.pairFails, ip)
-
-	writeJSON(w, 200, map[string]any{"ok": true, "token": s.authToken})
-}
-
-type pairFailure struct {
-	Count   int
-	Expires time.Time
-}
-
-func (s *Server) authStatus(w http.ResponseWriter, r *http.Request) {
-	if !isLANHost(r.Host) {
-		writeError(w, 403, "FORBIDDEN", "只允许本机或局域网私有网络访问", false, "")
-		return
-	}
-	if isLoopbackPeer(r) || s.authPIN == "" {
-		writeJSON(w, 200, map[string]any{"authenticated": true, "required": false})
-		return
-	}
-	token := extractToken(r)
-	authed := token != "" && secureEqual(token, s.authToken)
-	writeJSON(w, 200, map[string]any{"authenticated": authed, "required": true})
-}
-
-func clientIP(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
-
-func isWrite(r *http.Request) bool {
-	switch r.Method {
-	case "POST", "PUT", "PATCH", "DELETE":
-		return true
-	}
-	return false
-}
-
-func isLoopbackHost(host string) bool {
-	h := hostname(host)
-	if strings.EqualFold(h, "localhost") {
-		return true
-	}
-	ip := net.ParseIP(h)
-	return ip != nil && ip.IsLoopback()
-}
-
-func hostname(host string) string {
-	if h, _, err := net.SplitHostPort(host); err == nil {
-		return h
-	}
-	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
-		return host[1 : len(host)-1]
-	}
-	return host
-}
-
-// Only the transport peer can grant the local exemption. Host and forwarded
-// headers are supplied by the caller and must never establish its identity.
-func isLoopbackPeer(r *http.Request) bool {
-	ip := net.ParseIP(clientIP(r))
-	return ip != nil && ip.IsLoopback()
-}
-
-func isLANHost(host string) bool {
-	h := hostname(host)
-	if isLoopbackHost(h) {
-		return true
-	}
-	ip := net.ParseIP(h)
-	return ip != nil && (ip.IsPrivate() || ip.IsLoopback())
-}
-
-func sameOrigin(a, b string) bool { return strings.TrimSuffix(a, "/") == strings.TrimSuffix(b, "/") }
 
 // ---- handlers ----
 
@@ -689,115 +539,6 @@ func validSlot(slot string) bool {
 	return false
 }
 
-// ---- SSE ----
-
-func (s *Server) turnEvents(w http.ResponseWriter, r *http.Request) {
-	turnID := r.PathValue("turnId")
-	if _, err := s.turns.Get(turnID); err != nil {
-		writeError(w, 404, "NOT_FOUND", "回合不存在", false, "")
-		return
-	}
-	s.eventStream(w, r, turnID)
-}
-
-func (s *Server) sessionEvents(w http.ResponseWriter, r *http.Request) {
-	if err := s.sessions.RequireCharacter(r.PathValue("id"), ""); err != nil {
-		writeAPIError(w, err)
-		return
-	}
-	s.eventStream(w, r, r.PathValue("id"))
-}
-
-func (s *Server) eventStream(w http.ResponseWriter, r *http.Request, aggregateID string) {
-	controller := http.NewResponseController(w)
-	_ = controller.SetWriteDeadline(time.Now().Add(30 * time.Second))
-	defer func() { _ = controller.SetWriteDeadline(time.Time{}) }()
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		writeError(w, 500, "SSE_UNSUPPORTED", "当前连接不支持流式", false, "")
-		return
-	}
-	after := int64(0)
-	if lei := r.Header.Get("Last-Event-ID"); strings.HasPrefix(lei, aggregateID+":") {
-		if n, err := strconv.ParseInt(strings.TrimPrefix(lei, aggregateID+":"), 10, 64); err == nil && n > 0 {
-			after = n
-		}
-	}
-
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.WriteHeader(200)
-	flusher.Flush()
-
-	// Subscribe before reading. Notifications are only wakeups: every delivery
-	// comes from the durable outbox and advances one monotonic watermark.
-	sub, closeFn := s.bus.Subscribe(aggregateID, 64)
-	defer closeFn()
-	drain := func() bool {
-		for {
-			if r.Context().Err() != nil {
-				return false
-			}
-			events, err := s.bus.Poll(aggregateID, after, 256)
-			if err != nil {
-				return false
-			}
-			for _, ev := range events {
-				if ev.Sequence <= after {
-					continue
-				}
-				if !s.writeSSE(w, flusher, ev) {
-					return false
-				}
-				after = ev.Sequence
-			}
-			if len(events) < 256 {
-				return true
-			}
-		}
-	}
-	if !drain() {
-		return
-	}
-	reconcile := time.NewTicker(time.Second)
-	defer reconcile.Stop()
-	heartbeat := time.NewTicker(15 * time.Second)
-	defer heartbeat.Stop()
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case ev := <-sub.Events:
-			// Partial text/thinking is best-effort and has no durable event ID.
-			// A completed block still replaces any partial draft after reconnect.
-			if ev != nil && ev.Sequence == 0 && (ev.Type == "turn.thinking" || ev.Type == "block.delta") {
-				_ = controller.SetWriteDeadline(time.Now().Add(30 * time.Second))
-				if _, err := fmt.Fprintf(w, "event: %s\ndata: %s\n\n", ev.Type, ev.PayloadJSON); err != nil {
-					return
-				}
-				flusher.Flush()
-				continue
-			}
-			if !drain() {
-				return
-			}
-		case <-reconcile.C:
-			if !drain() {
-				return
-			}
-		case <-heartbeat.C:
-			_ = controller.SetWriteDeadline(time.Now().Add(30 * time.Second))
-			if _, err := io.WriteString(w, ": ping\n\n"); err != nil {
-				return
-			}
-			if err := controller.Flush(); err != nil {
-				return
-			}
-		}
-	}
-}
-
 func (s *Server) organizeMemories(w http.ResponseWriter, r *http.Request) {
 	if s.memories == nil {
 		writeError(w, 501, "NOT_IMPLEMENTED", "未启用记忆服务", false, "")
@@ -816,68 +557,4 @@ func (s *Server) organizeMemories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, plan)
-}
-
-func (s *Server) writeSSE(w http.ResponseWriter, flusher http.Flusher, ev *domain.OutboxEvent) bool {
-	_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(30 * time.Second))
-	_, err := fmt.Fprintf(w, "event: %s\nid: %s:%d\ndata: %s\n\n", ev.Type, ev.AggregateID, ev.Sequence, ev.PayloadJSON)
-	if err != nil {
-		return false
-	}
-	flusher.Flush()
-	return true
-}
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-func writeError(w http.ResponseWriter, status int, code, message string, retryable bool, turnID string) {
-	writeJSON(w, status, map[string]any{
-		"code": code, "message": message, "retryable": retryable, "turnId": turnID,
-	})
-}
-
-func writeAPIError(w http.ResponseWriter, err error) {
-	if appErr, ok := err.(*application.APIError); ok {
-		writeError(w, appErr.StatusCode, appErr.Code, appErr.Message, appErr.Retryable, "")
-		return
-	}
-	writeError(w, 500, "INTERNAL", err.Error(), true, "")
-}
-
-func withLogging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 健康检查是高频探活，跳过避免日志噪音。
-		if r.URL.Path == "/healthz" {
-			next.ServeHTTP(w, r)
-			return
-		}
-		start := time.Now()
-		rec := &statusRecorder{ResponseWriter: w, status: 200}
-		next.ServeHTTP(rec, r)
-		log.Printf("%s %s -> %d (%s)", r.Method, r.URL.Path, rec.status, time.Since(start).Round(time.Millisecond))
-	})
-}
-
-// statusRecorder 包装 ResponseWriter 捕获状态码（访问日志用）。
-type statusRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
-func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }
-
-func (r *statusRecorder) WriteHeader(code int) {
-	r.status = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
-// Flush 透传：SSE 路径依赖 w.(http.Flusher) 断言，包装层必须保持该能力。
-func (r *statusRecorder) Flush() {
-	if f, ok := r.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
 }
