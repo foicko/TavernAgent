@@ -119,6 +119,7 @@ export const TopHeader: React.FC = () => {
           aria-label="模型设置"
         >
           <span className={`active-model-indicator-dot ${primaryInstance ? "active" : "idle"}`} />
+          <span className="header-model-glyph mobile-only" aria-hidden="true">⚙</span>
           <span className="header-btn-text header-active-model-name">{activeModelName}</span>
         </button>
 

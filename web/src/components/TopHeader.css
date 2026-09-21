@@ -1,6 +1,20 @@
 @media (max-width: 480px) {
   .top-header .brand-title { display: none; }
   .top-header .brand-group { flex: 0 0 auto; }
+  .header-active-model-pill {
+    padding: 0 8px;
+    gap: 4px;
+    width: auto;
+    min-width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+}
+
+.header-model-glyph {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-muted);
 }
 
 .header-active-model-pill {

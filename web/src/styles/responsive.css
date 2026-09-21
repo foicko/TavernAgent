@@ -293,13 +293,20 @@
     display: none;
   }
 
-  .btn-primary-send {
-    height: 36px;
-    padding: 0 14px;
-    font-size: 12.5px;
-    min-width: 68px;
+  .composer-shelf .btn-primary-send.squircle {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
   }
-  .char-import-window,
+
+  .composer-shelf .send-arrow-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .composer-shelf .composer-note-input {
+    font-size: 16px;
+  }
 
   /* 世界书分栏转纵向响应 */
 

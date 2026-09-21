@@ -74,6 +74,20 @@
     min-height: 32px;
   }
 
+  .composer-shelf .composer-syntax-group {
+    height: 30px;
+  }
+
+  .composer-shelf .composer-syntax-btn {
+    height: 24px;
+    padding: 0 8px;
+  }
+
+  /* 贴底抽屉立绘紧凑展示，避免将三维量表与信物推至首屏视野之外 */
+  .rail-right .tachie-viewport {
+    height: 190px;
+  }
+
   /* 抽屉内的子页签：横向可滚动，单项不低于 44px 高。 */
   .rail-subtab-btn {
     min-height: 44px;

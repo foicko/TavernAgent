@@ -190,6 +190,10 @@
     animation: ui-command-palette-sheet var(--duration-fast) var(--ease-smooth-out);
   }
 
+  .ui-command-palette__input {
+    font-size: 16px;
+  }
+
   .ui-command-palette__item {
     min-height: 48px;
   }

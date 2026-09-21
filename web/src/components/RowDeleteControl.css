@@ -42,6 +42,14 @@
   opacity: 1;
 }
 
+@media (hover: none) {
+  .row-delete-btn--icon {
+    opacity: 0.85;
+    padding: 6px 8px;
+  }
+}
+
+
 .row-delete-btn--confirm {
   border-color: var(--color-warn-border);
   background: var(--color-danger-bg);

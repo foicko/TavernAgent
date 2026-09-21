@@ -28,7 +28,7 @@ describe("ttsPlayer", () => {
     const unsub = ttsPlayer.subscribe((cur) => states.push(cur));
 
     vi.spyOn(api, "synthesizeTTS").mockResolvedValue(new Blob(["mock-mp3"], { type: "audio/mpeg" }));
-    global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+    window.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
 
     await ttsPlayer.play("Hello world");
     expect(ttsPlayer.getCurrentText()).toBe("Hello world");
@@ -41,7 +41,7 @@ describe("ttsPlayer", () => {
 
   it("toggles off when playing the same text twice", async () => {
     vi.spyOn(api, "synthesizeTTS").mockResolvedValue(new Blob(["mock-mp3"], { type: "audio/mpeg" }));
-    global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+    window.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
 
     await ttsPlayer.play("Toggle me");
     expect(ttsPlayer.getCurrentText()).toBe("Toggle me");
@@ -56,7 +56,7 @@ describe("ttsPlayer", () => {
     useTTSSettings.getState().setDirectorMode(true);
 
     const synthSpy = vi.spyOn(api, "synthesizeTTS").mockResolvedValue(new Blob(["mock-mp3"], { type: "audio/mpeg" }));
-    global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+    window.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
 
     await ttsPlayer.play("(冷峻)你想带我走？[停顿片刻]滚出去。", {
       instruction: "【角色】岑家大当家\n【指导】极慢，实音重",
@@ -76,7 +76,7 @@ describe("ttsPlayer", () => {
     useTTSSettings.getState().resetToDefaults();
 
     const synthSpy = vi.spyOn(api, "synthesizeTTS").mockResolvedValue(new Blob(["mock-mp3"], { type: "audio/mpeg" }));
-    global.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+    window.URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
 
     await ttsPlayer.play("(冷峻)你想带我走？[停顿片刻]滚出去。");
 

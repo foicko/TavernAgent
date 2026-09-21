@@ -146,8 +146,12 @@
   }
 
   .ui-modal {
-    max-height: 94vh;
+    max-height: 92dvh;
     border-radius: var(--radius-xl, 18px) var(--radius-xl, 18px) 0 0;
+  }
+
+  .ui-modal__foot {
+    padding-bottom: max(var(--space-3), env(safe-area-inset-bottom, 0px));
   }
 }
 

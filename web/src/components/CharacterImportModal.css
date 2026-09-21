@@ -340,3 +340,17 @@
   text-overflow: ellipsis;
   line-height: 1.4;
 }
+
+@media (max-width: 720px) {
+  .char-import-window .ui-modal__body {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .char-import-preview__fields input,
+  .char-import-preview__opening select,
+  .char-import-preview__opening textarea {
+    font-size: 16px;
+  }
+}
+

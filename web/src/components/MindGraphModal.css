@@ -147,3 +147,25 @@
   color: var(--text-dim);
   font-size: var(--fs-xs);
 }
+
+@media (max-width: 720px) {
+  .ui-modal.mind-graph-fullscreen {
+    width: 100vw;
+    height: 94dvh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+
+  .mind-graph-inspector-drawer {
+    width: 100%;
+    height: auto;
+    max-height: 50dvh;
+    top: auto;
+    bottom: 0;
+    border-left: 0;
+    border-top: 1px solid var(--border-mid);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--space-4);
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom, 0px));
+  }
+}
+
