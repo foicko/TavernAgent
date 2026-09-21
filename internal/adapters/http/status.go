@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	ctxpkg "tavernagent/internal/context"
+	"tavernagent/internal/ports"
 )
 
 // runtimeStatus 暴露运行读数（T0.2）：回合与用量计数、最近若干次调用的
@@ -24,6 +25,11 @@ func (s *Server) runtimeStatus(w http.ResponseWriter, r *http.Request) {
 	// 消融开关（ADS-7.8-01）：基线评估必须能从产物里确认"这一轮确实关了哪些特性"，
 	// 而不是靠运行者的记忆。
 	out["ablation"] = s.ablation.String()
+	// 追踪读数：最近若干次请求的耗时与分段打点。tracer 不是记录器（例如换成
+	// OTLP 导出器、或压根没配）时这里直接少一段，而不是报错。
+	if snapshotter, ok := s.tracer.(ports.TraceSnapshotter); ok {
+		out["trace"] = snapshotter.TraceSnapshot()
+	}
 	if s.usage != nil {
 		if totals, err := s.usage.TurnUsageTotals(); err == nil {
 			out["usage"] = totals

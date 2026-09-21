@@ -9,6 +9,7 @@
 package app
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	ctxpkg "tavernagent/internal/context"
 	"tavernagent/internal/ports"
 	"tavernagent/internal/util/datalock"
+	"tavernagent/internal/util/trace"
 	"tavernagent/web"
 )
 
@@ -45,6 +47,9 @@ type Config struct {
 	Ablation ctxpkg.Ablation
 	// AppVersion 会写进剧情包清单，用于排查"这个包是哪个版本导出的"。
 	AppVersion string
+	// TLSConfig 非空时，无头监听会包成 HTTPS（局域网加密访问）。
+	// 桌面壳自带 loopback 监听，不受此项影响。
+	TLSConfig *tls.Config
 }
 
 // App 是一个已装配、可运行的实例。
@@ -156,6 +161,10 @@ func Bootstrap(cfg Config) (*App, error) {
 	// 台账写失败要能被读到（不再只剩一行日志）：接进同一组计数器。
 	manager.SetUsageFailureSink(metrics.UsageWriteFailed)
 
+	// 进程内追踪记录器：只保留最近若干次请求的耗时与分段打点，随 /api/status 暴露。
+	// 之所以不是 OTel SDK：见 internal/ports/trace.go 的包注释。
+	tracer := trace.NewRecorder(trace.DefaultCapacity)
+
 	server, err := httpadapter.New(httpadapter.Deps{
 		Director: directorSvc,
 		Sessions: sessionSvc, Turns: turnSvc, Branches: branchSvc,
@@ -168,6 +177,8 @@ func Bootstrap(cfg Config) (*App, error) {
 		Metrics:        metrics,
 		Usage:          store,
 		Ablation:       cfg.Ablation,
+		Tracer:         tracer,
+		TLSConfig:      cfg.TLSConfig,
 	})
 	if err != nil {
 		return nil, err
