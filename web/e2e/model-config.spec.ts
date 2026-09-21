@@ -41,6 +41,14 @@ async function resetConfig(page: Page) {
 }
 
 test.describe("模型配置：角色优先", () => {
+  test.beforeEach(async ({ page }) => {
+    await resetConfig(page);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await resetConfig(page);
+  });
+
   test("连接只配一次、角色只选连接、输入台一键切主线", async ({ page }) => {
     await seed(page, "模型配置验收");
     await page.goto("/");

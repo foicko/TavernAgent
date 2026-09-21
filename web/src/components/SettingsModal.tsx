@@ -35,7 +35,7 @@ export function SettingsModal({
   return (
     <Modal
       id="settings-modal"
-      label="系统设置"
+      label="模型设置"
       title={
         <div className="settings-modal-header">
           <span className="settings-modal-title">设置</span>
