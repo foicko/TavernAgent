@@ -285,4 +285,3 @@ func (s *Store) IntegrityCheck() ([]string, error) {
 
 	return issues, nil
 }
-

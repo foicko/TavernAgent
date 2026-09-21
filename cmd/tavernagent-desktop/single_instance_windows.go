@@ -46,7 +46,7 @@ var (
 
 // singleInstanceHandle 持有互斥体句柄，生命周期与进程一致（退出时由内核回收）。
 // 必须留着：句柄一关，互斥体就释放了，单实例判定随之失效。
-var singleInstanceHandle windows.Handle
+var singleInstanceHandle windows.Handle //nolint:unused
 
 // acquireSingleInstance 尝试成为唯一实例（用产品互斥体名）。
 //

@@ -292,5 +292,3 @@ func TestSynthesizeMiMoWithInstruction(t *testing.T) {
 		t.Errorf("expected message[1] to be assistant text, got %+v", receivedMessages[1])
 	}
 }
-
-

@@ -130,4 +130,3 @@ func TestTTSSynthesizeWithOptions(t *testing.T) {
 		t.Errorf("unexpected audio body: %s", rec.Body.String())
 	}
 }
-

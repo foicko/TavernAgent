@@ -218,4 +218,3 @@ func TestGenerateComfyUI(t *testing.T) {
 		t.Errorf("unexpected image content: %s", string(data))
 	}
 }
-
