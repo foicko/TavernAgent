@@ -1,0 +1,98 @@
+name: Real model evaluation (manual)
+
+# 只手动触发：常规 CI **不**调用付费模型（CONTRIBUTING.md）。
+# 这里的产物是"真实模型结论"的证据，落成 artifact 供发布评审引用；
+# 额度不可逆，因此流程固定为 预检（含预算闸）→ 协议评测，不做自动重试。
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: 样本数（探路用 3~5，正式验收用 100）
+        required: true
+        default: "100"
+      model:
+        description: 放行的模型标签（网关只接受这一个）
+        required: true
+        default: gemini-3.8-flash-high
+      workers:
+        description: 并发数（越高越省时间，但更容易触发上游限流）
+        required: true
+        default: "2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-eval-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Build the evaluated binary
+        shell: bash
+        run: |
+          # 前端必须先构建：web/dist 被 //go:embed 编译期嵌入，
+          # 顺序颠倒会让被测二进制里装的是旧前端。
+          cd web
+          pnpm install --frozen-lockfile
+          pnpm build
+          cd ..
+          go build -o build/release-eval/tavernagent.exe ./cmd/tavernagent
+
+      - name: Metered protocol evaluation
+        shell: bash
+        env:
+          # 凭据只经环境变量注入，绝不落进仓库或报告（release_audit --strict 会审计）。
+          TAVERNAGENT_EVAL_GATEWAY_KEY: ${{ secrets.TAVERNAGENT_EVAL_GATEWAY_KEY }}
+          TAVERNAGENT_EVAL_TOKEN: ${{ secrets.TAVERNAGENT_EVAL_TOKEN }}
+          TAVERNAGENT_EVAL_MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TAVERNAGENT_EVAL_GATEWAY_KEY:-}" ] || [ -z "${TAVERNAGENT_EVAL_TOKEN:-}" ]; then
+            echo "::error::需要 secrets.TAVERNAGENT_EVAL_GATEWAY_KEY 与 secrets.TAVERNAGENT_EVAL_TOKEN"
+            exit 1
+          fi
+          UPSTREAM="${{ secrets.TAVERNAGENT_EVAL_UPSTREAM }}"
+          if [ -z "$UPSTREAM" ]; then
+            echo "::error::需要 secrets.TAVERNAGENT_EVAL_UPSTREAM（例如 http://<gateway-host>:<port>/v1）"
+            exit 1
+          fi
+          # 起隔离环境（本地网关 + 被测实例），随后预检（内含预算闸）再跑评测。
+          # 三步必须在同一个 shell 里：进程随步骤结束会被回收。
+          python scripts/release_eval.py start --upstream "$UPSTREAM"
+          python scripts/release_eval.py preflight --upstream "$UPSTREAM"
+          python scripts/release_eval.py protocol \
+            --samples "${{ inputs.samples }}" \
+            --workers "${{ inputs.workers }}" \
+            --upstream "$UPSTREAM"
+
+      - name: Upload evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-eval-evidence
+          path: |
+            output/release-readiness/gemini/*.json
+            output/release-readiness/gemini/**/server.log
+            output/release-readiness/gemini/meter.log
+            output/release-readiness/gemini/application.log
+          if-no-files-found: warn

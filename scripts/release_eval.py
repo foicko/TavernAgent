@@ -129,7 +129,25 @@ class Evaluation:
         write_json(self.directory/"fingerprint.json", {**fingerprint(self.binary), **diagnostic})
         print(json.dumps({"started": True, "port": self.args.port, **self.save_ledger()}), flush=True)
 
+    def guard_budget(self):
+        """预检之前先看预算余额：网关的额度是**不可逆**的，烧完就只能换目录重来。
+
+        preflight 本身也要花掉几次调用（三个槽位各探一次），所以这道闸必须放在它前面。
+        需要多少：samples 次 + 一次有界修复的余量（只重跑失败样本，按 10% 且至少 10 次估）。
+        """
+        ledger = self.meter()
+        repair = max(10, self.args.samples // 10)
+        needed = self.args.samples + repair
+        if ledger.get("remaining", 0) < needed:
+            raise SystemExit(
+                f"评测预算不足：剩余 {ledger.get('remaining', 0)} 次，至少需要 {needed} 次"
+                f"（{self.args.samples} 例 + 修复余量 {repair}）。"
+                "额度不可逆，请先确认网关额度，或用更小的 --samples 跑一轮探路。")
+        print(json.dumps({"budget": {"remaining": ledger.get("remaining", 0), "needed": needed,
+                                     "samples": self.args.samples, "repairReserve": repair}}), flush=True)
+
     def preflight(self):
+        self.guard_budget()
         self.meter("/control/phase", {"phase": "preflight"})
         self.configure()
         results = []

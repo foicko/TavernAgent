@@ -18,7 +18,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-MODEL = "gemini-3.8-flash-high"
+MODEL = os.environ.get("TAVERNAGENT_EVAL_MODEL", "gemini-3.8-flash-high")
+# 模型标签可以改（--model / TAVERNAGENT_EVAL_MODEL），默认值保持不变：
+# 已有台账里记着旧标签，改默认值会让"这一轮到底跑了哪个模型"变成需要考古的问题。
 
 
 def utc():
@@ -30,9 +32,10 @@ class BudgetExhausted(Exception):
 
 
 class Ledger:
-    def __init__(self, directory, limit=300):
+    def __init__(self, directory, limit=300, model=MODEL):
         if not 1 <= limit <= 300:
             raise ValueError("Inference budget must be between 1 and 300")
+        self.model = model
         self.directory = Path(directory).resolve()
         self.directory.mkdir(parents=True, exist_ok=True)
         self.path = self.directory / "calls.sqlite3"
@@ -74,7 +77,7 @@ class Ledger:
                 raise BudgetExhausted("No inference was sent: the persisted budget is exhausted")
             phase = db.execute("SELECT value FROM metadata WHERE key='phase'").fetchone()[0]
             cursor = db.execute("INSERT INTO calls(started,phase,slot,model,protocol,request_sha256) VALUES(?,?,?,?,?,?)",
-                                (utc(), phase, slot, MODEL, protocol, hashlib.sha256(payload).hexdigest()))
+                                (utc(), phase, slot, self.model, protocol, hashlib.sha256(payload).hexdigest()))
             return cursor.lastrowid
 
     def finish(self, call_id, outcome, status, elapsed, first, size, digest):
@@ -93,18 +96,21 @@ class Ledger:
             db.row_factory = sqlite3.Row
             limit = int(db.execute("SELECT value FROM metadata WHERE key='limit'").fetchone()[0])
             calls = [dict(row) for row in db.execute("SELECT * FROM calls ORDER BY id")]
-        return {"limit": limit, "used": len(calls), "remaining": limit-len(calls), "model": MODEL, "calls": calls}
+        return {"limit": limit, "used": len(calls), "remaining": limit-len(calls), "model": self.model, "calls": calls}
 
 
 class MeterServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, port, ledger, upstream, gateway_key, token):
+    def __init__(self, port, ledger, upstream, gateway_key, token, model=MODEL):
         super().__init__(("127.0.0.1", port), Handler)
         self.ledger, self.upstream = ledger, urlsplit(upstream.rstrip("/"))
         if self.upstream.scheme not in {"http", "https"} or not self.upstream.hostname or self.upstream.username:
             raise ValueError("Invalid upstream URL")
         self.gateway_key, self.token = gateway_key, token
+        # 只放行被批准的模型：网关的预算与台账都按这个标签记账，
+        # 放行任意模型等于把"这一轮花了多少"变成不可对账的数字。
+        self.model = model
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -157,7 +163,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(404, {"error": {"code": "INVALID_INFERENCE_PATH"}})
                 return
             slot, _, protocol = parts
-            if body.get("model") != MODEL:
+            if body.get("model") != self.server.model:
                 self.reply(422, {"error": {"code": "MODEL_MISMATCH", "message": "Only the approved Gemini model is allowed"}})
                 return
             call_id = self.server.ledger.reserve(slot, protocol, payload)
@@ -228,13 +234,15 @@ def main():
     parser.add_argument("--upstream", required=True)
     parser.add_argument("--port", type=int, default=18892)
     parser.add_argument("--limit", type=int, default=300)
+    parser.add_argument("--model", default=MODEL,
+                        help="只放行的模型标签（默认取 TAVERNAGENT_EVAL_MODEL，再退到内置默认值）")
     args = parser.parse_args()
     key, token = os.environ.get("TAVERNAGENT_EVAL_GATEWAY_KEY"), os.environ.get("TAVERNAGENT_EVAL_TOKEN")
     if not key or not token:
         parser.error("Set both evaluation credential environment variables")
-    ledger = Ledger(args.directory, args.limit)
-    server = MeterServer(args.port, ledger, args.upstream, key, token)
-    print(json.dumps({"port": args.port, "used": ledger.snapshot()["used"], "limit": args.limit, "model": MODEL}), flush=True)
+    ledger = Ledger(args.directory, args.limit, args.model)
+    server = MeterServer(args.port, ledger, args.upstream, key, token, args.model)
+    print(json.dumps({"port": args.port, "used": ledger.snapshot()["used"], "limit": args.limit, "model": args.model}), flush=True)
     try:
         server.serve_forever()
     finally:
