@@ -1,0 +1,93 @@
+/* 收口区：被多个组件共用的类，集中在此声明。
+   由 styles.css 第 5364-5453 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   17. 跨组件共享样式
+   --------------------------------------------------------------------------
+   这些 class 被多个组件共用，但此前只以"某个组件恰好定义过"或内联样式的形式存在；
+   现收口到全局，组件内不再重复声明。
+   ========================================================================== */
+
+/* 叙事块：对白与心声（NarrativeStream / HistoricalStory 共用） */
+.block-dialogue {
+  margin-bottom: var(--space-2);
+  font-weight: var(--fw-medium);
+}
+
+.block-monologue {
+  margin-bottom: var(--space-2);
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+/* 实心行动按钮（TurnActions / CharacterImportModal 共用） */
+.btn-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--accent-solid);
+  border-radius: var(--radius-full);
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-solid:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.btn-solid:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 角色徽标（FullTachieModal 及其它角色面板共用） */
+.char-status-badge,
+.char-stage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.char-stage-pill {
+  color: var(--text-main);
+}
+
+/* 空白状态下的角色头像占位（FullTachieModal 无立绘时） */
+
+/* 已选检定提示条里的说明文字 */
+.selected-action-info {
+  font-size: var(--fs-sm);
+  color: var(--text-main);
+}
+
+/* 导演大纲的节拍列表 */
+.director-beats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

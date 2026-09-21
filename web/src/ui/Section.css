@@ -65,7 +65,3 @@
   gap: var(--space-3);
   min-width: 0;
 }
-
-.ui-section--flush .ui-section__body {
-  gap: 0;
-}

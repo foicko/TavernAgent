@@ -1,0 +1,77 @@
+/* 导演工作区：讨论、大纲与节拍编辑。
+   由 styles.css 第 5288-5363 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* Director workspace: draft intentions stay visually separate from the story. */
+.director-entry { cursor: pointer; }
+.director-status { margin-bottom: 10px; padding: 9px 12px; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; font-size: 12px; }
+.director-status-main { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.director-status-main > span { flex: 1; color: var(--muted); }
+.director-status p { margin: 5px 0 0; color: var(--muted); line-height: 1.6; }
+.director-overlay { position: fixed; inset: 0; z-index: 6000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(10, 12, 18, .58); backdrop-filter: blur(8px); }
+.director-dialog { display: flex; flex-direction: column; width: min(1120px, 100%); max-height: calc(100dvh - 48px); overflow: hidden; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 28px 90px rgba(0,0,0,.32); font-family: var(--font); }
+.director-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 26px 18px; border-bottom: 1px solid var(--border); }
+.director-header h2 { margin: 3px 0 8px; font-size: 25px; font-weight: 600; letter-spacing: .1em; }
+.director-header p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+.director-dialog button { cursor: pointer; font-family: inherit; }
+.director-dialog button:disabled, .director-entry:disabled { opacity: .45; cursor: not-allowed; }
+.director-dialog :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.director-columns { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); min-height: 220px; flex: 1; overflow: hidden; }
+.director-discussion, .director-editor { min-width: 0; padding: 20px 24px; }
+.director-discussion { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); background: var(--bg-soft); }
+.director-editor { overflow: auto; }
+.director-dialog h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+.director-muted { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 0 0 10px; }
+.director-chat { min-height: 100px; flex: 1; overflow: auto; padding-right: 4px; }
+.director-empty { padding: 36px 12px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.director-empty > span { color: var(--accent); font-size: 30px; }
+.director-empty small { font-size: 12px; }
+.director-exchange { margin-bottom: 20px; }
+.director-exchange article { padding: 12px 14px; border-radius: 10px; margin-bottom: 10px; line-height: 1.8; font-size: 13px; overflow-wrap: anywhere; }
+.director-exchange article strong { font-size: 11px; color: var(--muted); }
+.director-exchange article p { margin: 4px 0; white-space: pre-wrap; }
+.director-chat-user { background: var(--surface); border: 1px solid var(--border); }
+.director-chat-assistant { border-left: 2px solid var(--accent); }
+.director-chat-composer { padding-top: 12px; border-top: 1px solid var(--border); }
+.director-dialog label { display: block; font-size: 11px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+.director-dialog input:not([type="checkbox"]), .director-dialog textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 5px; border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; line-height: 1.7; }
+.director-dialog textarea { resize: vertical; min-height: 55px; }
+.director-dialog input:disabled, .director-dialog textarea:disabled { opacity: .7; }
+.director-chat-composer .director-actions { margin-top: 10px; justify-content: flex-end; }
+.director-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.director-section-heading span { color: var(--muted); font-size: 11px; }
+.director-replace { display: flex !important; gap: 8px; align-items: center; padding: 8px; border: 1px dashed var(--border); border-radius: 7px; }
+.director-beat { padding: 14px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; background: var(--surface); }
+.director-beat.current { border-color: var(--accent); }
+.director-beat-top { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; font-size: 11px; color: var(--muted); }
+.director-beat-number { color: var(--accent); font-size: 17px; font-variant-numeric: tabular-nums; }
+.director-beat-top .director-actions { margin-left: auto; }
+.director-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.director-beat-top button { border: 0; border-radius: 4px; padding: 3px 7px; font-size: 11px; background: var(--bg-soft); color: var(--text); }
+.director-add { width: 100%; padding: 12px; border: 1px dashed var(--border); border-radius: 8px; background: transparent; color: var(--accent); font-size: 12px; }
+.director-primary { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-contrast); padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.director-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 16px 24px; border-top: 1px solid var(--border); }
+.director-footer p { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.7; }
+.director-notice, .director-error { padding: 10px 24px; margin: 0; font-size: 12px; line-height: 1.7; }
+.director-notice { color: var(--muted); }
+.director-error { color: var(--danger); border-bottom: 1px solid var(--border); }
+.director-error p { margin: 0 0 6px; }
+.director-error button { margin-right: 10px; }
+.director-active-summary { padding: 12px 24px; border-bottom: 1px solid var(--border); font-size: 12px; max-height: 25dvh; overflow: auto; }
+.director-active-summary > span { margin-left: 12px; color: var(--muted); }
+.director-active-summary .director-actions { margin-top: 8px; }
+.director-active-summary summary { margin-top: 8px; cursor: pointer; color: var(--muted); }
+.director-warning { color: var(--muted); margin: 6px 0; line-height: 1.7; }
+.director-evidence { padding: 9px 0; }
+.director-evidence blockquote { color: var(--muted); margin: 6px 0; padding-left: 10px; border-left: 2px solid var(--border); }
+@media (max-width: 760px) {
+  .director-overlay { padding: 8px; }
+  .director-dialog { max-height: calc(100dvh - 16px); border-radius: 12px; }
+  .director-header { padding: 16px; }
+  .director-columns { display: block; overflow: auto; }
+  .director-discussion, .director-editor { padding: 16px; }
+  .director-discussion { border-right: 0; border-bottom: 1px solid var(--border); }
+  .director-chat { max-height: 260px; }
+  .director-editor { overflow: visible; }
+  .director-footer { padding: 12px 16px; flex-wrap: wrap; }
+  .director-footer .director-primary { width: 100%; }
+}

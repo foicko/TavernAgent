@@ -1,0 +1,419 @@
+/* 响应式：平板与手机断点、安全区与抽屉。
+   由 styles.css 第 4677-5098 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   15. RESPONSIVE DESIGN: SMARTPHONES, TABLETS & SAFE AREAS
+   ========================================================================== */
+
+/* Global responsive visibility utility classes */
+.mobile-only {
+  display: none !important;
+}
+
+.mobile-drawer-backdrop {
+  display: none;
+}
+
+.mobile-rail-toggle {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.mobile-drawer-header {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Tablet Mode (769px ~ 1024px: iPad portrait & landscape)
+   -------------------------------------------------------------------------- */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root {
+    --rail-left-w: 240px;
+    --rail-right-w: 280px;
+  }
+
+  /* 左右栏折叠时让出更多空间给文学主舞台 */
+  .workspace-layout {
+    grid-template-columns: 48px minmax(0, 1fr) 0px;
+  }
+
+  body:not(.rail-left-collapsed) .workspace-layout {
+    grid-template-columns: 240px minmax(0, 1fr) 0px;
+  }
+
+  body:not(.rail-right-collapsed) .workspace-layout {
+    grid-template-columns: 48px minmax(0, 1fr) 280px;
+  }
+
+  body:not(.rail-left-collapsed):not(.rail-right-collapsed) .workspace-layout {
+    grid-template-columns: 240px minmax(0, 1fr) 280px;
+  }
+
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
+  .header-actions .header-btn-text {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Smartphone Mode (<= 768px: iPhone, Android, Touch Mobile)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  :root {
+    --header-h: 48px;
+  }
+
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
+  /* 移动端顶栏紧凑布局 */
+  .top-header {
+    height: var(--header-h);
+    padding: 0 10px;
+    padding-top: env(safe-area-inset-top, 0px);
+    gap: 6px;
+  }
+
+  .brand-group {
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .brand-title {
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .scene-breadcrumb {
+    display: none !important; /* 手机端隐藏过长面包屑，保证顶栏清爽 */
+  }
+
+  .view-mode-tabs {
+    padding: 2px;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .view-tab-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  .view-tab-btn .tab-text {
+    display: inline;
+  }
+
+  .header-actions {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .header-actions .header-btn-text {
+    display: none !important;
+  }
+
+  .header-actions .btn-quiet {
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+  }
+
+  /* 移动端主工作区：单列占满视口 */
+  .workspace-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    width: 100% !important;
+    height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px)) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .stage-main {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     左侧导航栏：移动端原生抽屉 (Off-canvas Slide Drawer)
+     ------------------------------------------------------------------------
+     这段几何只负责 481~768px（平板与横屏手机）。更窄的手机视口由
+     styles/mobile.css 改成"从底部升起"的贴底抽屉——两边不能同时生效，
+     否则 <480px 会退化成侧滑（评分文档点名的"操作逼仄"）。 */
+
+  /* 移动端全屏半透明抽屉背景蒙版（各断点共用） */
+  .mobile-drawer-backdrop.active {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    z-index: 990 !important;
+    animation: fadeIn 0.2s ease !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     剧情叙事流 (Narrative Stream)
+     ------------------------------------------------------------------------ */
+  .floating-rail-trigger-right {
+    display: none !important;
+  }
+
+  .scene-bar {
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }
+
+  .scene-sub-telemetry {
+    display: none !important; /* 节省手机纵向高度 */
+  }
+
+  .scene-bar-actions .btn-quiet {
+    padding: 2px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .scene-bar-actions .btn-quiet:last-child {
+    display: none !important; /* 手机端隐藏冗余的重新讲述按钮 */
+  }
+
+  .char-avatar-frame {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .char-main-name {
+    font-size: 13.5px !important;
+  }
+
+  .stage-scroll-area {
+    padding: 10px 10px 18px !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .dialogue-turn-wrap {
+    padding: 12px 14px !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .block-narration,
+  .dialogue-content-text,
+  .player-speech-text {
+    font-size: 15px !important;
+    line-height: 1.8 !important;
+  }
+
+  .choice-grid,
+  .decision-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .player-turn-container {
+    max-width: 95% !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     底部输入决策中枢 (Composer Shelf)
+     ------------------------------------------------------------------------ */
+  .composer-shelf {
+    padding: 6px 10px max(10px, env(safe-area-inset-bottom, 0px)) 10px !important;
+    gap: 6px !important;
+  }
+
+  .composer-toolbar {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .composer-toolbar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mode-switch-group {
+    flex-shrink: 0 !important;
+  }
+
+  .composer-tag-btn {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  .quick-macro-pills {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .quick-macro-pills::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .macro-pill {
+    padding: 2px 7px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  .composer-input-wrapper {
+    padding: 6px 10px !important;
+    gap: 8px !important;
+  }
+
+  .composer-textarea {
+    font-size: 16px !important; /* 必须 >= 16px，严禁 iOS Safari 在 focus 时视口自动放大！ */
+    line-height: 1.4 !important;
+    min-height: 38px !important;
+    max-height: 100px !important;
+  }
+
+  .composer-shortcut-hint {
+    display: none !important;
+  }
+
+  .btn-primary-send {
+    height: 36px !important;
+    padding: 0 14px !important;
+    font-size: 12.5px !important;
+    min-width: 68px !important;
+  }
+  .char-import-window,
+
+  /* 世界书分栏转纵向响应 */
+
+  /* 全身立绘灯箱转上下纵向排布 */
+
+  .tachie-lightbox-stage {
+    flex: none !important;
+    height: 36vh !important;
+    min-height: 220px !important;
+  }
+
+  .tachie-lightbox-dossier {
+    flex: 1 1 auto !important;
+    padding: 16px !important;
+    overflow-y: visible !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     抽屉的可见性辅助（**所有** ≤768px 共用，别挪进 481~768 那段）
+     —— 这三组规则决定"抽屉里显示完整内容还是 48px 图标轨"，一旦只对平板生效，
+     手机端会渲染出图标轨、抽屉头部也会消失（连关闭按钮都没有）。
+     -------------------------------------------------------------------------- */
+  .rail-left .rail-collapsed-view {
+    display: none !important;
+  }
+  .rail-left .rail-full-view {
+    display: flex !important;
+    height: 100% !important;
+  }
+
+  .mobile-drawer-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-subtle);
+    flex-shrink: 0;
+  }
+
+  .rail-tab-header {
+    padding: 6px 10px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .rail-subtab-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .rail-collapse-handle-btn {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Phone & tablet drawers (481px ~ 768px)
+   写成扁平的区间条件而不是嵌套 @media：嵌套条件在旧版 Safari 上不生效。
+   更窄的手机视口由 styles/mobile.css 改成贴底抽屉，两边互不重叠。
+   -------------------------------------------------------------------------- */
+@media (min-width: 481px) and (max-width: 768px) {
+.rail-left {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: min(86vw, 320px) !important;
+  height: 100dvh !important;
+  height: -webkit-fill-available !important;
+  z-index: 1000 !important;
+  background: var(--bg-surface) !important;
+  border-right: 1px solid var(--border-mid) !important;
+  box-shadow: 6px 0 28px rgba(0, 0, 0, 0.3) !important;
+  transform: translateX(-105%) !important;
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+body:not(.rail-left-collapsed) .rail-left {
+  transform: translateX(0) !important;
+}
+
+/* ------------------------------------------------------------------------
+   右侧角色档案栏：移动端原生抽屉 (Off-canvas Slide Drawer)
+   ------------------------------------------------------------------------ */
+.rail-right {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: min(88vw, 360px) !important;
+  height: 100dvh !important;
+  height: -webkit-fill-available !important;
+  z-index: 1000 !important;
+  background: var(--bg-surface) !important;
+  border-left: 1px solid var(--border-mid) !important;
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.3) !important;
+  transform: translateX(105%) !important;
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)) !important;
+}
+
+body:not(.rail-right-collapsed) .rail-right {
+  transform: translateX(0) !important;
+}
+
+body.rail-right-collapsed .rail-right {
+  transform: translateX(105%) !important;
+  width: min(88vw, 360px) !important;
+}
+}

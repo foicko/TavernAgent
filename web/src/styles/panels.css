@@ -1,0 +1,162 @@
+/* 二级面板：记忆银行、剧情地图与世界书面板。
+   由 styles.css 第 5128-5287 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+.memory-quota { color: var(--text-dim); font-size: 11px; line-height: 1.6; padding: 8px 0; }
+.memory-quota progress { display: block; width: 100%; height: 5px; margin-top: 6px; accent-color: var(--accent-solid); }
+.memory-evidence { color: var(--text-dim); font-size: 11px; line-height: 1.6; padding: 6px 10px; overflow-wrap: anywhere; }
+.memory-evidence summary { cursor: pointer; }
+.memory-evidence blockquote { margin: 6px 0; padding-left: 8px; border-left: 2px solid var(--border-mid); }
+.mem-act-btn:disabled, .mem-graph-cue-btn:disabled { opacity: .45; cursor: default; }
+
+.story-map-open {
+  width: 100%;
+  margin-bottom: 14px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(10px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(10px));
+  border: 1px solid var(--glass-border, var(--border-mid));
+  box-shadow: var(--glass-specular-top), 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.story-map-open:hover {
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  border-color: var(--accent-solid);
+  color: var(--accent-solid);
+  transform: translateY(-1px);
+  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.story-outline {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg, 12px);
+  font-size: 12px;
+  line-height: 1.7;
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(10px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(10px));
+  box-shadow: var(--glass-specular-top), 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+.story-outline h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.story-outline h3::before {
+  content: "";
+  display: inline-block;
+  width: 3.5px;
+  height: 13px;
+  border-radius: var(--radius-full);
+  background: var(--accent-solid);
+}
+.story-outline h4 {
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.story-outline p {
+  margin: 4px 0;
+  color: var(--text-muted);
+}
+.story-outline ul {
+  padding-left: 0;
+  margin: 6px 0 0 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.story-outline li {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+/* 尺寸微调：外壳来自 ui/Modal，这里只声明该弹窗需要的宽高（两类名提高优先级） */
+.ui-modal.story-map-modal { width: min(1200px, 96vw); height: min(800px, 92dvh); }
+.story-map-toolbar { display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--border-mid); flex-wrap: wrap; font-size: 12px; }
+.story-map-toolbar select { max-width: 260px; color: var(--text-main); background: var(--bg-surface); border: 1px solid var(--border-mid); border-radius: var(--radius-full); padding: 6px 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); }
+.story-map-muted { color: var(--text-dim); font-size: 12px; }
+.story-map-notice, .story-map-error { margin: 0; padding: 10px 20px; font-size: 12px; line-height: 1.6; }
+.story-map-error { color: var(--color-danger-text); }
+.story-map-body { display: flex; flex: 1; min-height: 0; }
+.story-map-viewport { flex: 1; overflow: auto; min-width: 0; background: var(--bg-base); }
+.story-map-canvas { position: relative; }
+.story-map-canvas svg { position: absolute; inset: 0; pointer-events: none; }
+.story-map-canvas path { fill: none; stroke: var(--border-mid); stroke-width: 2; }
+.story-map-node {
+  position: absolute;
+  width: 160px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 10px);
+  color: var(--text-main);
+  cursor: pointer;
+  box-shadow: var(--glass-specular-top), 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.story-map-node:hover {
+  border-color: var(--border-mid);
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  transform: translateY(-2px);
+  box-shadow: var(--glass-specular-top), 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.story-map-node strong { font-size: 12px; }
+.story-map-node span { font-size: 10px; color: var(--text-dim); }
+.story-map-node.selected { border-color: var(--accent-solid); box-shadow: 0 0 0 2px var(--accent-solid), 0 6px 20px rgba(0, 0, 0, 0.1); }
+.story-map-detail { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; padding: 16px; border-left: 1px solid var(--border-mid); overflow: auto; }
+.story-map-detail h3 { font-size: 15px; margin: 0; }
+.story-map-excerpt { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; font-size: 13px; margin: 16px 0; }
+.lorebook-panel { display: grid; gap: 10px; min-width: 0; }
+.memory-search { box-sizing: border-box; width: 100%; margin: 8px 0; }
+.memory-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 10px; color: var(--text-dim); margin: 4px 0 10px; }
+.memory-pagination .btn-quiet { padding: 5px 8px; }
+.mind-graph-limit-note { font-size: 11px; color: var(--text-muted); margin: 8px 18px; line-height: 1.6; }
+.lorebook-panel h3 { font-size: 13px; margin: 8px 0 0; }
+.lorebook-panel h3 small { font-size: 10px; color: var(--text-dim); font-weight: 400; }
+.lorebook-panel p { margin: 0; line-height: 1.6; }
+.lorebook-panel .lore-search-input { box-sizing: border-box; width: 100%; }
+.lorebook-panel .lore-entry-card { cursor: default; }
+.lorebook-panel summary { cursor: pointer; }
+.lorebook-content { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.7; margin-top: 8px; }
+.story-map-actions { display: grid; gap: 8px; margin-top: auto; }
+.story-map-actions button:disabled { opacity: .45; cursor: default; }
+@media (max-width: 700px) {
+  .story-map-body { flex-direction: column; }
+  .story-map-viewport { min-height: 200px; }
+  .story-map-detail { width: auto; max-height: 42%; border-left: 0; border-top: 1px solid var(--border-mid); }
+  .story-map-actions { grid-template-columns: 1fr 1fr; }
+}

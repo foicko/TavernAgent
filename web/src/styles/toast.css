@@ -1,0 +1,31 @@
+/* 轻量微通知吐司。
+   由 styles.css 第 5099-5127 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   16. LIGHTWEIGHT TOAST NOTIFICATION (轻量微通知吐司)
+   ========================================================================== */
+.quiet-toast-notification {
+  position: fixed;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--shadow-float);
+  z-index: 9999;
+  pointer-events: none;
+  animation: toastIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  max-width: 80vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

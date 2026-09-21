@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:parity": "vite build --minify false",
     "typecheck": "tsc --noEmit",
     "lint": "node scripts/check.mjs && eslint src --max-warnings 0",
+    "css:snapshot": "node scripts/css-parity.mjs snapshot",
+    "css:parity": "node scripts/css-parity.mjs compare",
     "test": "vitest run src",
     "test:browser": "playwright test",
     "preview": "vite preview"

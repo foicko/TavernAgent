@@ -1,0 +1,549 @@
+/* 底部输入中枢：浮岛输入框与附加快捷入口。
+   由 styles.css 第 2283-2854 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   7. COMPOSER DECK (底部极简输入中枢 · Floating Island Prompt Bar)
+   ========================================================================== */
+.composer-shelf {
+  background: transparent;
+  padding: 0 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.composer-shelf > * {
+  max-width: 840px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.composer-card-shell {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 12px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-float), inset 0 1.5px 1.5px 0 var(--glass-specular-top), inset 0 -1px 1px 0 var(--glass-specular-bottom);
+  transition: border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-normal, 200ms) ease,
+              background-color var(--duration-quick, 150ms) ease,
+              transform var(--duration-normal, 200ms) var(--ease-spring);
+}
+
+.composer-card-shell:focus-within {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-elevated);
+  box-shadow: var(--shadow-float),
+              0 0 0 1px var(--ring-glow),
+              inset 0 1.5px 2px 0 var(--glass-specular-top),
+              inset 0 -1px 1px 0 var(--glass-specular-bottom);
+}
+
+.composer-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.mode-switch-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+/* 统一操作按钮基类 (GlassPillChip 风格，参考 LiquidGlassBarKit.kt) */
+.composer-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  box-sizing: border-box;
+  background: var(--glass-pill-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top);
+  transition: background 0.18s ease,
+              border-color 0.18s ease,
+              color 0.18s ease,
+              box-shadow 0.18s ease,
+              transform 0.2s var(--glass-spring-ease);
+}
+
+.composer-tag-btn .btn-icon {
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.composer-tag-btn:hover:not(:disabled) {
+  background: var(--glass-pill-bg-hover);
+  border-color: var(--glass-border-hover);
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm), inset 0 1px 1px 0 var(--glass-specular-top);
+  transform: translateY(-0.5px);
+}
+
+.composer-tag-btn:active:not(:disabled) {
+  transform: scale(0.98);
+  background: var(--glass-bg-elevated);
+}
+
+.composer-tag-btn.active {
+  background: var(--glass-pill-bg-active);
+  border-color: var(--glass-pill-bg-active);
+  color: var(--glass-pill-text-active);
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-sm);
+}
+
+.composer-tag-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 1. 导演模式入口 */
+.composer-tag-btn.director-entry {
+  background: var(--bg-surface);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  font-weight: 600;
+  padding: 0 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  position: relative;
+}
+
+.composer-tag-btn.director-entry:hover:not(:disabled) {
+  border-color: var(--accent-solid);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+}
+
+.composer-tag-btn.director-entry.director-active {
+  border-color: var(--accent-solid);
+  background: var(--bg-surface);
+}
+
+.director-pulse-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success, #2e7d32);
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.25);
+  animation: pulseIndicator 2.2s infinite ease-in-out;
+  margin-left: 2px;
+}
+
+@keyframes pulseIndicator {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.65; }
+}
+
+/* 优雅垂直分割线 */
+.composer-toolbar-divider {
+  display: inline-block;
+  width: 1px;
+  height: 14px;
+  background: var(--border-light);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* 2. 文本语义快捷格式包裹器 (GlassTabBar / GlassPillChip 风格，参考 LiquidGlassBarKit.kt) */
+.composer-syntax-group {
+  display: inline-flex;
+  align-items: center;
+  background: var(--glass-bg-subtle);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 2px 3px;
+  gap: 2px;
+  box-sizing: border-box;
+  height: 26px;
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top);
+}
+
+.composer-syntax-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 7px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.16s var(--glass-spring-ease), box-shadow 0.14s ease;
+}
+
+.composer-syntax-btn .syntax-bracket {
+  font-family: var(--font-display, serif);
+  font-size: 11px;
+  opacity: 0.6;
+  font-weight: 600;
+  color: var(--text-dim);
+  transition: color 0.12s, opacity 0.12s;
+}
+
+.composer-syntax-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  transform: scale(1.04);
+  box-shadow: 0 1px 3px var(--glass-shadow);
+}
+
+.composer-syntax-btn:hover .syntax-bracket {
+  opacity: 0.95;
+  color: var(--text-main);
+}
+
+.composer-syntax-btn:active,
+.composer-syntax-btn.is-pressed {
+  transform: scale(0.96);
+  background: var(--glass-bg-elevated);
+  color: var(--text-main);
+}
+
+/* 3. TRPG 规则检定触发器与下拉菜单 */
+.composer-check-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.composer-tag-btn.check-trigger-btn {
+  padding: 0 8px 0 10px;
+}
+
+.composer-tag-btn.check-trigger-btn.menu-open {
+  background: var(--bg-surface);
+  border-color: var(--border-dark);
+  color: var(--text-main);
+}
+
+.composer-tag-btn.check-trigger-btn.has-selection {
+  border-color: var(--border-mid);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.composer-caret {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-left: 1px;
+  transition: transform 0.16s ease;
+}
+
+.composer-tag-btn.check-trigger-btn.menu-open .composer-caret {
+  transform: rotate(180deg);
+}
+
+
+@keyframes checkPopoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 已选择检定动作提示横幅 */
+.composer-selected-action-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  align-self: flex-start;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.composer-selected-action-banner strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.composer-selected-action-banner .btn-action-cancel {
+  font-size: 11px;
+  padding: 1px 6px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+.composer-selected-action-banner .btn-action-cancel:hover {
+  color: var(--color-danger-text, #c2185b);
+  background: var(--color-danger-bg, rgba(194, 24, 91, 0.06));
+}
+
+/* 4. 快捷宏药丸 */
+.quick-macro-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+  justify-content: flex-end;
+}
+.quick-macro-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.macro-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-subtle);
+  user-select: none;
+  white-space: nowrap;
+  transition: all 0.14s ease;
+}
+
+.macro-pill:hover {
+  background: var(--bg-surface);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.composer-input-wrapper.composer-recessed-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--glass-bg-subtle);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 10px 14px 8px;
+  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.composer-input-wrapper.composer-recessed-box:focus-within {
+  border-color: var(--glass-border-hover);
+  background: var(--bg-surface);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.composer-textarea {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+  resize: none;
+  min-height: 44px;
+  max-height: 160px;
+  padding: 0;
+}
+
+.composer-textarea::placeholder {
+  color: var(--text-dim);
+}
+
+.composer-buttons.composer-control-deck {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .composer-buttons.composer-control-deck {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.composer-control-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-control-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.composer-circle-tool-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top);
+  transition: transform 0.2s var(--glass-spring-ease),
+              background-color 0.16s ease,
+              border-color 0.16s ease,
+              color 0.16s ease,
+              box-shadow 0.16s ease;
+}
+
+.composer-circle-tool-btn:hover {
+  background: var(--glass-bg-elevated);
+  color: var(--text-main);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-0.5px);
+  box-shadow: inset 0 1px 1.5px 0 var(--glass-specular-top), var(--shadow-sm);
+}
+
+.composer-circle-tool-btn:active {
+  transform: scale(0.96);
+}
+
+.composer-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  user-select: none;
+  line-height: 1.2;
+}
+
+.composer-mode-badge.amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+[data-theme="dark"] .composer-mode-badge.amber {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.composer-mode-badge.subtle {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px dashed var(--border-light);
+}
+
+.btn-primary-send.squircle {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border: 1px solid var(--accent-solid);
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: var(--shadow-sm), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              box-shadow var(--duration-quick, 150ms) ease,
+              opacity var(--duration-quick, 150ms) ease;
+  flex-shrink: 0;
+}
+
+.btn-primary-send.squircle:hover:not(:disabled) {
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-md), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35);
+  opacity: 0.94;
+}
+
+.btn-primary-send.squircle:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-primary-send.squircle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.send-arrow-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.5;
+}
+
+.send-status-text {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

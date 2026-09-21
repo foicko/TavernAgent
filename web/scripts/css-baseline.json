@@ -1,0 +1,37 @@
+{
+  "$comment": "由 node scripts/check.mjs --update-css-baseline 生成；只允许收紧，放宽会在输出中打印。",
+  "maxFileLines": 800,
+  "fileLines": {},
+  "important": {
+    "src/styles/composer.css": 1,
+    "src/styles/director.css": 1,
+    "src/styles/modals.css": 3,
+    "src/styles/probe.css": 3,
+    "src/styles/responsive.css": 127,
+    "src/styles/shell.css": 104,
+    "src/ui/Button.css": 3,
+    "src/ui/Menu.css": 2,
+    "src/ui/Modal.css": 1
+  },
+  "duplicates": [
+    "||.mem-act-btn",
+    "||.mem-act-btn:hover",
+    "||.mem-filter-btn",
+    "||.mem-filter-btn.active",
+    "||.mem-item-actions",
+    "||.mem-item-content",
+    "||.mem-item-top",
+    "||.memory-filter-row",
+    "||.memory-item-card",
+    "||.node-mini-metrics",
+    "||.node-state-pill",
+    "||.node-state-pill.active",
+    "||.node-state-pill.fork",
+    "||.probe-btn.confirming",
+    "||.probe-close-btn",
+    "||.probe-close-btn:hover",
+    "||.stage-scroll-area",
+    "||.tachie-image"
+  ],
+  "deadClasses": []
+}

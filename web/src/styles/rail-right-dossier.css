@@ -1,0 +1,405 @@
+
+
+/* Dossier Markdown 内部排版美化 */
+.dossier-markdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dossier-p {
+  margin: 0;
+  word-break: break-word;
+}
+
+.dossier-h1, .dossier-h2, .dossier-h3 {
+  margin: 6px 0 2px 0;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.dossier-h1 { font-size: 13.5px; border-bottom: 1px solid var(--border-light); padding-bottom: 2px; }
+.dossier-h2 { font-size: 12.5px; }
+.dossier-h3 { font-size: 11.5px; }
+
+.dossier-section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-solid);
+  background: var(--accent-subtle, rgba(234, 88, 12, 0.08));
+  border: 1px solid var(--accent-border, rgba(234, 88, 12, 0.2));
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  margin-top: 4px;
+}
+
+.dossier-section-pill .pill-dot {
+  font-size: 7px;
+  opacity: 0.8;
+}
+
+.dossier-bracket-tag {
+  color: var(--accent-solid);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+[data-theme="dark"] .dossier-bracket-tag {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dossier-code-inline {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  color: var(--accent-solid);
+}
+
+.dossier-blockquote {
+  margin: 4px 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--accent-solid);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-style: italic;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+}
+
+.dossier-ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dossier-divider {
+  border-bottom: 1px dashed var(--border-mid);
+  margin: 6px 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* 属性表：V2/V3 卡里 {"Key": ("v")}、Key：（"v"）一类土制属性列表的落点。
+   键固定成窄列右对齐，值换行左对齐，长文本不再糊成一堵墙。 */
+.dossier-attr-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+  background: var(--bg-subtle);
+}
+
+.dossier-attr-row {
+  display: grid;
+  grid-template-columns: minmax(48px, max-content) 1fr;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.dossier-attr-row + .dossier-attr-row {
+  border-top: 1px dashed var(--border-light);
+  padding-top: 2px;
+}
+
+.dossier-attr-key {
+  color: var(--text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.dossier-attr-value {
+  color: var(--text-main);
+  word-break: break-word;
+  min-width: 0;
+}
+
+.dossier-empty-note {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 16px 0;
+  font-style: italic;
+}
+
+/* Section Component */
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hud-block-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Minimalist Black & White Meters */
+.meter-box-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.meter-unit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meter-info-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+#meter-num-aff,
+#meter-num-trust,
+#meter-num-alert {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.meter-delta-float {
+  position: absolute;
+  right: 74px;
+  top: -1px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  animation: floatDeltaUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 20;
+}
+
+.meter-delta-float.positive {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.meter-delta-float.negative {
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border-mid);
+}
+
+@keyframes floatDeltaUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.item-bubble-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+}
+
+.slot-icon-quiet {
+  font-size: 15px;
+  color: var(--text-main);
+}
+
+.slot-name-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.slot-status-label {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* HUD Empty State Cards */
+.hud-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.hud-empty-card .empty-card-icon {
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.hud-empty-card .empty-card-text {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Story Checkpoint Section */
+.story-checkpoint-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.checkpoint-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+}
+
+.checkpoint-card:hover {
+  border-color: var(--border-mid);
+  background: var(--bg-elevated);
+}
+
+.checkpoint-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkpoint-card-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.checkpoint-card-text {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.checkpoint-card-mindset {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.checkpoint-attr-pill {
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+}
+
+.checkpoint-card-tension {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-dim);
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.checkpoint-tension-label {
+  font-weight: 600;
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.checkpoint-card-pre {
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  margin: 0;
+}

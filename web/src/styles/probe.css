@@ -1,0 +1,76 @@
+/* 因果分支探针的微视觉增强。
+   由 styles.css 第 4603-4676 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   PROBE & CAUSAL TREE ENHANCEMENTS (因果分支与探针微视觉增强)
+   ========================================================================== */
+.probe-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 4px;
+  line-height: 1;
+  border-radius: 2px;
+  transition: var(--transition-fast);
+}
+.probe-close-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+
+.probe-btn.primary {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+}
+.probe-btn.primary:hover {
+  opacity: 0.92;
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.probe-btn.confirming {
+  background: #8b2525 !important;
+  color: #ffffff !important;
+  border-color: #8b2525 !important;
+  animation: pulseAlert 0.8s infinite alternate;
+}
+
+/* Node Card Visual Upgrades */
+.node-state-pill {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-dim);
+  border: 1px solid var(--border-light);
+  letter-spacing: 0.02em;
+}
+.node-state-pill.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+}
+.node-state-pill.fork {
+  background: rgba(184, 134, 11, 0.12);
+  color: #b8860b;
+  border-color: rgba(184, 134, 11, 0.28);
+}
+
+.node-mini-metrics {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  font-family: var(--font-mono, monospace);
+}
+.node-mini-metrics b {
+  color: var(--text-muted);
+  font-weight: 600;
+}

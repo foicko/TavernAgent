@@ -1,0 +1,339 @@
+/* 左栏外壳：子页签栏与因果分支树。
+   由 styles.css 第 518-854 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   5. LEFT RAIL: CHRONOLOGY, CHARACTERS & WORLDBOOK (左栏四重维度)
+   ========================================================================== */
+.rail-left {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.rail-collapsed-view {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  gap: 12px;
+  width: 100%;
+}
+
+.collapsed-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md, 10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent;
+}
+
+.collapsed-icon-btn:hover {
+  border-color: var(--glass-border, var(--border-mid));
+  color: var(--text-main);
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.collapsed-icon-btn.active {
+  border-color: var(--glass-border, var(--border-dark));
+  color: var(--accent-contrast, var(--text-main));
+  background: var(--accent-solid);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.rail-full-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 左栏 4 Tab Header + 收起把手 (GlassTabBar / GlassPillChip 风格，参考 LiquidGlassBarKit.kt) */
+.rail-tab-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) 24px;
+  border-bottom: 1px solid var(--glass-border);
+  padding: 6px 8px;
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-subtle);
+  -webkit-backdrop-filter: var(--glass-blur-subtle);
+  align-items: center;
+  gap: 3px;
+}
+
+.rail-collapse-handle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  height: 26px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  transition: transform 0.2s var(--glass-spring-ease), background 0.16s ease, color 0.16s ease;
+}
+
+.rail-collapse-handle-btn:hover {
+  background: var(--glass-pill-bg-hover);
+  color: var(--text-main);
+  transform: scale(1.05);
+}
+
+.rail-subtab-btn {
+  padding: 5px 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.2s var(--glass-spring-ease),
+              background-color 0.16s ease,
+              color 0.16s ease,
+              border-color 0.16s ease,
+              box-shadow 0.16s ease;
+  white-space: nowrap;
+}
+
+.rail-subtab-btn:hover {
+  color: var(--text-main);
+  background: var(--glass-pill-bg-hover);
+  transform: scale(1.02);
+}
+
+.rail-subtab-btn.active {
+  color: var(--glass-pill-text-active);
+  background: var(--glass-pill-bg-active);
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 2px 6px -1px var(--glass-shadow);
+  transform: scale(1.04);
+}
+
+.rail-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Subview 1: 因果分支树 */
+.branch-timeline-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tree-lead-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tree-node-stack {
+  position: relative;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.tree-vertical-line {
+  position: absolute;
+  top: 12px;
+  bottom: 16px;
+  left: 6px;
+  width: 2px;
+  background: var(--border-light);
+  border-radius: 1px;
+}
+
+.node-item {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-light);
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
+  box-shadow: var(--glass-specular-top), 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.node-item::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--text-dim);
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+}
+
+.node-item:hover {
+  background: var(--glass-bg-hover, var(--bg-subtle));
+  border-color: var(--border-mid);
+  transform: translateX(3px);
+  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.node-item:hover::before {
+  border-color: var(--accent-solid);
+  transform: scale(1.25);
+  box-shadow: 0 0 6px var(--accent-subtle);
+}
+
+.node-item.active {
+  border-color: var(--accent-solid);
+  background: var(--glass-bg-subtle, var(--bg-surface));
+}
+
+.node-item.active::before {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.node-item.viewing {
+  border-color: var(--border-dark);
+  background: var(--bg-subtle);
+}
+
+.node-item.viewing::before {
+  border-color: var(--border-dark);
+  background: var(--accent-solid);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.node-item.opened {
+  border-color: var(--border-dark);
+  box-shadow: var(--glass-specular-top), 0 6px 20px rgba(0, 0, 0, 0.08);
+  background: var(--bg-surface);
+}
+
+.node-item.fork {
+  margin-left: 6px;
+  border-left: 2px dashed var(--border-mid);
+}
+
+.node-turn-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.node-tag-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.node-badge-viewing {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border-mid);
+}
+
+.node-state-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.node-state-pill.active {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #059669;
+}
+
+.node-state-pill.fork {
+  background: var(--bg-subtle);
+  border-color: var(--border-mid);
+  color: var(--text-muted);
+}
+
+.node-turn-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.node-mini-metrics {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+  flex-wrap: wrap;
+}
+
+.metric-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.metric-chip.aff b {
+  color: #e11d48;
+}
+
+.metric-chip.trust b {
+  color: #0284c7;
+}
+
+.metric-chip.alert b {
+  color: #7c3aed;
+}

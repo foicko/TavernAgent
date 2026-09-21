@@ -1,0 +1,421 @@
+/* 应用外壳：顶栏、工作区栅格与左右栏独立折叠契约。
+   由 styles.css 第 59-517 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   3. TOP CONTROL BAR (极简顶栏)
+   ========================================================================== */
+.top-header {
+  height: var(--header-h);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px -2px var(--glass-shadow), inset 0 1px 0 0 var(--glass-specular-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 50;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-main);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.scene-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* min-width 原本写在 components/TopHeader.css 的同名规则里，而那份更早进入产物、
+     必被本规则覆盖，于是"缩不下去"这一条只在那里写着——两处各半份。并入此处后
+     组件 CSS 不再重复声明同名选择器。 */
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+
+/* View Switcher (Segmented Pill Control · 参考 ui.shadcn.com 与 transitions.dev 规范) */
+.view-mode-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-subtle);
+  -webkit-backdrop-filter: var(--glass-blur-subtle);
+  border: 1px solid var(--glass-border);
+  padding: 2.5px;
+  border-radius: var(--radius-full);
+  gap: 2px;
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), var(--shadow-sm);
+  transition: border-color var(--duration-quick, 150ms) ease, box-shadow var(--duration-quick, 150ms) ease;
+}
+
+.view-tab-btn {
+  padding: 4.5px 13px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease;
+}
+
+.view-tab-btn:hover {
+  color: var(--text-main);
+  background: var(--glass-pill-bg-hover);
+}
+
+.view-tab-btn:active {
+  transform: scale(0.98);
+}
+
+.view-tab-btn.active {
+  background: var(--glass-pill-bg-active);
+  color: var(--glass-pill-text-active);
+  font-weight: var(--fw-semibold);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Header Actions & Rail Toggle Buttons */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-quiet {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-subtle);
+  -webkit-backdrop-filter: var(--glass-blur-subtle);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 1px 3px var(--glass-shadow);
+  transition: transform 0.2s var(--glass-spring-ease),
+              background-color 0.16s ease,
+              border-color 0.16s ease,
+              color 0.16s ease,
+              box-shadow 0.16s ease;
+  white-space: nowrap;
+}
+
+.btn-quiet:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-elevated);
+  color: var(--text-main);
+  transform: translateY(-0.5px) scale(1.02);
+  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 3px 8px -1px var(--glass-shadow);
+}
+
+.btn-quiet:active {
+  transform: translateY(0.5px) scale(0.98);
+}
+
+.btn-quiet.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+  box-shadow: 0 2px 8px -1px var(--glass-shadow);
+}
+
+/* ==========================================================================
+   4. WORKSPACE LAYOUT & INDEPENDENT RAIL COLLAPSING (左右栏独立折叠与视口精简)
+   ========================================================================== */
+.workspace-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--rail-left-w) minmax(0, 1fr) var(--rail-right-w);
+  grid-template-rows: minmax(0, 1fr);
+  height: calc(100vh - var(--header-h));
+  overflow: hidden;
+  transition: grid-template-columns 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+/* Left Rail Collapsed State (48px Slim Icon Dock) */
+body.rail-left-collapsed .workspace-layout {
+  grid-template-columns: 48px minmax(0, 1fr) var(--rail-right-w);
+}
+body.rail-left-collapsed .rail-left .rail-full-view { 
+  display: none !important; 
+}
+body.rail-left-collapsed .rail-left .rail-collapsed-view { 
+  display: flex !important; 
+}
+
+/* Right Rail Collapsed State (0px Full Hide) */
+body.rail-right-collapsed .workspace-layout {
+  grid-template-columns: var(--rail-left-w) minmax(0, 1fr) 0px;
+}
+body.rail-right-collapsed .rail-right,
+.rail-right.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-left: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  display: none !important;
+}
+
+/* Both Rails Collapsed (Maximal Central Stage Canvas) */
+body.rail-left-collapsed.rail-right-collapsed .workspace-layout {
+  grid-template-columns: 48px minmax(0, 1fr) 0px;
+}
+
+/* Mode 2: 纯净编年小说模式 (Reading Mode - 真正纯净的文学阅读流与全视口滚轮支持) */
+body.mode-reading .workspace-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+  width: 100% !important;
+  height: calc(100vh - var(--header-h)) !important;
+  overflow: hidden !important;
+  background: var(--bg-base) !important;
+}
+
+body.mode-reading .rail-left,
+body.mode-reading .rail-right {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.mode-reading .stage-main {
+  flex: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  background: var(--bg-base) !important;
+  overflow: hidden !important;
+}
+
+/* 纯净模式下隐藏沉重杂乱的游戏遥测条 */
+body.mode-reading .scene-bar {
+  display: none !important;
+}
+
+/* 全视口可滚动：鼠标滚轮在屏幕任意位置都能丝滑滚动，右侧原生滚动条贴合视口边缘 */
+body.mode-reading .stage-scroll-area {
+  flex: 1 !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 44px 24px 80px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 32px !important;
+}
+
+/* 正文流内容居中，严格限制在 760px 黄金阅读视口 */
+body.mode-reading .reading-mode-banner,
+body.mode-reading .story-turn {
+  max-width: 760px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+/* 纯净文学排版：旁白块 */
+body.mode-reading .block-narration {
+  font-size: 16.5px !important;
+  line-height: 1.95 !important;
+  color: var(--text-main) !important;
+  border-left: 2px solid var(--border-dark) !important;
+  padding-left: 20px !important;
+  margin-bottom: 4px !important;
+}
+
+/* 对白卡片：去除厚重灰框与底色，化为出版级小说正文流 */
+body.mode-reading .dialogue-turn-wrap {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  gap: 10px !important;
+}
+
+body.mode-reading .dialogue-meta-header {
+  border-bottom: 1px solid var(--border-light) !important;
+  padding-bottom: 6px !important;
+  margin-bottom: 2px !important;
+}
+
+body.mode-reading .dialogue-content-text {
+  font-size: 16.5px !important;
+  line-height: 1.9 !important;
+  color: var(--text-main) !important;
+}
+
+/* 玩家行动与回复：去除聊天气泡，化为主视角文学叙事 */
+body.mode-reading .player-turn-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  align-items: stretch !important;
+}
+
+body.mode-reading .player-bubble {
+  background: transparent !important;
+  border: none !important;
+  border-left: 2px solid var(--text-muted) !important;
+  padding: 4px 0 4px 18px !important;
+  border-radius: 0 !important;
+}
+
+body.mode-reading .player-speech-text {
+  font-size: 16.5px !important;
+  line-height: 1.9 !important;
+  color: var(--text-main) !important;
+  font-weight: 500 !important;
+}
+
+body.mode-reading .dice-badge-quiet {
+  background: var(--bg-subtle) !important;
+  border: 1px solid var(--border-light) !important;
+  font-size: 11.5px !important;
+  padding: 2px 10px !important;
+  margin-top: 8px !important;
+}
+
+/* 意图决策矩阵：在纯净阅读中保持克制整洁 */
+body.mode-reading .decision-deck-box {
+  margin-top: 16px !important;
+  padding: 16px 18px !important;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+body.mode-reading .decision-deck-header {
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  margin-bottom: 10px !important;
+}
+
+/* 纯净模式专属优雅书头指示 */
+.reading-mode-banner {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 24px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-mid);
+  text-align: center;
+}
+
+body.mode-reading .reading-mode-banner {
+  display: flex;
+}
+
+.reading-book-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.1em;
+}
+
+.reading-mode-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.reading-exit-pill {
+  margin-top: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  padding: 4px 16px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.reading-exit-pill:hover {
+  border-color: var(--border-dark);
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+/* 纯净模式下隐藏技术性时间戳与节点标记 */
+body.mode-reading .turn-time-stamp {
+  display: none !important;
+}
+
+/* 底部输入中枢在纯净编年中的极简化 */
+body.mode-reading .composer-shelf {
+  background: var(--bg-surface) !important;
+  border-top: 1px solid var(--border-light) !important;
+  padding: 10px 24px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+body.mode-reading .composer-toolbar {
+  display: none !important;
+}
+
+body.mode-reading .composer-input-wrapper {
+  max-width: 760px !important;
+  width: 100% !important;
+}

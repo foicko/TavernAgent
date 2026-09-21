@@ -1,0 +1,744 @@
+/* 中央舞台：场景横幅、回合块、文学排版与思考过程折叠。
+   由 styles.css 第 1533-2282 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   6. CENTER STAGE: LITERARY ROLEPLAY FLOW (主舞台与文学剧场)
+   ========================================================================== */
+.stage-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* Minimalist Scene Banner (Liquid Glass Style) */
+.scene-bar {
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 16px;
+  z-index: 10;
+}
+
+.character-presence-deck {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.char-avatar-frame {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-mid);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  object-fit: cover;
+  filter: grayscale(12%);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+.char-avatar-frame:hover {
+  border-color: var(--accent-solid);
+  transform: scale(1.06);
+  box-shadow: 0 0 12px var(--accent-subtle), 0 3px 10px rgba(0, 0, 0, 0.1);
+  filter: grayscale(0%);
+}
+
+.char-presence-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.char-name-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.char-main-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.char-main-name:hover {
+  text-decoration: underline;
+}
+
+.quiet-state-pill {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 2px 9px;
+  background: var(--glass-bg-subtle, var(--bg-subtle));
+  backdrop-filter: var(--glass-blur-sm, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.scene-sub-telemetry {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.scene-bar-actions .btn-quiet {
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  font-size: var(--fs-xs);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scene-bar-actions .btn-quiet:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* The Literary Narrative Flow (Centered Editorial Stage · 参考 ui.shadcn.com / beui.dev) */
+.stage-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  scroll-behavior: auto;
+}
+
+.stage-scroll-area > * {
+  max-width: 840px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 960px) {
+  .stage-scroll-area {
+    padding: 20px 16px 40px;
+  }
+}
+
+/* Turn Items */
+.story-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: turnFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes turnFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 1. Narration Block (典雅旁白) */
+.block-narration {
+  font-family: var(--font-narrative);
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--text-main);
+  padding-left: 16px;
+  border-left: 2px solid var(--border-dark);
+  position: relative;
+}
+
+.block-narration p {
+  margin-bottom: 8px;
+}
+.block-narration p:last-child {
+  margin-bottom: 0;
+}
+
+
+/* 2. Character Dialogue (角色对白卡片 · 参考 rareui.com & beautifului.dev 规范) */
+.dialogue-turn-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 20px;
+  position: relative;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 0 var(--glass-specular-top);
+  transition: border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease,
+              transform var(--duration-quick, 150ms) var(--ease-smooth-out);
+}
+
+.dialogue-turn-wrap:hover {
+  border-color: var(--border-mid);
+  box-shadow: var(--shadow-md), inset 0 1px 0 0 var(--glass-specular-top);
+  transform: translateY(-0.5px);
+}
+
+/* 消息气泡文学微操作工具栏 (Turn Quick Actions) */
+.turn-quick-toolbar {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  display: none;
+  align-items: center;
+  gap: 3px;
+  background: var(--glass-bg-elevated, var(--bg-surface));
+  backdrop-filter: var(--glass-blur, blur(14px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(14px));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 3px 6px;
+  box-shadow: var(--shadow-md), inset 0 1px 1px 0 var(--glass-specular-top);
+  z-index: 10;
+  animation: fadeInDown var(--duration-quick, 150ms) var(--ease-smooth-out);
+}
+
+.dialogue-turn-wrap:hover .turn-quick-toolbar {
+  display: flex;
+}
+
+.turn-tool-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
+              background-color var(--duration-quick, 150ms) ease,
+              color var(--duration-quick, 150ms) ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.turn-tool-btn:hover {
+  background: var(--glass-pill-bg-hover);
+  color: var(--text-main);
+}
+
+.turn-tool-btn:active {
+  transform: scale(0.96);
+}
+
+/* 正文世界书专有名词高亮与即显悬停卡 (Lore Hover Popover) */
+.lore-term {
+  border-bottom: 1.5px dotted var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  color: var(--text-main);
+  font-weight: 600;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.lore-term:hover {
+  border-bottom-color: var(--text-main);
+  background: var(--bg-subtle);
+  color: var(--text-main);
+}
+
+.lore-popover {
+  position: fixed;
+  z-index: 9999;
+  width: 290px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow-lg), inset 0 1px 1.5px 0 var(--glass-specular-top);
+  padding: 12px 14px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+  animation: fadeInScale 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lore-popover.show {
+  display: flex;
+}
+
+.lore-pop-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lore-pop-title {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.lore-pop-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.lore-pop-footer {
+  border-top: 1px solid var(--border-light);
+  padding-top: 6px;
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.lore-pop-link {
+  color: var(--text-main);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 11px;
+  padding: 0;
+}
+
+.dialogue-meta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 6px;
+}
+
+.speaker-label {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speaker-delivery {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.turn-time-stamp {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.dialogue-content-text {
+  font-family: var(--font-narrative);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-main);
+}
+
+/* Subtext / Inner Thought (潜台词与心声) */
+
+
+/* Turn Actions Bar */
+
+
+
+
+
+
+
+/* 3. Player Response Turn (玩家行动与言语) */
+.player-turn-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+  max-width: 85%;
+}
+
+.player-bubble {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-right: 2.5px solid var(--accent-solid);
+  border-radius: var(--radius-lg, 12px);
+  padding: 12px 18px;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 0 var(--glass-specular-top);
+  transition: border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease;
+}
+
+.player-bubble:hover {
+  box-shadow: var(--shadow-md), inset 0 1px 0 0 var(--glass-specular-top);
+}
+
+.player-speech-text {
+  font-family: var(--font-narrative);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+
+.dice-badge-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  margin-top: 4px;
+  background: var(--bg-subtle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* 渐进式流式演义与即时玩家回显优化 */
+.dialogue-turn-wrap.is-streaming {
+  border-color: var(--border-mid);
+  position: relative;
+}
+.dialogue-turn-wrap.is-streaming::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-solid), transparent);
+  opacity: 0.6;
+  animation: streamingShimmer 2.2s ease-in-out infinite;
+}
+@keyframes streamingShimmer {
+  0%, 100% { opacity: 0.2; transform: scaleX(0.7); }
+  50% { opacity: 0.8; transform: scaleX(1); }
+}
+
+.active-player-bubble {
+  animation: fadeInSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeInSlideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.player-sending-tag {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+/* ==========================================================================
+   现代折叠式思考过程 (Reasoning Box · 参考 beautifului.dev Thinking 规范)
+   ========================================================================== */
+.thinking-container {
+  margin-bottom: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-left: 2.5px solid var(--border-mid);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-quick, 150ms) ease,
+              box-shadow var(--duration-quick, 150ms) ease,
+              background-color var(--duration-quick, 150ms) ease;
+}
+.thinking-container:hover {
+  border-color: var(--border-mid);
+  border-left-color: var(--accent-solid);
+  box-shadow: var(--shadow-md);
+}
+.thinking-container.is-expanded {
+  border-left-color: var(--accent-solid);
+  background: var(--bg-surface);
+}
+.thinking-container.committed {
+  opacity: 0.94;
+}
+.thinking-toggle-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.015);
+  min-height: 34px;
+  box-sizing: border-box;
+  transition: background var(--duration-quick, 150ms) ease, color var(--duration-quick, 150ms) ease;
+}
+[data-theme="dark"] .thinking-toggle-bar {
+  background: rgba(255, 255, 255, 0.025);
+}
+.thinking-toggle-bar:hover {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.035);
+}
+[data-theme="dark"] .thinking-toggle-bar:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.thinking-bar-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.thinking-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: transform var(--duration-quick, 150ms) ease;
+}
+.thinking-container:not(.committed) .thinking-icon {
+  animation: thinking-icon-breathe 2s ease-in-out infinite;
+}
+@keyframes thinking-icon-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.thinking-title {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--text-main);
+}
+.thinking-ticker-text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  opacity: 0.9;
+  padding-left: 8px;
+  border-left: 1px solid var(--border-light);
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
+.thinking-expand-hint {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  white-space: nowrap;
+  margin-left: 8px;
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-quick, 150ms) ease, background var(--duration-quick, 150ms) ease;
+}
+.thinking-toggle-bar:hover .thinking-expand-hint {
+  color: var(--text-main);
+  background: var(--glass-pill-bg-hover);
+}
+.thinking-content-body {
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-light);
+  font-family: var(--font-mono);
+  background: rgba(0, 0, 0, 0.015);
+  animation: thinking-body-in var(--duration-fast, 250ms) var(--ease-smooth-out);
+}
+[data-theme="dark"] .thinking-content-body {
+  background: rgba(0, 0, 0, 0.2);
+}
+@keyframes thinking-body-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 渐进式打字机光标 */
+.typing-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 15px;
+  background: var(--accent-solid);
+  vertical-align: middle;
+  margin-left: 4px;
+  border-radius: 1px;
+  animation: cursorBlink 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 会话切换骨架屏 (消除突兀白屏与错位序幕卡闪烁) */
+.narrative-loading-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+  animation: fadeIn 0.15s ease-out;
+}
+.narrative-skeleton-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  padding: 18px 22px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+.narrative-skeleton-card.player-skeleton {
+  max-width: 70%;
+  margin-left: auto;
+  background: var(--bg-subtle);
+}
+.narrative-skeleton-card.assistant-skeleton {
+  max-width: 100%;
+}
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.skeleton-avatar.pulse {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-line.pulse {
+  border-radius: var(--radius-sm);
+  background: var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-avatar.pulse::after,
+.skeleton-line.pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: skeletonShimmer 1.8s infinite ease-in-out;
+}
+[data-theme="dark"] .skeleton-avatar.pulse::after,
+[data-theme="dark"] .skeleton-line.pulse::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+}
+@keyframes skeletonShimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* 注意：这两个选择器此前和 .decision-deck-box 挤在同一选择器列表里，于是"按下
+   故事/角色卡那一行"会套上 .decision-deck-box 的 display:flex + column，行内布局
+   在按下瞬间重排，行内按钮收不到 click。按下反馈见 LeftRail.css。 */
+/* 4. Decision Matrix (四维意图选择：极简黑白版) */
+.decision-deck-box {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.decision-deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+
+
+
+/* 技能检定裁决卡 (Dice Roll Verdict Card) */

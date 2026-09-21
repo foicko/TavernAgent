@@ -1,0 +1,101 @@
+/* 手机视口（<=480px）的专项打磨。
+   --------------------------------------------------------------------------
+   与 responsive.css 的分工：那边是 481~768px 的"侧滑抽屉"几何与通用手机排版，
+   这里只处理更窄视口独有的三件事——
+   ① 左右栏改成从**底部**升起的贴底抽屉（拇指可达，不必伸手去够屏幕左上角）；
+   ② 触控目标不小于 44px；
+   ③ 输入台贴底并避让安全区。
+   本文件在 styles.css 的 @import 链里排在 responsive.css 之后，因此同权重下
+   后写生效；不新增 !important（门禁会拦），需要覆盖的规则都在 481~768px 段里。 */
+
+@media (max-width: 480px) {
+  /* ---------------------------------------------------------------- 贴底抽屉 */
+  .rail-left,
+  .rail-right {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: 75dvh;
+    z-index: var(--z-modal);
+    background: var(--bg-surface);
+    border: 0;
+    border-top: 1px solid var(--border-mid);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.28);
+    transform: translateY(105%);
+    transition: transform var(--duration-fast) var(--ease-smooth-out);
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 抓取条：给手指一个"这里能往下拖"的可见锚点。 */
+  .rail-left::before,
+  .rail-right::before {
+    content: "";
+    display: block;
+    position: sticky;
+    top: 0;
+    width: 40px;
+    height: 4px;
+    margin: 8px auto 4px;
+    border-radius: var(--radius-full);
+    background: var(--border-mid);
+  }
+
+  body:not(.rail-left-collapsed) .rail-left,
+  body:not(.rail-right-collapsed) .rail-right {
+    transform: translateY(0);
+  }
+
+  body.rail-right-collapsed .rail-right {
+    transform: translateY(105%);
+  }
+
+  /* ------------------------------------------------------------------ 触控目标 */
+  /* 顶栏按钮：48px 顶栏里放得下 44px 的命中区（原为 32px，手指常点空）。 */
+  .header-actions .btn-quiet,
+  .brand-group .mobile-rail-toggle {
+    width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+
+  /* 输入台与舞台里的图标型按钮同样给足命中区。 */
+  .composer-shelf .btn-quiet,
+  .composer-shelf .composer-tag-btn {
+    min-height: 32px;
+  }
+
+  /* 抽屉内的子页签：横向可滚动，单项不低于 44px 高。 */
+  .rail-subtab-btn {
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  /* ------------------------------------------------------------ 输入台与溢出 */
+  .composer-shelf {
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  }
+
+  /* 手机横屏时输入框仍要留出正文可见高度。 */
+  .composer-textarea {
+    max-height: 34dvh;
+  }
+
+  /* 主舞台只做纵向滚动：任何一行超宽内容都不该把整页推成横向可滚。 */
+  .stage-scroll-area {
+    overflow-x: hidden;
+  }
+
+  .ui-modal {
+    max-width: 100vw;
+  }
+}

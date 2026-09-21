@@ -24,8 +24,3 @@
   color: var(--text-dim);
 }
 
-.story-checkpoint-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}

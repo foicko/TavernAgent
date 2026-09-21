@@ -85,8 +85,7 @@
   outline-color: var(--color-warn-border);
 }
 
-.ui-input--mono,
-.ui-select--mono {
+.ui-input--mono{
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
 }

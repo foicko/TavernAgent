@@ -1,0 +1,69 @@
+/* 右栏内容：记忆卡片。
+   由 styles.css 第 3805-3871 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* Memory Cards */
+.memory-filter-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.mem-filter-btn {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.mem-filter-btn.active {
+  background: var(--bg-subtle);
+  border-color: var(--border-light);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.memory-item-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-left: 2px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mem-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+
+.mem-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mem-act-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.mem-act-btn:hover {
+  color: var(--text-main);
+}
+
+.mem-item-content {
+  font-size: 11.5px;
+  color: var(--text-main);
+  line-height: 1.45;
+}

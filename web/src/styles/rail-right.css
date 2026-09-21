@@ -1,0 +1,394 @@
+/* 右栏外壳：立绘舞台、信息条与差分表情切换。
+   由 styles.css 第 2855-3246 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* ==========================================================================
+   8. RIGHT RAIL: CHARACTER TACHIE STAGE & AGENTIC HUD (实时立绘与心境记忆)
+   ========================================================================== */
+.rail-right {
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 14px 40px;
+  gap: 14px;
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), padding 0.24s ease;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-mid) transparent;
+}
+
+.rail-right::-webkit-scrollbar {
+  width: 5px;
+}
+.rail-right::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rail-right::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: var(--radius-full);
+}
+.rail-right::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+.rail-right-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.rail-right-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-main);
+  display: inline-block;
+}
+
+.rail-right-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--glass-pill-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top);
+  transition: transform 0.2s var(--glass-spring-ease), background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.rail-right-collapse-btn:hover {
+  background: var(--glass-pill-bg-hover);
+  border-color: var(--glass-border-hover);
+  color: var(--text-main);
+  transform: scale(1.02);
+}
+
+.floating-rail-trigger-right {
+  position: absolute;
+  top: 64px;
+  right: 14px;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 7px;
+  background: var(--glass-bg, var(--bg-surface));
+  border: 1px solid var(--glass-border, var(--border-mid));
+  border-radius: var(--radius-full);
+  box-shadow: var(--glass-specular-top), 0 4px 16px rgba(0, 0, 0, 0.08);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: var(--glass-blur, blur(16px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(16px));
+}
+
+.floating-rail-trigger-right:hover {
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  color: var(--text-main);
+  border-color: var(--border-dark);
+  transform: translateX(-2px);
+  box-shadow: var(--glass-specular-top), 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.floating-trigger-arrow {
+  font-size: 13px;
+  color: var(--text-dim);
+  transition: transform 0.2s ease;
+}
+
+.floating-rail-trigger-right:hover .floating-trigger-arrow {
+  transform: translateX(-2px);
+  color: var(--text-main);
+}
+
+.floating-trigger-avatar-img {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-subtle);
+}
+
+.floating-trigger-name {
+  letter-spacing: 0.02em;
+}
+
+body.rail-right-collapsed:not(.mode-reading) .floating-rail-trigger-right {
+  display: inline-flex;
+}
+
+/* 实时半身立绘视窗 (Tachie Stage - Liquid Glass Shell) */
+.tachie-hero-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tachie-viewport {
+  position: relative;
+  width: 100%;
+  height: 290px;
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  background: var(--bg-subtle);
+  border: 1px solid var(--glass-border, var(--border-light));
+  box-shadow: var(--glass-specular-top), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.tachie-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.35s ease, filter 0.35s ease;
+  filter: grayscale(8%);
+}
+
+.tachie-viewport:hover .tachie-image {
+  transform: scale(1.02);
+}
+
+/* 底部水墨羽化渐隐蒙版：自然融入乳白 / 墨黑面板底色 */
+.tachie-gradient-mask {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 38%;
+  background: linear-gradient(to bottom, transparent 0%, var(--bg-surface) 100%);
+  pointer-events: none;
+  transition: background 0.2s ease;
+}
+
+/* 顶部浮动信息条 */
+.tachie-top-bar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+
+.tachie-expression-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+  border: 1px solid var(--glass-border, var(--border-light));
+  backdrop-filter: var(--glass-blur-sm, blur(10px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(10px));
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+[data-theme="dark"] .tachie-expression-badge {
+  background: var(--glass-bg, rgba(26, 27, 32, 0.85));
+  border-color: var(--glass-border, var(--border-mid));
+}
+
+.tachie-zoom-btn {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+  border: 1px solid var(--glass-border, var(--border-light));
+  color: var(--text-main);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  backdrop-filter: var(--glass-blur-sm, blur(10px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(10px));
+  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+[data-theme="dark"] .tachie-zoom-btn {
+  background: var(--glass-bg, rgba(26, 27, 32, 0.85));
+  border-color: var(--glass-border, var(--border-mid));
+}
+.tachie-zoom-btn:hover {
+  border-color: var(--border-dark);
+  background: var(--text-main);
+  color: var(--bg-surface);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* 底部差分表情切换器 */
+.tachie-bottom-bar {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: center;
+  z-index: 2;
+}
+
+.tachie-expr-switcher {
+  display: flex;
+  gap: 3px;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.88));
+  padding: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border, var(--border-light));
+  backdrop-filter: var(--glass-blur, blur(14px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(14px));
+  box-shadow: var(--glass-specular-top), 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .tachie-expr-switcher {
+  background: var(--glass-bg, rgba(26, 27, 32, 0.88));
+  border-color: var(--glass-border, var(--border-mid));
+}
+
+.expr-switch-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  font-weight: 500;
+}
+.expr-switch-btn:hover {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="dark"] .expr-switch-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.expr-switch-btn.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 角色名与标签卡 */
+.tachie-nameplate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tachie-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tachie-main-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+}
+
+.tachie-stage-pill {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.dossier-identity {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.dossier-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.dossier-badge {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg-subtle, var(--bg-subtle));
+  border: 1px solid var(--glass-border, var(--border-light));
+  color: var(--text-main);
+  line-height: 1.3;
+  backdrop-filter: var(--glass-blur-sm, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dossier-badge:hover {
+  border-color: var(--border-mid);
+  background: var(--bg-elevated);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.dossier-badge-icon {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.dossier-full-name-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+.dossier-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.dossier-tag-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--accent-solid);
+  font-weight: 500;
+  white-space: nowrap;
+}

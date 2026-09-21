@@ -1,0 +1,325 @@
+/* 左栏内容：分支快照抽屉、角色卡库与世界书。
+   由 styles.css 第 855-1177 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
+/* 分支历史快照操作抽屉 (Branch Snapshot Probe Deck) */
+.branch-probe-card {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeInDown 0.16s ease-out;
+}
+
+.probe-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding-bottom: 2px;
+}
+
+.probe-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: var(--transition-fast);
+}
+
+.probe-close-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-main);
+}
+
+.probe-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.probe-btn-primary {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border: 1px solid var(--accent-solid);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+
+.probe-btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.probe-viewing-badge {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.probe-secondary-grid {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.probe-btn-sub {
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.probe-btn-sub:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-dark);
+}
+
+.probe-fork-confirm-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+.probe-btn-confirm {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  transition: var(--transition-fast);
+}
+
+.probe-btn-confirm:hover {
+  background: #047857;
+}
+
+.probe-btn-cancel {
+  padding: 5px 8px;
+  font-size: 11px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-mid);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.probe-btn-cancel:hover {
+  background: var(--bg-surface);
+  color: var(--text-main);
+}
+
+/* Subview 2: 角色卡库 */
+.roster-actions-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.char-card-entry {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 8px);
+  background: var(--glass-bg, var(--bg-surface));
+  backdrop-filter: var(--glass-blur-sm, blur(8px));
+  -webkit-backdrop-filter: var(--glass-blur-sm, blur(8px));
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.char-card-entry:hover {
+  border-color: var(--border-mid);
+  background: var(--glass-bg-hover, var(--bg-elevated));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.char-card-entry.active {
+  border-color: var(--accent-solid);
+  background: var(--glass-bg-subtle, var(--bg-surface));
+  box-shadow: 0 0 0 1px var(--accent-solid), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.char-card-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md, 8px);
+  object-fit: cover;
+  border: 1px solid var(--border-mid);
+  filter: grayscale(10%);
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.char-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.char-card-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.char-card-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.char-card-badge {
+  font-size: 9.5px;
+  padding: 1px 4px;
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  color: var(--text-dim);
+}
+
+.char-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Subview 3: 世界书 */
+.lore-search-input {
+  width: 100%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-main);
+  outline: none;
+  margin-bottom: 8px;
+}
+.lore-search-input:focus {
+  border-color: var(--border-dark);
+  background: var(--bg-surface);
+}
+
+.lore-entry-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.lore-entry-card:hover {
+  border-color: var(--border-dark);
+}
+
+.lore-entry-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lore-entry-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.lore-toggle-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-dim);
+  border: 1px solid var(--border-light);
+}
+.lore-toggle-pill.active {
+  color: var(--text-main);
+  border-color: var(--border-dark);
+  font-weight: 600;
+}
+
+.lore-keys-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lore-key-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 2px;
+  color: var(--text-muted);
+}
+
+.lore-entry-snippet {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

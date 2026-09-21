@@ -19,14 +19,6 @@
   row-gap: var(--space-2);
 }
 
-/* 过滤胶囊容器 */
-.mind-graph-filters {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 /* 过滤胶囊：未选中为安静描边，选中为实心。 */
 .memory-filter-btn {
   height: 28px;

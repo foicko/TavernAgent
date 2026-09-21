@@ -1,0 +1,525 @@
+
+
+
+
+.modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close-btn:hover {
+  border-color: var(--border-dark);
+  color: var(--text-main);
+}
+  
+/* --------------------------------------------------------------------------
+   14 REFINED POLISH & MICRO-INTERACTIONS
+   -------------------------------------------------------------------------- */
+/* 1. 舞台叙事流触底向底平滑水墨渐隐遮罩 */
+.stage-scroll-area {
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 36px), transparent 100%);
+  mask-image: linear-gradient(to bottom, black calc(100% - 36px), transparent 100%);
+}
+
+/* 2. 玩家发言身份排版 */
+.player-bubble-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-light);
+}
+.player-id-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.player-turn-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+/* 3. 纯净编年横幅出版物元数据 */
+.reading-meta-stats {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-family: var(--font-sans);
+}
+
+/* 5 & 6 & 7. 输入框高度自适应、Token微标与快捷键常驻提示 */
+.composer-input-wrapper {
+  position: relative;
+}
+.composer-shortcut-hint {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  pointer-events: none;
+  font-family: var(--font-sans);
+  opacity: 0.7;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* 8. 立绘半身像底部溶墨羽化 */
+.tachie-image {
+  -webkit-mask-image: linear-gradient(to bottom, black 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 82%, transparent 100%);
+}
+
+/* 9. 心境量表微调国风墨色阶 */
+.meter-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 3px;
+}
+.meter-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+}
+#meter-fill-aff {
+  background: linear-gradient(90deg, #f43f5e, #e11d48); /* 绯红温情 */
+}
+#meter-fill-trust {
+  background: linear-gradient(90deg, #0ea5e9, #0284c7); /* 蔚蓝信任 */
+}
+#meter-fill-alert {
+  background: linear-gradient(90deg, #f59e0b, #d97706); /* 琥珀戒心 */
+}
+[data-theme="dark"] #meter-fill-aff,
+[data-theme="dark"] #meter-fill-trust,
+[data-theme="dark"] #meter-fill-alert,
+
+/* 11. 当前活跃节点呼吸脉冲 */
+.node-item.active::before {
+  background: var(--text-main);
+  border-color: var(--text-main);
+  box-shadow: 0 0 0 0 rgba(20, 20, 20, 0.4);
+  animation: activeNodePulse 2.4s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+@keyframes activeNodePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(20, 20, 20, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(20, 20, 20, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(20, 20, 20, 0);
+  }
+}
+@keyframes activeNodePulseDark {
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 230, 230, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(230, 230, 230, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 230, 230, 0);
+  }
+}
+
+/* 12. 分支快照探针二次确认按钮样式 */
+.probe-btn.confirming {
+  background: #8b2525 !important;
+  color: #ffffff !important;
+  border-color: #8b2525 !important;
+  animation: pulseAlert 0.8s infinite alternate;
+}
+@keyframes pulseAlert {
+  from { opacity: 0.85; }
+  to { opacity: 1; }
+}
+
+/* 14. 世界书词条悬停卡底部按钮 */
+.lore-pop-btn-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.lore-pop-btn-quote {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  color: var(--text-main);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: inherit;
+}
+.lore-pop-btn-quote:hover {
+  background: var(--text-main);
+  color: var(--bg-canvas);
+  border-color: var(--text-main);
+}
+
+/* --------------------------------------------------------------------------
+   COGNITIVE MEMORY BANK REFACTOR CSS
+   -------------------------------------------------------------------------- */
+.mem-badge-cow {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-light);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.04em;
+}
+
+.mem-graph-cue-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mem-graph-cue-btn:hover {
+  border-color: var(--border-dark);
+  color: var(--text-main);
+  background: var(--bg-surface);
+}
+
+.memory-filter-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.mem-filter-btn {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: inherit;
+}
+
+.mem-filter-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-canvas);
+}
+
+.mem-filter-btn.active {
+  background: var(--bg-surface);
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.memory-bank-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memory-item-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: var(--transition-fast);
+}
+
+.memory-item-card.category-episodic {
+  border-left-color: #2b3e58; /* 亲历：冷深黛蓝 */
+}
+
+.memory-item-card.category-inference {
+  border-left-color: #5c4728; /* 苍赭 */
+}
+
+.memory-item-card.category-secret {
+  border-left-color: #6e3232; /* 秘密：朱砂 */
+}
+
+.memory-item-card.recalled {
+  border-color: var(--border-mid);
+  box-shadow: 0 0 0 1px rgba(180, 140, 60, 0.25);
+}
+
+.memory-item-card.pinned {
+  background: var(--bg-subtle);
+}
+
+.memory-item-card.hidden {
+  opacity: 0.45;
+}
+
+.memory-item-card.hidden .mem-item-content {
+  text-decoration: line-through;
+}
+
+.mem-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.mem-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.mem-type-badge {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.mem-turn-tag {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+.mem-recalled-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #8c6820;
+  background: rgba(210, 170, 70, 0.15);
+  border: 1px solid rgba(210, 170, 70, 0.35);
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.03em;
+}
+
+.mem-cow-edited-tag {
+  font-size: 9px;
+  color: var(--text-dim);
+  border: 1px dashed var(--border-mid);
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.mem-item-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.mem-act-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.mem-act-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+.mem-act-btn.pinned-active {
+  color: #a86c1d;
+  background: rgba(180, 140, 60, 0.12);
+  font-weight: 700;
+}
+
+.mem-item-content {
+  font-size: 11.5px;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+.mem-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.mem-entity-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mem-entity-pill {
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+  padding: 0 4px;
+  font-size: 9.5px;
+}
+
+.mem-valence-pill {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+
+/* Inline Editor */
+.mem-inline-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.mem-inline-textarea {
+  width: 100%;
+  min-height: 52px;
+  font-size: 11.5px;
+  font-family: inherit;
+  line-height: 1.45;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-xs);
+  padding: 6px;
+  color: var(--text-main);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.mem-inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Add Memory Form */
+
+
+
+
+
+
+
+
+
+
+.mem-act-btn-sm.primary {
+  background: var(--text-main);
+  color: var(--bg-canvas);
+  border: 1px solid var(--text-main);
+}
+
+/* --------------------------------------------------------------------------
+   COGNITIVE MIND GRAPH (心智与实体星图) STYLES
+   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+.mind-graph-filters {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  /* flex-wrap 原先只在 components/MindGraphModal.css 的同名规则里；那份更早进入产物，
+     除了这一条以外全部被本规则覆盖。并入此处后不再有跨文件重复声明。 */
+  flex-wrap: wrap;
+}
+
+
+.mind-graph-canvas-container {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+  cursor: grab;
+  user-select: none;
+}
+
+.mind-graph-canvas-container:active {
+  cursor: grabbing;
+}
+
+#mind-graph-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.field input, .field select {
+  height: 34px;
+  padding: 0 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}

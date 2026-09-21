@@ -139,10 +139,6 @@
   flex-shrink: 0;
 }
 
-.ui-modal__foot-spacer {
-  flex: 1;
-}
-
 @media (max-width: 720px) {
   .ui-modal-backdrop {
     padding: 0;
