@@ -100,6 +100,20 @@ export const TopHeader: React.FC = () => {
           <kbd className="command-trigger-key header-btn-text">Ctrl K</kbd>
         </button>
 
+        {/* 组件参考展厅入口 (独立服务: 5174) */}
+        <button
+          className="btn-quiet header-showcase-trigger"
+          onClick={() => window.open("http://localhost:5174", "_blank")}
+          id="showcase-btn"
+          title="打开独立组件展厅 (beautifului, beui, rareui, transitions, shadcn)"
+          aria-label="组件展厅"
+        >
+          <span className="header-showcase-glyph" aria-hidden="true">
+            🧩
+          </span>
+          <span className="header-btn-text">组件展厅</span>
+        </button>
+
         {/* 移动端/平板快速呼出右侧角色立绘与状态 */}
         <button
           className={`btn-quiet mobile-rail-toggle mobile-only ${!isRightRailCollapsed ? "active" : ""}`}

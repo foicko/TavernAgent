@@ -36,12 +36,13 @@
 
   <!-- UI button primitive: classes primary / quiet / ghost / danger × sm -->
   <Style Selector="Button.ui-btn">
-    <Setter Property="CornerRadius" Value="999" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
     <Setter Property="Padding" Value="14,0" />
     <Setter Property="Height" Value="32" />
-    <Setter Property="MinWidth" Value="64" />
+    <Setter Property="MinWidth" Value="60" />
     <Setter Property="FontSize" Value="{DynamicResource FsMd}" />
     <Setter Property="FontFamily" Value="{DynamicResource FontBody}" />
+    <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="BorderThickness" Value="1" />
@@ -50,7 +51,9 @@
     <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
     <Setter Property="Transitions">
       <Transitions>
-        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.08" Easing="CubicEaseOut" />
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="0.16,1,0.3,1" />
+        <BrushTransition Property="Background" Duration="0:0:0.15" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
       </Transitions>
     </Setter>
   </Style>
@@ -63,7 +66,7 @@
   <Style Selector="Button.ui-btn:pressed">
     <Setter Property="Background" Value="{DynamicResource GlassPillActiveBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource GlassPillTextActiveBrush}" />
-    <Setter Property="RenderTransform" Value="scale(0.98)" />
+    <Setter Property="RenderTransform" Value="scale(0.97)" />
   </Style>
 
   <Style Selector="Button.ui-btn:disabled">
@@ -73,25 +76,62 @@
   <Style Selector="Button.ui-btn.primary">
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
-    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button.ui-btn.primary:pointerover">
+    <Setter Property="Opacity" Value="0.9" />
+    <Setter Property="RenderTransform" Value="translateY(-1.5px)" />
   </Style>
 
   <Style Selector="Button.ui-btn.danger">
     <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button.ui-btn.danger:pointerover">
+    <Setter Property="Opacity" Value="0.9" />
+    <Setter Property="RenderTransform" Value="translateY(-1.5px)" />
   </Style>
 
   <Style Selector="Button.ui-btn.ghost">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Button.ui-btn.ghost:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="Button.ui-btn.outline">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+  </Style>
+  <Style Selector="Button.ui-btn.outline:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="Button.ui-btn.secondary">
+    <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+  <Style Selector="Button.ui-btn.secondary:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
   </Style>
 
   <Style Selector="Button.ui-btn.sm">
-    <Setter Property="Height" Value="25" />
-    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="9,0" />
     <Setter Property="FontSize" Value="{DynamicResource FsSm}" />
     <Setter Property="MinWidth" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
   </Style>
 
   <!-- Legacy aliases kept for existing views -->
@@ -208,6 +248,7 @@
   <Style Selector="Button.seg.active">
     <Setter Property="Background" Value="{DynamicResource GlassPillActiveBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource GlassPillTextActiveBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <!-- Header model pill (web: .header-active-model-pill) -->

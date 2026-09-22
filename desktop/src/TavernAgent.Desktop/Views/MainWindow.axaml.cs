@@ -68,9 +68,15 @@ public partial class MainWindow : Window
 
     private void ShowMain(bool ready)
     {
-        var overlay = this.FindControl<Border>("BootOverlay");
-        var main = this.FindControl<Control>("MainContent");
-        if (overlay is not null) overlay.IsVisible = !ready;
-        if (main is not null) main.IsVisible = ready;
+        void Update()
+        {
+            var overlay = this.FindControl<Border>("BootOverlay");
+            var main = this.FindControl<Control>("MainContent");
+            if (overlay is not null) overlay.IsVisible = !ready;
+            if (main is not null) main.IsVisible = ready;
+        }
+
+        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess()) Update();
+        else Avalonia.Threading.Dispatcher.UIThread.Post(Update);
     }
 }

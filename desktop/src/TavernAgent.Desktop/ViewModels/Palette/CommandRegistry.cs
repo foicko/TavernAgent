@@ -68,6 +68,13 @@ public static class CommandRegistry
             () => ui.ViewMode != ViewportMode.Reading, keywords: "reading 纯净 编年 阅读");
         Add("view", "view:theme", ui.Theme == ThemeMode.Dark ? "切换到浅色主题" : "切换到深色主题",
             () => { ui.ToggleTheme(); return Task.CompletedTask; }, keywords: "theme dark light 主题 深浅 明暗");
+        Add("view", "view:showcase", "打开独立组件展厅 (beautifului, beui, rareui, transitions, shadcn)",
+            () =>
+            {
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://localhost:5174") { UseShellExecute = true }); }
+                catch { }
+                return Task.CompletedTask;
+            }, keywords: "showcase 组件 展厅 beautifului shadcn rareui transitions beui");
         Add("view", "view:left", "切换左栏", () => { ui.ToggleLeftRail(); return Task.CompletedTask; }, hint: "Ctrl+[", keywords: "left rail 左栏");
         Add("view", "view:right", "切换右栏", () => { ui.ToggleRightRail(); return Task.CompletedTask; }, hint: "Ctrl+]", keywords: "right rail 右栏");
 

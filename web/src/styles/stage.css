@@ -205,12 +205,14 @@
   transform: translateY(-0.5px);
 }
 
-/* 消息气泡文学微操作工具栏 (Turn Quick Actions) */
+/* 消息气泡文学微操作工具栏 (Turn Quick Actions · rareui / transitions.dev 规范) */
 .turn-quick-toolbar {
   position: absolute;
   top: 10px;
   right: 14px;
-  display: none;
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
   align-items: center;
   gap: 3px;
   background: var(--glass-bg-elevated, var(--bg-surface));
@@ -221,11 +223,15 @@
   padding: 3px 6px;
   box-shadow: var(--shadow-md), inset 0 1px 1px 0 var(--glass-specular-top);
   z-index: 10;
-  animation: fadeInDown var(--duration-quick, 150ms) var(--ease-smooth-out);
+  transform: translateY(-2px);
+  transition: opacity var(--duration-quick, 150ms) ease,
+              transform var(--duration-quick, 150ms) var(--ease-smooth-out);
 }
 
 .dialogue-turn-wrap:hover .turn-quick-toolbar {
-  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .turn-tool-btn {

@@ -163,11 +163,26 @@
             </ComboBox>
 
             <Button Classes="ui-btn danger" Height="30" IsVisible="{Binding CanCancel}"
-                    Command="{Binding CancelCommand}" Content="■ 停止" />
+                    Command="{Binding CancelCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="■" FontSize="11" VerticalAlignment="Center" />
+                <TextBlock Text="停止" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding CanContinue}"
-                    Command="{Binding ContinueCommand}" Content="▶ 继续" />
+                    Command="{Binding ContinueCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="▶" FontSize="11" VerticalAlignment="Center" />
+                <TextBlock Text="继续" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding !CanContinue}"
-                    Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}" Content="发送" />
+                    Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBlock Text="发送" VerticalAlignment="Center" />
+                <TextBlock Text="↵" FontSize="11" Opacity="0.8" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </StackPanel>
         </Grid>
       </StackPanel>

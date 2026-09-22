@@ -9,17 +9,21 @@
     <!-- Player echo bubble -->
     <Border IsVisible="{Binding HasInputText}"
             HorizontalAlignment="Right"
-            MaxWidth="620"
-            CornerRadius="{DynamicResource RadiusLg}"
-            Background="{DynamicResource GlassPillBrush}"
-            BorderBrush="{DynamicResource GlassBorderBrush}"
+            MaxWidth="640"
+            CornerRadius="{DynamicResource RadiusXl}"
+            Background="{DynamicResource SubtleBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
-            Padding="14,10">
+            Padding="16,12"
+            BoxShadow="{DynamicResource Elevation1}">
       <StackPanel Spacing="6">
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0" Text="✦ 玩家行动 · 第一人称"
-                     FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
-                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="✦" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
+            <TextBlock Text="玩家行动 · 第一人称"
+                       FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+          </StackPanel>
           <TextBlock Grid.Column="1" Text="{Binding TurnLabel}"
                      FontSize="{DynamicResource FsXs}"
                      Foreground="{DynamicResource TextDimBrush}" />
@@ -31,8 +35,8 @@
     </Border>
 
     <!-- Assistant / opening turn card -->
-    <Border Classes="glass-subtle msg-card" Padding="18" CornerRadius="{DynamicResource RadiusLg}">
-      <StackPanel Spacing="10">
+    <Border Classes="glass-subtle msg-card" Padding="20" CornerRadius="{DynamicResource RadiusLg}">
+      <StackPanel Spacing="12">
         <Grid ColumnDefinitions="*,Auto">
           <TextBlock Grid.Column="0"
                      Text="✦ 命运序章 · 场景起步"
@@ -72,30 +76,39 @@
           </StackPanel>
         </Grid>
 
-        <!-- Committed thinking chain -->
+        <!-- Committed thinking chain (ThinkingState inspired by beautifului.dev) -->
         <Border IsVisible="{Binding HasThinking}"
-                CornerRadius="{DynamicResource RadiusMd}"
-                Background="{DynamicResource SubtleBrush}"
-                Padding="10,8">
-          <StackPanel Spacing="6">
+                Classes="thinking-card"
+                Padding="12,10">
+          <StackPanel Spacing="8">
             <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
                     Command="{Binding ToggleThinkingCommand}">
               <Grid ColumnDefinitions="Auto,*,Auto">
-                <TextBlock Grid.Column="0" Text="💭  " />
-                <TextBlock Grid.Column="1" Text="思考过程 (Reasoning)"
-                           HorizontalAlignment="Left"
-                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="🧠" FontSize="13" VerticalAlignment="Center" />
+                  <TextBlock Text="深度思维链 (Reasoning Flow)"
+                             FontWeight="SemiBold"
+                             FontSize="{DynamicResource FsXs}"
+                             VerticalAlignment="Center"
+                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
                 <TextBlock Grid.Column="2" Text="{Binding ThinkingToggleLabel}"
+                           FontSize="{DynamicResource FsXs}"
+                           VerticalAlignment="Center"
                            Foreground="{DynamicResource TextDimBrush}" />
               </Grid>
             </Button>
-            <SelectableTextBlock Text="{Binding Thinking}"
-                                 IsVisible="{Binding IsThinkingExpanded}"
-                                 TextWrapping="Wrap"
-                                 Classes="mono"
-                                 FontSize="12"
-                                 LineHeight="1.7"
-                                 Foreground="{DynamicResource TextDimBrush}" />
+            <Border IsVisible="{Binding IsThinkingExpanded}"
+                    Padding="14,8,8,4"
+                    BorderThickness="2,0,0,0"
+                    BorderBrush="{DynamicResource BorderMidBrush}">
+              <SelectableTextBlock Text="{Binding Thinking}"
+                                   TextWrapping="Wrap"
+                                   FontFamily="{DynamicResource FontMono}"
+                                   FontSize="12"
+                                   LineHeight="1.7"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+            </Border>
           </StackPanel>
         </Border>
 
@@ -274,17 +287,20 @@
           <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditTextCommand}" Content="✏️ 改正文" />
         </StackPanel>
 
-        <!-- Decision deck -->
+        <!-- Decision deck (ApprovalCard inspired by beautifului.dev) -->
         <Border IsVisible="{Binding ShowDecisionDeck}"
                 Classes="glass-subtle"
-                Padding="12"
-                CornerRadius="{DynamicResource RadiusMd}">
-          <StackPanel Spacing="10">
+                Padding="16"
+                CornerRadius="{DynamicResource RadiusLg}">
+          <StackPanel Spacing="12">
             <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Grid.Column="0" Text="✦ 剧情抉择分支（点击直接推进，或填入输入框）"
-                         FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
-                         Foreground="{DynamicResource TextSecondaryBrush}" />
-              <TextBlock Grid.Column="1" Text="多意图推演" FontSize="{DynamicResource FsXs}"
+              <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="✦" Foreground="{DynamicResource AccentAmberBrush}" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+                <TextBlock Text="剧情抉择分支 · 人在回路推演"
+                           FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+              </StackPanel>
+              <TextBlock Grid.Column="1" Text="多意图分支" FontSize="{DynamicResource FsXs}"
                          Foreground="{DynamicResource TextDimBrush}" />
             </Grid>
             <ItemsControl ItemsSource="{Binding Options}">
@@ -298,14 +314,20 @@
                   <Button Classes="decision-card" Margin="0,0,10,10"
                           Command="{Binding $parent[ItemsControl].((vm:MessageViewModel)DataContext).ChooseOptionCommand}"
                           CommandParameter="{Binding}">
-                    <StackPanel Spacing="6" MaxWidth="220">
-                      <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="{Binding Icon}" />
-                        <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                      </StackPanel>
+                    <StackPanel Spacing="6" MaxWidth="240">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                          <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center" />
+                          <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Classes="chip" Padding="5,1">
+                          <TextBlock Text="选定 ↵" FontSize="9" Foreground="{DynamicResource TextDimBrush}" />
+                        </Border>
+                      </Grid>
                       <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
-                                 FontSize="{DynamicResource FsSm}" />
+                                 FontSize="{DynamicResource FsSm}"
+                                 Foreground="{DynamicResource TextPrimaryBrush}" />
                     </StackPanel>
                   </Button>
                 </DataTemplate>

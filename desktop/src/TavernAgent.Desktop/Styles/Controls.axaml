@@ -1,4 +1,4 @@
-﻿<Styles xmlns="https://github.com/avaloniaui"
+<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="using:TavernAgent.Desktop.Controls">
 
@@ -142,7 +142,7 @@
     <Setter Property="AllowAutoHide" Value="True" />
   </Style>
 
-  <!-- v2: icon-rail buttons -->
+  <!-- v2: icon-rail buttons (Dock spring physics inspired by beui.dev) -->
   <Style Selector="Button.rail-btn">
     <Setter Property="Width" Value="40" />
     <Setter Property="Height" Value="40" />
@@ -158,19 +158,21 @@
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="Transitions">
       <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut" />
+        <BrushTransition Property="Background" Duration="0:0:0.18" />
+        <BrushTransition Property="Foreground" Duration="0:0:0.18" />
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="0.16,1,0.3,1" />
       </Transitions>
     </Setter>
   </Style>
   <Style Selector="Button.rail-btn:pointerover">
     <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="RenderTransform" Value="translateY(-2px) scale(1.08)" />
   </Style>
   <Style Selector="Button.rail-btn.active">
     <Setter Property="Background" Value="{DynamicResource GlassPillActiveBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource GlassPillTextActiveBrush}" />
+    <Setter Property="RenderTransform" Value="scale(1.04)" />
   </Style>
   <!-- Remembered-but-closed tab: quiet marker so the rail keeps a sense of place. -->
   <Style Selector="Button.rail-btn.visited">

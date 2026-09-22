@@ -51,6 +51,10 @@ data/config/secrets.json
 # Frontend
 web/node_modules/
 web/.vite/
+showcase/node_modules/
+showcase/.vite/
+showcase/dist/
+node_modules/
 
 # Local verification scratch (published reports live in docs/artifacts)
 /.playwright-cli/

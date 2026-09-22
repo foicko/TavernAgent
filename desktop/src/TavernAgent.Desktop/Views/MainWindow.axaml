@@ -10,7 +10,7 @@
         Width="1440" Height="900"
         MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen"
-        Background="Transparent">
+        Background="{DynamicResource WindowBackgroundBrush}">
 
   <Window.KeyBindings>
     <KeyBinding Gesture="Ctrl+K" Command="{Binding Workspace.TogglePaletteCommand}" />

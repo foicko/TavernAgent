@@ -163,6 +163,19 @@ public sealed partial class WorkspaceViewModel : ViewModelBase
     private void ToggleTheme() => _ui.ToggleTheme();
 
     [RelayCommand]
+    private void OpenShowcase()
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://localhost:5174")
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch { /* ignore browser spawn error */ }
+    }
+
+    [RelayCommand]
     private void EnterStudio() => _ui.SwitchViewMode(ViewportMode.Studio);
 
     [RelayCommand]

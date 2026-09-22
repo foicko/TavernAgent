@@ -226,6 +226,7 @@ export function buildCommands(): Command[] {
     panel("panel:promises", "打开承诺清单", ["promise", "pledge", "chengnuo"], () => useUi.getState().setPromisesModalOpen(true)),
     panel("panel:tachie", "查看全身立绘", ["tachie", "litai", "quanshen"], () => useUi.getState().setFullTachieOpen(true)),
     panel("panel:import-card", "导入角色卡", ["import", "card", "daoru", "jiaoseka"], () => useUi.getState().setCharImportOpen(true)),
+    panel("panel:showcase", "打开组件参考展厅 (Component Showcase)", ["showcase", "components", "zhanting", "beautifului", "shadcn", "rareui", "transitions", "beui"], () => window.open("http://localhost:5174", "_blank")),
   );
 
   return commands;

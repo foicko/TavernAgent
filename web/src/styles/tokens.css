@@ -47,68 +47,69 @@
 }
 
 /* --------------------------------------------------------------------------
-   1. 冷月银白（现代极简中性浅色主题：清爽纯粹与高对比文学排版）
+   1. 纯净纸白（现代极简白色主题：Shadcn Slate / Clean Pure White）
    -------------------------------------------------------------------------- */
 :root {
-  /* 表面与底层 (Shadcn Slate / Clean White) */
-  --bg-base: #f6f7f9;
-  --bg-canvas: #f6f7f9;
+  /* 表面与底层 */
+  --bg-base: #f8fafc;
+  --bg-canvas: #f8fafc;
   --bg-surface: #ffffff;
-  --bg-subtle: #eeeff3;
-  --bg-elevated: #e4e6ed;
+  --bg-subtle: #f1f5f9;
+  --bg-elevated: #ffffff;
 
-  /* 边框：高清晰中性细线，告别发黄发暗 */
-  --border-light: #e2e5ec;
-  --border-mid: #cbcfd9;
-  --border-dark: #0f1014;
-  --border-subtle: #edf0f5;
+  /* 边框：高清晰中性细线，纯净现代 */
+  --border-light: #e2e8f0;
+  --border-mid: #cbd5e1;
+  --border-dark: #0f172a;
+  --border-subtle: #f1f5f9;
 
-  /* 文本梯度 (深空墨阶) */
-  --text-main: #0f1014;
-  --text-muted: #575a65;
-  --text-dim: #8b8f9e;
+  /* 文本梯度 (墨黑深阶) */
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
 
-  /* 核心强调色与对比色 */
-  --accent-solid: #0f1014;
+  /* 核心强调色与反差色 */
+  --accent-solid: #0f172a;
   --accent-contrast: #ffffff;
-  --accent-subtle: rgba(15, 16, 20, 0.05);
-  --accent-glow: #3e5068;
-  --accent-amber: #b8860b;
-  --accent-green: #2e7d32;
+  --accent-subtle: rgba(15, 23, 42, 0.05);
+  --accent-glow: #475569;
+  --accent-amber: #b45309;
+  --accent-green: #15803d;
 
   /* 焦点环 (shadcn focus ring) */
-  --ring: rgba(15, 16, 20, 0.22);
+  --ring: rgba(15, 23, 42, 0.22);
   --ring-offset: 2px;
+  --ring-glow: rgba(15, 23, 42, 0.15);
 
   /* 刻度槽与填充 */
-  --meter-track: #eeeff3;
-  --meter-fill: #0f1014;
+  --meter-track: #f1f5f9;
+  --meter-fill: #0f172a;
 
   /* 语义反馈色 */
-  --color-danger-text: #c2185b;
-  --color-danger-bg: rgba(194, 24, 91, 0.06);
-  --color-warn-border: #e57373;
-  --color-warn-bg: rgba(229, 115, 115, 0.08);
-  --color-node-muted: #4a5d78;
+  --color-danger-text: #be123c;
+  --color-danger-bg: rgba(190, 18, 60, 0.06);
+  --color-warn-border: #f59e0b;
+  --color-warn-bg: rgba(245, 158, 11, 0.08);
+  --color-node-muted: #64748b;
 
   /* 状态三色 */
-  --color-success: #2e7d32;
-  --color-warning: #ed6c02;
-  --color-info: #0288d1;
+  --color-success: #16a34a;
+  --color-warning: #ea580c;
+  --color-info: #0284c7;
 
-  --bg-muted: #e4e6ed;
-  --bg-panel: #eeeff3;
+  --bg-muted: #f1f5f9;
+  --bg-panel: #f8fafc;
 
   /* 字体族：文学衬线 + 精准无衬线现代界面 */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   --font-display: 'Cinzel', 'Noto Serif SC', serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-narrative: 'Noto Serif SC', Georgia, "Songti SC", serif;
 
   /* 骨架尺寸 */
-  --header-h: 52px;
-  --rail-left-w: 285px;
-  --rail-right-w: 320px;
+  --header-h: 46px;
+  --rail-left-w: 280px;
+  --rail-right-w: 310px;
 
   /* 圆角 */
   --radius-sm: 6px;
@@ -140,8 +141,8 @@
 
   /* 多层微阴影 (rareui / shadcn 分级) */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 14px -2px rgba(15, 16, 20, 0.07), 0 2px 4px -1px rgba(15, 16, 20, 0.03);
-  --shadow-float: 0 18px 40px -10px rgba(15, 16, 20, 0.12), 0 4px 12px -2px rgba(15, 16, 20, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
+  --shadow-float: 0 16px 36px -8px rgba(15, 23, 42, 0.10), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
 
   /* 层级 */
   --z-base: 1;
@@ -155,70 +156,72 @@
   /* 动效 */
   --transition-fast: all 0.16s var(--ease-smooth-out);
 
-  /* 水晶拟态与亚像素高光 */
-  --glass-bg: rgba(255, 255, 255, 0.86);
-  --glass-bg-subtle: rgba(244, 245, 249, 0.78);
+  /* 水晶拟态与亚像素高光 (beautifului.dev 规范) */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-subtle: rgba(241, 245, 249, 0.80);
   --glass-bg-elevated: rgba(255, 255, 255, 0.96);
-  --glass-pill-bg: rgba(15, 16, 20, 0.04);
-  --glass-pill-bg-hover: rgba(15, 16, 20, 0.08);
-  --glass-pill-bg-active: #0f1014;
+  --glass-pill-bg: rgba(15, 23, 42, 0.04);
+  --glass-pill-bg-hover: rgba(15, 23, 42, 0.08);
+  --glass-pill-bg-active: #0f172a;
   --glass-pill-text-active: #ffffff;
-  --glass-border: rgba(15, 16, 20, 0.08);
-  --glass-border-light: rgba(255, 255, 255, 0.85);
-  --glass-border-hover: rgba(15, 16, 20, 0.16);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-border-light: rgba(255, 255, 255, 0.90);
+  --glass-border-hover: rgba(15, 23, 42, 0.16);
   --glass-specular-top: rgba(255, 255, 255, 0.95);
-  --glass-specular-bottom: rgba(15, 16, 20, 0.03);
-  --glass-shadow: rgba(0, 0, 0, 0.05);
-  --glass-shadow-lg: 0 12px 32px -4px rgba(15, 16, 20, 0.08), 0 4px 10px -2px rgba(15, 16, 20, 0.04);
+  --glass-specular-bottom: rgba(15, 23, 42, 0.03);
+  --glass-shadow: rgba(0, 0, 0, 0.04);
+  --glass-shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
   --glass-blur: blur(14px) saturate(140%);
   --glass-blur-subtle: blur(8px) saturate(130%);
   --glass-spring-ease: var(--ease-spring);
 }
 
 /* --------------------------------------------------------------------------
-   2. 墨黑幽夜（深色主题：现代曜石工作室 Obsidian Studio）
+   2. 曜石墨黑（现代极简黑色主题：Shadcn Zinc / Obsidian Studio）
    -------------------------------------------------------------------------- */
 [data-theme="dark"] {
-  --bg-base: #090a0d;
-  --bg-canvas: #090a0d;
-  --bg-surface: #111217;
-  --bg-subtle: #181920;
-  --bg-elevated: #20222b;
+  --bg-base: #09090b;
+  --bg-canvas: #09090b;
+  --bg-surface: #121215;
+  --bg-subtle: #18181b;
+  --bg-elevated: #1d1e24;
 
   --border-light: rgba(255, 255, 255, 0.08);
   --border-mid: rgba(255, 255, 255, 0.14);
-  --border-dark: #f4f4f7;
+  --border-dark: #fafafa;
   --border-subtle: rgba(255, 255, 255, 0.05);
 
-  --text-main: #f4f4f7;
-  --text-muted: #a1a3af;
-  --text-dim: #6d707d;
+  --text-main: #f8fafc;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
 
-  --accent-solid: #f4f4f7;
-  --accent-contrast: #090a0d;
-  --accent-subtle: rgba(244, 244, 247, 0.06);
-  --accent-glow: #8fa4c4;
-  --accent-amber: #d4a72c;
-  --accent-green: #66bb6a;
+  --accent-solid: #f8fafc;
+  --accent-contrast: #09090b;
+  --accent-subtle: rgba(248, 250, 252, 0.06);
+  --accent-glow: #94a3b8;
+  --accent-amber: #f59e0b;
+  --accent-green: #22c55e;
 
   /* 焦点环 (深色高辨识聚焦) */
-  --ring: rgba(244, 244, 247, 0.32);
+  --ring: rgba(248, 250, 252, 0.28);
   --ring-offset: 2px;
+  --ring-glow: rgba(255, 255, 255, 0.16);
 
-  --meter-track: #1c1d25;
-  --meter-fill: #f4f4f7;
+  --meter-track: #18181b;
+  --meter-fill: #f8fafc;
 
-  --color-danger-text: #f2779e;
-  --color-danger-bg: rgba(242, 119, 158, 0.1);
-  --color-warn-border: #8c4b4b;
-  --color-warn-bg: rgba(229, 115, 115, 0.12);
+  --color-danger-text: #fb7185;
+  --color-danger-bg: rgba(251, 113, 133, 0.1);
+  --color-warn-border: #d97706;
+  --color-warn-bg: rgba(217, 119, 6, 0.12);
+  --color-node-muted: #71717a;
 
-  --color-success: #66bb6a;
-  --color-warning: #ffa726;
-  --color-info: #4fc3f7;
+  --color-success: #22c55e;
+  --color-warning: #f97316;
+  --color-info: #38bdf8;
 
-  --bg-muted: #1c1d25;
-  --bg-panel: #181920;
+  --bg-muted: #18181b;
+  --bg-panel: #121215;
 
   /* 深色微阴影 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
@@ -226,19 +229,19 @@
   --shadow-float: 0 20px 48px -10px rgba(0, 0, 0, 0.75), 0 8px 18px -4px rgba(0, 0, 0, 0.45);
 
   /* 液态玻璃特效令牌 (深色主题) */
-  --glass-bg: rgba(17, 18, 23, 0.80);
-  --glass-bg-subtle: rgba(24, 25, 32, 0.72);
-  --glass-bg-elevated: rgba(32, 34, 43, 0.90);
-  --glass-pill-bg: rgba(244, 244, 247, 0.06);
-  --glass-pill-bg-hover: rgba(244, 244, 247, 0.11);
-  --glass-pill-bg-active: #f4f4f7;
-  --glass-pill-text-active: #090a0d;
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-border-light: rgba(255, 255, 255, 0.18);
+  --glass-bg: rgba(18, 18, 21, 0.80);
+  --glass-bg-subtle: rgba(24, 24, 27, 0.72);
+  --glass-bg-elevated: rgba(29, 30, 36, 0.92);
+  --glass-pill-bg: rgba(248, 250, 252, 0.06);
+  --glass-pill-bg-hover: rgba(248, 250, 252, 0.12);
+  --glass-pill-bg-active: #f8fafc;
+  --glass-pill-text-active: #09090b;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-light: rgba(255, 255, 255, 0.16);
   --glass-border-hover: rgba(255, 255, 255, 0.22);
   --glass-specular-top: rgba(255, 255, 255, 0.15);
-  --glass-specular-bottom: rgba(0, 0, 0, 0.35);
-  --glass-shadow: rgba(0, 0, 0, 0.45);
+  --glass-specular-bottom: rgba(0, 0, 0, 0.40);
+  --glass-shadow: rgba(0, 0, 0, 0.50);
   --glass-shadow-lg: 0 14px 38px -4px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.40);
   --glass-blur: blur(14px) saturate(140%);
   --glass-blur-subtle: blur(8px) saturate(130%);

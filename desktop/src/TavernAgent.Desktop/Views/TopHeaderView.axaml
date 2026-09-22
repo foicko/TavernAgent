@@ -82,6 +82,13 @@
           </StackPanel>
         </Button>
 
+        <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding OpenShowcaseCommand}" ToolTip.Tip="组件展厅 (:5174)">
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <TextBlock Text="🧩" FontSize="13" VerticalAlignment="Center" />
+            <TextBlock Text="组件展厅" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
         <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding ToggleThemeCommand}"
                 ToolTip.Tip="{Binding ThemeLabel}">
           <TextBlock Text="◐" FontSize="15" VerticalAlignment="Center" />

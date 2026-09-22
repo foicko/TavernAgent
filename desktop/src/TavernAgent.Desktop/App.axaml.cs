@@ -41,6 +41,8 @@ public class App : Application
                 DataContext = _shell,
             };
             appLife.MainWindow = window;
+            window.Show();
+            window.Activate();
             appLife.Exit += async (_, _) =>
             {
                 try { await _shell.DisposeAsync(); }

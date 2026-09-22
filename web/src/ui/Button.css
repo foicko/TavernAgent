@@ -109,6 +109,40 @@
   background: var(--bg-elevated);
 }
 
+.ui-btn--outline {
+  border-color: var(--border-mid);
+  background: transparent;
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-btn--outline:hover:not(:disabled) {
+  border-color: var(--border-dark);
+  background: var(--bg-subtle);
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-btn--outline:active:not(:disabled) {
+  transform: scale(0.98);
+  background: var(--bg-elevated);
+}
+
+.ui-btn--secondary {
+  border-color: transparent;
+  background: var(--bg-subtle);
+  color: var(--text-main);
+}
+
+.ui-btn--secondary:hover:not(:disabled) {
+  background: var(--bg-muted);
+  transform: translateY(-0.5px);
+}
+
+.ui-btn--secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .ui-btn--danger {
   border-color: var(--color-warn-border);
   color: var(--color-danger-text);
