@@ -4,7 +4,6 @@ import { chooseStartupSession, lastSessionId } from "./stores/sessionMemory";
 import { useSettings } from "./stores/settingsStore";
 import { useUi } from "./stores/uiStore";
 import { api, onAuthRequired } from "./app/api";
-import { applyNativeTheme } from "./lib/desktopShell";
 import { buildCommands } from "./lib/commandRegistry";
 import { CommandPalette } from "./ui/CommandPalette";
 
@@ -88,11 +87,6 @@ export default function App() {
         // 若无后端连接，平滑降级为离线真实角色剧场
       });
   }, [loadSessions]);
-
-  // 让原生标题栏跟随应用主题（浏览器下是空操作）。
-  useEffect(() => {
-    applyNativeTheme(theme);
-  }, [theme]);
 
   // 同步侧栏折叠与阅读模式类至 document.body (与 styles.css 契约完全吻合)
   useEffect(() => {

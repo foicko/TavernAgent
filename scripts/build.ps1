@@ -4,8 +4,7 @@ param(
   [string]$Version = "dev",
   [string]$OutputDirectory = "build",
   [switch]$SkipInstall,
-  [switch]$SkipChecks,
-  [switch]$Desktop
+  [switch]$SkipChecks
 )
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -64,18 +63,4 @@ try {
   $metadata = [ordered]@{ version = $Version; commit = $commit; builtAt = $builtAt; sha256 = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash; executable = $fileName }
   $metadata | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $targetDir "BUILD-INFO.json") -Encoding UTF8
   Write-Host "Built $executable"
-
-  if ($Desktop) {
-    if ((& go env GOOS) -ne "windows") { throw "桌面壳（-Desktop）目前仅支持 Windows；其他平台请构建无头服务。" }
-    $desktopExe = Join-Path $targetDir "tavernagent-desktop.exe"
-    # -H windowsgui：把 exe 标成 GUI 子系统。默认是控制台子系统，双击启动会先弹一个
-    # 空白终端窗口（wails build 自己也是这么设的）；无头服务必须保留控制台，所以不共用。
-    $desktopFlags = "-H windowsgui " + $flags
-    # 先生成图标/清单/版本资源（.syso），再构建；Wails 必须带 production/dev 标签，
-    # 缺标签时它编译成“弹框报错”的变体，窗口根本不渲染。
-    Invoke-Checked "go" @("run", "./cmd/winresgen", "-version", "tavernagent/$Version")
-    Invoke-Checked "go" @("build", "-trimpath", "-tags", "desktop,production", "-ldflags", $desktopFlags, "-o", $desktopExe, "./cmd/tavernagent-desktop")
-    Assert-WindowsGuiSubsystem $desktopExe
-    Write-Host "Built $desktopExe"
-  }
 } finally { Pop-Location }

@@ -2,7 +2,7 @@
 // 默认回环绑定；模型供应商由 data/config 配置驱动（primary/assist/reflection 三槽位），
 // 可显式使用 -provider mock 运行离线演示。
 //
-// 装配逻辑在 internal/app（组合根），桌面壳 cmd/tavernagent-desktop 与它共用同一后端。
+// 装配逻辑在 internal/app（组合根）；桌面端（Avalonia，desktop/）以 sidecar 方式拉起本服务并共用同一后端。
 package main
 
 import (
