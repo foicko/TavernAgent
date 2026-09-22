@@ -68,6 +68,7 @@ Generated conservatively from all locked Go modules and the installed production
 | github.com/mattn/go-colorable | v0.1.13 | See included text | [LICENSE](LICENSES/github.com_mattn_go-colorable-1.txt) |
 | github.com/mattn/go-isatty | v0.0.24 | See included text | [LICENSE](LICENSES/github.com_mattn_go-isatty-1.txt) |
 | github.com/mattn/go-runewidth | v0.0.16 | See included text | [LICENSE](LICENSES/github.com_mattn_go-runewidth-1.txt) |
+| github.com/mattn/go-sqlite3 | v1.14.52 | See included text | [LICENSE](LICENSES/github.com_mattn_go-sqlite3-1.txt) |
 | github.com/microcosm-cc/bluemonday | v1.0.27 | See included text | [LICENSE.md](LICENSES/github.com_microcosm-cc_bluemonday-1.txt) |
 | github.com/muesli/reflow | v0.3.0 | See included text | [LICENSE](LICENSES/github.com_muesli_reflow-1.txt) |
 | github.com/muesli/termenv | v0.15.3-0.20240618155329-98d742f6907a | See included text | [LICENSE](LICENSES/github.com_muesli_termenv-1.txt) |
@@ -94,9 +95,6 @@ Generated conservatively from all locked Go modules and the installed production
 | github.com/tkrajina/go-reflector | v0.5.8 | See included text | [LICENSE.txt](LICENSES/github.com_tkrajina_go-reflector-1.txt) |
 | github.com/valyala/bytebufferpool | v1.0.0 | See included text | [LICENSE](LICENSES/github.com_valyala_bytebufferpool-1.txt) |
 | github.com/valyala/fasttemplate | v1.2.2 | See included text | [LICENSE](LICENSES/github.com_valyala_fasttemplate-1.txt) |
-| github.com/wailsapp/go-webview2 | v1.0.22 | See included text | [LICENSE](LICENSES/github.com_wailsapp_go-webview2-1.txt) |
-| github.com/wailsapp/mimetype | v1.4.1 | See included text | [LICENSE](LICENSES/github.com_wailsapp_mimetype-1.txt) |
-| github.com/wailsapp/wails/v2 | v2.16.0 | See included text | [LICENSE](LICENSES/github.com_wailsapp_wails_v2-1.txt) |
 | github.com/wzshiming/ctc | v1.2.3 | See included text | [LICENSE](LICENSES/github.com_wzshiming_ctc-1.txt) |
 | github.com/wzshiming/winseq | v0.0.0-20200112104235-db357dc107ae | See included text | [LICENSE](LICENSES/github.com_wzshiming_winseq-1.txt) |
 | github.com/xanzy/ssh-agent | v0.3.3 | See included text | [LICENSE](LICENSES/github.com_xanzy_ssh-agent-1.txt) |

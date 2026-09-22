@@ -2,14 +2,14 @@
 
 本文件是项目的**唯一权威文档**：记录当前架构、已交付能力、工程门禁、已知技术债与待做事项。设计取舍与历史决策已并入本文；面向终端用户的安装运维与授权信息见 [运行维护说明](OPERATIONS.md) 与 [素材授权](ASSET_LICENSES.md)。
 
-> 最近更新：2026-09-15
+> 最近更新：2026-09-22
 
 ## 1. 项目概述
 
 本地优先的剧情与角色扮演应用：Go 单二进制服务 + SQLite 故事库 + React 界面。回合、人物状态、物品与分支保存在本机；记忆修订以新节点追加，支持历史回看与剧情包导入导出。
 
-- **技术栈**：Go 1.26.6、SQLite（`modernc.org/sqlite`，无 CGO）、React 19 + TypeScript + Vite + Zustand、Node 24 / pnpm 11.9.0。
-- **交付形态**：前端经 `//go:embed` 编译期嵌入，产物为单个可执行文件；发布目标为 Windows/macOS/Linux 五平台。
+- **技术栈**：Go 1.26.6、SQLite（`modernc.org/sqlite`，无 CGO）、React 19 + TypeScript + Vite + Zustand、Node 24 / pnpm 11.9.0；桌面端为 Avalonia 12（.NET 10）。
+- **交付形态**：Web 端前端经 `//go:embed` 编译期嵌入，产物为单个可执行文件；桌面端（`desktop/`）为自包含发布 + 同捆 sidecar。发布目标为 Windows/macOS/Linux 五平台。
 - **默认边界**：默认回环绑定、不调用任何未配置的外部模型；局域网访问需配对码。
 
 ## 2. 架构
@@ -33,6 +33,15 @@ internal/
 └── util/         原子文件、数据目录锁、ID
 ```
 
+桌面端（`desktop/`）独立于 Go 模块，按职责分三层：
+
+```
+desktop/src/
+├── TavernAgent.Core/      Api（HTTP/SSE 客户端）、Stores（对应 web 的 Zustand store）
+├── TavernAgent.Sidecar/   子进程守护、健康检查、日志
+└── TavernAgent.Desktop/   视图与 ViewModel（Shell / 舞台 / 左右栏 / 弹窗 / 命令面板）
+```
+
 ## 3. 已交付能力
 
 | 领域 | 能力 |
@@ -52,7 +61,7 @@ internal/
 | 前端 | 双主题设计系统 + 原语；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；<480px 贴底抽屉与 44px 触控目标 |
 | 样式结构 | `styles.css` 退化为 `@import` 入口，按功能域拆成 18 个文件；四项 CSS 门禁（行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名） |
 | 观测 | 请求级关联 ID（`X-Request-ID` 回显）、进程内追踪记录器、`/api/status` 的 `trace` 段（最近/最慢请求 + 分段打点） |
-| 桌面端（Windows） | 单实例锁、原生标题栏配色、日志滚动、**开机自启**（`-autostart on/off`）、**局域网第二屏**（`-lan`，强制配对码，可叠加加密） |
+| 桌面端（跨平台） | `desktop/`：Avalonia 12（.NET 10）+ Sidecar 子进程守护；原生窗口材质（Mica/Acrylic/vibrancy 带回退）、舞台优先 · 覆盖式侧栏 · 悬浮 HUD 的 UI 范式、命令面板、导演工作台、回合插画、TTS 播放；单实例锁；自包含发布并同捆 sidecar（`scripts/publish-desktop.ps1`） |
 
 ## 4. 运行与构建
 
@@ -92,7 +101,7 @@ node scripts/check.mjs --update-css-baseline  # 收紧门禁基线；放宽的�
 CI（`.github/workflows/quality.yml`）在 Ubuntu 跑 `go test -race`、`govulncheck`、浏览器测试，并在五平台构建 + 解压冒烟。真实模型验收由 `scripts/release_eval.py` 与 `scripts/gemini_meter.py` 负责，普通 CI 不调用付费模型。
 
 评估报告同时给出 `passAtK`（能力上限）与 `passPowerK`（业务可靠性）两个口径，失败按类别聚簇
-并逐条记录首错归因，见 `scripts/eval_metrics.py` 与 [ADS 合规记录](ADS_GAP_ANALYSIS.md)。
+并逐条记录首错归因，见 `scripts/eval_metrics.py`。
 造裸模型基线用消融开关（列出即关闭，`-ablate=all` 表示全关）：
 
 ```powershell
@@ -108,8 +117,10 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 - **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
   （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
 - **样式层**：`!important` 存量已从 245 处降至 14 处（已彻底消除 `shell.css` 与 `responsive.css` 中全部 231 处层叠覆盖，仅保留无障碍与高危确认原语，门禁基线收紧锁定在 14）。
-- **桌面端系统托盘**：未实现。自启（`-autostart`）与局域网第二屏（`-lan`）已可用，
-  托盘是"常驻 + 一键开关"的壳层，需要真机 GUI 会话验证后才能落地（见 `DESKTOP.md`）。
+- **桌面端壳层能力回退**：旧 Wails 壳删除后，`-lan`（第二屏便捷开关）与 `-autostart`
+  （开机自启）两个入口随之消失；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
+  可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是补回 `cmd/tavernagent` 的参数，
+  还是改为在 Avalonia 端提供设置项。系统托盘同样未实现。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
 ## 7. 待做功能与近期完成
@@ -130,9 +141,8 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 
 - [系统提示词总览](PROMPTS.md)：全部系统提示词的逐字提取 + 组装顺序 + 修改规则（由
   `scripts/prompt_docs.py` 生成，`scripts/tests/test_prompt_docs.py` 防止漂移）。
-- [桌面端（Windows）](DESKTOP.md)：Wails 壳、图标/清单、窗口栏配色与构建方式。
-- [ADS 合规评审与整改记录](ADS_GAP_ANALYSIS.md)：对照 `Agent开发规范.md`（ADS v1.0）的
-  整改项、显式取舍（无工具的工作流式设计、压缩用轮数触发、未上 OTel 等）与未处理缺口。
+- [桌面端（跨平台 · Avalonia + Sidecar）](DESKTOP_AVALONIA.md)：架构、运行/打包脚本、
+  UI 范式、窗口材质与 reduced-motion 处理。
 - [运行维护说明](OPERATIONS.md)：安装、三槽位配置、局域网、备份与升级回退。
 - [素材授权](ASSET_LICENSES.md)、[第三方声明](../THIRD_PARTY_NOTICES.md)、[MIT 许可证](../LICENSE)。
 - [贡献指南](../CONTRIBUTING.md)、[安全报告](../SECURITY.md)。

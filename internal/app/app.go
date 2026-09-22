@@ -1,6 +1,6 @@
 // Package app 是组合根：把存储、配置、供应商与 HTTP 适配器装配成一个可运行实例。
 //
-// 无头服务入口（cmd/tavernagent）与桌面壳（cmd/tavernagent-desktop）共用它，
+// 无头服务入口（cmd/tavernagent）与桌面端（desktop/，以 sidecar 方式拉起它）共用它，
 // 这样"桌面端"与"命令行端"必定是同一个后端——桌面模式不是另写一套装配，
 // 而是同一个 http.Handler 承载在同一个 loopback 监听上，只是多开了一个原生窗口。
 //

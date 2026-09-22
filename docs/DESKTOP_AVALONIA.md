@@ -4,9 +4,11 @@
 WebView，而是用原生 XAML 重新实现 Web 前端的界面与交互，后端仍是同一个 Go 无头服务
 ——以**子进程（sidecar）**方式拉起，只监听 loopback。
 
-> 与旧版 Wails 壳（[DESKTOP.md](DESKTOP.md)）的区别：Avalonia 端是真正的原生渲染、
-> 跨平台（Windows / macOS / Linux），不依赖 WebView2/WebKit。旧壳进入弃用流程，等本端
-> 功能对等后移除。
+> 与已移除的旧 Wails 壳的区别：Avalonia 端是真正的原生渲染、跨平台
+> （Windows / macOS / Linux），不依赖 WebView2/WebKit。旧壳（`cmd/tavernagent-desktop`、
+> `web/src/lib/desktopShell.ts`、`scripts/build.ps1 -Desktop`）已在 M7 功能对等后删除。
+> 无头服务中的 `/api/v1/desktop` 与 `/api/v1/desktop/theme` 端点保留（无害且仍有测试覆盖），
+> 仅不再有 Wails 壳消费它们。
 
 ## 运行
 
@@ -118,4 +120,4 @@ desktop/
 | M7 | ✅ | 全量 UI 重设（设计系统 v2 + 舞台优先 · 覆盖式侧栏 · 悬浮 HUD · 命令驱动的新范式）、原生窗口材质、动效库与 reduced-motion、自包含打包 + sidecar 同捆、移除 Wails 旧壳 |
 | M7.7 | ✅ | UI 走查修复：顶栏避让 HUD + 视图模式居中、图标轨道统一 emoji 字体、心境量表改用 `Meter*` 令牌并按 `Tone` 着色（新增中立刻度线）、HUD 滚动条自动隐藏、行囊空态去彩色 emoji、空态与输入占位文案更新（去掉「左侧栏」）、输入岛控制行统一高度、reduced-motion 改为不加载动效层 |
 
-> 旧 Wails 桌面壳已**移除**，见 [DESKTOP.md](DESKTOP.md)。
+> 旧 Wails 桌面壳已**移除**（见上）。

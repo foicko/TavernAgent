@@ -161,7 +161,7 @@ export const api = {
   pair: (pin: string) =>
     http<{ ok: boolean; token: string }>("POST", "/api/v1/auth/pair", { pin }),
   // 桌面壳桥（浏览器部署下 desktop=false / theme 返回 404）：
-  // 窗口跑在 loopback 源上，拿不到 Wails 注入的 window.runtime，
+  // 窗口跑在 loopback 源上，拿不到壳层注入的原生桥，
   // 原生窗口配色只能由前端通过同源接口回传。
   desktopInfo: () => http<{ desktop: boolean }>("GET", "/api/v1/desktop"),
   setDesktopTheme: (mode: "light" | "dark") =>

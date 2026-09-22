@@ -58,7 +58,7 @@ tavernagent.exe -tls files -tls-cert cert.pem -tls-key key.pem   # 用你自己�
 ### 第二屏（桌面端）
 
 桌面壳默认只监听 loopback。要保留“手机/平板连 PC 游玩”，用 `-lan` 显式开启
-（详见 [桌面端说明](DESKTOP.md)）：它会另起一个监听、强制配对码，并可与 `-tls auto` 叠加。
+（详见 [桌面端说明](DESKTOP_AVALONIA.md)）：它会另起一个监听、强制配对码，并可与 `-tls auto` 叠加。
 
 ## 备份与剧情包
 

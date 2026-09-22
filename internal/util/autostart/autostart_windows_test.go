@@ -20,7 +20,7 @@ func TestSetValueWritesQuotedCommand(t *testing.T) {
 	key.Close()
 	defer registry.DeleteKey(registry.CURRENT_USER, path)
 
-	if err := setValue(registry.CURRENT_USER, path, EntryName, `"C:\Program Files\TavernAgent\tavernagent-desktop.exe"`); err != nil {
+	if err := setValue(registry.CURRENT_USER, path, EntryName, `"C:\Program Files\TavernAgent\tavernagent.exe"`); err != nil {
 		t.Fatalf("setValue: %v", err)
 	}
 
