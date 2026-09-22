@@ -31,7 +31,6 @@ export default function App() {
 
   const {
     viewMode,
-    theme,
     switchViewMode,
     isLeftRailCollapsed,
     isRightRailCollapsed,
