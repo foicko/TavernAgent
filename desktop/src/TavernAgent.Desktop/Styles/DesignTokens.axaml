@@ -1,0 +1,267 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Design tokens v2. Light = :root, Dark = [data-theme="dark"] (parity with tokens.css).
+    v2 adds semantic surface/text layers, elevation, material, ambient, z-index and
+    motion/spring tokens on top of the original contract (all legacy keys preserved).
+  -->
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <Color x:Key="C.BgBase">#F6F7F9</Color>
+      <Color x:Key="C.BgCanvas">#F6F7F9</Color>
+      <Color x:Key="C.BgSurface">#FFFFFF</Color>
+      <Color x:Key="C.BgSubtle">#EEEEF3</Color>
+      <Color x:Key="C.BgElevated">#E4E6ED</Color>
+      <Color x:Key="C.BorderLight">#E2E5EC</Color>
+      <Color x:Key="C.BorderMid">#CBCFD9</Color>
+      <Color x:Key="C.BorderDark">#0F1014</Color>
+      <Color x:Key="C.BorderSubtle">#EDF0F5</Color>
+      <Color x:Key="C.TextMain">#0F1014</Color>
+      <Color x:Key="C.TextMuted">#575A65</Color>
+      <Color x:Key="C.TextDim">#8B8F9E</Color>
+      <Color x:Key="C.AccentSolid">#0F1014</Color>
+      <Color x:Key="C.AccentContrast">#FFFFFF</Color>
+      <Color x:Key="C.AccentSubtle">#0D0F1014</Color>
+      <Color x:Key="C.AccentAmber">#B8860B</Color>
+      <Color x:Key="C.AccentGreen">#2E7D32</Color>
+      <Color x:Key="C.Ring">#380F1014</Color>
+      <Color x:Key="C.DangerText">#C2185B</Color>
+      <Color x:Key="C.DangerBg">#0FC2185B</Color>
+      <Color x:Key="C.Success">#2E7D32</Color>
+      <Color x:Key="C.Warning">#ED6C02</Color>
+      <Color x:Key="C.Info">#0288D1</Color>
+      <Color x:Key="C.MeterTrack">#EEEEF3</Color>
+      <Color x:Key="C.MeterFill">#0F1014</Color>
+      <Color x:Key="C.MeterAff">#E11D48</Color>
+      <Color x:Key="C.MeterTrust">#0284C7</Color>
+      <Color x:Key="C.MeterAlert">#D97706</Color>
+      <Color x:Key="C.GlassBg">#DBFFFFFF</Color>
+      <Color x:Key="C.GlassBgSubtle">#C7F4F5F9</Color>
+      <Color x:Key="C.GlassBgElevated">#F5FFFFFF</Color>
+      <Color x:Key="C.GlassBorder">#140F1014</Color>
+      <Color x:Key="C.GlassBorderLight">#D9FFFFFF</Color>
+      <Color x:Key="C.GlassSpecularTop">#F2FFFFFF</Color>
+      <Color x:Key="C.GlassSpecularBottom">#080F1014</Color>
+      <Color x:Key="C.GlassPillBg">#0A0F1014</Color>
+      <Color x:Key="C.GlassPillBgHover">#140F1014</Color>
+      <Color x:Key="C.GlassPillBgActive">#0F1014</Color>
+      <Color x:Key="C.GlassPillTextActive">#FFFFFF</Color>
+      <Color x:Key="C.WindowBg">#F6F7F9</Color>
+
+      <!-- v2: translucent base used when native window material is active -->
+      <Color x:Key="C.WindowBgMaterial">#B8F6F7F9</Color>
+
+      <!-- v2: semantic surfaces -->
+      <Color x:Key="C.SurfaceOverlay">#F7FFFFFF</Color>
+      <Color x:Key="C.SurfaceSunken">#EAECF1</Color>
+      <Color x:Key="C.ScrimStrong">#8C0E0F12</Color>
+      <Color x:Key="C.Highlight">#120F1014</Color>
+
+      <!-- v2: ambient background -->
+      <Color x:Key="C.AmbientA">#2E6F8CF0</Color>
+      <Color x:Key="C.AmbientB">#26C56BA0</Color>
+      <Color x:Key="C.AmbientC">#1FB8860B</Color>
+
+      <BoxShadows x:Key="ShadowSm">0 1 2 0 #0D0F1014, 0 1 1 0 #080F1014</BoxShadows>
+      <BoxShadows x:Key="ShadowMd">0 4 14 -2 #120F1014, 0 2 4 -1 #080F1014</BoxShadows>
+      <BoxShadows x:Key="ShadowFloat">0 18 40 -10 #1F0F1014</BoxShadows>
+      <BoxShadows x:Key="Elevation1">0 1 2 0 #0F0F1014, 0 1 1 0 #080F1014</BoxShadows>
+      <BoxShadows x:Key="Elevation2">0 6 18 -4 #140F1014, 0 2 6 -2 #0A0F1014</BoxShadows>
+      <BoxShadows x:Key="Elevation3">0 18 44 -12 #1F0F1014, 0 6 16 -6 #120F1014</BoxShadows>
+      <BoxShadows x:Key="Elevation4">0 32 72 -18 #290F1014, 0 10 24 -10 #170F1014</BoxShadows>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Dark">
+      <Color x:Key="C.BgBase">#090A0D</Color>
+      <Color x:Key="C.BgCanvas">#090A0D</Color>
+      <Color x:Key="C.BgSurface">#111217</Color>
+      <Color x:Key="C.BgSubtle">#181920</Color>
+      <Color x:Key="C.BgElevated">#20222B</Color>
+      <Color x:Key="C.BorderLight">#14FFFFFF</Color>
+      <Color x:Key="C.BorderMid">#24FFFFFF</Color>
+      <Color x:Key="C.BorderDark">#F4F4F7</Color>
+      <Color x:Key="C.BorderSubtle">#0DFFFFFF</Color>
+      <Color x:Key="C.TextMain">#F4F4F7</Color>
+      <Color x:Key="C.TextMuted">#A1A3AF</Color>
+      <Color x:Key="C.TextDim">#6D707D</Color>
+      <Color x:Key="C.AccentSolid">#F4F4F7</Color>
+      <Color x:Key="C.AccentContrast">#090A0D</Color>
+      <Color x:Key="C.AccentSubtle">#0FF4F4F7</Color>
+      <Color x:Key="C.AccentAmber">#D4A72C</Color>
+      <Color x:Key="C.AccentGreen">#66BB6A</Color>
+      <Color x:Key="C.Ring">#52F4F4F7</Color>
+      <Color x:Key="C.DangerText">#F2779E</Color>
+      <Color x:Key="C.DangerBg">#1AF2779E</Color>
+      <Color x:Key="C.Success">#66BB6A</Color>
+      <Color x:Key="C.Warning">#FFA726</Color>
+      <Color x:Key="C.Info">#4FC3F7</Color>
+      <Color x:Key="C.MeterTrack">#1C1D25</Color>
+      <Color x:Key="C.MeterFill">#F4F4F7</Color>
+      <Color x:Key="C.MeterAff">#F43F5E</Color>
+      <Color x:Key="C.MeterTrust">#0EA5E9</Color>
+      <Color x:Key="C.MeterAlert">#F59E0B</Color>
+      <Color x:Key="C.GlassBg">#CC111217</Color>
+      <Color x:Key="C.GlassBgSubtle">#B8181920</Color>
+      <Color x:Key="C.GlassBgElevated">#E620222B</Color>
+      <Color x:Key="C.GlassBorder">#17FFFFFF</Color>
+      <Color x:Key="C.GlassBorderLight">#2EFFFFFF</Color>
+      <Color x:Key="C.GlassSpecularTop">#26FFFFFF</Color>
+      <Color x:Key="C.GlassSpecularBottom">#59000000</Color>
+      <Color x:Key="C.GlassPillBg">#0FF4F4F7</Color>
+      <Color x:Key="C.GlassPillBgHover">#1CF4F4F7</Color>
+      <Color x:Key="C.GlassPillBgActive">#F4F4F7</Color>
+      <Color x:Key="C.GlassPillTextActive">#090A0D</Color>
+      <Color x:Key="C.WindowBg">#090A0D</Color>
+
+      <!-- v2: translucent base used when native window material is active -->
+      <Color x:Key="C.WindowBgMaterial">#B8090A0D</Color>
+
+      <!-- v2: semantic surfaces -->
+      <Color x:Key="C.SurfaceOverlay">#F01A1B22</Color>
+      <Color x:Key="C.SurfaceSunken">#0C0D11</Color>
+      <Color x:Key="C.ScrimStrong">#A6000000</Color>
+      <Color x:Key="C.Highlight">#14FFFFFF</Color>
+
+      <!-- v2: ambient background -->
+      <Color x:Key="C.AmbientA">#3D3B82F6</Color>
+      <Color x:Key="C.AmbientB">#3310B981</Color>
+      <Color x:Key="C.AmbientC">#26A855F7</Color>
+
+      <BoxShadows x:Key="ShadowSm">0 1 2 0 #66000000</BoxShadows>
+      <BoxShadows x:Key="ShadowMd">0 4 14 -2 #8C000000, 0 2 4 -1 #59000000</BoxShadows>
+      <BoxShadows x:Key="ShadowFloat">0 20 48 -10 #BF000000</BoxShadows>
+      <BoxShadows x:Key="Elevation1">0 1 2 0 #73000000</BoxShadows>
+      <BoxShadows x:Key="Elevation2">0 6 18 -4 #8F000000, 0 2 6 -2 #59000000</BoxShadows>
+      <BoxShadows x:Key="Elevation3">0 18 44 -12 #B3000000, 0 6 16 -6 #66000000</BoxShadows>
+      <BoxShadows x:Key="Elevation4">0 32 72 -18 #CC000000, 0 10 24 -10 #73000000</BoxShadows>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+
+  <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{DynamicResource C.WindowBg}" />
+  <SolidColorBrush x:Key="WindowBackgroundMaterialBrush" Color="{DynamicResource C.WindowBgMaterial}" />
+  <!-- App base painted by the ambient layer; swapped to the material variant when native blur is active. -->
+  <SolidColorBrush x:Key="AppBaseBrush" Color="{DynamicResource C.WindowBg}" />
+  <SolidColorBrush x:Key="BgBaseBrush" Color="{DynamicResource C.BgBase}" />
+  <SolidColorBrush x:Key="SurfaceBrush" Color="{DynamicResource C.BgSurface}" />
+  <SolidColorBrush x:Key="SubtleBrush" Color="{DynamicResource C.BgSubtle}" />
+  <SolidColorBrush x:Key="ElevatedBrush" Color="{DynamicResource C.BgElevated}" />
+  <SolidColorBrush x:Key="TextPrimaryBrush" Color="{DynamicResource C.TextMain}" />
+  <SolidColorBrush x:Key="TextSecondaryBrush" Color="{DynamicResource C.TextMuted}" />
+  <SolidColorBrush x:Key="TextDimBrush" Color="{DynamicResource C.TextDim}" />
+  <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource C.BorderLight}" />
+  <SolidColorBrush x:Key="BorderMidBrush" Color="{DynamicResource C.BorderMid}" />
+  <SolidColorBrush x:Key="BorderSubtleBrush" Color="{DynamicResource C.BorderSubtle}" />
+  <SolidColorBrush x:Key="BorderDarkBrush" Color="{DynamicResource C.BorderDark}" />
+  <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource C.AccentSolid}" />
+  <SolidColorBrush x:Key="AccentContrastBrush" Color="{DynamicResource C.AccentContrast}" />
+  <SolidColorBrush x:Key="AccentSubtleBrush" Color="{DynamicResource C.AccentSubtle}" />
+  <SolidColorBrush x:Key="AccentAmberBrush" Color="{DynamicResource C.AccentAmber}" />
+  <SolidColorBrush x:Key="DangerBrush" Color="{DynamicResource C.DangerText}" />
+  <SolidColorBrush x:Key="DangerSoftBrush" Color="{DynamicResource C.DangerBg}" />
+  <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource C.Success}" />
+  <SolidColorBrush x:Key="WarningBrush" Color="{DynamicResource C.Warning}" />
+  <SolidColorBrush x:Key="InfoBrush" Color="{DynamicResource C.Info}" />
+  <SolidColorBrush x:Key="RingBrush" Color="{DynamicResource C.Ring}" />
+  <SolidColorBrush x:Key="MeterTrackBrush" Color="{DynamicResource C.MeterTrack}" />
+  <SolidColorBrush x:Key="MeterFillBrush" Color="{DynamicResource C.MeterFill}" />
+  <SolidColorBrush x:Key="MeterAffBrush" Color="{DynamicResource C.MeterAff}" />
+  <SolidColorBrush x:Key="MeterTrustBrush" Color="{DynamicResource C.MeterTrust}" />
+  <SolidColorBrush x:Key="MeterAlertBrush" Color="{DynamicResource C.MeterAlert}" />
+  <SolidColorBrush x:Key="GlassBackgroundBrush" Color="{DynamicResource C.GlassBg}" />
+  <SolidColorBrush x:Key="GlassSubtleBrush" Color="{DynamicResource C.GlassBgSubtle}" />
+  <SolidColorBrush x:Key="GlassElevatedBrush" Color="{DynamicResource C.GlassBgElevated}" />
+  <SolidColorBrush x:Key="GlassBorderBrush" Color="{DynamicResource C.GlassBorder}" />
+  <SolidColorBrush x:Key="GlassBorderLightBrush" Color="{DynamicResource C.GlassBorderLight}" />
+  <SolidColorBrush x:Key="GlassSpecularBrush" Color="{DynamicResource C.GlassSpecularTop}" />
+  <SolidColorBrush x:Key="GlassPillBrush" Color="{DynamicResource C.GlassPillBg}" />
+  <SolidColorBrush x:Key="GlassPillHoverBrush" Color="{DynamicResource C.GlassPillBgHover}" />
+  <SolidColorBrush x:Key="GlassPillActiveBrush" Color="{DynamicResource C.GlassPillBgActive}" />
+  <SolidColorBrush x:Key="GlassPillTextActiveBrush" Color="{DynamicResource C.GlassPillTextActive}" />
+  <SolidColorBrush x:Key="ModalScrimBrush" Color="#800E0F12" />
+
+  <!-- v2 brushes -->
+  <SolidColorBrush x:Key="SurfaceOverlayBrush" Color="{DynamicResource C.SurfaceOverlay}" />
+  <SolidColorBrush x:Key="SurfaceSunkenBrush" Color="{DynamicResource C.SurfaceSunken}" />
+  <SolidColorBrush x:Key="ScrimStrongBrush" Color="{DynamicResource C.ScrimStrong}" />
+  <SolidColorBrush x:Key="HighlightBrush" Color="{DynamicResource C.Highlight}" />
+  <SolidColorBrush x:Key="AmbientABrush" Color="{DynamicResource C.AmbientA}" />
+  <SolidColorBrush x:Key="AmbientBBrush" Color="{DynamicResource C.AmbientB}" />
+  <SolidColorBrush x:Key="AmbientCBrush" Color="{DynamicResource C.AmbientC}" />
+  <SolidColorBrush x:Key="TransparentBrush" Color="Transparent" />
+
+  <!-- Typography (system stacks only — no bundled fonts) -->
+  <FontFamily x:Key="FontBody">Segoe UI Variable Text, Segoe UI, SF Pro Text, -apple-system, Noto Sans CJK SC, Microsoft YaHei UI, Roboto, Helvetica, Arial, sans-serif</FontFamily>
+  <FontFamily x:Key="FontDisplay">Segoe UI Variable Display, SF Pro Display, -apple-system, Noto Serif SC, Georgia, Songti SC, serif</FontFamily>
+  <FontFamily x:Key="FontNarrative">Noto Serif SC, Songti SC, Georgia, Microsoft YaHei, serif</FontFamily>
+  <FontFamily x:Key="FontMono">Cascadia Mono, Consolas, SFMono-Regular, Menlo, monospace</FontFamily>
+
+  <!-- Spacing -->
+  <x:Double x:Key="Space1">4</x:Double>
+  <x:Double x:Key="Space2">8</x:Double>
+  <x:Double x:Key="Space3">12</x:Double>
+  <x:Double x:Key="Space4">16</x:Double>
+  <x:Double x:Key="Space5">24</x:Double>
+  <x:Double x:Key="Space6">32</x:Double>
+
+  <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+  <CornerRadius x:Key="RadiusMd">10</CornerRadius>
+  <CornerRadius x:Key="RadiusLg">14</CornerRadius>
+  <CornerRadius x:Key="RadiusXl">18</CornerRadius>
+  <CornerRadius x:Key="Radius2xl">24</CornerRadius>
+  <CornerRadius x:Key="RadiusFull">999</CornerRadius>
+
+  <!-- Layout skeleton -->
+  <x:Double x:Key="HeaderHeightPx">52</x:Double>
+  <x:Double x:Key="HeaderFloatHeightPx">44</x:Double>
+  <x:Double x:Key="RailIconWidth">56</x:Double>
+  <x:Double x:Key="FlyoutWidth">328</x:Double>
+  <x:Double x:Key="HudWidth">320</x:Double>
+  <x:Double x:Key="RailLeftWidth">285</x:Double>
+  <x:Double x:Key="RailRightWidth">320</x:Double>
+  <x:Double x:Key="RailCollapsedWidth">48</x:Double>
+  <x:Double x:Key="StageReadingWidth">820</x:Double>
+  <x:Double x:Key="StageReadingModeWidth">760</x:Double>
+  <x:Double x:Key="TachieHeight">290</x:Double>
+  <x:Double x:Key="MeterTrackHeight">6</x:Double>
+
+  <!-- Type scale -->
+  <x:Double x:Key="FsXs">11</x:Double>
+  <x:Double x:Key="FsSm">12</x:Double>
+  <x:Double x:Key="FsMd">13.5</x:Double>
+  <x:Double x:Key="FsLg">16</x:Double>
+  <x:Double x:Key="FsXl">20</x:Double>
+  <x:Double x:Key="Fs2xl">26</x:Double>
+  <x:Double x:Key="LhTight">1.35</x:Double>
+  <x:Double x:Key="LhNormal">1.6</x:Double>
+  <x:Double x:Key="LhNarrative">1.78</x:Double>
+
+  <!-- Motion (ms; easings as cubic-bezier control points) -->
+  <x:Double x:Key="DurationMicroMs">80</x:Double>
+  <x:Double x:Key="DurationQuickMs">150</x:Double>
+  <x:Double x:Key="DurationFastMs">250</x:Double>
+  <x:Double x:Key="DurationMediumMs">350</x:Double>
+  <x:Double x:Key="DurationSlowMs">450</x:Double>
+  <x:Double x:Key="DurationRailMs">240</x:Double>
+  <x:Double x:Key="DurationEmphasizedMs">520</x:Double>
+
+  <x:String x:Key="EaseSmoothOut">0.22,1,0.36,1</x:String>
+  <x:String x:Key="EaseSpring">0.16,1,0.3,1</x:String>
+  <x:String x:Key="EaseBounce">0.34,1.36,0.64,1</x:String>
+  <x:String x:Key="EaseStandard">0.2,0,0,1</x:String>
+  <x:String x:Key="EaseEmphasized">0.2,0.8,0.2,1</x:String>
+
+  <!-- Blur radii -->
+  <x:Double x:Key="BlurScrim">8</x:Double>
+  <x:Double x:Key="BlurGlass">14</x:Double>
+  <x:Double x:Key="BlurAmbient">64</x:Double>
+
+  <!-- Z-index -->
+  <x:Double x:Key="ZStage">0</x:Double>
+  <x:Double x:Key="ZRail">10</x:Double>
+  <x:Double x:Key="ZHeader">20</x:Double>
+  <x:Double x:Key="ZFlyout">30</x:Double>
+  <x:Double x:Key="ZModal">40</x:Double>
+  <x:Double x:Key="ZPalette">50</x:Double>
+  <x:Double x:Key="ZToast">60</x:Double>
+</ResourceDictionary>

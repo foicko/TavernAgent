@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Left"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Left.SessionsPanel"
+             x:DataType="vm:SessionsPanelViewModel">
+  <StackPanel Spacing="12">
+
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="历史故事会话" FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" VerticalAlignment="Center" />
+      <TextBlock Grid.Column="1" Text="{Binding TotalCount}" FontSize="{DynamicResource FsXs}"
+                 Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
+    </Grid>
+
+    <Border Classes="glass-subtle" CornerRadius="999" Padding="3" HorizontalAlignment="Stretch">
+      <Grid ColumnDefinitions="*,*">
+        <Button Grid.Column="0" Classes="seg" Classes.active="{Binding IsAllFilter}"
+                HorizontalAlignment="Stretch" Command="{Binding SetAllFilterCommand}"
+                Content="{Binding TotalCount, StringFormat=全部 ({0})}" />
+        <Button Grid.Column="1" Classes="seg" Classes.active="{Binding IsCurrentFilter}"
+                HorizontalAlignment="Stretch" Command="{Binding SetCurrentFilterCommand}"
+                Content="{Binding FilterCurrentLabel}" />
+      </Grid>
+    </Border>
+
+    <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="📜" Title="暂无历史故事会话"
+                  Description="点击下方按钮开辟，或直接在底部输入框发言开启全新故事。" />
+
+    <ItemsControl ItemsSource="{Binding Rows}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="vm:SessionRowViewModel">
+          <Border Classes="session-card" Classes.active="{Binding IsActive}" Margin="0,0,0,8">
+            <Grid ColumnDefinitions="*,Auto">
+              <Button Grid.Column="0" Classes="card-open" Command="{Binding OpenCommand}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <Panel Grid.Column="0" Width="34" Height="34">
+                    <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
+                      <TextBlock Text="{Binding Monogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 IsVisible="{Binding !HasAvatar}" />
+                    </Border>
+                    <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
+                  </Panel>
+                  <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" MaxWidth="150" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="{Binding TimeText}" FontSize="10.5"
+                                 Foreground="{DynamicResource TextDimBrush}" />
+                      <Border Classes="state-pill" Classes.active="{Binding IsActive}">
+                        <TextBlock Text="{Binding StatusText}" FontSize="10" />
+                      </Border>
+                    </StackPanel>
+                  </StackPanel>
+                </Grid>
+              </Button>
+
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <Button Classes="ui-btn sm ghost" Content="🗑" Padding="4,0"
+                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}" />
+                <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsConfirmingDelete}">
+                  <Button Classes="ui-btn sm danger" Content="确认删除" Command="{Binding ConfirmDeleteCommand}" />
+                  <Button Classes="ui-btn sm quiet" Content="取消" Command="{Binding CancelDeleteCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <!-- Action shelf -->
+    <Button Classes="ui-btn primary" HorizontalAlignment="Stretch"
+            Command="{Binding NewStoryCommand}" Content="{Binding NewStoryLabel}" />
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+      <Button Grid.Column="0" Classes="ui-btn quiet" HorizontalAlignment="Stretch"
+              Click="OnExportClick" Content="📦 导出剧本"
+              IsEnabled="{Binding HasCurrentView}" />
+      <Button Grid.Column="1" Classes="ui-btn quiet" HorizontalAlignment="Stretch"
+              Click="OnImportClick" Content="📥 导入剧本" />
+    </Grid>
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button Classes="ui-btn sm ghost" Command="{Binding GoCharactersCommand}" Content="👥 角色库" />
+      <Button Classes="ui-btn sm ghost" Command="{Binding GoImportCommand}" Content="➕ 导入角色卡" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

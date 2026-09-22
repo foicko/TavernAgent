@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Modals"
+             xmlns:dto="using:TavernAgent.Core.Dtos"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Modals.CharacterImportModalView"
+             x:DataType="vm:CharacterImportViewModel">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}"
+           Title="选择角色，开始新故事" DialogWidth="880">
+    <c:Modal.Body>
+      <StackPanel Width="820" Spacing="12">
+
+        <!-- dropzone -->
+        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusLg}" Padding="24"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+          <StackPanel Spacing="8" HorizontalAlignment="Center">
+            <TextBlock Text="🎭" FontSize="30" HorizontalAlignment="Center" />
+            <TextBlock Text="正在读取角色设定与开场…" HorizontalAlignment="Center"
+                       FontSize="{DynamicResource FsSm}" IsVisible="{Binding Parsing}" />
+            <TextBlock Text="拖入或选择角色卡" HorizontalAlignment="Center"
+                       FontSize="{DynamicResource FsSm}" IsVisible="{Binding !Parsing}" />
+            <Button Classes="ui-btn quiet" Margin="0,4,0,0" HorizontalAlignment="Center"
+                    Click="OnPickClick" Content="选择文件 (.png / .json)" IsEnabled="{Binding !Creating}" />
+            <TextBlock Text="支持 Tavern V2 / V3 与原生 JSON；解析在服务端完成"
+                       HorizontalAlignment="Center" FontSize="{DynamicResource FsXs}"
+                       Foreground="{DynamicResource TextDimBrush}" />
+          </StackPanel>
+        </Border>
+
+        <c:Banner Classes="danger" Message="{Binding Error}" IsVisible="{Binding HasError}" />
+
+        <!-- preview -->
+        <StackPanel Spacing="10" IsVisible="{Binding HasPreview}">
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <Panel Grid.Column="0" Width="64" Height="64">
+              <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
+                <TextBlock Text="🎭" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsVisible="{Binding NoAvatar}" />
+              </Border>
+              <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
+            </Panel>
+            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Name}" FontSize="{DynamicResource FsMd}" FontWeight="SemiBold"
+                         TextTrimming="CharacterEllipsis" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{Binding FormatBadge}" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" />
+                <TextBlock Text="{Binding Creator, StringFormat=作者：{0}}" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" IsVisible="{Binding HasCreator}" />
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+
+          <ItemsControl ItemsSource="{Binding Tags}" IsVisible="{Binding HasTags}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <Border Classes="state-pill" Margin="0,0,6,6"><TextBlock Text="{Binding}" FontSize="10" /></Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock Text="{Binding WarningsText}" IsVisible="{Binding HasWarnings}" TextWrapping="Wrap"
+                     FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource WarningBrush}" />
+
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="玩家姓名">
+              <c:Field.Body><TextBox Text="{Binding PlayerName}" PlaceholderText="旅人" /></c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="身份或背景（可选）">
+              <c:Field.Body><TextBox Text="{Binding PlayerRole}" PlaceholderText="例如：路过的旅人 / 学徒" /></c:Field.Body>
+            </c:Field>
+          </Grid>
+
+          <c:Field Label="选择开场" IsVisible="{Binding HasOpenings}">
+            <c:Field.Body>
+              <ComboBox ItemsSource="{Binding Openings}" SelectedItem="{Binding SelectedOpening}" HorizontalAlignment="Stretch">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="dto:CardOpening">
+                    <TextBlock Text="{Binding Title}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+            </c:Field.Body>
+          </c:Field>
+
+          <c:Field Label="自定义开场" Hint="该角色卡没有内置开场，请填写第一幕" IsVisible="{Binding !HasOpenings}">
+            <c:Field.Body>
+              <TextBox Text="{Binding CustomOpening}" AcceptsReturn="True" TextWrapping="Wrap"
+                       MinHeight="90" PlaceholderText="夜色低垂，你推开那扇门……" />
+            </c:Field.Body>
+          </c:Field>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+          <Button Classes="ui-btn ghost" Command="{Binding CloseCommand}" Content="取消" IsEnabled="{Binding !Creating}" />
+          <Button Classes="ui-btn primary" Command="{Binding ConfirmCommand}" IsEnabled="{Binding CanConfirm}">
+            <Panel>
+              <TextBlock Text="开启冒险" IsVisible="{Binding !Creating}" />
+              <TextBlock Text="创建中…" IsVisible="{Binding Creating}" />
+            </Panel>
+          </Button>
+        </StackPanel>
+
+      </StackPanel>
+    </c:Modal.Body>
+  </c:Modal>
+</UserControl>

@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:TavernAgent.Desktop.ViewModels.Modals.Settings"
+             xmlns:dto="using:TavernAgent.Core.Dtos"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Modals.Settings.TtsSettingsPageView"
+             x:DataType="settings:TtsSettingsPageViewModel">
+  <StackPanel Spacing="12">
+
+    <c:Section Title="TTS 语音引擎">
+      <c:Section.Body>
+        <c:Field Label="引擎">
+          <c:Field.Body>
+            <ComboBox ItemsSource="{Binding Engines}" SelectedItem="{Binding SelectedEngine}" HorizontalAlignment="Stretch" />
+          </c:Field.Body>
+        </c:Field>
+      </c:Section.Body>
+    </c:Section>
+
+    <c:Section Title="Edge-TTS 声音配置" IsVisible="{Binding IsEdge}">
+      <c:Section.Body>
+        <c:Field Label="声音" Hint="来自微软 Edge 在线语音库">
+          <c:Field.Body>
+            <ComboBox ItemsSource="{Binding Voices}" SelectedItem="{Binding SelectedVoice}" HorizontalAlignment="Stretch">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="dto:TTSVoice">
+                  <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </c:Field.Body>
+        </c:Field>
+      </c:Section.Body>
+    </c:Section>
+
+    <c:Section Title="自定义端点与本地模型" IsVisible="{Binding IsCustom}">
+      <c:Section.Body>
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyMimoCommand}" Content="小米 MiMo" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyLocalCommand}" Content="本地端点" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyOpenAICommand}" Content="OpenAI 官方" />
+          </StackPanel>
+          <c:Field Label="Base URL">
+            <c:Field.Body><TextBox Text="{Binding CustomBaseUrl}" PlaceholderText="http://127.0.0.1:9880/v1" /></c:Field.Body>
+          </c:Field>
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="API Key">
+              <c:Field.Body><TextBox Text="{Binding CustomApiKey}" PasswordChar="●" PlaceholderText="本地服务通常留空" /></c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="模型">
+              <c:Field.Body><TextBox Text="{Binding CustomModel}" PlaceholderText="tts-1" /></c:Field.Body>
+            </c:Field>
+          </Grid>
+          <c:Field Label="声音">
+            <c:Field.Body><TextBox Text="{Binding CustomVoice}" PlaceholderText="alloy / mimo_default" /></c:Field.Body>
+          </c:Field>
+        </StackPanel>
+      </c:Section.Body>
+    </c:Section>
+
+    <c:Section Title="系统原生语音" IsVisible="{Binding IsWebSpeech}">
+      <c:Section.Body>
+        <TextBlock Text="使用操作系统内置的语音合成，完全离线，无需配置。" TextWrapping="Wrap"
+                   FontSize="{DynamicResource FsSm}" Foreground="{DynamicResource TextSecondaryBrush}" />
+      </c:Section.Body>
+    </c:Section>
+
+    <c:Section Title="朗读偏好">
+      <c:Section.Body>
+        <StackPanel Spacing="12">
+          <c:Switch IsChecked="{Binding DialogueOnly}">
+            <c:Switch.Body><TextBlock Text="只播报角色对白" FontSize="{DynamicResource FsSm}" /></c:Switch.Body>
+          </c:Switch>
+          <c:Switch IsChecked="{Binding DirectorMode}">
+            <c:Switch.Body><TextBlock Text="情境感知演播（导演模式，仅 MiMo）" FontSize="{DynamicResource FsSm}" /></c:Switch.Body>
+          </c:Switch>
+          <c:Field Label="语速">
+            <c:Field.Body>
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <Slider Grid.Column="0" Minimum="0.5" Maximum="2.0" TickFrequency="0.1" Value="{Binding Speed}" />
+                <TextBlock Grid.Column="1" Text="{Binding SpeedLabel}" VerticalAlignment="Center"
+                           FontSize="{DynamicResource FsSm}" MinWidth="40" TextAlignment="Right" />
+              </Grid>
+            </c:Field.Body>
+          </c:Field>
+          <c:Banner Classes="danger" Message="{Binding TestError}" IsVisible="{Binding HasError}" />
+          <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Classes="ui-btn quiet" Command="{Binding TestPlaybackCommand}" Content="🔊 试听发音" />
+            <Button Classes="ui-btn ghost" Command="{Binding ResetDefaultsCommand}" Content="恢复默认" />
+          </StackPanel>
+        </StackPanel>
+      </c:Section.Body>
+    </c:Section>
+
+  </StackPanel>
+</UserControl>

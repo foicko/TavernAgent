@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Controls.Section">
+  <Border Background="{DynamicResource SurfaceBrush}"
+          BorderBrush="{DynamicResource BorderBrush}"
+          BorderThickness="1"
+          CornerRadius="{DynamicResource RadiusLg}"
+          Padding="16">
+    <StackPanel Spacing="12">
+      <StackPanel Orientation="Horizontal" Spacing="10"
+                  IsVisible="{Binding $parent[controls:Section].Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <Border Width="24" Height="24" CornerRadius="999"
+                Background="{DynamicResource AccentBrush}"
+                IsVisible="{Binding $parent[controls:Section].Index, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Text="{Binding $parent[controls:Section].Index}"
+                     FontSize="{DynamicResource FsSm}"
+                     FontWeight="SemiBold"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     Foreground="{DynamicResource AccentContrastBrush}" />
+        </Border>
+        <TextBlock Text="{Binding $parent[controls:Section].Title}"
+                   FontSize="{DynamicResource FsMd}"
+                   FontWeight="SemiBold"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextPrimaryBrush}" />
+      </StackPanel>
+      <ContentPresenter Content="{Binding $parent[controls:Section].Body}" />
+    </StackPanel>
+  </Border>
+</UserControl>

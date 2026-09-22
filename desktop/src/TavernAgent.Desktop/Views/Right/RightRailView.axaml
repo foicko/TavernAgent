@@ -1,0 +1,300 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Right"
+             xmlns:right="using:TavernAgent.Desktop.Views.Right"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Right.RightRailView"
+             x:DataType="vm:RightRailViewModel">
+  <Grid RowDefinitions="Auto,*">
+
+    <Border Grid.Row="0" Padding="14,10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+          <TextBlock Text="角色档案 · 实时立绘" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+        </StackPanel>
+        <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding ToggleCollapseCommand}"
+                Content="收起 ›" />
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="14,12,14,40" Spacing="14">
+
+        <!-- Tachie stage -->
+        <Border CornerRadius="{DynamicResource RadiusLg}" Height="290" ClipToBounds="True"
+                Background="{DynamicResource SubtleBrush}"
+                BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1">
+          <Panel>
+            <TextBlock Text="{Binding TachieMonogram}" FontSize="72" Opacity="0.35"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding !HasTachie}" />
+            <Image Source="{Binding Tachie}" Stretch="UniformToFill" VerticalAlignment="Top" IsVisible="{Binding HasTachie}" />
+            <Border Background="#000000" Opacity="{Binding ExpressionOverlay}" IsHitTestVisible="False" />
+            <Border VerticalAlignment="Bottom" Height="110" IsHitTestVisible="False">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                  <GradientStop Offset="0" Color="#00000000" />
+                  <GradientStop Offset="1" Color="{DynamicResource C.BgSurface}" />
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
+
+            <Grid VerticalAlignment="Top" Margin="10" ColumnDefinitions="*,Auto">
+              <Border Grid.Column="0" Classes="chip" HorizontalAlignment="Left">
+                <TextBlock Text="{Binding ExpressionTitle}" FontSize="{DynamicResource FsXs}" />
+              </Border>
+              <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding OpenFullTachieCommand}"
+                      Content="⛶ 全身" />
+            </Grid>
+
+            <StackPanel VerticalAlignment="Bottom" Margin="10" Spacing="6">
+              <Border Classes="glass-subtle" CornerRadius="999" Padding="3" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="3">
+                  <Button Classes="seg" Classes.active="{Binding IsAlertExpr}" Command="{Binding SetAlertCommand}" Content="警觉" />
+                  <Button Classes="seg" Classes.active="{Binding IsCalmExpr}" Command="{Binding SetCalmCommand}" Content="冷静" />
+                  <Button Classes="seg" Classes.active="{Binding IsSmileExpr}" Command="{Binding SetSmileCommand}" Content="释怀" />
+                  <Button Classes="seg" Classes.active="{Binding IsWhisperExpr}" Command="{Binding SetWhisperCommand}" Content="动容" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Panel>
+        </Border>
+
+        <!-- Nameplate -->
+        <StackPanel Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding Character.ShortName}" Classes="display" FontSize="16" />
+            <Border Classes="state-pill"><TextBlock Text="{Binding Character.StagePill}" FontSize="10" /></Border>
+          </StackPanel>
+          <TextBlock Text="{Binding Character.Name}" FontSize="{DynamicResource FsXs}"
+                     Foreground="{DynamicResource TextDimBrush}"
+                     IsVisible="{Binding Character.HasAvatar}" />
+          <TextBlock Text="{Binding Character.Role}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <ItemsControl ItemsSource="{Binding Tags}" IsVisible="{Binding HasTags}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <Border Classes="chip" Margin="0,0,4,4"><TextBlock Text="{Binding, StringFormat=#{0}}" FontSize="10" /></Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Border Classes="chip"><TextBlock Text="{Binding Character.StateBadge, StringFormat=🎭 {0}}" FontSize="10" /></Border>
+            <Border Classes="chip"><TextBlock Text="{Binding Character.AllianceBadge, StringFormat=🏛️ {0}}" FontSize="10" /></Border>
+            <Border Classes="chip"><TextBlock Text="{Binding Character.VoiceBadge, StringFormat=🎙️ {0}}" FontSize="10" /></Border>
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Nav tiles -->
+        <StackPanel Spacing="8">
+          <Button Classes="hud-tile" Command="{Binding OpenDossierCommand}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Border Grid.Column="0" Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"
+                      Background="{DynamicResource SubtleBrush}">
+                <TextBlock Text="📜" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                <TextBlock Text="角色设定与世界观" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Text="人设性格 · 场景规则 · 范例与说明" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <Border Grid.Column="2" Classes="state-pill" VerticalAlignment="Center"><TextBlock Text="详情" FontSize="10" /></Border>
+            </Grid>
+          </Button>
+
+          <Button Classes="hud-tile" Command="{Binding OpenPromisesCommand}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Border Grid.Column="0" Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"
+                      Background="{DynamicResource SubtleBrush}">
+                <TextBlock Text="🤝" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                <TextBlock Text="主动契约与承诺" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Text="誓约状态与履约跟踪" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <Border Grid.Column="2" Classes="state-pill" VerticalAlignment="Center">
+                <TextBlock Text="{Binding ActivePromiseCount, StringFormat={}{0} 生效}" FontSize="10" />
+              </Border>
+            </Grid>
+          </Button>
+
+          <Button Classes="hud-tile" Command="{Binding OpenMemoryCommand}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Border Grid.Column="0" Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"
+                      Background="{DynamicResource SubtleBrush}">
+                <TextBlock Text="🧠" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                <TextBlock Text="认知记忆库" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Text="亲历观察 · 反思推演 · 分支独立 CoW" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <Border Grid.Column="2" Classes="state-pill" VerticalAlignment="Center">
+                <TextBlock Text="{Binding MemoryCount, StringFormat={}{0} 条}" FontSize="10" />
+              </Border>
+            </Grid>
+          </Button>
+        </StackPanel>
+
+        <!-- Meters -->
+        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="12">
+          <StackPanel Spacing="10">
+            <TextBlock Text="心境三维量表 · 实时投影" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+
+            <StackPanel Spacing="4">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding MeterAffection.Label, StringFormat={}{0} (Affection)}"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding MeterAffection.ValueText}" Classes="mono meter-value"
+                           Classes.meter-aff="{Binding MeterAffection.IsAffection}"
+                           FontWeight="Bold" />
+              </Grid>
+              <Grid ToolTip.Tip="−100 ~ +100 的归一化位置，中点即中立">
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding MeterAffection.Percent}"
+                             Height="6" Classes.meter-aff="{Binding MeterAffection.IsAffection}" />
+                <Border Width="1" Margin="0,-2" HorizontalAlignment="Center" IsVisible="{Binding MeterAffection.IsAffection}"
+                        Background="{DynamicResource BorderMidBrush}" />
+                <ItemsControl ItemsSource="{Binding MeterAffection.Deltas}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" Margin="0,-16,0,0">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:MeterDeltaViewModel">
+                      <TextBlock Classes="meter-delta" Classes.pos="{Binding IsPositive}" Text="{Binding Text}" FontSize="10" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Grid>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding MeterTrust.Label, StringFormat={}{0} (Trust)}"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding MeterTrust.ValueText}" Classes="mono meter-value"
+                           Classes.meter-trust="{Binding MeterTrust.IsTrust}"
+                           FontWeight="Bold" />
+              </Grid>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding MeterTrust.Percent}"
+                           Height="6" Classes.meter-trust="{Binding MeterTrust.IsTrust}" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding MeterAlert.Label, StringFormat={}{0} (Alert)}"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding MeterAlert.ValueText}" Classes="mono meter-value"
+                           Classes.meter-alert="{Binding MeterAlert.IsAlert}"
+                           FontWeight="Bold" />
+              </Grid>
+              <ProgressBar Minimum="0" Maximum="100" Value="{Binding MeterAlert.Percent}"
+                           Height="6" Classes.meter-alert="{Binding MeterAlert.IsAlert}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Inventory -->
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding InventoryCount, StringFormat=携带物品与信物 {0} 件}"
+                     FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <ItemsControl ItemsSource="{Binding Inventory}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:InventoryItemViewModel">
+                <Button Classes="item-slot" Margin="0,0,8,8">
+                  <Button.Flyout>
+                    <Flyout Placement="Top">
+                      <Border x:DataType="vm:InventoryItemViewModel" Width="180"
+                              Classes="glass-elevated" Padding="8">
+                        <StackPanel Spacing="4">
+                          <TextBlock Text="{Binding Name, StringFormat={}{0} 动作}" FontSize="10"
+                                     Foreground="{DynamicResource TextDimBrush}" />
+                          <ItemsControl ItemsSource="{Binding Acts}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate DataType="vm:InventoryActViewModel">
+                                <Button Classes="item-act" HorizontalAlignment="Stretch"
+                                        Click="OnActClick" Content="{Binding Label}" />
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </StackPanel>
+                      </Border>
+                    </Flyout>
+                  </Button.Flyout>
+                  <StackPanel Width="64" Spacing="2">
+                    <TextBlock Text="{Binding Icon}" FontSize="15" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding Name}" FontSize="10.5" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding Status}" FontSize="9" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextDimBrush}" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Border IsVisible="{Binding !HasInventory}" CornerRadius="{DynamicResource RadiusMd}"
+                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="16"
+                  Background="{DynamicResource SubtleBrush}">
+            <TextBlock Text="随身包裹空空如也" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextDimBrush}" FontSize="{DynamicResource FsXs}" />
+          </Border>
+        </StackPanel>
+
+        <!-- Checkpoint -->
+        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="12"
+                IsVisible="{Binding Checkpoint.HasAny}">
+          <StackPanel Spacing="10">
+            <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
+                    Command="{Binding Checkpoint.ToggleCommand}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="📖 前情回顾与交接" HorizontalAlignment="Left" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="{Binding Checkpoint.ToggleLabel}"
+                           Foreground="{DynamicResource TextDimBrush}" />
+              </Grid>
+            </Button>
+            <StackPanel Spacing="10" IsVisible="{Binding Checkpoint.IsExpanded}">
+              <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasNarrativeArc}">
+                <TextBlock Text="📜 剧情推进" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Checkpoint.NarrativeArc}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+              </StackPanel>
+              <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasMindsets}">
+                <TextBlock Text="🌊 角色心境与暗涌" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding Checkpoint.Mindsets}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:CheckpointMindset">
+                      <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                                 Foreground="{DynamicResource TextSecondaryBrush}">
+                        <Run Text="{Binding Character}" FontWeight="SemiBold" /><Run Text="：" /><Run Text="{Binding Content}" />
+                      </TextBlock>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding Checkpoint.HiddenTension, StringFormat=暗流：{0}}" TextWrapping="Wrap"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource WarningBrush}"
+                           IsVisible="{Binding Checkpoint.HiddenTension, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              </StackPanel>
+              <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasOpenLoops}">
+                <TextBlock Text="⏳ 待解悬念与约定" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Checkpoint.OpenLoops}" TextWrapping="Wrap" Classes="mono"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
+              </StackPanel>
+              <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasMilestones}">
+                <TextBlock Text="🚩 阶段里程碑" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Checkpoint.Milestones}" TextWrapping="Wrap" Classes="mono"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
+              </StackPanel>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:TavernAgent.Desktop.ViewModels.Modals.Settings"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Modals.Settings.ImageSettingsPageView"
+             x:DataType="settings:ImageSettingsPageViewModel">
+  <StackPanel Spacing="12">
+
+    <c:Section Title="生图引擎配置">
+      <c:Section.Body>
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyComfyCommand}" Content="ComfyUI" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplySiliconFlowCommand}" Content="SiliconFlow" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyOpenAICommand}" Content="OpenAI" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplySdWebUICommand}" Content="SD WebUI" />
+          </StackPanel>
+          <c:Field Label="引擎">
+            <c:Field.Body>
+              <ComboBox ItemsSource="{Binding Engines}" SelectedItem="{Binding SelectedEngine}" HorizontalAlignment="Stretch" />
+            </c:Field.Body>
+          </c:Field>
+          <c:Field Label="Base URL" Hint="不要包含 /images/generations 或 /prompt 等路径">
+            <c:Field.Body><TextBox Text="{Binding CustomBaseUrl}" PlaceholderText="http://127.0.0.1:8188" /></c:Field.Body>
+          </c:Field>
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="模型">
+              <c:Field.Body><TextBox Text="{Binding CustomModel}" PlaceholderText="image_qwen_image_2_1_t2i" /></c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="API Key">
+              <c:Field.Body><TextBox Text="{Binding CustomApiKey}" PasswordChar="●" PlaceholderText="本地服务通常留空" /></c:Field.Body>
+            </c:Field>
+          </Grid>
+        </StackPanel>
+      </c:Section.Body>
+    </c:Section>
+
+    <c:Section Title="画面与艺术偏好">
+      <c:Section.Body>
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="默认画面比例">
+              <c:Field.Body>
+                <ComboBox ItemsSource="{Binding Sizes}" SelectedItem="{Binding SelectedSize}" HorizontalAlignment="Stretch" />
+              </c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="默认画风">
+              <c:Field.Body>
+                <ComboBox ItemsSource="{Binding Styles}" SelectedItem="{Binding SelectedStyle}" HorizontalAlignment="Stretch" />
+              </c:Field.Body>
+            </c:Field>
+          </Grid>
+          <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
+          <c:Banner Classes="danger" Message="{Binding TestMessage}" IsVisible="{Binding TestError}" />
+          <c:Banner Classes="success" Message="{Binding TestMessage}" IsVisible="{Binding ShowTestSuccess}" />
+          <Image Source="{Binding Preview}" Stretch="Uniform" MaxHeight="320" IsVisible="{Binding HasPreview}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Classes="ui-btn quiet" Command="{Binding TestGenerateCommand}" IsEnabled="{Binding !Generating}" Content="🎨 试运行生图" />
+            <Button Classes="ui-btn ghost" Command="{Binding ResetDefaultsCommand}" Content="恢复默认" />
+          </StackPanel>
+        </StackPanel>
+      </c:Section.Body>
+    </c:Section>
+
+  </StackPanel>
+</UserControl>

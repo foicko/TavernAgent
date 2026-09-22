@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Left"
+             x:Class="TavernAgent.Desktop.Views.Left.IconRailView"
+             x:DataType="vm:LeftRailViewModel">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="0,12,0,12">
+
+    <!-- Primary nav -->
+    <StackPanel Grid.Row="0" Spacing="6" HorizontalAlignment="Center">
+      <Button Classes="rail-btn" Classes.active="{Binding IsTreeTabActive}"
+              Classes.visited="{Binding IsTreeTabVisited}"
+              Command="{Binding ShowTreeCommand}" Content="🌿" ToolTip.Tip="因果分支" />
+      <Button Classes="rail-btn" Classes.active="{Binding IsCharactersTabActive}"
+              Classes.visited="{Binding IsCharactersTabVisited}"
+              Command="{Binding ShowCharactersCommand}" Content="🎭" ToolTip.Tip="角色卡库" />
+      <Button Classes="rail-btn" Classes.active="{Binding IsLoreTabActive}"
+              Classes.visited="{Binding IsLoreTabVisited}"
+              Command="{Binding ShowLoreCommand}" Content="📖" ToolTip.Tip="世界书" />
+      <Button Classes="rail-btn" Classes.active="{Binding IsSessionsTabActive}"
+              Classes.visited="{Binding IsSessionsTabVisited}"
+              Command="{Binding ShowSessionsCommand}" Content="🕰️" ToolTip.Tip="历史会话" />
+    </StackPanel>
+
+    <!-- Center: director -->
+    <StackPanel Grid.Row="1" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+      <Border Width="20" Classes="divider" />
+      <Button Classes="rail-btn" Classes.active="{Binding IsDirectorActive}"
+              Command="{Binding OpenDirectorCommand}" Content="🎬" ToolTip.Tip="导演模式" />
+    </StackPanel>
+
+    <!-- Bottom: palette / theme / settings -->
+    <StackPanel Grid.Row="2" Spacing="6" HorizontalAlignment="Center">
+      <Button Classes="rail-btn" Command="{Binding OpenPaletteCommand}" Content="🔍" ToolTip.Tip="命令面板 (Ctrl+K)" />
+      <Button Classes="rail-btn" Command="{Binding ToggleThemeCommand}" Content="🌓" ToolTip.Tip="切换主题" />
+      <Button Classes="rail-btn" Command="{Binding OpenSettingsCommand}" Content="⚙️" ToolTip.Tip="设置" />
+    </StackPanel>
+  </Grid>
+</UserControl>

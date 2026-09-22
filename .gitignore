@@ -38,8 +38,14 @@ cmd/tavernagent-desktop/*.syso
 # 不入库，避免"改了 src 忘了重建、go build 静默嵌入旧前端"。
 web/dist/
 bin/
+obj/
 *.exe
 *.dll
+
+# Avalonia / .NET desktop
+desktop/**/bin/
+desktop/**/obj/
+desktop/**/TestResults/
 
 # Local secrets (API keys live only on the backend host)
 data/config/secrets.json

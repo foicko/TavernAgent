@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:TavernAgent.Desktop.ViewModels.Modals.Settings"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Modals.Settings.EmbeddingSettingsPageView"
+             x:DataType="settings:EmbeddingSettingsPageViewModel">
+  <StackPanel Spacing="12">
+
+    <c:Section Title="向量模型与端点">
+      <c:Section.Body>
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyBgeSmallCommand}" Content="BGE 小模型" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplySiliconFlowCommand}" Content="SiliconFlow" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyBgeM3Command}" Content="bge-m3" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyNomicCommand}" Content="nomic" />
+            <Button Classes="ui-btn sm quiet" Command="{Binding ApplyOpenAICommand}" Content="OpenAI" />
+          </StackPanel>
+          <c:Switch IsChecked="{Binding Enabled}">
+            <c:Switch.Body><TextBlock Text="启用向量语义增强检索 (Hybrid RRF)" FontSize="{DynamicResource FsSm}" /></c:Switch.Body>
+          </c:Switch>
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="服务商">
+              <c:Field.Body>
+                <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}" HorizontalAlignment="Stretch" />
+              </c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="Base URL">
+              <c:Field.Body><TextBox Text="{Binding BaseUrl}" PlaceholderText="http://127.0.0.1:11434/v1" /></c:Field.Body>
+            </c:Field>
+          </Grid>
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="模型">
+              <c:Field.Body><TextBox Text="{Binding Model}" PlaceholderText="bge-small-zh-v1.5" /></c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="API Key">
+              <c:Field.Body><TextBox Text="{Binding ApiKey}" PasswordChar="●" PlaceholderText="本地服务通常留空" /></c:Field.Body>
+            </c:Field>
+          </Grid>
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <c:Field Grid.Column="0" Label="向量维度">
+              <c:Field.Body><TextBox Text="{Binding Dimension}" PlaceholderText="512" /></c:Field.Body>
+            </c:Field>
+            <c:Field Grid.Column="1" Label="Top-K">
+              <c:Field.Body><TextBox Text="{Binding TopK}" PlaceholderText="5" /></c:Field.Body>
+            </c:Field>
+          </Grid>
+          <c:Field Label="检索权重">
+            <c:Field.Body>
+              <StackPanel Spacing="4">
+                <Slider Minimum="0.1" Maximum="0.9" TickFrequency="0.1" Value="{Binding Weight}" />
+                <TextBlock Text="{Binding WeightLabel}" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" />
+              </StackPanel>
+            </c:Field.Body>
+          </c:Field>
+          <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="10">
+            <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Text="本地部署提示：先安装 Ollama 并运行 `ollama pull bge-small-zh-v1.5`，保持 11434 端口可访问。" />
+          </Border>
+        </StackPanel>
+      </c:Section.Body>
+    </c:Section>
+
+    <c:Section Title="连通性测试">
+      <c:Section.Body>
+        <StackPanel Spacing="10">
+          <c:Banner Classes="danger" Message="{Binding ResultText}" IsVisible="{Binding ResultError}" />
+          <c:Banner Classes="success" Message="{Binding ResultText}" IsVisible="{Binding ShowSuccess}" />
+          <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Classes="ui-btn quiet" Command="{Binding TestProbeCommand}" IsEnabled="{Binding !Probing}" Content="测试连通性 / 探测维度" />
+            <Button Classes="ui-btn ghost" Command="{Binding ResetDefaultsCommand}" Content="恢复默认配置" />
+          </StackPanel>
+        </StackPanel>
+      </c:Section.Body>
+    </c:Section>
+
+  </StackPanel>
+</UserControl>

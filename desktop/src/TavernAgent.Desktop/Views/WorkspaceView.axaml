@@ -1,0 +1,137 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             xmlns:views="using:TavernAgent.Desktop.Views"
+             xmlns:left="using:TavernAgent.Desktop.Views.Left"
+             xmlns:right="using:TavernAgent.Desktop.Views.Right"
+             xmlns:modals="using:TavernAgent.Desktop.Views.Modals"
+             xmlns:settings="using:TavernAgent.Desktop.Views.Modals.Settings"
+             xmlns:stageviews="using:TavernAgent.Desktop.Views.Stage"
+             x:Class="TavernAgent.Desktop.Views.WorkspaceView"
+             x:DataType="vm:WorkspaceViewModel">
+  <Panel>
+
+    <!-- Ambient gradient orbs -->
+    <c:AmbientBackground Intensity="{Binding AmbientIntensity}" />
+
+    <!-- Content: icon rail + stage -->
+    <Grid ColumnDefinitions="Auto,*">
+      <Border Grid.Column="0"
+              Name="IconRailSlot"
+              Width="56"
+              IsVisible="{Binding ShowChrome}"
+              Background="{DynamicResource GlassSubtleBrush}"
+              BorderBrush="{DynamicResource BorderBrush}"
+              BorderThickness="0,0,1,0">
+        <left:IconRailView DataContext="{Binding LeftRail}" />
+      </Border>
+
+      <Grid Grid.Column="1" RowDefinitions="Auto,*">
+        <Border Grid.Row="0" Height="{Binding HeaderSpacerHeight}" />
+        <ContentControl Grid.Row="1" Content="{Binding Stage}" />
+      </Grid>
+    </Grid>
+
+    <!-- Floating header -->
+    <views:TopHeaderView VerticalAlignment="Top"
+                         Margin="{Binding HeaderMargin}"
+                         IsVisible="{Binding ShowChrome}" />
+
+    <!-- Left flyout panel -->
+    <Panel IsVisible="{Binding ShowFlyout}">
+      <Border Background="{DynamicResource ModalScrimBrush}" Opacity="0.4"
+              PointerPressed="OnFlyoutScrimPressed" />
+      <Border Classes="overlay anim-slide-in-left"
+              Width="336"
+              HorizontalAlignment="Left"
+              VerticalAlignment="Stretch"
+              Margin="68,10,0,12"
+              ClipToBounds="True">
+        <left:LeftRailView DataContext="{Binding LeftRail}" />
+      </Border>
+    </Panel>
+
+    <!-- Right HUD (floating, overlays the stage) -->
+    <Border Classes="hud"
+            Width="320"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Stretch"
+            Margin="0,10,16,12"
+            ClipToBounds="True"
+            IsVisible="{Binding ShowHud}">
+      <ContentControl Content="{Binding RightRail}" />
+    </Border>
+
+    <!-- HUD recall (when collapsed) -->
+    <Border Classes="float-bar"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Margin="0,0,12,0"
+            IsVisible="{Binding ShowRightRailRecall}">
+      <Button Classes="ui-btn sm quiet"
+              Command="{Binding ToggleRightRailCommand}"
+              ToolTip.Tip="展开角色档案">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="‹" VerticalAlignment="Center" />
+          <TextBlock Text="🎭" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+    </Border>
+
+    <!-- Story map modal -->
+    <left:StoryMapModal DataContext="{Binding LeftRail.StoryMap}" />
+
+    <!-- Full-body tachie lightbox -->
+    <right:FullTachieModal DataContext="{Binding RightRail}" />
+
+    <!-- Rail detail modals -->
+    <modals:DossierModalView DataContext="{Binding Dossier}" />
+    <modals:PromisesModalView DataContext="{Binding Promises}" />
+    <modals:MemoryModalView DataContext="{Binding MemoryModal}" />
+    <settings:SettingsModalView DataContext="{Binding SettingsModal}" />
+    <modals:CharacterImportModalView DataContext="{Binding CharacterImport}" />
+    <modals:WorldbookModalView DataContext="{Binding Worldbook}" />
+
+    <!-- Command palette (Ctrl+K) -->
+    <views:CommandPaletteView DataContext="{Binding Palette}" />
+
+    <!-- Turn illustration modal + lightbox -->
+    <modals:IllustrationModalView DataContext="{Binding Stage.Illustration}" />
+
+    <!-- Director workspace -->
+    <stageviews:DirectorWorkspaceView DataContext="{Binding Stage.Director}" />
+
+    <!-- Turn illustration lightbox -->
+    <Button IsVisible="{Binding Stage.LightboxOpen}"
+            Command="{Binding Stage.CloseLightboxCommand}"
+            Background="{DynamicResource ModalScrimBrush}"
+            BorderThickness="0"
+            Padding="0"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
+            ToolTip.Tip="点击任意处关闭">
+      <Image Source="{Binding Stage.LightboxImage}" Stretch="Uniform" Margin="56" />
+    </Button>
+
+    <!-- Quiet toast -->
+    <Border HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Margin="0,0,0,28"
+            CornerRadius="999"
+            Padding="16,8"
+            Background="{DynamicResource GlassElevatedBrush}"
+            BorderBrush="{DynamicResource GlassBorderLightBrush}"
+            BorderThickness="1"
+            BoxShadow="{DynamicResource ShadowFloat}"
+            Classes="anim-rise-in-bottom"
+            IsVisible="{Binding HasToast}"
+            IsHitTestVisible="False">
+      <TextBlock Text="{Binding ToastMessage}"
+                 FontSize="{DynamicResource FsSm}"
+                 Foreground="{DynamicResource TextPrimaryBrush}" />
+    </Border>
+  </Panel>
+</UserControl>

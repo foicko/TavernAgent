@@ -1,0 +1,208 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Stage"
+             xmlns:stage="using:TavernAgent.Desktop.Views.Stage"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Stage.StageView"
+             x:DataType="vm:StageViewModel">
+  <Grid RowDefinitions="Auto,*,Auto">
+
+    <stage:SceneBarView Grid.Row="0" DataContext="{Binding}" IsVisible="{Binding HasStory}" />
+
+    <ScrollViewer Grid.Row="1" Name="Stream"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <StackPanel MaxWidth="820" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
+
+        <!-- Reading mode banner -->
+        <Border IsVisible="{Binding ShowReadingBanner}" Classes="glass-subtle" Padding="20"
+                CornerRadius="{DynamicResource RadiusLg}">
+          <StackPanel Spacing="8" HorizontalAlignment="Center">
+            <TextBlock Text="{Binding SceneTitle, StringFormat=《{0} · 编年篇章》}"
+                       Classes="display" FontSize="18" HorizontalAlignment="Center" />
+            <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FsSm}"
+                       Foreground="{DynamicResource TextSecondaryBrush}">
+              <Run Text="已载入 " /><Run Text="{Binding WordCountText}" /><Run Text=" 字 · 第 " /><Run Text="{Binding HeadTurnNumber}" /><Run Text=" 轮" />
+            </TextBlock>
+          </StackPanel>
+        </Border>
+
+        <!-- Load older -->
+        <Button IsVisible="{Binding HasMoreHistory}" Classes="ui-btn sm quiet"
+                HorizontalAlignment="Center"
+                Command="{Binding LoadOlderCommand}"
+                IsEnabled="{Binding !IsLoadingOlder}"
+                Content="↑ 查看更早的剧情历史" />
+
+        <!-- History read-only banner -->
+        <Border IsVisible="{Binding IsHistoryView}" Classes="glass-subtle" Padding="14"
+                CornerRadius="{DynamicResource RadiusMd}">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0" Text="📍 正在浏览历史快照节点（只读模式）"
+                       VerticalAlignment="Center" FontSize="{DynamicResource FsSm}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+              <Button Classes="ui-btn sm quiet" Command="{Binding BackToHeadCommand}" Content="返回最新进度" />
+              <Button Classes="ui-btn sm primary" Command="{Binding ForkViewCommand}" Content="🌿 从此处开辟新分支" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- Committed messages -->
+        <ItemsControl ItemsSource="{Binding Messages}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:MessageViewModel">
+              <stage:MessageView Margin="0,0,0,22" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Prologue card -->
+        <Border IsVisible="{Binding ShowPrologue}" Classes="glass-subtle" Padding="16"
+                CornerRadius="{DynamicResource RadiusLg}">
+          <StackPanel Spacing="12">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="✦ 命运序章 · 场景起步"
+                         FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextSecondaryBrush}" />
+              <TextBlock Grid.Column="1" Text="开场白" FontSize="{DynamicResource FsXs}"
+                         Foreground="{DynamicResource TextDimBrush}" />
+            </Grid>
+            <TextBlock Text="暂无历史对话记录。在下方输入框键入第一句对白或动作描述，由大模型推演真实因果与角色心境；亦可点击输入框上方的快捷动作宏直接起手。"
+                       TextWrapping="Wrap"
+                       Classes="narrative" />
+          </StackPanel>
+        </Border>
+
+        <!-- Skeleton -->
+        <StackPanel IsVisible="{Binding ShowSkeleton}" Spacing="14">
+          <c:Skeleton Height="80" Radius="14" />
+          <c:Skeleton Height="140" Radius="14" />
+        </StackPanel>
+
+        <!-- Active streaming turn -->
+        <StackPanel IsVisible="{Binding IsStreaming}" Spacing="10" Classes="anim-rise">
+          <Border IsVisible="{Binding HasLastInput}"
+                  HorizontalAlignment="Right" MaxWidth="620"
+                  CornerRadius="{DynamicResource RadiusLg}"
+                  Background="{DynamicResource GlassPillBrush}"
+                  BorderBrush="{DynamicResource GlassBorderBrush}"
+                  BorderThickness="1" Padding="14,10">
+            <StackPanel Spacing="6">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="✦ 玩家行动 · 第一人称" FontSize="{DynamicResource FsXs}"
+                           FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Text="{Binding ActiveTurnNumber, StringFormat=回合 #{0}}"
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextDimBrush}" />
+              </Grid>
+              <c:InlineMarkdownText Markdown="{Binding LastInputText}" TextWrapping="Wrap"
+                                    FontSize="{DynamicResource FsMd}" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="glass-subtle" Padding="16" CornerRadius="{DynamicResource RadiusLg}">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="{Binding CharShortName}" FontWeight="SemiBold"
+                             FontSize="{DynamicResource FsSm}" />
+                  <TextBlock Text="（大模型正在实时演义中... ⚡）" FontSize="{DynamicResource FsSm}"
+                             Foreground="{DynamicResource TextDimBrush}" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="生成中" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextDimBrush}" />
+              </Grid>
+
+              <!-- Live thinking -->
+              <Border IsVisible="{Binding HasThinking}" CornerRadius="{DynamicResource RadiusMd}"
+                      Background="{DynamicResource SubtleBrush}" Padding="10,8">
+                <StackPanel Spacing="6">
+                  <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
+                          Command="{Binding ToggleThinkingCommand}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <TextBlock Grid.Column="0" Text="💭  " />
+                      <TextBlock Grid.Column="1" Text="{Binding ThinkingTitle}" HorizontalAlignment="Left"
+                                 Foreground="{DynamicResource TextSecondaryBrush}" />
+                      <TextBlock Grid.Column="2" Text="{Binding ThinkingToggleLabel}"
+                                 Foreground="{DynamicResource TextDimBrush}" />
+                    </Grid>
+                  </Button>
+                  <SelectableTextBlock Text="{Binding ThinkingText}" IsVisible="{Binding IsThinkingExpanded}"
+                                       TextWrapping="Wrap" Classes="mono" FontSize="12" LineHeight="1.7"
+                                       Foreground="{DynamicResource TextDimBrush}" />
+                </StackPanel>
+              </Border>
+
+              <!-- Draft blocks -->
+              <StackPanel>
+                <TextBlock IsVisible="{Binding !HasDraftBlocks}"
+                           Text="正在推演因果走势与角色心境... ⚡"
+                           Classes="narrative" Opacity="0.7" />
+                <ItemsControl ItemsSource="{Binding DraftBlocks}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:BlockViewModel">
+                      <c:InlineMarkdownText Markdown="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,10"
+                                            Classes.narration="{Binding IsNarration}"
+                                            Classes.dialogue="{Binding IsDialogue}"
+                                            Classes.monologue="{Binding IsMonologue}" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="▋" Classes="cursor" FontSize="14" HorizontalAlignment="Left"
+                           Foreground="{DynamicResource AccentBrush}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- Truncated control -->
+        <Border IsVisible="{Binding IsTruncated}" Classes="glass-subtle" Padding="16"
+                CornerRadius="{DynamicResource RadiusLg}">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="⚡ 模型输出因上下文长度截断，等待确认" FontSize="{DynamicResource FsSm}"
+                         FontWeight="SemiBold" />
+              <TextBlock Text="状态机：awaiting_continuation" FontSize="{DynamicResource FsXs}"
+                         Foreground="{DynamicResource TextDimBrush}" />
+            </Grid>
+            <TextBlock Text="大模型已生成当前叙事片段。你可以让剧情顺滑续讲、重新发起本轮尝试、或放弃当前生成。"
+                       TextWrapping="Wrap" FontSize="{DynamicResource FsSm}"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="ui-btn primary" Command="{Binding ContinueCommand}" Content="▶ 继续讲下去" />
+              <Button Classes="ui-btn quiet" Command="{Binding RetryCommand}" Content="🔄 重新构思此轮" />
+              <Button Classes="ui-btn quiet" Command="{Binding CancelCommand}" Content="✕ 放弃" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Error card -->
+        <Border IsVisible="{Binding HasError}" Classes="glass-subtle" Padding="16"
+                CornerRadius="{DynamicResource RadiusLg}">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Grid.Column="0" Text="✕" Foreground="{DynamicResource DangerBrush}"
+                       FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Text="生成受阻" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}" />
+              <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="{DynamicResource FsSm}"
+                         Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+            <Button Grid.Column="2" Classes="ui-btn danger sm" Command="{Binding RetryCommand}" Content="重试" />
+          </Grid>
+        </Border>
+
+        <!-- No story -->
+        <c:EmptyState IsVisible="{Binding !HasStory}"
+                      Icon="🪶" Title="还没有正在推演的剧本"
+                      Description="导入角色卡开启冒险，或先用默认角色创建新故事。">
+          <c:EmptyState.Body>
+            <Button Classes="ui-btn primary" Command="{Binding StartNeutralSessionCommand}" Content="开始新故事" />
+          </c:EmptyState.Body>
+        </c:EmptyState>
+      </StackPanel>
+    </ScrollViewer>
+
+    <ContentControl Grid.Row="2" IsVisible="{Binding IsStudioMode}">
+      <stage:ComposerView DataContext="{Binding Composer}" />
+    </ContentControl>
+  </Grid>
+</UserControl>

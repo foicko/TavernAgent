@@ -1,0 +1,319 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Stage"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Stage.MessageView"
+             x:DataType="vm:MessageViewModel">
+  <StackPanel Spacing="10">
+
+    <!-- Player echo bubble -->
+    <Border IsVisible="{Binding HasInputText}"
+            HorizontalAlignment="Right"
+            MaxWidth="620"
+            CornerRadius="{DynamicResource RadiusLg}"
+            Background="{DynamicResource GlassPillBrush}"
+            BorderBrush="{DynamicResource GlassBorderBrush}"
+            BorderThickness="1"
+            Padding="14,10">
+      <StackPanel Spacing="6">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0" Text="✦ 玩家行动 · 第一人称"
+                     FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <TextBlock Grid.Column="1" Text="{Binding TurnLabel}"
+                     FontSize="{DynamicResource FsXs}"
+                     Foreground="{DynamicResource TextDimBrush}" />
+        </Grid>
+        <c:InlineMarkdownText Markdown="{Binding InputText}" TextWrapping="Wrap"
+                              FontSize="{DynamicResource FsMd}"
+                              Foreground="{DynamicResource TextPrimaryBrush}" />
+      </StackPanel>
+    </Border>
+
+    <!-- Assistant / opening turn card -->
+    <Border Classes="glass-subtle msg-card" Padding="18" CornerRadius="{DynamicResource RadiusLg}">
+      <StackPanel Spacing="10">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Grid.Column="0"
+                     Text="✦ 命运序章 · 场景起步"
+                     IsVisible="{Binding IsOpening}"
+                     FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <TextBlock Grid.Column="0"
+                     Text="{Binding TurnLabel}"
+                     IsVisible="{Binding !IsOpening}"
+                     FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <TextBlock Grid.Column="1" Text="{Binding TurnLabel}"
+                     IsVisible="{Binding IsOpening}"
+                     FontSize="{DynamicResource FsXs}"
+                     Foreground="{DynamicResource TextDimBrush}" />
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowToolbar}"
+                      Classes="msg-actions">
+            <Button Classes="ui-btn sm ghost" Click="OnCopyClick" ToolTip.Tip="复制文学正文" Content="⎘ 复制" />
+            <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
+                    Command="{Binding QuoteCommand}" ToolTip.Tip="引用此句" Content="❝ 引用" />
+            <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
+                    Command="{Binding RegenerateCommand}" IsEnabled="{Binding CanAct}"
+                    ToolTip.Tip="重新生成" Content="🔄" />
+            <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
+                    Command="{Binding ToggleRegenCommand}" IsEnabled="{Binding CanAct}"
+                    ToolTip.Tip="带要求重演" Content="✎" />
+            <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
+                    Command="{Binding ForkCommand}" IsEnabled="{Binding CanAct}"
+                    ToolTip.Tip="从此处分叉" Content="🌿" />
+            <Button Classes="ui-btn sm ghost"
+                    Command="{Binding DrawIllustrationCommand}" IsEnabled="{Binding CanAct}"
+                    ToolTip.Tip="生成本幕插画" Content="🎨" />
+            <Button Classes="ui-btn sm ghost"
+                    Command="{Binding Tts.PlayCommand}"
+                    Content="{Binding Tts.Label}" ToolTip.Tip="{Binding Tts.Tooltip}" />
+          </StackPanel>
+        </Grid>
+
+        <!-- Committed thinking chain -->
+        <Border IsVisible="{Binding HasThinking}"
+                CornerRadius="{DynamicResource RadiusMd}"
+                Background="{DynamicResource SubtleBrush}"
+                Padding="10,8">
+          <StackPanel Spacing="6">
+            <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
+                    Command="{Binding ToggleThinkingCommand}">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="💭  " />
+                <TextBlock Grid.Column="1" Text="思考过程 (Reasoning)"
+                           HorizontalAlignment="Left"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <TextBlock Grid.Column="2" Text="{Binding ThinkingToggleLabel}"
+                           Foreground="{DynamicResource TextDimBrush}" />
+              </Grid>
+            </Button>
+            <SelectableTextBlock Text="{Binding Thinking}"
+                                 IsVisible="{Binding IsThinkingExpanded}"
+                                 TextWrapping="Wrap"
+                                 Classes="mono"
+                                 FontSize="12"
+                                 LineHeight="1.7"
+                                 Foreground="{DynamicResource TextDimBrush}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Narrative blocks -->
+        <ItemsControl ItemsSource="{Binding Blocks}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:BlockViewModel">
+              <c:InlineMarkdownText Markdown="{Binding Text}"
+                                    TextWrapping="Wrap"
+                                    Margin="0,0,0,10"
+                                    Classes.narration="{Binding IsNarration}"
+                                    Classes.dialogue="{Binding IsDialogue}"
+                                    Classes.monologue="{Binding IsMonologue}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Turn illustration -->
+        <StackPanel Spacing="6" IsVisible="{Binding Illustration.HasImage}">
+          <Border CornerRadius="{DynamicResource RadiusMd}" ClipToBounds="True">
+            <Image Source="{Binding Illustration.Image}" Stretch="Uniform" MaxHeight="320" />
+          </Border>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding Illustration.Caption}" FontSize="{DynamicResource FsXs}"
+                       VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" />
+            <Button Classes="ui-btn sm ghost" Command="{Binding Illustration.EnlargeCommand}" Content="🔍 放大" />
+            <Button Classes="ui-btn sm ghost" Command="{Binding Illustration.RedrawCommand}" Content="🔄 重绘" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Evidence -->
+        <StackPanel IsVisible="{Binding HasEvidence}" Spacing="8">
+          <ItemsControl ItemsSource="{Binding Changes}" IsVisible="{Binding HasEvidenceLine}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:ChangeEvidenceViewModel">
+                <Border Classes="chip" Margin="0,0,6,6">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="{Binding Text}" FontSize="{DynamicResource FsXs}"
+                               Classes.up="{Binding IsUp}" Classes.down="{Binding IsDown}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <ItemsControl ItemsSource="{Binding Checks}" IsVisible="{Binding HasChecks}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:CheckEvidenceViewModel">
+                <Border Classes="chip" Margin="0,0,6,6">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="🎲" FontSize="{DynamicResource FsXs}" />
+                    <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="{Binding OutcomeLabel}" FontSize="{DynamicResource FsXs}"
+                               Classes.up="{Binding IsSuccess}" Classes.down="{Binding !IsSuccess}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock IsVisible="{Binding HasSuppressed}" FontSize="{DynamicResource FsXs}"
+                     Text="✦ 本轮承接上一轮抉择，未摆出选项"
+                     Foreground="{DynamicResource TextDimBrush}" />
+
+          <Button Classes="ui-btn sm ghost" HorizontalAlignment="Left"
+                  IsVisible="{Binding HasEvidenceDetail}"
+                  Command="{Binding ToggleEvidenceCommand}"
+                  Content="{Binding EvidenceToggleLabel}" />
+
+          <Border IsVisible="{Binding IsEvidenceExpanded}"
+                  Classes="glass-subtle" Padding="12" CornerRadius="{DynamicResource RadiusMd}">
+            <StackPanel Spacing="10">
+              <StackPanel Spacing="4" IsVisible="{Binding HasChecks}">
+                <TextBlock Text="检定" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <ItemsControl ItemsSource="{Binding Checks}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:CheckEvidenceViewModel">
+                      <StackPanel Spacing="2" Margin="0,0,0,6">
+                        <TextBlock Text="{Binding Detail}" TextWrapping="Wrap"
+                                   FontSize="{DynamicResource FsXs}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBlock Text="{Binding PermanentEffect, StringFormat=永久影响：{0}}"
+                                   IsVisible="{Binding HasPermanentEffect}"
+                                   FontSize="{DynamicResource FsXs}"
+                                   Foreground="{DynamicResource WarningBrush}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+              <StackPanel Spacing="4" IsVisible="{Binding HasMemories}">
+                <TextBlock Text="本轮参考的记忆" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <ItemsControl ItemsSource="{Binding Memories}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:MemoryEvidenceViewModel">
+                      <StackPanel Spacing="2" Margin="0,0,0,6">
+                        <TextBlock Text="{Binding KindLabel}" FontSize="{DynamicResource FsXs}"
+                                   Foreground="{DynamicResource TextDimBrush}" />
+                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
+                                   FontSize="{DynamicResource FsSm}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- Inline editors -->
+        <Border IsVisible="{Binding IsRegenOpen}" Classes="glass-subtle" Padding="12"
+                CornerRadius="{DynamicResource RadiusMd}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="带要求重演" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding RegenGuidance}" PlaceholderText="补充你对这次重演的要求…"
+                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="ui-btn sm primary" Command="{Binding SubmitRegenCommand}" Content="按此要求重演" />
+              <Button Classes="ui-btn sm ghost" Command="{Binding ToggleRegenCommand}" Content="取消" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <Border IsVisible="{Binding IsEditingText}" Classes="glass-subtle" Padding="12"
+                CornerRadius="{DynamicResource RadiusMd}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="改写正文" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding EditText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="ui-btn sm primary" Command="{Binding SubmitEditTextCommand}" Content="保存为候选" />
+              <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditTextCommand}" Content="取消" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <Border IsVisible="{Binding IsEditingInput}" Classes="glass-subtle" Padding="12"
+                CornerRadius="{DynamicResource RadiusMd}">
+          <StackPanel Spacing="8">
+            <TextBlock Text="改写玩家输入" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBox Text="{Binding EditInputText}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="ui-btn sm primary" Command="{Binding SubmitEditInputCommand}" Content="派生并生成" />
+              <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditInputCommand}" Content="取消" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Candidate / version switcher -->
+        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasCandidates}">
+          <Button Classes="ui-btn sm ghost" Command="{Binding PrevCandidateCommand}" Content="‹" ToolTip.Tip="查看上一个候选版本" />
+          <TextBlock Text="{Binding CandidateLabel}" VerticalAlignment="Center"
+                     FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
+          <Button Classes="ui-btn sm ghost" Command="{Binding NextCandidateCommand}" Content="›" ToolTip.Tip="查看下一个候选版本" />
+        </StackPanel>
+
+        <!-- Turn action row -->
+        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowToolbar}"
+                    IsEnabled="{Binding CanAct}">
+          <Button Classes="ui-btn sm ghost" IsVisible="{Binding HasInputText}"
+                  Command="{Binding ToggleEditInputCommand}" Content="💬 改输入" />
+          <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditTextCommand}" Content="✏️ 改正文" />
+        </StackPanel>
+
+        <!-- Decision deck -->
+        <Border IsVisible="{Binding ShowDecisionDeck}"
+                Classes="glass-subtle"
+                Padding="12"
+                CornerRadius="{DynamicResource RadiusMd}">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="✦ 剧情抉择分支（点击直接推进，或填入输入框）"
+                         FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                         Foreground="{DynamicResource TextSecondaryBrush}" />
+              <TextBlock Grid.Column="1" Text="多意图推演" FontSize="{DynamicResource FsXs}"
+                         Foreground="{DynamicResource TextDimBrush}" />
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Options}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:OptionViewModel">
+                  <Button Classes="decision-card" Margin="0,0,10,10"
+                          Command="{Binding $parent[ItemsControl].((vm:MessageViewModel)DataContext).ChooseOptionCommand}"
+                          CommandParameter="{Binding}">
+                    <StackPanel Spacing="6" MaxWidth="220">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding Icon}" />
+                        <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                      </StackPanel>
+                      <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
+                                 FontSize="{DynamicResource FsSm}" />
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

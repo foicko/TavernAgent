@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:palette="using:TavernAgent.Desktop.ViewModels.Palette"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.CommandPaletteView"
+             x:DataType="palette:CommandPaletteViewModel">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="命令面板" DialogWidth="640">
+    <c:Modal.Body>
+      <StackPanel Width="580" Spacing="10">
+        <TextBox x:Name="SearchBox" Text="{Binding Query}" KeyDown="OnSearchKeyDown"
+                 PlaceholderText="输入命令，如：设置 / 世界书 / 主题 / 会话…" />
+
+        <TextBlock Text="没有匹配的命令，换个说法试试。" IsVisible="{Binding IsEmpty}"
+                   FontSize="{DynamicResource FsSm}" Foreground="{DynamicResource TextDimBrush}" />
+
+        <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto" IsVisible="{Binding HasResults}">
+          <ItemsControl ItemsSource="{Binding Results}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="palette:CommandItem">
+                <Button Classes="ui-btn" Classes.active="{Binding IsActive}"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Margin="0,0,0,4" IsEnabled="{Binding IsEnabled}"
+                        CommandParameter="{Binding}"
+                        Command="{Binding $parent[ItemsControl].((palette:CommandPaletteViewModel)DataContext).RunCommand}">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="2">
+                      <TextBlock Text="{Binding Title}" FontSize="{DynamicResource FsSm}" />
+                      <TextBlock Text="{Binding Hint}" FontSize="{DynamicResource FsXs}"
+                                 Foreground="{DynamicResource TextDimBrush}" IsVisible="{Binding HasHint}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding GroupLabel}" FontSize="10"
+                               VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" />
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Text="↑↓ 选择 · Enter 执行 · Esc 关闭" FontSize="{DynamicResource FsXs}"
+                   Foreground="{DynamicResource TextDimBrush}" />
+      </StackPanel>
+    </c:Modal.Body>
+  </c:Modal>
+</UserControl>

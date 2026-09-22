@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Modals"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Modals.IllustrationModalView"
+             x:DataType="vm:IllustrationModalViewModel">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="🎨 生成本幕场景插画" DialogWidth="760">
+    <c:Modal.Body>
+      <StackPanel Width="700" Spacing="12">
+        <TextBlock Text="根据本回合的叙事自动提取画面描述，也可自行改写提示词。" TextWrapping="Wrap"
+                   FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextDimBrush}" />
+
+        <c:Field Label="画面提示词">
+          <c:Field.Body>
+            <TextBox Text="{Binding Prompt}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" />
+          </c:Field.Body>
+        </c:Field>
+
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+          <c:Field Grid.Column="0" Label="画风">
+            <c:Field.Body>
+              <ComboBox ItemsSource="{Binding Styles}" SelectedItem="{Binding SelectedStyle}" HorizontalAlignment="Stretch" />
+            </c:Field.Body>
+          </c:Field>
+          <c:Field Grid.Column="1" Label="画面比例">
+            <c:Field.Body>
+              <ComboBox ItemsSource="{Binding Sizes}" SelectedItem="{Binding SelectedSize}" HorizontalAlignment="Stretch" />
+            </c:Field.Body>
+          </c:Field>
+        </Grid>
+
+        <c:Banner Classes="danger" Message="{Binding Error}" IsVisible="{Binding HasError}" />
+        <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
+
+        <Image Source="{Binding Preview}" Stretch="Uniform" MaxHeight="320" IsVisible="{Binding HasPreview}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+          <Button Classes="ui-btn ghost" Command="{Binding CloseCommand}" Content="完成 / 关闭" />
+          <Button Classes="ui-btn primary" Command="{Binding GenerateCommand}" IsEnabled="{Binding CanGenerate}">
+            <Panel>
+              <TextBlock Text="🎨 开始绘制插画" IsVisible="{Binding !Generating}" />
+              <TextBlock Text="正在绘制画面..." IsVisible="{Binding Generating}" />
+            </Panel>
+          </Button>
+        </StackPanel>
+      </StackPanel>
+    </c:Modal.Body>
+  </c:Modal>
+</UserControl>

@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.TopHeaderView"
+             x:DataType="vm:WorkspaceViewModel">
+  <Border Classes="float-bar anim-fade" Padding="14,0" Height="44">
+    <Grid ColumnDefinitions="*,Auto,*">
+
+      <!-- Brand + breadcrumb -->
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"
+                  HorizontalAlignment="Left">
+        <Border Width="8" Height="8" CornerRadius="999" Background="{DynamicResource AccentBrush}" />
+        <TextBlock Text="TAVERN AGENT"
+                   Classes="display"
+                   FontSize="13"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextPrimaryBrush}" />
+        <Border Width="1" Height="16" Margin="2,0"
+                Background="{DynamicResource BorderBrush}"
+                IsVisible="{Binding HasStory}" />
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                    IsVisible="{Binding HasStory}">
+          <TextBlock Text="📖" FontSize="12" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding BreadcrumbTitle}"
+                     FontSize="{DynamicResource FsSm}"
+                     MaxWidth="300"
+                     TextTrimming="CharacterEllipsis"
+                     VerticalAlignment="Center"
+                     Foreground="{DynamicResource TextSecondaryBrush}" />
+        </StackPanel>
+      </StackPanel>
+
+      <!-- View mode segmented control -->
+      <Border Grid.Column="1"
+              Classes="glass-subtle"
+              CornerRadius="999"
+              Padding="3"
+              VerticalAlignment="Center"
+              Margin="12,0">
+        <StackPanel Orientation="Horizontal" Spacing="3">
+          <Button Classes="seg soft-brush" Classes.active="{Binding IsStudioMode}"
+                  Command="{Binding EnterStudioCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="✦" FontSize="12" VerticalAlignment="Center" />
+              <TextBlock Text="工作台" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="seg soft-brush" Classes.active="{Binding IsReadingMode}"
+                  Command="{Binding EnterReadingCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="📖" FontSize="12" VerticalAlignment="Center" />
+              <TextBlock Text="纯净编年" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+      </Border>
+
+      <!-- Actions -->
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                  HorizontalAlignment="Right">
+        <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding TogglePaletteCommand}" ToolTip.Tip="命令面板">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center" />
+            <c:Kbd Text="Ctrl K" />
+          </StackPanel>
+        </Button>
+
+        <Button Classes="model-pill soft-brush" Command="{Binding OpenSettingsCommand}" ToolTip.Tip="模型与连接">
+          <StackPanel Orientation="Horizontal" Spacing="7">
+            <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                     Fill="{DynamicResource SuccessBrush}"
+                     IsVisible="{Binding HasActiveModel}" />
+            <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                     Fill="{DynamicResource TextDimBrush}"
+                     IsVisible="{Binding !HasActiveModel}" />
+            <TextBlock Text="{Binding ActiveModelName}"
+                       FontSize="{DynamicResource FsSm}"
+                       MaxWidth="170"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding ToggleThemeCommand}"
+                ToolTip.Tip="{Binding ThemeLabel}">
+          <TextBlock Text="◐" FontSize="15" VerticalAlignment="Center" />
+        </Button>
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Controls.Disclosure">
+  <StackPanel Spacing="8">
+    <ToggleButton Name="HeaderToggle"
+                  IsChecked="{Binding $parent[controls:Disclosure].IsExpanded, Mode=TwoWay}"
+                  HorizontalContentAlignment="Stretch"
+                  HorizontalAlignment="Stretch"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Padding="4">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Grid.Column="0"
+                   Text="{Binding $parent[controls:Disclosure].Header}"
+                   FontSize="{DynamicResource FsMd}"
+                   FontWeight="Medium"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextPrimaryBrush}" />
+        <TextBlock Grid.Column="1" Text="▾" Foreground="{DynamicResource TextDimBrush}" />
+      </Grid>
+    </ToggleButton>
+    <ContentPresenter Content="{Binding $parent[controls:Disclosure].Body}"
+                      IsVisible="{Binding $parent[controls:Disclosure].IsExpanded}" />
+  </StackPanel>
+</UserControl>

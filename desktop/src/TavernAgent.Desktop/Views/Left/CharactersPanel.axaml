@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Left"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Left.CharactersPanel"
+             x:DataType="vm:CharactersPanelViewModel">
+  <StackPanel Spacing="12">
+    <Button Classes="ui-btn primary" HorizontalAlignment="Stretch"
+            Command="{Binding ImportCommand}" Content="+ 导入 / 创建角色卡" />
+
+    <StackPanel Orientation="Horizontal" Spacing="6">
+      <TextBlock Text="{Binding Cards.Count, StringFormat=已收录角色卡 ({0})}"
+                 FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" />
+      <Button Classes="ui-btn sm ghost" Command="{Binding RefreshCommand}" Content="↻" Padding="4,0" />
+    </StackPanel>
+
+    <TextBlock Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+               TextWrapping="Wrap" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource DangerBrush}" />
+
+    <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="🎭" Title="暂无角色卡"
+                  Description="点击上方「+ 导入 / 创建角色卡」开始。" />
+
+    <ItemsControl ItemsSource="{Binding Cards}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="vm:CardRowViewModel">
+          <Border Classes="char-card" Classes.active="{Binding IsActive}"
+                  Classes.confirming="{Binding IsConfirmingDelete}" Margin="0,0,0,8">
+            <Grid ColumnDefinitions="*,Auto">
+              <Button Grid.Column="0" Classes="card-open" Command="{Binding OpenCommand}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <Panel Grid.Column="0" Width="40" Height="40">
+                    <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
+                      <TextBlock Text="{Binding Monogram}" FontSize="16"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 IsVisible="{Binding !HasAvatar}" />
+                    </Border>
+                    <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
+                  </Panel>
+
+                  <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="Bold"
+                                 TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                      <Border Classes="state-pill"><TextBlock Text="{Binding Badge}" FontSize="10" /></Border>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Desc}" FontSize="{DynamicResource FsXs}" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                  </StackPanel>
+                </Grid>
+              </Button>
+
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <Button Classes="ui-btn sm ghost" Content="🗑" Padding="4,0"
+                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}" />
+                <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsConfirmingDelete}">
+                  <Button Classes="ui-btn sm danger" Content="确认移除" Command="{Binding ConfirmDeleteCommand}" />
+                  <Button Classes="ui-btn sm quiet" Content="取消" Command="{Binding CancelDeleteCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </Grid>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </StackPanel>
+</UserControl>

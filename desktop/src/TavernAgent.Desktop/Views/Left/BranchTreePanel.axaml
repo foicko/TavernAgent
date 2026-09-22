@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Left"
+             xmlns:c="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Views.Left.BranchTreePanel"
+             x:DataType="vm:BranchTreeViewModel">
+  <StackPanel Spacing="12">
+
+    <Button Classes="ui-btn sm quiet" HorizontalAlignment="Stretch"
+            Command="{Binding OpenStoryMapCommand}" Content="🗺 打开剧情分支图" />
+
+    <!-- Outline -->
+    <Border Classes="glass-subtle" Padding="12" CornerRadius="{DynamicResource RadiusMd}"
+            IsVisible="{Binding Outline.HasOutline}">
+      <StackPanel Spacing="8">
+        <TextBlock Text="剧情进展" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
+                   Foreground="{DynamicResource TextPrimaryBrush}" />
+        <TextBlock Text="{Binding Outline.Scene, StringFormat=当前场景 · {0}}"
+                   IsVisible="{Binding Outline.HasScene}"
+                   TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                   Foreground="{DynamicResource TextSecondaryBrush}" />
+        <StackPanel Spacing="4" IsVisible="{Binding Outline.HasMilestones}">
+          <TextBlock Text="已达成里程碑" FontSize="{DynamicResource FsXs}" FontWeight="Medium" />
+          <ItemsControl ItemsSource="{Binding Outline.Milestones}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        <StackPanel Spacing="4" IsVisible="{Binding Outline.HasGoals}">
+          <TextBlock Text="角色目标" FontSize="{DynamicResource FsXs}" FontWeight="Medium" />
+          <ItemsControl ItemsSource="{Binding Outline.Goals}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:GoalLine">
+                <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource TextSecondaryBrush}">
+                  <Run Text="{Binding CharacterName}" FontWeight="SemiBold" /><Run Text=" · " /><Run Text="{Binding Text}" />
+                </TextBlock>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <!-- Lead -->
+    <StackPanel Spacing="2">
+      <TextBlock Text="分支拓扑 (Branch Graph)" FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextPrimaryBrush}" />
+      <TextBlock Text="可点击节点回溯" FontSize="{DynamicResource FsXs}"
+                 Foreground="{DynamicResource TextDimBrush}" />
+    </StackPanel>
+
+    <!-- Empty -->
+    <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="🌱" Title="因果树未播种"
+                  Description="推进第一轮对话后，大模型将在此自动生长因果拓扑与历史快照。" />
+
+    <!-- Node stack -->
+    <ItemsControl ItemsSource="{Binding Nodes}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="vm:BranchNodeViewModel">
+          <StackPanel Margin="0,0,0,8">
+            <Button Classes="node-item"
+                    Classes.active="{Binding IsActiveState}"
+                    Classes.viewing="{Binding IsViewing}"
+                    Classes.fork="{Binding IsForkState}"
+                    Command="{Binding ToggleProbeCommand}">
+              <StackPanel Spacing="3">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="{Binding Tag}" FontWeight="Bold" FontSize="11.5"
+                             Foreground="{DynamicResource TextPrimaryBrush}" />
+                  <TextBlock Text="当前视角" FontSize="10" VerticalAlignment="Center"
+                             Foreground="{DynamicResource InfoBrush}" IsVisible="{Binding IsViewing}" />
+                  <Border Classes="state-pill" Classes.active="{Binding IsActiveState}"
+                          Classes.fork="{Binding IsForkState}">
+                    <TextBlock Text="{Binding StatePillText}" FontSize="10" />
+                  </Border>
+                </StackPanel>
+                <TextBlock Text="{Binding Desc}" TextWrapping="Wrap" MaxLines="2"
+                           TextTrimming="CharacterEllipsis" FontSize="11.5"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowMetrics}">
+                  <Border Classes="metric-chip"><StackPanel Orientation="Horizontal" Spacing="3">
+                    <TextBlock Text="好感" FontSize="10" Foreground="{DynamicResource TextDimBrush}" />
+                    <TextBlock Text="{Binding AffText}" FontSize="10" FontWeight="Bold" Foreground="#E11D48" />
+                  </StackPanel></Border>
+                  <Border Classes="metric-chip"><StackPanel Orientation="Horizontal" Spacing="3">
+                    <TextBlock Text="信任" FontSize="10" Foreground="{DynamicResource TextDimBrush}" />
+                    <TextBlock Text="{Binding TrustText}" FontSize="10" FontWeight="Bold" Foreground="#0284C7" />
+                  </StackPanel></Border>
+                  <Border Classes="metric-chip"><StackPanel Orientation="Horizontal" Spacing="3">
+                    <TextBlock Text="戒备" FontSize="10" Foreground="{DynamicResource TextDimBrush}" />
+                    <TextBlock Text="{Binding AlertText}" FontSize="10" FontWeight="Bold" Foreground="#7C3AED" />
+                  </StackPanel></Border>
+                </StackPanel>
+              </StackPanel>
+            </Button>
+
+            <!-- Probe card -->
+            <Border IsVisible="{Binding IsProbeOpen}" Classes="glass-subtle" Margin="0,4,0,0"
+                    Padding="10" CornerRadius="{DynamicResource RadiusMd}">
+              <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="快照控制" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                  <Button Grid.Column="1" Classes="ui-btn sm ghost" Content="✕" Padding="4,0"
+                          Command="{Binding ToggleProbeCommand}" />
+                </Grid>
+
+                <!-- Fork confirm -->
+                <StackPanel Spacing="8" IsVisible="{Binding IsConfirming}">
+                  <TextBlock Text="{Binding ConfirmText}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}" />
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="ui-btn sm primary" Command="{Binding ConfirmForkCommand}" Content="✓ 确认开辟" />
+                    <Button Classes="ui-btn sm quiet" Command="{Binding CancelForkCommand}" Content="取消" />
+                  </StackPanel>
+                </StackPanel>
+
+                <!-- Actions -->
+                <StackPanel Spacing="6" IsVisible="{Binding !IsConfirming}">
+                  <TextBlock Text="👁️ 当前主窗口正在显示此节点" FontSize="{DynamicResource FsXs}"
+                             Foreground="{DynamicResource InfoBrush}" IsVisible="{Binding IsViewing}" />
+                  <Button Classes="ui-btn sm primary" HorizontalAlignment="Stretch"
+                          Command="{Binding ViewAtCommand}" Content="回溯定位至此快照" />
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Classes="ui-btn sm quiet" Command="{Binding RequestForkCommand}" Content="🌿 开辟分支" />
+                    <Button Classes="ui-btn sm quiet" Command="{Binding RegenerateCommand}"
+                            IsVisible="{Binding CanRegenerate}" Content="🔄 重生变体" />
+                  </StackPanel>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </StackPanel>
+</UserControl>

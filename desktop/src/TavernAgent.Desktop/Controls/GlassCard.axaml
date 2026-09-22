@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:TavernAgent.Desktop.Controls"
+             x:Class="TavernAgent.Desktop.Controls.GlassCard">
+  <Border Background="{DynamicResource GlassBackgroundBrush}"
+          BorderBrush="{DynamicResource GlassBorderBrush}"
+          BorderThickness="1"
+          CornerRadius="{DynamicResource RadiusLg}"
+          BoxShadow="{DynamicResource ShadowMd}">
+    <ContentPresenter Content="{Binding $parent[controls:GlassCard].Body}" />
+  </Border>
+</UserControl>

@@ -5,6 +5,7 @@
 | 内容 | 来源 | 授权 |
 | --- | --- | --- |
 | `web/public/assets/original/*.svg` | 本项目新绘制的几何矢量插图与中性占位 | MIT，TavernAgent contributors |
+| `desktop/src/TavernAgent.Desktop/Assets/app.ico` | 本项目程序化绘制的应用图标（`scripts/make-icon.ps1`，无外部素材） | MIT，TavernAgent contributors |
 | `web/src/lib/characterPresets.ts` 的中性占位皮肤与卡片模型定义 | 本项目代码与中性预设契约 | MIT |
 | `scripts/fixtures/*.json` | 本项目合成测试数据 | MIT |
 | 界面文字、CSS 与图标中的 Unicode 字符 | 本项目代码；由系统字体渲染 | 代码按 MIT；字体由用户系统提供，不随软件分发 |

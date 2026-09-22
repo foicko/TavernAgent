@@ -1,0 +1,176 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TavernAgent.Desktop.ViewModels.Stage"
+             xmlns:dto="using:TavernAgent.Core.Dtos"
+             x:Class="TavernAgent.Desktop.Views.Stage.ComposerView"
+             x:DataType="vm:ComposerViewModel">
+  <Grid RowDefinitions="Auto,Auto" Margin="20,0,20,16" MaxWidth="840" HorizontalAlignment="Center">
+    <Border Grid.Row="1"
+            Classes="glass-elevated composer-island anim-rise-in-bottom"
+            CornerRadius="24"
+            Padding="16,12">
+      <StackPanel Spacing="10">
+
+        <!-- Toolbar -->
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Button Classes="ui-btn sm ghost" Command="{Binding ToggleNoteCommand}"
+                    Classes.has-note="{Binding HasNote}" Content="✎ 注记" />
+            <Border Width="1" Height="16" VerticalAlignment="Center"
+                    Background="{DynamicResource BorderBrush}" />
+            <ItemsControl ItemsSource="{Binding AvailableActions}" IsVisible="{Binding HasActions}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="dto:ActionView">
+                  <Button Classes="ui-btn sm quiet" Margin="0,0,6,0"
+                          Command="{Binding $parent[ItemsControl].((vm:ComposerViewModel)DataContext).SelectActionCommand}"
+                          CommandParameter="{Binding}"
+                          Content="{Binding Label}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button Classes="ui-btn sm quiet" Command="{Binding OpenDirectorCommand}" ToolTip.Tip="导演模式">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="🎬" VerticalAlignment="Center" />
+                <TextBlock Text="导演" VerticalAlignment="Center" />
+                <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                         Fill="{DynamicResource SuccessBrush}"
+                         IsVisible="{Binding Director.IsActive}" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+
+          <ItemsControl Grid.Column="1" ItemsSource="{Binding Macros}" VerticalAlignment="Center">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:MacroPill">
+                <Button Classes="ui-btn sm quiet" Content="{Binding Label}"
+                        Command="{Binding $parent[ItemsControl].((vm:ComposerViewModel)DataContext).ApplyMacroCommand}"
+                        CommandParameter="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+
+        <!-- Selected action banner -->
+        <Border IsVisible="{Binding HasAction}" Classes="chip" HorizontalAlignment="Left">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding ActionLabel}" FontSize="{DynamicResource FsXs}" />
+            <Button Classes="ui-btn sm ghost" Command="{Binding ClearActionCommand}" Content="✕" Padding="4,0" />
+          </StackPanel>
+        </Border>
+
+        <!-- Note row -->
+        <TextBox IsVisible="{Binding IsNoteOpen}" Text="{Binding Note}"
+                 PlaceholderText="本轮注记（非叙事）：只约束这一次演绎…" />
+
+        <!-- Input -->
+        <TextBox Name="InputBox"
+                 Text="{Binding Text, Mode=TwoWay}"
+                 KeyDown="OnInputKeyDown"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 MinHeight="44"
+                 MaxHeight="160"
+                 CornerRadius="{DynamicResource RadiusMd}"
+                 Background="{DynamicResource SubtleBrush}"
+                 PlaceholderText="{Binding Placeholder}" />
+
+        <!-- Control deck -->
+        <Grid ColumnDefinitions="Auto,*,Auto" Height="30">
+          <TextBlock Grid.Column="0" Text="↵ 发送 · ⇧↵ 换行" FontSize="{DynamicResource FsXs}"
+                     VerticalAlignment="Center"
+                     Foreground="{DynamicResource TextDimBrush}" />
+
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <!-- Context metrics donut -->
+            <Button Classes="ui-btn sm quiet" Height="30" ToolTip.Tip="上下文占用">
+              <Button.Flyout>
+                <Flyout Placement="Top">
+                  <Border DataContext="{Binding Context}" Width="272" Classes="glass-elevated" Padding="14">
+                    <StackPanel Spacing="10">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="上下文占用" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource FsSm}" />
+                        <TextBlock Grid.Column="1" Text="{Binding PercentageText}"
+                                   FontSize="{DynamicResource FsSm}" />
+                      </Grid>
+                      <TextBlock Text="{Binding ModelName, StringFormat=模型：{0}}" FontSize="{DynamicResource FsXs}"
+                                 Foreground="{DynamicResource TextDimBrush}" />
+                      <ProgressBar Value="{Binding Percentage}" Minimum="0" Maximum="100" />
+                      <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding UsedFormatted}" FontSize="{DynamicResource FsXs}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBlock Text="{Binding LimitFormatted, StringFormat=上限 {0}}" FontSize="{DynamicResource FsXs}"
+                                   Foreground="{DynamicResource TextDimBrush}" />
+                        <TextBlock Text="{Binding CacheLabel, StringFormat=前缀缓存命中 {0}}" FontSize="{DynamicResource FsXs}"
+                                   Foreground="{DynamicResource TextDimBrush}" />
+                      </StackPanel>
+                      <StackPanel Spacing="3">
+                        <TextBlock Text="{Binding SystemLabel, StringFormat=系统人设　{0}}" FontSize="{DynamicResource FsXs}" />
+                        <TextBlock Text="{Binding MemoryLabel, StringFormat=记忆世界　{0}}" FontSize="{DynamicResource FsXs}" />
+                        <TextBlock Text="{Binding HistoryLabel, StringFormat=对话历史　{0}}" FontSize="{DynamicResource FsXs}" />
+                        <TextBlock Text="{Binding DraftLabel, StringFormat=当前草稿　{0}}" FontSize="{DynamicResource FsXs}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </Border>
+                </Flyout>
+              </Button.Flyout>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Panel Width="16" Height="16">
+                  <Ellipse Width="16" Height="16" Stroke="{DynamicResource MeterTrackBrush}" StrokeThickness="2.5" />
+                  <Arc Width="16" Height="16" StartAngle="-90"
+                       SweepAngle="{Binding Context.SweepAngle}"
+                       Stroke="{DynamicResource SuccessBrush}" StrokeThickness="2.5" />
+                </Panel>
+                <TextBlock Text="{Binding Context.PercentageText}" FontSize="{DynamicResource FsXs}"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <ComboBox IsVisible="{Binding HasModels}"
+                      ItemsSource="{Binding Models}"
+                      SelectedItem="{Binding SelectedModel}"
+                      Height="30"
+                      MinWidth="120"
+                      FontSize="{DynamicResource FsXs}"
+                      VerticalContentAlignment="Center"
+                      ToolTip.Tip="主线模型">
+              <ComboBox.ItemTemplate>
+                <DataTemplate DataType="vm:ModelQuickItem">
+                  <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <ComboBox ItemsSource="{Binding Efforts}"
+                      SelectedItem="{Binding SelectedEffortItem}"
+                      Height="30"
+                      MinWidth="76"
+                      FontSize="{DynamicResource FsXs}"
+                      VerticalContentAlignment="Center"
+                      ToolTip.Tip="思考强度">
+              <ComboBox.ItemTemplate>
+                <DataTemplate DataType="vm:EffortItem">
+                  <TextBlock Text="{Binding Label}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button Classes="ui-btn danger" Height="30" IsVisible="{Binding CanCancel}"
+                    Command="{Binding CancelCommand}" Content="■ 停止" />
+            <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding CanContinue}"
+                    Command="{Binding ContinueCommand}" Content="▶ 继续" />
+            <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding !CanContinue}"
+                    Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}" Content="发送" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>
