@@ -55,7 +55,12 @@
           <c:Banner Classes="success" Message="{Binding TestMessage}" IsVisible="{Binding ShowTestSuccess}" />
           <Image Source="{Binding Preview}" Stretch="Uniform" MaxHeight="320" IsVisible="{Binding HasPreview}" />
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Classes="ui-btn quiet" Command="{Binding TestGenerateCommand}" IsEnabled="{Binding !Generating}" Content="🎨 试运行生图" />
+            <Button Classes="ui-btn quiet" Command="{Binding TestGenerateCommand}" IsEnabled="{Binding !Generating}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Path Classes="icon" Data="{StaticResource IconImage}" Width="13" Height="13" />
+                <TextBlock Text="试运行生图" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Button Classes="ui-btn ghost" Command="{Binding ResetDefaultsCommand}" Content="恢复默认" />
           </StackPanel>
         </StackPanel>

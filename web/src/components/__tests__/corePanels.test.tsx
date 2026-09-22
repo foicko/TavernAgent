@@ -82,7 +82,7 @@ describe("inventory, character state and memory panels", () => {
     expect(document.getElementById("meter-num-aff")?.textContent).toBe("+50");
     expect(document.getElementById("meter-fill-aff")?.style.width).toBe("75%");
     expect(document.getElementById("meter-num-trust")?.textContent).toBe("40%");
-    expect(screen.getByText("🎭 神态：冷静自持")).toBeTruthy();
+    expect(screen.getByText("神态：冷静自持")).toBeTruthy();
     expect(useUi.getState().tachieExpression).toBe("calm");
   });
 
@@ -119,7 +119,7 @@ describe("inventory, character state and memory panels", () => {
     await user.click(screen.getByRole("button", { name: "保存修订" }));
     expect(reviseMemory).toHaveBeenLastCalledWith("memory", { content: "向导来自南方的港口。" });
     expect(screen.getByText("向导来自南方的港口。")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "📌 置顶" }));
+    await user.click(screen.getByRole("button", { name: /置顶/ }));
     expect(reviseMemory).toHaveBeenLastCalledWith("memory", { pinned: true });
     await user.click(screen.getByRole("button", { name: "隐藏" }));
     await waitFor(() => expect(screen.queryByText("向导来自南方的港口。")).toBeNull());

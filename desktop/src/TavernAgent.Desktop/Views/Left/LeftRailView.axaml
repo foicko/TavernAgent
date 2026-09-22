@@ -11,8 +11,10 @@
       <TextBlock Grid.Column="0" Text="{Binding PanelTitle}"
                  FontSize="{DynamicResource FsLg}" FontWeight="SemiBold"
                  VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
-      <Button Grid.Column="1" Classes="icon soft-brush" Content="✕"
-              Command="{Binding CollapseCommand}" ToolTip.Tip="收起面板" />
+      <Button Grid.Column="1" Classes="icon soft-brush"
+              Command="{Binding CollapseCommand}" ToolTip.Tip="收起面板">
+        <Path Classes="icon" Data="{StaticResource IconClose}" Width="14" Height="14" />
+      </Button>
     </Grid>
 
     <Border Grid.Row="1" Classes="divider" />

@@ -16,7 +16,7 @@
         <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
 
         <!-- active plan summary -->
-        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusLg}" Padding="12" IsVisible="{Binding HasState}">
+        <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="12" IsVisible="{Binding HasState}">
           <StackPanel Spacing="8">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Grid.Column="0" Spacing="2">
@@ -29,10 +29,25 @@
                 </StackPanel>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                <Button Classes="ui-btn sm quiet" Command="{Binding PauseCommand}" IsVisible="{Binding IsActive}" Content="⏸ 暂停" />
-                <Button Classes="ui-btn sm quiet" Command="{Binding ResumeCommand}" IsVisible="{Binding IsPaused}" Content="▶ 继续" />
+                <Button Classes="ui-btn sm quiet" Command="{Binding PauseCommand}" IsVisible="{Binding IsActive}">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Path Classes="icon" Data="{StaticResource IconPause}" Width="12" Height="12" />
+                    <TextBlock Text="暂停" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="ui-btn sm quiet" Command="{Binding ResumeCommand}" IsVisible="{Binding IsPaused}">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Path Classes="icon" Data="{StaticResource IconPlay}" Width="12" Height="12" />
+                    <TextBlock Text="继续" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
                 <Button Classes="ui-btn sm quiet" Command="{Binding CompleteBeatCommand}"
-                        IsVisible="{Binding IsActive}" Content="✓ 完成本阶段" />
+                        IsVisible="{Binding IsActive}">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Path Classes="icon" Data="{StaticResource IconCheck}" Width="12" Height="12" />
+                    <TextBlock Text="完成本阶段" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
                 <Button Classes="ui-btn sm ghost" Command="{Binding SkipBeatCommand}"
                         IsVisible="{Binding IsActive}" Content="跳过" />
               </StackPanel>
@@ -48,17 +63,17 @@
         <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Height="400">
 
           <!-- discussion -->
-          <Border Grid.Column="0" Classes="glass-subtle" CornerRadius="{DynamicResource RadiusLg}" Padding="12">
+          <Border Grid.Column="0" Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="12">
             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
               <TextBlock Grid.Row="0" Text="与导演协商" FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" />
               <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Spacing="8">
-                  <c:EmptyState IsVisible="{Binding !HasExchanges}" Icon="🎬" Title="还没有讨论"
+                  <c:EmptyState IsVisible="{Binding !HasExchanges}" IconGeometry="{StaticResource IconFilm}" Title="还没有讨论"
                                 Description="向导演提问，例如「下一幕该怎么推进？」它会给出建议大纲。" />
                   <ItemsControl ItemsSource="{Binding Exchanges}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:DirectorExchangeViewModel">
-                        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="10" Margin="0,0,0,8">
+                        <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="10" Margin="0,0,0,8">
                           <StackPanel Spacing="6">
                             <TextBlock Text="你" FontSize="10" Foreground="{DynamicResource TextDimBrush}" />
                             <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="{DynamicResource FsSm}" />
@@ -96,7 +111,7 @@
           </Border>
 
           <!-- editor -->
-          <Border Grid.Column="1" Classes="glass-subtle" CornerRadius="{DynamicResource RadiusLg}" Padding="12">
+          <Border Grid.Column="1" Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="12">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
               <StackPanel Spacing="10">
                 <TextBlock Text="大纲编辑" FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" />
@@ -116,7 +131,7 @@
                 <ItemsControl ItemsSource="{Binding Beats}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:DirectorBeatViewModel">
-                      <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="10" Margin="0,0,0,8">
+                      <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="10" Margin="0,0,0,8">
                         <StackPanel Spacing="6">
                           <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0" Text="{Binding Number}" FontWeight="SemiBold"
@@ -126,19 +141,30 @@
                               <TextBlock Text="{Binding StatusLabel}" FontSize="10" />
                             </Border>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
-                              <Button Classes="ui-btn sm ghost" Padding="4,0" Content="↑"
+                              <Button Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="上移阶段"
                                       CommandParameter="{Binding}"
-                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).MoveBeatUpCommand}" />
-                              <Button Classes="ui-btn sm ghost" Padding="4,0" Content="↓"
+                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).MoveBeatUpCommand}">
+                                <Path Classes="icon" Data="{StaticResource IconArrowUp}" Width="12" Height="12" />
+                              </Button>
+                              <Button Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="下移阶段"
                                       CommandParameter="{Binding}"
-                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).MoveBeatDownCommand}" />
-                              <Button Classes="ui-btn sm ghost" Padding="4,0" Content="🗑"
+                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).MoveBeatDownCommand}">
+                                <Path Classes="icon" Data="{StaticResource IconArrowDown}" Width="12" Height="12" />
+                              </Button>
+                              <Button Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="删除阶段"
                                       CommandParameter="{Binding}"
-                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).DeleteBeatCommand}" />
-                              <Button Classes="ui-btn sm ghost" Padding="4,0" Content="↩ 回退"
+                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).DeleteBeatCommand}">
+                                <Path Classes="icon danger" Data="{StaticResource IconTrash}" Width="12" Height="12" />
+                              </Button>
+                              <Button Classes="ui-btn sm ghost" Padding="4,0"
                                       IsVisible="{Binding IsSettled}"
                                       CommandParameter="{Binding}"
-                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).RewindCommand}" />
+                                      Command="{Binding $parent[ItemsControl].((vm:DirectorViewModel)DataContext).RewindCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                  <Path Classes="icon" Data="{StaticResource IconUndo}" Width="12" Height="12" />
+                                  <TextBlock Text="回退" VerticalAlignment="Center" />
+                                </StackPanel>
+                              </Button>
                             </StackPanel>
                           </Grid>
                           <TextBox Text="{Binding Title}" PlaceholderText="阶段名称" FontSize="{DynamicResource FsSm}" />
@@ -152,7 +178,12 @@
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Button Classes="ui-btn sm quiet" Command="{Binding AddBeatCommand}" Content="＋ 添加阶段" />
+                <Button Classes="ui-btn sm quiet" Command="{Binding AddBeatCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Path Classes="icon" Data="{StaticResource IconPlus}" Width="12" Height="12" />
+                    <TextBlock Text="添加阶段" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
               </StackPanel>
             </ScrollViewer>
           </Border>

@@ -58,10 +58,10 @@ desktop/src/
 | 模型配置 | 模型实例 CRUD + primary/assist/reflection 三槽位；服务商预设；密钥脱敏；探测；用量台账 |
 | 协议适配 | Chat Completions、Responses、Anthropic Messages；思考链增量；截断归类；超时/取消区分 |
 | 局域网 | 可绑定 `0.0.0.0`、随机配对码、恒时鉴权、来源白名单、请求限额、SSE 截止时间；**自签 HTTPS**（`-tls=auto`，证书持久化 + 指纹可比对） |
-| 前端 | 双主题设计系统 + 原语；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；<480px 贴底抽屉与 44px 触控目标 |
-| 样式结构 | `styles.css` 退化为 `@import` 入口，按功能域拆成 18 个文件；四项 CSS 门禁（行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名） |
+| 前端 | 双主题设计系统 + 原语（`ui/` 的 Tabs/Tooltip/Popover/Toast/Skeleton/Kbd/Avatar/Card 等）；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；56px 顶栏；主题持久化并默认跟随系统 `prefers-color-scheme`；<480px 贴底抽屉与 44px 触控目标 |
+| 样式结构 | `styles.css` 退化为 `@import` 入口，按功能域拆成 18 个文件；六项 CSS 门禁（行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名、颜色字面值、玻璃残留）；`--glass-*` 兼容层已删除 |
 | 观测 | 请求级关联 ID（`X-Request-ID` 回显）、进程内追踪记录器、`/api/status` 的 `trace` 段（最近/最慢请求 + 分段打点） |
-| 桌面端（跨平台） | `desktop/`：Avalonia 12（.NET 10）+ Sidecar 子进程守护；原生窗口材质（Mica/Acrylic/vibrancy 带回退）、舞台优先 · 覆盖式侧栏 · 悬浮 HUD 的 UI 范式、命令面板、导演工作台、回合插画、TTS 播放；单实例锁；自包含发布并同捆 sidecar（`scripts/publish-desktop.ps1`） |
+| 桌面端（跨平台） | `desktop/`：Avalonia 12（.NET 10）+ Sidecar 子进程守护；扁平纸墨设计系统（`Styles/Surfaces.axaml`，无 Mica/Acrylic/氛围光）、**三栏内嵌**外壳（56px 顶栏 + 左栏 224/52 + 舞台 + 右栏 304/0，240ms 过渡）、命令面板、导演工作台、回合插画、TTS 播放；主题默认跟随系统并持久化；单实例锁；自包含发布并同捆 sidecar（`scripts/publish-desktop.ps1`） |
 
 ## 4. 运行与构建
 
@@ -92,7 +92,7 @@ Set-Location web; pnpm typecheck; pnpm lint; pnpm test; pnpm build
 样式改动另有三道专门的门禁与一件证据工具（都在 `web/` 下执行）：
 
 ```powershell
-pnpm lint                                  # 含 CSS 四项门禁：行数棘轮 / !important 棘轮 / 跨文件重复选择器 / 死类名
+pnpm lint                                  # 含 CSS 六项门禁：行数棘轮 / !important 棘轮 / 跨文件重复选择器 / 死类名 / 颜色字面值 / 玻璃残留
 pnpm build:parity; pnpm css:parity         # 样式等价性：比对构建产物的声明集合（纯结构改动的证据）
 pnpm css:snapshot                          # 落新的基线快照（有意改变视觉之后才该做）
 node scripts/check.mjs --update-css-baseline  # 收紧门禁基线；放宽的条目会打印出来要求解释
@@ -116,7 +116,7 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
   网关额度不可逆，`preflight` 会先查余额再决定是否开始。
 - **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
   （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
-- **样式层**：`!important` 存量已从 245 处降至 14 处（已彻底消除 `shell.css` 与 `responsive.css` 中全部 231 处层叠覆盖，仅保留无障碍与高危确认原语，门禁基线收紧锁定在 14）。
+- **样式层**：`!important` 存量已从 245 处降至 4 处（仅保留 `Button` 的 reduced-motion 归零、`Modal` 动画归零与无障碍原语）；跨文件重复选择器 18→0、颜色字面值与玻璃残留归零，门禁基线已收紧锁定。
 - **桌面端壳层能力回退**：旧 Wails 壳删除后，`-lan`（第二屏便捷开关）与 `-autostart`
   （开机自启）两个入口随之消失；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
   可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是补回 `cmd/tavernagent` 的参数，

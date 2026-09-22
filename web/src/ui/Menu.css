@@ -1,5 +1,5 @@
 /* 下拉菜单：唯一实现（替代 .menu / .check-popover-menu / .probe-* 三套）。
-   融合 transitions.dev 锚点感知进入动效与 shadcn 极简菜单排版 */
+   扁平 elevated 面 + 发丝线 + 浮起阴影；从锚点方向生长 250ms（transitions.dev 05-menu-dropdown）。 */
 .ui-menu {
   position: absolute;
   z-index: var(--z-dropdown);
@@ -9,14 +9,12 @@
   max-height: 320px;
   overflow-y: auto;
   padding: var(--space-1);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-  background: var(--glass-bg-elevated);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-float), inset 0 1px 1.5px 0 var(--glass-specular-top);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-float);
   transform-origin: top left;
-  animation: ui-menu-in var(--duration-fast, 250ms) var(--ease-smooth-out);
+  animation: ui-menu-in var(--duration-fast) var(--ease-spring);
 }
 
 .ui-menu--up {
@@ -46,7 +44,7 @@
 @keyframes ui-menu-in {
   from {
     opacity: 0;
-    transform: scale(0.97) translateY(-4px);
+    transform: scale(0.96) translateY(-4px);
   }
   to {
     opacity: 1;
@@ -57,7 +55,7 @@
 @keyframes ui-menu-up-in {
   from {
     opacity: 0;
-    transform: scale(0.97) translateY(4px);
+    transform: scale(0.96) translateY(4px);
   }
   to {
     opacity: 1;
@@ -97,9 +95,8 @@
   cursor: pointer;
   outline: none;
   touch-action: manipulation;
-  transition: background-color var(--duration-quick, 150ms) ease,
-              transform var(--duration-micro, 80ms) ease,
-              color var(--duration-quick, 150ms) ease;
+  transition: background-color var(--duration-quick) var(--ease-smooth-out),
+              color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .ui-menu__item:focus {
@@ -108,9 +105,8 @@
 
 .ui-menu__item:hover:not(:disabled),
 .ui-menu__item:focus-visible {
-  background: var(--glass-pill-bg-hover);
+  background: var(--bg-subtle);
   outline: none;
-  transform: translateX(1px);
 }
 
 .ui-menu__item:focus-visible {
@@ -118,7 +114,7 @@
 }
 
 .ui-menu__item--active {
-  background: var(--glass-pill-bg-hover);
+  background: var(--bg-subtle);
   color: var(--text-main);
   font-weight: var(--fw-semibold);
 }
@@ -126,7 +122,6 @@
 .ui-menu__item:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  transform: none;
 }
 
 .ui-menu__text {
@@ -171,13 +166,4 @@
   font-size: var(--fs-xs);
   color: var(--text-dim);
   line-height: var(--lh-tight);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-menu {
-    animation: none !important;
-  }
-  .ui-menu__item:hover:not(:disabled) {
-    transform: none !important;
-  }
 }

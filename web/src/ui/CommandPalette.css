@@ -1,4 +1,4 @@
-/* 命令面板：与既有浮岛输入框同调性的居中浮岛卡片。
+/* 命令面板：与既有浮岛输入框同调性的居中扁平卡片。
    只引用 tokens.css 的设计令牌，不写死颜色与圆角；不使用 !important（门禁会拦）。 */
 
 .ui-command-palette__backdrop {
@@ -9,7 +9,7 @@
   align-items: flex-start;
   justify-content: center;
   padding: 12vh 16px 16px;
-  background: rgba(9, 10, 13, 0.34);
+  background: var(--scrim);
   animation: ui-command-palette-fade var(--duration-quick) var(--ease-smooth-out);
 }
 
@@ -19,15 +19,13 @@
   width: min(560px, 90vw);
   max-height: 60vh;
   overflow: hidden;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-specular-top), var(--shadow-float);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-float);
   color: var(--text-main);
   font-family: var(--font-body);
-  animation: ui-command-palette-rise var(--duration-quick) var(--ease-smooth-out);
+  animation: ui-command-palette-rise var(--duration-fast) var(--ease-spring);
 }
 
 .ui-command-palette__search {
@@ -39,8 +37,6 @@
 }
 
 .ui-command-palette__search-icon {
-  width: 15px;
-  height: 15px;
   flex-shrink: 0;
   color: var(--text-dim);
 }
@@ -61,18 +57,6 @@
 
 .ui-command-palette__input::placeholder {
   color: var(--text-dim);
-}
-
-.ui-command-palette__key {
-  flex-shrink: 0;
-  padding: 1px 6px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  line-height: 1.5;
 }
 
 .ui-command-palette__list {
@@ -106,7 +90,7 @@
 
 .ui-command-palette__item--active {
   border-left-color: var(--accent-solid);
-  background: var(--glass-pill-bg-hover);
+  background: var(--bg-subtle);
 }
 
 .ui-command-palette__item:active {
@@ -167,7 +151,7 @@
 @keyframes ui-command-palette-rise {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.98);
+    transform: translateY(-8px) scale(0.96);
   }
   to {
     opacity: 1;
@@ -205,16 +189,5 @@
   }
   to {
     transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-command-palette,
-  .ui-command-palette__backdrop {
-    animation: none;
-  }
-
-  .ui-command-palette__item {
-    transition: none;
   }
 }

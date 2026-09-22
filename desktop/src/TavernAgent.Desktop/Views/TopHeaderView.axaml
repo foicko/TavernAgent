@@ -4,7 +4,11 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.TopHeaderView"
              x:DataType="vm:WorkspaceViewModel">
-  <Border Classes="float-bar anim-fade" Padding="14,0" Height="44">
+  <Border Background="{DynamicResource SurfaceBrush}"
+          BorderBrush="{DynamicResource BorderBrush}"
+          BorderThickness="0,0,0,1"
+          Padding="14,0"
+          Height="{DynamicResource HeaderHeightPx}">
     <Grid ColumnDefinitions="*,Auto,*">
 
       <!-- Brand + breadcrumb -->
@@ -21,7 +25,7 @@
                 IsVisible="{Binding HasStory}" />
         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
                     IsVisible="{Binding HasStory}">
-          <TextBlock Text="📖" FontSize="12" VerticalAlignment="Center" />
+          <Path Classes="icon" Data="{StaticResource IconBook}" Width="13" Height="13" />
           <TextBlock Text="{Binding BreadcrumbTitle}"
                      FontSize="{DynamicResource FsSm}"
                      MaxWidth="300"
@@ -33,8 +37,8 @@
 
       <!-- View mode segmented control -->
       <Border Grid.Column="1"
-              Classes="glass-subtle"
-              CornerRadius="999"
+              Classes="surface-inset"
+              CornerRadius="{DynamicResource RadiusFull}"
               Padding="3"
               VerticalAlignment="Center"
               Margin="12,0">
@@ -42,14 +46,14 @@
           <Button Classes="seg soft-brush" Classes.active="{Binding IsStudioMode}"
                   Command="{Binding EnterStudioCommand}">
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="✦" FontSize="12" VerticalAlignment="Center" />
+              <Path Classes="icon" Data="{StaticResource IconCompass}" Width="12" Height="12" />
               <TextBlock Text="工作台" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
           <Button Classes="seg soft-brush" Classes.active="{Binding IsReadingMode}"
                   Command="{Binding EnterReadingCommand}">
             <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="📖" FontSize="12" VerticalAlignment="Center" />
+              <Path Classes="icon" Data="{StaticResource IconBook}" Width="12" Height="12" />
               <TextBlock Text="纯净编年" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
@@ -61,7 +65,7 @@
                   HorizontalAlignment="Right">
         <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding TogglePaletteCommand}" ToolTip.Tip="命令面板">
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center" />
+            <Path Classes="icon" Data="{StaticResource IconCommand}" Width="12" Height="12" />
             <c:Kbd Text="Ctrl K" />
           </StackPanel>
         </Button>
@@ -82,16 +86,14 @@
           </StackPanel>
         </Button>
 
-        <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding OpenShowcaseCommand}" ToolTip.Tip="组件展厅 (:5174)">
-          <StackPanel Orientation="Horizontal" Spacing="5">
-            <TextBlock Text="🧩" FontSize="13" VerticalAlignment="Center" />
-            <TextBlock Text="组件展厅" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
-          </StackPanel>
-        </Button>
-
         <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding ToggleThemeCommand}"
                 ToolTip.Tip="{Binding ThemeLabel}">
-          <TextBlock Text="◐" FontSize="15" VerticalAlignment="Center" />
+          <Panel>
+            <Path Classes="icon" Data="{StaticResource IconSun}" Width="15" Height="15"
+                  IsVisible="{Binding IsDarkTheme}" />
+            <Path Classes="icon" Data="{StaticResource IconMoon}" Width="15" Height="15"
+                  IsVisible="{Binding !IsDarkTheme}" />
+          </Panel>
         </Button>
       </StackPanel>
     </Grid>

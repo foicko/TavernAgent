@@ -98,7 +98,7 @@ async function sendFromComposer() {
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "沿着码头前行。" } });
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "推进剧情" })); });
   expect(screen.getByText("沿着码头前行。")).toBeTruthy();
-  expect(screen.getByText("✦ 玩家行动 · 第一人称")).toBeTruthy();
+  expect(screen.getByText("玩家行动 · 第一人称")).toBeTruthy();
   expect(screen.getByText("向导收好了地图。")).toBeTruthy();
   expect(screen.getByText("生成中", { exact: true })).toBeTruthy();
   expect((screen.getByRole("textbox") as HTMLTextAreaElement).disabled).toBe(true);

@@ -2,12 +2,20 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "../stores/settingsStore";
 import { Modal } from "../ui/Modal";
+import { Tabs } from "../ui/Tabs";
 import { ModelSettingsPage } from "./ModelSettingsPage";
 import { TTSSettingsPage } from "./TTSSettingsPage";
 import { ImageSettingsPage } from "./ImageSettingsPage";
 import { EmbeddingSettingsPage } from "./EmbeddingSettingsPage";
 
 export type SettingsTab = "models" | "tts" | "images" | "embedding";
+
+const TAB_ITEMS: Array<{ value: SettingsTab; label: string }> = [
+  { value: "models", label: "模型与连接" },
+  { value: "tts", label: "语音设置 (TTS)" },
+  { value: "images", label: "图像生成" },
+  { value: "embedding", label: "记忆向量 (Embedding)" },
+];
 
 export function SettingsModal({
   onClose,
@@ -39,44 +47,7 @@ export function SettingsModal({
       title={
         <div className="settings-modal-header">
           <span className="settings-modal-title">设置</span>
-          <div className="settings-modal-tabs" role="tablist" aria-label="设置分类">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "models"}
-              className={`settings-tab-btn ${activeTab === "models" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("models")}
-            >
-              模型与连接
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "tts"}
-              className={`settings-tab-btn ${activeTab === "tts" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("tts")}
-            >
-              语音设置 (TTS)
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "images"}
-              className={`settings-tab-btn ${activeTab === "images" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("images")}
-            >
-              图像生成
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "embedding"}
-              className={`settings-tab-btn ${activeTab === "embedding" ? "is-active" : ""}`}
-              onClick={() => setActiveTab("embedding")}
-            >
-              记忆向量 (Embedding)
-            </button>
-          </div>
+          <Tabs label="设置分类" size="sm" value={activeTab} onChange={setActiveTab} items={TAB_ITEMS} className="settings-modal-tabs" />
         </div>
       }
       description={description}

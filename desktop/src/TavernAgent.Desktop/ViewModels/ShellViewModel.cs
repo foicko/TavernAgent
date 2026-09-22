@@ -32,8 +32,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
         _supervisor.StateChanged += OnSidecarStateChanged;
         _phase = BootPhase.StartingSidecar;
         _statusText = "正在启动本地服务…";
-        _theme = _settings.Theme;
-        AppServices.Ui.SetTheme(_settings.Theme == "light" ? ThemeMode.Light : ThemeMode.Dark);
+        _theme = ResolveTheme(_settings.Theme);
+        AppServices.Ui.SetTheme(_theme == "light" ? ThemeMode.Light : ThemeMode.Dark);
         AppServices.Ui.PropertyChanged += OnUiChanged;
     }
 
@@ -169,6 +169,14 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
     {
         DisposeAsync().AsTask().GetAwaiter().GetResult();
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>User choice wins; otherwise follow the OS light/dark preference.</summary>
+    private static string ResolveTheme(string saved)
+    {
+        if (saved is "light" or "dark") return saved;
+        var variant = Avalonia.Application.Current?.PlatformSettings?.GetColorValues().ThemeVariant;
+        return variant == Avalonia.Platform.PlatformThemeVariant.Light ? "light" : "dark";
     }
 
     private void ApplyTheme()

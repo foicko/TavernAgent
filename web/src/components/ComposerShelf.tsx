@@ -10,6 +10,7 @@ import { Menu, MenuItem } from "../ui/Menu";
 import { ContextMetricsPopover } from "./ContextMetricsPopover";
 import { ModelQuickSwitch } from "./ModelQuickSwitch";
 import { ThinkingEffortControl } from "./ThinkingEffortControl";
+import { Icon } from "../ui/Icon";
 import "./ComposerShelf.css";
 
 export const ComposerShelf: React.FC = () => {
@@ -214,7 +215,7 @@ export const ComposerShelf: React.FC = () => {
               onClick={() => void openDirector()}
               title="讨论大纲并安排后续剧情"
             >
-              <span className="btn-icon">🎬</span>
+              <Icon name="film" size={14} className="btn-icon" />
               <span>{directorOpening ? "正在准备工作区…" : "导演模式"}</span>
               {directorActive && <span className="director-pulse-indicator" title="大纲活跃推进中" />}
             </button>
@@ -228,7 +229,7 @@ export const ComposerShelf: React.FC = () => {
               title="写一条本轮注记：对这次演绎的要求（不会出现在正文里）"
               aria-expanded={noteOpen}
             >
-              <span className="btn-icon">✎</span>
+              <Icon name="note" size={14} className="btn-icon" />
               <span>{noteAttached ? "已写注记" : "注记"}</span>
             </button>
 
@@ -243,9 +244,9 @@ export const ComposerShelf: React.FC = () => {
                 aria-haspopup="true"
                 aria-expanded={showCheckMenu}
               >
-                <span className="btn-icon">🎲</span>
+                <Icon name="dice" size={14} className="btn-icon" />
                 <span>{selectedActionObj ? `${selectedActionObj.label || selectedActionObj.actionId} · DC ${selectedActionObj.dc}` : "规则检定"}</span>
-                <span className="composer-caret">▾</span>
+                <span className="composer-caret"><Icon name="chevronDown" size={12} /></span>
               </button>
               <Menu
                 open={showCheckMenu}
@@ -263,7 +264,7 @@ export const ComposerShelf: React.FC = () => {
                     key={ci.actionId}
                     title={
                       <>
-                        <span className="check-item-icon" aria-hidden="true">🎲</span>
+                        <Icon name="dice" size={12} className="check-item-icon" />
                         {ci.label || ci.actionId}
                       </>
                     }
@@ -321,10 +322,10 @@ export const ComposerShelf: React.FC = () => {
         {selectedAction && (
           <div className="composer-selected-action-banner">
             <span className="selected-action-info">
-              🎲 已选择检定：<strong>{actions.find((a) => a.actionId === selectedAction)?.label || selectedAction}</strong>
+              <Icon name="dice" size={13} /> 已选择检定：<strong>{actions.find((a) => a.actionId === selectedAction)?.label || selectedAction}</strong>
             </span>
             <button type="button" className="btn-quiet btn-action-cancel" onClick={() => setSelectedAction(undefined)}>
-              ✕ 取消检定
+              <Icon name="close" size={12} /> 取消检定
             </button>
           </div>
         )}
@@ -333,7 +334,9 @@ export const ComposerShelf: React.FC = () => {
             混进正文会被当成角色说过的话，污染剧情。 */}
         {noteOpen && (
           <div className="composer-note-row">
-            <span className="composer-note-label" title="注记只作用于这一轮，不会出现在正文里">✎ 注记</span>
+            <span className="composer-note-label" title="注记只作用于这一轮，不会出现在正文里">
+              <Icon name="note" size={12} /> 注记
+            </span>
             <input
               className="composer-note-input"
               value={note}
@@ -350,9 +353,10 @@ export const ComposerShelf: React.FC = () => {
             <button
               type="button"
               className="btn-quiet btn-note-clear"
+              aria-label="清除注记"
               onClick={() => { setNote(""); setNoteOpen(false); }}
             >
-              ✕
+              <Icon name="close" size={13} />
             </button>
           </div>
         )}
@@ -391,15 +395,15 @@ export const ComposerShelf: React.FC = () => {
               </button>
               {selectedActionObj ? (
                 <div className="composer-mode-badge amber">
-                  🎲 DC {selectedActionObj.dc} 检定
+                  <Icon name="dice" size={12} /> DC {selectedActionObj.dc} 检定
                 </div>
               ) : directorActive ? (
                 <div className="composer-mode-badge amber">
-                  🎬 导演大纲推进中
+                  <Icon name="film" size={12} /> 导演大纲推进中
                 </div>
               ) : (
                 <div className="composer-mode-badge subtle">
-                  ✦ 自由推演
+                  <Icon name="sparkles" size={12} /> 自由推演
                 </div>
               )}
             </div>

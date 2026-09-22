@@ -11,6 +11,7 @@ import { useSettings } from "../stores/settingsStore";
 import { Banner } from "../ui/Banner";
 import { Button, IconButton } from "../ui/Button";
 import { Field, NumberInput, Select, TextInput } from "../ui/Field";
+import { Icon } from "../ui/Icon";
 import { Pill } from "../ui/Pill";
 
 export interface ConnectionFormProps {
@@ -281,7 +282,7 @@ export function ConnectionForm({
               size="sm"
               onClick={() => setShowKey((value) => !value)}
             >
-              {showKey ? "🙈" : "👁"}
+              <Icon name={showKey ? "eyeOff" : "eye"} size={14} />
             </IconButton>
           </div>
         </Field>

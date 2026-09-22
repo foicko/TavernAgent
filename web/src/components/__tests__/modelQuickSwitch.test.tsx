@@ -106,6 +106,7 @@ describe("ModelQuickSwitch · 输入台快捷切换", () => {
     useSettings.setState({ models: [migrated], providers: slots("m_migrated"), loaded: true });
     await openMenu();
     const item = screen.getByRole("menuitemradio", { name: /deepseek-flash/ });
-    expect(item.textContent).toBe("deepseek-flashapi.deepseek.com✓主线");
+    expect(item.textContent).toBe("deepseek-flashapi.deepseek.com主线");
+    expect(item.querySelector("svg")).toBeTruthy();
   });
 });

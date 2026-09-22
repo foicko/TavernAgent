@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../app/api";
 import type { GraphView, PlotNode, SessionView, TextBlock } from "../app/types";
 import { storyBusy, useStory } from "../stores/storyStore";
+import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
 
 export function StoryOutlineSection({ view }: { view: SessionView }) {
@@ -112,10 +114,10 @@ export function StoryMapModal({ view, onClose }: { view: SessionView; onClose: (
           const branch = view.branches?.find(item => item.branchId === event.target.value);
           if (branch) { setTarget(branch.headNodeId); setSelected(branch.headNodeId); }
         }}><option value="" disabled>节点附近</option>{(view.branches || [view.branch]).map(branch => <option key={branch.branchId} value={branch.branchId}>{branch.name}</option>)}</select></label>
-        <button className="btn-quiet" onClick={() => { setTarget(view.branch.headNodeId); setSelected(view.branch.headNodeId); setRevision(r => r + 1); }}>当前分支头</button>
+        <Button size="sm" variant="outline" onClick={() => { setTarget(view.branch.headNodeId); setSelected(view.branch.headNodeId); setRevision(r => r + 1); }}>当前分支头</Button>
         <span className="story-map-muted">{loading ? "加载中…" : "已加载 " + layout.length + " 个节点"}</span>
       </div>
-      {error && <div className="story-map-error" role="alert">{error} <button onClick={() => setRevision(r => r + 1)}>重试</button></div>}
+      {error && <div className="story-map-error" role="alert">{error} <Button size="sm" variant="outline" onClick={() => setRevision(r => r + 1)}>重试</Button></div>}
       {graph?.truncated && <p className="story-map-notice">当前仅展示附近的部分节点（最多 300 个）。选择节点后展开附近，或从菜单定位其他分支。</p>}
       <div className="story-map-body">
         <div className="story-map-viewport" ref={viewport} aria-label="分支节点" aria-busy={loading}>
@@ -133,14 +135,14 @@ export function StoryMapModal({ view, onClose }: { view: SessionView; onClose: (
         <aside className="story-map-detail" aria-label="节点详情">
           <h3>{detail ? nodeLabel(detail.kind, detail.turnNumber) : "加载节点…"}</h3>
           {selectedBranch && <p className="story-map-muted">分支 · {selectedBranch.name}</p>}
-          {detailError && <p className="story-map-error" role="alert">{detailError} <button onClick={() => setRevision(r => r + 1)}>重试</button></p>}
+          {detailError && <p className="story-map-error" role="alert">{detailError} <Button size="sm" variant="outline" onClick={() => setRevision(r => r + 1)}>重试</Button></p>}
           <div className="story-map-excerpt">{detail && nodeText(detail)}</div>
           <div className="story-map-actions">
-            <button className="btn-quiet" onClick={() => { setTarget(selected); setRevision(r => r + 1); }}>展开此节点附近</button>
-            <button className="btn-quiet" disabled={busy || !detail} onClick={() => void perform(() => useStory.getState().viewAt(selected))}>查看历史快照</button>
-            <button className="btn-quiet" disabled={busy || !detail} onClick={() => void perform(() => useStory.getState().forkFrom(selected))}>从此处开辟分支</button>
-            {selectedBranch && <button className="btn-quiet" disabled={busy} onClick={() => void perform(() => useStory.getState().switchBranch(selectedBranch.branchId))}>切换到此分支</button>}
-            {detail?.kind === "turn" && <button className="btn-quiet" disabled={busy} onClick={() => void perform(() => useStory.getState().regenerate(selected))}>重新生成此回合</button>}
+            <Button variant="outline" onClick={() => { setTarget(selected); setRevision(r => r + 1); }}>展开此节点附近</Button>
+            <Button variant="outline" disabled={busy || !detail} onClick={() => void perform(() => useStory.getState().viewAt(selected))}><Icon name="eye" size={13} /> 查看历史快照</Button>
+            <Button variant="outline" disabled={busy || !detail} onClick={() => void perform(() => useStory.getState().forkFrom(selected))}><Icon name="leaf" size={13} /> 从此处开辟分支</Button>
+            {selectedBranch && <Button variant="outline" disabled={busy} onClick={() => void perform(() => useStory.getState().switchBranch(selectedBranch.branchId))}>切换到此分支</Button>}
+            {detail?.kind === "turn" && <Button variant="outline" disabled={busy} onClick={() => void perform(() => useStory.getState().regenerate(selected))}><Icon name="refresh" size={13} /> 重新生成此回合</Button>}
           </div>
         </aside>
       </div>

@@ -181,7 +181,7 @@ export function beginNavigation(onDetachStream?: () => void): number {
 export function emptyStory(): Partial<StoryState> {
   return {
     ...emptyDirectorState,
-    view: null, messages: [], draftBlocks: [], draftOptions: [], phase: "idle", thinkingText: "", turnThinking: {}, lastTurnId: null,
+    view: null, messages: [], draftBlocks: [], draftOptions: [], phase: "idle", thinkingText: "", turnThinking: {}, turnThinkingSeconds: {}, lastTurnId: null,
     error: null, hud: null, memories: [], memoryUsage: null, memoryError: null, memoryLoading: false, activeCharacterId: null, pendingInput: null, pendingAction: null, lastInput: null,
     memoryPaging: emptyMemoryPaging(), activeBranchId: null, viewNodeId: null, packError: null, hasMoreHistory: false, oldestTurnId: null, loadingOlder: false, sessionLoading: false, pendingSessionId: null,
   };
@@ -200,6 +200,7 @@ export function createInitialStoryState(): Partial<StoryState> {
     phase: "idle",
     thinkingText: "",
     turnThinking: {},
+    turnThinkingSeconds: {},
     lastTurnId: null,
     error: null,
     hud: null,
@@ -275,9 +276,14 @@ export function watchSession(sessionId: string, epoch: number, onSynchronize?: (
 }
 
 // ---- 节点解析器 ----
-export function messagesFromNodes(view: SessionView, turnThinkingMap?: Record<string, string>): StoryMessage[] {
+export function messagesFromNodes(
+  view: SessionView,
+  turnThinkingMap?: Record<string, string>,
+  turnThinkingSecondsMap?: Record<string, number>,
+): StoryMessage[] {
   const out: StoryMessage[] = [];
   const thinkingMap = turnThinkingMap || getStoryState().turnThinking || {};
+  const thinkingSecondsMap = turnThinkingSecondsMap || getStoryState().turnThinkingSeconds || {};
   const nodes = [...(view.nodes ?? [])].sort((a, b) => (a.depth ?? 0) - (b.depth ?? 0) || (a.turnNumber ?? 0) - (b.turnNumber ?? 0));
   for (const n of nodes) {
     if (n.kind === "root") {
@@ -295,6 +301,7 @@ export function messagesFromNodes(view: SessionView, turnThinkingMap?: Record<st
     }));
     const turnId = tc.provenance?.turnId;
     const thinking = thinkingMap[n.nodeId] || (turnId ? thinkingMap[turnId] : undefined);
+    const thinkingSeconds = thinkingSecondsMap[n.nodeId] ?? (turnId ? thinkingSecondsMap[turnId] : undefined);
     out.push({
       id: n.nodeId,
       parentId: n.parentId || undefined,
@@ -309,6 +316,7 @@ export function messagesFromNodes(view: SessionView, turnThinkingMap?: Record<st
       suppressedOptions: tc.suppressedOptions,
       turnNumber: n.turnNumber,
       thinking,
+      thinkingSeconds,
     });
   }
   if (out.length === 0) out.push(openingMessage(view));

@@ -4,7 +4,7 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.IllustrationModalView"
              x:DataType="vm:IllustrationModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="🎨 生成本幕场景插画" DialogWidth="760">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="生成本幕场景插画" DialogWidth="760">
     <c:Modal.Body>
       <StackPanel Width="700" Spacing="12">
         <TextBlock Text="根据本回合的叙事自动提取画面描述，也可自行改写提示词。" TextWrapping="Wrap"
@@ -38,7 +38,7 @@
           <Button Classes="ui-btn ghost" Command="{Binding CloseCommand}" Content="完成 / 关闭" />
           <Button Classes="ui-btn primary" Command="{Binding GenerateCommand}" IsEnabled="{Binding CanGenerate}">
             <Panel>
-              <TextBlock Text="🎨 开始绘制插画" IsVisible="{Binding !Generating}" />
+              <TextBlock Text="开始绘制插画" IsVisible="{Binding !Generating}" />
               <TextBlock Text="正在绘制画面..." IsVisible="{Binding Generating}" />
             </Panel>
           </Button>

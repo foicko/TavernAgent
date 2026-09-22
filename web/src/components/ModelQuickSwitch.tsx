@@ -7,6 +7,7 @@ import { useDismiss } from "../lib/useDismiss";
 import { activePrimaryInstance, useSettings } from "../stores/settingsStore";
 import { useUi } from "../stores/uiStore";
 import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 import { Menu, MenuItem, MenuSeparator } from "../ui/Menu";
 import { StatusDot, Tag } from "../ui/Pill";
 import "./ModelQuickSwitch.css";
@@ -69,22 +70,7 @@ export function ModelQuickSwitch() {
       >
         <StatusDot tone={current ? "success" : "neutral"} hollow={!current} />
         <span className="model-quick-switch__name">{current ? connectionTitle(current) : "配置模型"}</span>
-        <svg
-          className="model-quick-switch__caret"
-          viewBox="0 0 10 10"
-          width="9"
-          height="9"
-          aria-hidden="true"
-        >
-          <path
-            d="M2 3.5L5 6.5L8 3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Icon name="chevronDown" size={12} className="model-quick-switch__caret" />
       </Button>
 
       <Menu
@@ -114,7 +100,7 @@ export function ModelQuickSwitch() {
               meta={
                 active ? (
                   <>
-                    <span aria-hidden="true">✓</span>
+                    <Icon name="check" size={12} />
                     <Tag>主线</Tag>
                   </>
                 ) : null

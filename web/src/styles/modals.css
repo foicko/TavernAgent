@@ -25,11 +25,7 @@
 /* --------------------------------------------------------------------------
    14 REFINED POLISH & MICRO-INTERACTIONS
    -------------------------------------------------------------------------- */
-/* 1. 舞台叙事流触底向底平滑水墨渐隐遮罩 */
-.stage-scroll-area {
-  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 36px), transparent 100%);
-  mask-image: linear-gradient(to bottom, black calc(100% - 36px), transparent 100%);
-}
+/* 1. 舞台叙事流渐隐遮罩见 stage.css（唯一来源） */
 
 /* 2. 玩家发言身份排版 */
 .player-bubble-header {
@@ -78,104 +74,15 @@
   white-space: nowrap;
 }
 
-/* 8. 立绘半身像底部溶墨羽化 */
-.tachie-image {
-  -webkit-mask-image: linear-gradient(to bottom, black 82%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 82%, transparent 100%);
-}
+/* 8. 立绘半身像底部溶墨羽化见 rail-right.css（唯一来源） */
 
-/* 9. 心境量表微调国风墨色阶 */
-.meter-bar-track {
-  width: 100%;
-  height: 6px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin-top: 3px;
-}
-.meter-bar-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
-}
-#meter-fill-aff {
-  background: linear-gradient(90deg, #f43f5e, #e11d48); /* 绯红温情 */
-}
-#meter-fill-trust {
-  background: linear-gradient(90deg, #0ea5e9, #0284c7); /* 蔚蓝信任 */
-}
-#meter-fill-alert {
-  background: linear-gradient(90deg, #f59e0b, #d97706); /* 琥珀戒心 */
-}
-[data-theme="dark"] #meter-fill-aff,
-[data-theme="dark"] #meter-fill-trust,
-[data-theme="dark"] #meter-fill-alert,
+/* 9. 心境量表样式见 rail-right-dossier.css（唯一来源，此处不再重复定义） */
 
-/* 11. 当前活跃节点呼吸脉冲 */
-.node-item.active::before {
-  background: var(--text-main);
-  border-color: var(--text-main);
-  box-shadow: 0 0 0 0 rgba(20, 20, 20, 0.4);
-  animation: activeNodePulse 2.4s infinite cubic-bezier(0.66, 0, 0, 1);
-}
-@keyframes activeNodePulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(20, 20, 20, 0.45);
-  }
-  70% {
-    box-shadow: 0 0 0 7px rgba(20, 20, 20, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(20, 20, 20, 0);
-  }
-}
-@keyframes activeNodePulseDark {
-  0% {
-    box-shadow: 0 0 0 0 rgba(230, 230, 230, 0.45);
-  }
-  70% {
-    box-shadow: 0 0 0 7px rgba(230, 230, 230, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(230, 230, 230, 0);
-  }
-}
+/* 11. 当前活跃节点呼吸脉冲见 rail-left.css（节点样式唯一来源） */
 
-/* 12. 分支快照探针二次确认按钮样式 */
-.probe-btn.confirming {
-  background: #8b2525 !important;
-  color: #ffffff !important;
-  border-color: #8b2525 !important;
-  animation: pulseAlert 0.8s infinite alternate;
-}
-@keyframes pulseAlert {
-  from { opacity: 0.85; }
-  to { opacity: 1; }
-}
+/* 12. 分支快照探针二次确认按钮样式已移除（.probe-btn.confirming 无使用处） */
 
-/* 14. 世界书词条悬停卡底部按钮 */
-.lore-pop-btn-group {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.lore-pop-btn-quote {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-mid);
-  color: var(--text-main);
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition: var(--transition-fast);
-  font-family: inherit;
-}
-.lore-pop-btn-quote:hover {
-  background: var(--text-main);
-  color: var(--bg-canvas);
-  border-color: var(--text-main);
-}
+/* 14. 世界书词条悬停卡底部按钮已迁移到 Popover + Button 原语 */
 
 /* --------------------------------------------------------------------------
    COGNITIVE MEMORY BANK REFACTOR CSS
@@ -261,20 +168,20 @@
 }
 
 .memory-item-card.category-episodic {
-  border-left-color: #2b3e58; /* 亲历：冷深黛蓝 */
+  border-left-color: var(--memory-episodic); /* 亲历：冷深黛蓝 */
 }
 
 .memory-item-card.category-inference {
-  border-left-color: #5c4728; /* 苍赭 */
+  border-left-color: var(--memory-inference); /* 苍赭 */
 }
 
 .memory-item-card.category-secret {
-  border-left-color: #6e3232; /* 秘密：朱砂 */
+  border-left-color: var(--memory-secret); /* 秘密：朱砂 */
 }
 
 .memory-item-card.recalled {
   border-color: var(--border-mid);
-  box-shadow: 0 0 0 1px rgba(180, 140, 60, 0.25);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-warning) 25%, transparent);
 }
 
 .memory-item-card.pinned {
@@ -320,9 +227,9 @@
 .mem-recalled-badge {
   font-size: 9px;
   font-weight: 700;
-  color: #8c6820;
-  background: rgba(210, 170, 70, 0.15);
-  border: 1px solid rgba(210, 170, 70, 0.35);
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
   padding: 0 4px;
   border-radius: var(--radius-full);
   letter-spacing: 0.03em;
@@ -365,8 +272,8 @@
 }
 
 .mem-act-btn.pinned-active {
-  color: #a86c1d;
-  background: rgba(180, 140, 60, 0.12);
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
   font-weight: 700;
 }
 
@@ -451,45 +358,7 @@
   border: 1px solid var(--text-main);
 }
 
-/* --------------------------------------------------------------------------
-   COGNITIVE MIND GRAPH (心智与实体星图) STYLES
-   -------------------------------------------------------------------------- */
 
-
-
-
-
-
-.mind-graph-filters {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  /* flex-wrap 原先只在 components/MindGraphModal.css 的同名规则里；那份更早进入产物，
-     除了这一条以外全部被本规则覆盖。并入此处后不再有跨文件重复声明。 */
-  flex-wrap: wrap;
-}
-
-
-.mind-graph-canvas-container {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: var(--bg-base);
-  cursor: grab;
-  user-select: none;
-}
-
-.mind-graph-canvas-container:active {
-  cursor: grabbing;
-}
-
-#mind-graph-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
 
 .field {
   display: flex;
@@ -507,12 +376,6 @@
   border-radius: var(--radius-sm);
   color: var(--text-main);
   font-size: 13px;
-}
-
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
 }
 
 .btn-row {

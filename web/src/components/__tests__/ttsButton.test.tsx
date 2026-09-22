@@ -40,7 +40,7 @@ describe("TTSPlayButton", () => {
 
     const btn = screen.getByRole("button", { name: "朗读角色台词" });
     expect(btn).toBeTruthy();
-    expect(btn.textContent).toContain("🔊 朗读");
+    expect(btn.textContent).toContain("朗读");
 
     await act(async () => {
       fireEvent.click(btn);
@@ -68,7 +68,7 @@ describe("TTSPlayButton", () => {
     // Should NOT call play
     expect(playSpy).not.toHaveBeenCalled();
     // Notice shown
-    expect(btn.textContent).toContain("🔇 仅旁白");
+    expect(btn.textContent).toContain("仅旁白");
   });
 
   it("reads full text when dialogueOnly is set to false", async () => {
@@ -100,7 +100,7 @@ describe("TTSPlayButton", () => {
     });
 
     const btn = screen.getByRole("button", { name: "停止朗读" });
-    expect(btn.textContent).toContain("⏹ 停止");
+    expect(btn.textContent).toContain("停止");
     expect(btn.classList.contains("is-playing")).toBe(true);
 
     await act(async () => {

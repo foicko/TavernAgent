@@ -7,6 +7,7 @@ import {
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
 import { Field, Select, TextInput } from "../ui/Field";
+import { Icon } from "../ui/Icon";
 import { Section } from "../ui/Section";
 import { Switch } from "../ui/Switch";
 import "./EmbeddingSettings.css";
@@ -190,23 +191,27 @@ export function EmbeddingSettingsPage() {
         </Field>
 
         <div className="embedding-tip-box">
-          💡 <strong>本地部署提示</strong>：若使用本地 Ollama，可在系统终端执行命令拉取模型：
-          <br />
-          <code>ollama pull bge-small-zh-v1.5</code>
-          <br />
-          <code>bge-small-zh-v1.5</code> 模型权重约 90MB，推理耗时仅需 5~10ms，无需抢占 GPU 显存。
+          <Icon name="lightbulb" size={13} className="embedding-tip-icon" />
+          <div>
+            <strong>本地部署提示</strong>：若使用本地 Ollama，可在系统终端执行命令拉取模型：
+            <br />
+            <code>ollama pull bge-small-zh-v1.5</code>
+            <br />
+            <code>bge-small-zh-v1.5</code> 模型权重约 90MB，推理耗时仅需 5~10ms，无需抢占 GPU 显存。
+          </div>
         </div>
 
         <div className="embedding-action-row">
           <Button
             variant="primary"
+            loading={testing}
             onClick={() => void handleTestProbe()}
             disabled={testing}
           >
             {testing ? "正在探测连通性..." : "测试连通性 / 探测维度"}
           </Button>
 
-          <Button variant="quiet" onClick={resetToDefaults}>
+          <Button variant="outline" onClick={resetToDefaults}>
             恢复默认配置
           </Button>
         </div>
@@ -216,7 +221,7 @@ export function EmbeddingSettingsPage() {
             <div>
               <strong>连通性测试未通过</strong>: {probeError}
             </div>
-            <div style={{ marginTop: "4px", fontSize: "12px", opacity: 0.9 }}>
+            <div className="embedding-probe-advice">
               建议排查：1. 本地 Ollama 是否已启动并在 11434 端口监听；2. 是否已执行 <code>ollama pull {model}</code>；3. 云端接口 API Key 是否有效。
             </div>
           </Banner>
@@ -225,10 +230,10 @@ export function EmbeddingSettingsPage() {
         {probeResult && probeResult.ok ? (
           <div className="embedding-probe-card">
             <div className="embedding-probe-header">
-              <span style={{ color: "var(--color-success, #22c55e)" }}>
-                ✓ 服务连通成功！模型可用
+              <span className="embedding-probe-ok">
+                <Icon name="checkCircle" size={14} /> 服务连通成功！模型可用
               </span>
-              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>
+              <span className="embedding-probe-latency">
                 耗时 {probeResult.latencyMs} ms
               </span>
             </div>
@@ -238,7 +243,7 @@ export function EmbeddingSettingsPage() {
             </div>
             {probeResult.preview && probeResult.preview.length > 0 ? (
               <div>
-                <span style={{ fontSize: "11px", color: "var(--text-dim)" }}>首分量向量样例 (Preview):</span>
+                <span className="embedding-preview-caption">首分量向量样例 (Preview):</span>
                 <div className="embedding-preview-code">
                   [{probeResult.preview.map((v) => v.toFixed(5)).join(", ")} ...]
                 </div>

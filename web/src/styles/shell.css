@@ -6,18 +6,15 @@
    ========================================================================== */
 .top-header {
   height: var(--header-h);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow: 0 4px 20px -2px var(--glass-shadow), inset 0 1px 0 0 var(--glass-specular-top);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   z-index: 50;
   flex-shrink: 0;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .brand-group {
@@ -30,10 +27,9 @@
 .brand-title {
   font-family: var(--font-display);
   font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--text-main);
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -54,58 +50,7 @@
 
 
 
-/* View Switcher (Segmented Pill Control · 参考 ui.shadcn.com 与 transitions.dev 规范) */
-.view-mode-tabs {
-  display: flex;
-  align-items: center;
-  background: var(--glass-bg-subtle);
-  backdrop-filter: var(--glass-blur-subtle);
-  -webkit-backdrop-filter: var(--glass-blur-subtle);
-  border: 1px solid var(--glass-border);
-  padding: 2.5px;
-  border-radius: var(--radius-full);
-  gap: 2px;
-  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), var(--shadow-sm);
-  transition: border-color var(--duration-quick, 150ms) ease, box-shadow var(--duration-quick, 150ms) ease;
-}
-
-.view-tab-btn {
-  padding: 4.5px 13px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  user-select: none;
-  touch-action: manipulation;
-  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
-              background-color var(--duration-quick, 150ms) ease,
-              color var(--duration-quick, 150ms) ease,
-              box-shadow var(--duration-quick, 150ms) ease;
-}
-
-.view-tab-btn:hover {
-  color: var(--text-main);
-  background: var(--glass-pill-bg-hover);
-}
-
-.view-tab-btn:active {
-  transform: scale(0.98);
-}
-
-.view-tab-btn.active {
-  background: var(--glass-pill-bg-active);
-  color: var(--glass-pill-text-active);
-  font-weight: var(--fw-semibold);
-  border-color: transparent;
-  box-shadow: var(--shadow-sm), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
-}
+/* View Switcher 由 ui/Tabs 原语承载（.view-mode-tabs 仅作窄屏微调钩子）。 */
 
 /* Header Actions & Rail Toggle Buttons */
 .header-actions {
@@ -116,46 +61,39 @@
 }
 
 .btn-quiet {
-  background: var(--glass-bg-subtle);
-  backdrop-filter: var(--glass-blur-subtle);
-  -webkit-backdrop-filter: var(--glass-blur-subtle);
-  border: 1px solid var(--glass-border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
   color: var(--text-muted);
   height: 30px;
   padding: 0 12px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 1px 3px var(--glass-shadow);
-  transition: transform 0.2s var(--glass-spring-ease),
+  transition: transform var(--duration-quick, 150ms) var(--ease-smooth-out),
               background-color 0.16s ease,
               border-color 0.16s ease,
-              color 0.16s ease,
-              box-shadow 0.16s ease;
+              color 0.16s ease;
   white-space: nowrap;
 }
 
 .btn-quiet:hover {
-  border-color: var(--glass-border-hover);
-  background: var(--glass-bg-elevated);
+  border-color: var(--border-mid);
+  background: var(--bg-subtle);
   color: var(--text-main);
-  transform: translateY(-0.5px) scale(1.02);
-  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 3px 8px -1px var(--glass-shadow);
 }
 
 .btn-quiet:active {
-  transform: translateY(0.5px) scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn-quiet.active {
   background: var(--accent-solid);
   color: var(--accent-contrast);
   border-color: var(--accent-solid);
-  box-shadow: 0 2px 8px -1px var(--glass-shadow);
 }
 
 /* ==========================================================================
@@ -174,7 +112,7 @@
 
 /* Left Rail Collapsed State (48px Slim Icon Dock) */
 body.rail-left-collapsed .workspace-layout {
-  grid-template-columns: 48px minmax(0, 1fr) var(--rail-right-w);
+  grid-template-columns: var(--rail-left-collapsed-w) minmax(0, 1fr) var(--rail-right-w);
 }
 body.rail-left-collapsed .rail-left .rail-full-view { 
   display: none; 
@@ -202,7 +140,7 @@ body.rail-right-collapsed .rail-right,
 
 /* Both Rails Collapsed (Maximal Central Stage Canvas) */
 body.rail-left-collapsed.rail-right-collapsed .workspace-layout {
-  grid-template-columns: 48px minmax(0, 1fr) 0px;
+  grid-template-columns: var(--rail-left-collapsed-w) minmax(0, 1fr) 0px;
 }
 
 /* Mode 2: 纯净编年小说模式 (Reading Mode - 真正纯净的文学阅读流与全视口滚轮支持) */
@@ -259,10 +197,10 @@ body.mode-reading .stage-scroll-area {
   gap: 32px;
 }
 
-/* 正文流内容居中，严格限制在 760px 黄金阅读视口 */
+/* 正文流内容居中，严格限制在 820px 黄金阅读视口 */
 body.mode-reading .reading-mode-banner,
 body.mode-reading .story-turn {
-  max-width: 760px;
+  max-width: var(--reading-w);
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -416,6 +354,6 @@ body.mode-reading .composer-toolbar {
 }
 
 body.mode-reading .composer-input-wrapper {
-  max-width: 760px;
+  max-width: var(--reading-w);
   width: 100%;
 }

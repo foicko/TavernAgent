@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.Media;
 using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
 
@@ -40,21 +42,31 @@ public sealed class OptionViewModel
         OptionId = option.OptionId;
         Intent = option.Intent;
         Text = option.Text;
-        (Label, Icon, Accent) = Intent switch
+        (Label, IconResourceKey, Accent) = Intent switch
         {
-            "aggressive" => ("强势威慑", "⚔️", "#E57373"),
-            "clever" => ("机智试探", "💡", "#64B5F6"),
-            "emotional" => ("共情抚慰", "🤝", "#81C784"),
-            _ => ("出其不意", "🎲", "#BA68C8"),
+            "aggressive" => ("强势威慑", "IconSwords", "DangerBrush"),
+            "clever" => ("机智试探", "IconLightbulb", "InfoBrush"),
+            "emotional" => ("共情抚慰", "IconHandshake", "SuccessBrush"),
+            _ => ("出其不意", "IconDice", "AccentAmberBrush"),
         };
+        IconGeometry = Resolve<Geometry>(IconResourceKey);
     }
 
     public string OptionId { get; }
     public string Intent { get; }
     public string Text { get; }
     public string Label { get; }
-    public string Icon { get; }
+
+    /// <summary>Linear icon geometry from Styles/Icons.axaml (web: Icon name).</summary>
+    public Geometry? IconGeometry { get; }
+
+    /// <summary>Accent brush resource key (token-driven, no literal color).</summary>
     public string Accent { get; }
+
+    private string IconResourceKey { get; }
+
+    private static T? Resolve<T>(string key) where T : class =>
+        Application.Current is { } app && app.Resources.TryGetResource(key, null, out var value) ? value as T : null;
 }
 
 public sealed class CheckEvidenceViewModel

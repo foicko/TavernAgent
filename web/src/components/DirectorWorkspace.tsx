@@ -4,6 +4,8 @@ import type { DirectorAction, DirectorBeat, DirectorDraft, DirectorPlan } from "
 import { directorBusy, storyBusy, useStory } from "../stores/storyStore";
 import { directorScopeKey } from "../stores/slices/directorSlice";
 import { owns, scope } from "../stores/storyHelpers";
+import { Button, IconButton } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 
 const blankPlan = (): DirectorPlan => ({ title: "", guidance: "", beats: [] });
 const statusText = { active: "执行中", paused: "已暂停", completed: "已完成" };
@@ -16,10 +18,10 @@ export function DirectorStatusBar({ onOpen }: { onOpen: () => void }) {
   if (!summary) return null;
   return <div className="director-status" aria-label="导演进度">
     <div className="director-status-main">
-      <button type="button" className="btn-quiet" onClick={onOpen}>🎬 {summary.title} · {statusText[summary.status]}</button>
+      <Button size="sm" variant="outline" onClick={onOpen}><Icon name="film" size={13} /> {summary.title} · {statusText[summary.status]}</Button>
       <span>{summary.status === "completed" ? "阶段已全部结束，可自由续写" : `当前：${summary.currentBeatTitle}`} · {summary.completed}/{summary.total}</span>
-      {summary.status !== "completed" && <button type="button" className="btn-quiet" disabled={disabled}
-        onClick={() => void command(summary.status === "paused" ? "resume" : "pause").catch(() => undefined)}>{summary.status === "paused" ? "恢复大纲" : "暂停大纲"}</button>}
+      {summary.status !== "completed" && <Button size="sm" variant="ghost" disabled={disabled}
+        onClick={() => void command(summary.status === "paused" ? "resume" : "pause").catch(() => undefined)}>{summary.status === "paused" ? "恢复大纲" : "暂停大纲"}</Button>}
     </div>
     {(summary.warning || error) && <p role={error ? "alert" : "status"}>{error || summary.warning}</p>}
   </div>;
@@ -197,48 +199,51 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
       }}>
       <header className="director-header">
         <div><h2 id="director-title">导演模式</h2><p>先商量故事的方向，再让角色走进下一幕。</p></div>
-        <button type="button" className="btn-quiet" onClick={() => void close()}>返回剧情 ×</button>
+        <Button variant="outline" onClick={() => void close()}>返回剧情 <Icon name="close" size={13} /></Button>
       </header>
       {readonly && <div className="director-notice">正在查看历史大纲，此处只读。回到当前节点或从此处分叉后，可以调整未来安排。</div>}
       {active && <div className="director-active-summary">
         <strong>{active.plan.title}</strong><span>{statusText[active.status]} · {Object.keys(active.progress).length}/{active.plan.beats.length} 阶段</span>
         <div className="director-actions">
-          {active.status !== "completed" && <><button className="btn-quiet" disabled={busy} onClick={() => void run(active.status === "paused" ? "resume" : "pause")}>{active.status === "paused" ? "恢复大纲" : "暂停大纲"}</button>
-            <button className="btn-quiet" disabled={busy} onClick={() => void run("complete", active.currentBeatId)}>标记当前阶段完成</button>
-            <button className="btn-quiet" disabled={busy} onClick={() => void run("skip", active.currentBeatId)}>跳过当前阶段</button></>}
+          {active.status !== "completed" && <><Button size="sm" variant="outline" disabled={busy} onClick={() => void run(active.status === "paused" ? "resume" : "pause")}>{active.status === "paused" ? "恢复大纲" : "暂停大纲"}</Button>
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => void run("complete", active.currentBeatId)}>标记当前阶段完成</Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void run("skip", active.currentBeatId)}>跳过当前阶段</Button></>}
         </div>
         {active.warning && <p className="director-warning">{active.warning}</p>}
         {!!Object.keys(active.progress).length && <details><summary>已结束阶段与完成依据</summary>
           {active.plan.beats.filter(b => active.progress[b.beatId]).map(b => <div className="director-evidence" key={b.beatId}>
             <span>{b.title} · {active.progress[b.beatId].status === "skipped" ? "已跳过" : "已完成"}</span>
             {active.progress[b.beatId].evidence?.map((e, i) => <blockquote key={i}>{e.quote}</blockquote>)}
-            <button className="btn-quiet" disabled={busy} onClick={() => void run("rewind", b.beatId)}>回退到「{b.title}」</button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void run("rewind", b.beatId)}><Icon name="undo" size={12} /> 回退到「{b.title}」</Button>
           </div>)}
         </details>}
       </div>}
       {(error || saveIssue) && <div className="director-error" role="alert">
-        <p>{saveIssue || error}</p><button className="btn-quiet" onClick={() => void useStory.getState().reloadView().then(load)}>刷新状态</button>
-        {saveIssue && <><button className="btn-quiet" onClick={() => void keepLocal()}>保留我的编辑并保存</button><button className="btn-quiet" onClick={() => void loadSaved()}>载入已保存草稿</button></>}
+        <p>{saveIssue || error}</p>
+        <div className="director-actions">
+          <Button size="sm" variant="outline" onClick={() => void useStory.getState().reloadView().then(load)}>刷新状态</Button>
+          {saveIssue && <><Button size="sm" variant="outline" onClick={() => void keepLocal()}>保留我的编辑并保存</Button><Button size="sm" variant="outline" onClick={() => void loadSaved()}>载入已保存草稿</Button></>}
+        </div>
       </div>}
       {notice && <p className="director-notice" role="status">{notice}</p>}
       {!workspace ? <p className="director-notice">{loading ? "正在读取导演工作区…" : "暂时无法读取，请刷新重试。"}</p> : <div className="director-columns">
         <section className="director-discussion" aria-label="导演讨论">
           <h3>讨论走向</h3><p className="director-muted">这里的讨论独立保存。描述你想发生什么，或粘贴已有的大纲。</p>
           <div className="director-chat" aria-live="polite">
-            {!workspace.requests.length && <div className="director-empty"><span>✦</span><p>希望下一幕发生什么？</p><small>例如：先让两人试探彼此，再因旧信产生误会，最后留下和解的机会。</small></div>}
+            {!workspace.requests.length && <div className="director-empty"><span><Icon name="sparkles" size={22} /></span><p>希望下一幕发生什么？</p><small>例如：先让两人试探彼此，再因旧信产生误会，最后留下和解的机会。</small></div>}
             {workspace.requests.map(request => <div key={request.requestId} className="director-exchange">
               <article className="director-chat-user"><strong>你</strong><p>{request.text}</p></article>
               <article className="director-chat-assistant"><strong>导演助手</strong>
                 <p>{request.status === "generating" ? "正在梳理剧情安排…" : request.reply || request.error || "讨论已停止"}</p>
                 {request.candidate && !request.draftApplied && <><p className="director-muted">这份建议尚未载入；你的草稿或剧情已更新。</p>
-                  <button className="btn-quiet" disabled={readonly || saving} onClick={() => { version.current = workspace.draft?.version ?? 0; baseRevision.current = active?.plan.revisionId ?? ""; setSaveIssue(""); edit(request.candidate!); }}>载入此建议</button></>}
-                {["failed", "cancelled", "interrupted"].includes(request.status) && <button className="btn-quiet" disabled={readonly || !!running || sending} onClick={() => void send(request.text)}>重试讨论</button>}
+                  <Button size="sm" variant="outline" disabled={readonly || saving} onClick={() => { version.current = workspace.draft?.version ?? 0; baseRevision.current = active?.plan.revisionId ?? ""; setSaveIssue(""); edit(request.candidate!); }}>载入此建议</Button></>}
+                {["failed", "cancelled", "interrupted"].includes(request.status) && <Button size="sm" variant="outline" disabled={readonly || !!running || sending} onClick={() => void send(request.text)}>重试讨论</Button>}
               </article>
             </div>)}
           </div>
           {!readonly && <form className="director-chat-composer" onSubmit={event => { event.preventDefault(); void send(); }}>
             <label htmlFor="director-message">与导演讨论</label><textarea id="director-message" value={text} maxLength={8000} rows={3} placeholder="描述目标、转折、节奏，或想避免的情节…" onChange={event => setText(event.target.value)} disabled={!!running || sending} />
-            <div className="director-actions">{running ? <button type="button" className="btn-quiet" onClick={() => void cancel(running.requestId).catch(() => undefined)}>停止讨论</button> : <button type="submit" className="director-primary" disabled={!text.trim() || sending || !ready}>{sending ? "发送中…" : "发送给导演"}</button>}</div>
+            <div className="director-actions">{running ? <Button variant="outline" onClick={() => void cancel(running.requestId).catch(() => undefined)}>停止讨论</Button> : <Button type="submit" variant="primary" disabled={!text.trim() || sending || !ready}>{sending ? "发送中…" : "发送给导演"}</Button>}</div>
           </form>}
         </section>
         <section className="director-editor" aria-label="大纲编辑">
@@ -252,18 +257,22 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
             const locked = readonly || settled || commanding;
             return <article className={`director-beat ${current ? "current" : ""}`} key={beat.beatId}>
               <div className="director-beat-top"><span className="director-beat-number">{String(index + 1).padStart(2, "0")}</span><span>{current ? "当前阶段" : settled ? "已结束" : "待推进"}</span>
-                {!readonly && <div className="director-actions"><button type="button" aria-label={`上移阶段 ${index + 1}`} disabled={locked || index <= firstMovable} onClick={() => moveBeat(index, -1)}>↑</button><button type="button" aria-label={`下移阶段 ${index + 1}`} disabled={locked || index < firstMovable || index === plan.beats.length - 1} onClick={() => moveBeat(index, 1)}>↓</button><button type="button" aria-label={`删除阶段 ${index + 1}`} disabled={locked || current} onClick={() => edit({ ...editor.current, beats: editor.current.beats.filter(b => b.beatId !== beat.beatId) })}>删除</button></div>}
+                {!readonly && <div className="director-actions">
+                  <IconButton size="sm" label={`上移阶段 ${index + 1}`} disabled={locked || index <= firstMovable} onClick={() => moveBeat(index, -1)}><Icon name="arrowUp" size={13} /></IconButton>
+                  <IconButton size="sm" label={`下移阶段 ${index + 1}`} disabled={locked || index < firstMovable || index === plan.beats.length - 1} onClick={() => moveBeat(index, 1)}><Icon name="arrowDown" size={13} /></IconButton>
+                  <IconButton size="sm" label={`删除阶段 ${index + 1}`} disabled={locked || current} onClick={() => edit({ ...editor.current, beats: editor.current.beats.filter(b => b.beatId !== beat.beatId) })}><Icon name="trash" size={13} /></IconButton>
+                </div>}
               </div>
               <label>阶段名称<input aria-label={`阶段 ${index + 1} 名称`} value={beat.title} maxLength={200} disabled={locked} onChange={event => updateBeat(beat.beatId, { title: event.target.value })} /></label>
               <label>剧情安排<textarea aria-label={`阶段 ${index + 1} 安排`} value={beat.instruction} rows={3} maxLength={4000} disabled={locked} onChange={event => updateBeat(beat.beatId, { instruction: event.target.value })} /></label>
               <label>完成条件<textarea aria-label={`阶段 ${index + 1} 完成条件`} value={beat.completionCriteria} rows={2} maxLength={2000} disabled={locked} placeholder="什么真正发生之后，才能进入下一阶段？" onChange={event => updateBeat(beat.beatId, { completionCriteria: event.target.value })} /></label>
             </article>;
           })}</div>
-          {!readonly && <button type="button" className="director-add" disabled={!ready || commanding || plan.beats.length >= 32} onClick={() => edit({ ...editor.current, beats: [...editor.current.beats, { beatId: crypto.randomUUID(), title: "", instruction: "", completionCriteria: "" }] })}>＋ 添加阶段</button>}
+          {!readonly && <Button variant="outline" block className="director-add" disabled={!ready || commanding || plan.beats.length >= 32} onClick={() => edit({ ...editor.current, beats: [...editor.current.beats, { beatId: crypto.randomUUID(), title: "", instruction: "", completionCriteria: "" }] })}><Icon name="plus" size={13} /> 添加阶段</Button>}
         </section>
       </div>}
       <footer className="director-footer"><p>{readonly ? "历史进度随查看节点还原。" : "确认后从下一回合生效。每阶段可以跨多轮，完成后恢复自由续写。"}</p>
-        {!readonly && <button type="button" className="director-primary" disabled={!valid || !ready || busy || saving || !!saveIssue} onClick={() => void run("activate")}>{commanding ? "正在启用…" : replace ? "确认替换并启用" : "确认启用大纲"}</button>}
+        {!readonly && <Button variant="primary" disabled={!valid || !ready || busy || saving || !!saveIssue} onClick={() => void run("activate")}>{commanding ? "正在启用…" : replace ? "确认替换并启用" : "确认启用大纲"}</Button>}
       </footer>
     </div>
   </div>, document.body);

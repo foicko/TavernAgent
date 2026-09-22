@@ -87,7 +87,12 @@
           <c:Banner Classes="danger" Message="{Binding TestError}" IsVisible="{Binding HasError}" />
           <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Classes="ui-btn quiet" Command="{Binding TestPlaybackCommand}" Content="🔊 试听发音" />
+            <Button Classes="ui-btn quiet" Command="{Binding TestPlaybackCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Path Classes="icon" Data="{StaticResource IconVolume}" Width="13" Height="13" />
+                <TextBlock Text="试听发音" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Button Classes="ui-btn ghost" Command="{Binding ResetDefaultsCommand}" Content="恢复默认" />
           </StackPanel>
         </StackPanel>

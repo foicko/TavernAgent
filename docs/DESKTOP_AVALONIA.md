@@ -69,20 +69,25 @@ desktop/
 
 ### UI 层与主题
 
-**新导航范式（M7）：舞台优先 · 覆盖式侧栏 · 悬浮 HUD · 命令驱动**
-- **窗口**：原生材质（Win11 Mica/Acrylic、macOS vibrancy）→ 不可用时回退不透明；`AmbientBackground` 提供缓慢流动的环境光层。
-- **顶栏**：44px 悬浮玻璃条（品牌 + 面包屑 + 居中视图模式 + 命令/模型/主题）；阅读模式或收起时隐藏。其左右内边距由 `WorkspaceViewModel.HeaderMargin` 计算，**HUD 展开时自动让出 344px，避免右侧控件被 HUD 压住**。
-- **左侧**：56px 图标轨道（`IconRailView`，统一彩色 emoji + 确定性 emoji 字体栈）；点击展开玻璃**飞出面板**（`LeftRailView`），覆盖在舞台之上，不再挤压中央列。关闭时用 `visited` 类保留「上次所在页签」的弱提示。
-- **中央**：全宽 + 居中阅读列（820px）；场景条为吸附玻璃 chip。
-- **输入岛**：底部悬浮玻璃岛，聚焦时形态上浮（`Border.composer-island:focus-within`）；控制行统一 30px 高。
-- **右侧**：贴边悬浮 HUD（`Border.hud`，滚动条 `AllowAutoHide` 自动隐藏），可收拢为召回按钮。
-- **弹窗**：`Modal` 使用 `ExperimentalAcrylicBorder` 模糊 scrim + `anim-pop` 弹簧入场。
+**导航范式（v4）：扁平纸墨 · 三栏内嵌 · 命令驱动**（对标 beautifului.dev，与 Web 同构）
+- **窗口**：完全不透明扁平外壳（已移除 Win11 Mica/Acrylic、macOS vibrancy 与 `AmbientBackground` 氛围光层）。
+- **外壳**：`WorkspaceView` 为 `Grid RowDefinitions="Auto,*" ColumnDefinitions="Auto,*,Auto"`——第 0 行顶栏横跨三列，第 1 行左栏 / 舞台 / 右栏全部内嵌，不再有悬浮顶栏与覆盖式 HUD。
+- **顶栏**：内嵌 `56px` 扁平条（`Height={DynamicResource HeaderHeightPx}`，表面 + 底部发丝线；品牌 + 面包屑 + 居中视图模式 + 命令/模型/主题）；阅读模式保留顶栏、仅隐藏左右栏。
+- **左侧**：常驻可折叠侧栏 `224px`（展开，`LeftRailView`）/ `52px`（收起，`IconRailView`），宽度走 `DoubleTransition` 240ms；同页签再次点击收拢为图标轨，收拢后用 `visited` 类保留「上次所在页签」的弱提示。
+- **中央**：全宽 + 居中阅读列（820px）；场景条为内嵌扁平表面卡（`Border.surface`）。
+- **输入岛**：底部扁平 surface 卡 + 发丝线（`Border.composer-island`），聚焦时以 `RingBrush` 描边；控制行统一 30px 高。
+- **右侧**：内嵌 `304px` 栏（`RightRailWidth`，收起为 0 并显示舞台右上角的扁平召回 pill），滚动条 `AllowAutoHide` 自动隐藏。
+- **弹窗**：`Modal` 使用扁平 scrim（`ScrimBrush`）+ `anim-pop` 弹簧入场；已无 `ExperimentalAcrylicBorder`。
 
-- **设计令牌**：`Styles/DesignTokens.axaml`（v2 增加语义 surface/border/text、elevation、material、ambient、z-index、spring 令牌；**仅系统字体栈**，不随包分发字体）。
+- **设计令牌**：`Styles/DesignTokens.axaml`（v4 全面对齐 beautifului.dev：page/canvas/surface/inset 中性面、ink 三级文字、单一蓝色强调、发丝线描边与低透明阴影，无毛玻璃/无装饰渐变；`HeaderHeightPx=56`、`ScrimBrush`、`RingThickness`；**仅系统字体栈**，不随包分发字体）。
+- **表面与按钮**：`Styles/Surfaces.axaml`（原 `Glass.axaml`）定义 `Border.surface`/`surface-inset`/`surface-elevated`/`panel`；`Button.ui-btn` 变体矩阵 primary / secondary / outline / quiet / ghost / danger / link × xs/sm/md/lg + `icon`（旧 `Button.pill/.primary/.danger` 别名已删除）。
+- **主题**：默认跟随系统（`Application.PlatformSettings.GetColorValues().ThemeVariant`，`App.axaml` 的 `RequestedThemeVariant="Default"`）；用户手动切换后经 `DesktopSettings.Theme` 持久化到本地 JSON。
 - **动效库**：`Styles/Motion.axaml`（`anim-rise`/`anim-pop`/`anim-slide-in-*`/`anim-rise-in-bottom`/`anim-pulse`/`anim-spin`/`stagger-*`/`hover-lift`/`press`/`glide`/`soft-brush`）。
-  **减少动态**：这些效果全部基于 `Style.Animations`，无法用后置 setter 覆盖，因此 `MotionPreference` 在检测到系统偏好（或 `TAVERNAGENT_REDUCE_MOTION=1`）时**直接不加载 `Motion.axaml`**，改为加载 `Styles/ReducedMotion.axaml` 清空过渡；`AmbientBackground` 的环境光漂移挂在 `.drift` 类上，同样不启用。
+  **减少动态**：这些效果全部基于 `Style.Animations`，无法用后置 setter 覆盖，因此 `MotionPreference` 在检测到系统偏好（或 `TAVERNAGENT_REDUCE_MOTION=1`）时**直接不加载 `Motion.axaml`**，改为加载 `Styles/ReducedMotion.axaml` 清空过渡。
 - **UI 基元**：`Controls/` 下的 `Pill`/`Field`/`Section`/`Modal`/`Disclosure`/`Switch`/`ListRow`/
-  `EmptyState`/`Banner`/`Kbd`/`Skeleton`/`AmbientBackground` 以及 `InlineMarkdownText`（`**粗体**` / `*斜体*`）。
+  `EmptyState`/`Banner`/`Kbd`/`Skeleton` 以及 `InlineMarkdownText`（`**粗体**` / `*斜体*`）。
+- **图标**：`Styles/Icons.axaml` 提供 24×24 描边几何（`StreamGeometry`）与 `Path.icon` 样式（`.accent/.primary/.danger/.warn` 变体），
+  与 Web 端 `web/src/ui/Icon.tsx` 一一对应；外壳/导航/工具条的装饰性 emoji 已统一替换为线性图标。
 - **舞台**：`Views/Stage/` 下 `StageView`（居中 820px 阅读列 + 吸附场景条 + 悬浮输入岛）、
   `MessageView`（正文/对白/独白、思考链、依据、悬停浮现的回合微操作、抉择卡、插画、朗读）、`ComposerView`
   （注记/检定/宏、上下文甜甜圈、模型速切、思考强度）。
@@ -116,8 +121,10 @@ desktop/
 | M4 | ✅ | 中央舞台：叙事流、思考链、回合依据与微操作、抉择卡、悬浮输入岛、上下文甜甜圈、模型/强度速切、会话引导 |
 | M5 | ✅ | 左栏（因果树 + 快照探针 + 剧情分支图 + 大纲 / 角色卡库 / 世界书 / 会话 + 剧情包导入导出）与右栏（立绘 + 神态 + 名牌 + 三维心境 + 浮动增减 + 行囊动作气泡 + 前情回顾）、栏内弹窗（档案/誓约/记忆库）、回合候选版本切换 |
 | M6 | ✅ | 设置中心（模型与连接 CRUD/槽位指派/探测 + 交互偏好；语音 / 图像 / 记忆向量四页签，本地 JSON 持久化）、角色导入弹窗（拖放/选择 → 服务端解析 → 开新会话）、世界书示例、命令面板（Ctrl+K，跳转/剧情/视图/面板）、回合插画（提示词提取 + 生图弹窗 + 灯箱）、TTS 朗读（SoundFlow/miniaudio 播放 + MiMo 情境演播） |
-| M6.5 | ✅ | Director 导演工作台（状态条 + 双栏：与导演协商 / 阶段编辑器；启用/暂停/恢复/完成/跳过/回退；本地草稿缓存 + 700ms 自动保存；候选建议载入）。心智星图按需延后 |
-| M7 | ✅ | 全量 UI 重设（设计系统 v2 + 舞台优先 · 覆盖式侧栏 · 悬浮 HUD · 命令驱动的新范式）、原生窗口材质、动效库与 reduced-motion、自包含打包 + sidecar 同捆、移除 Wails 旧壳 |
+| M6.5 | ✅ | Director 导演工作台（状态条 + 双栏：与导演协商 / 阶段编辑器；启用/暂停/恢复/完成/跳过/回退；本地草稿缓存 + 700ms 自动保存；候选建议载入） |
+| M7 | ✅ | 全量 UI 重设（舞台优先 · 悬浮 HUD · 命令驱动）、动效库与 reduced-motion、自包含打包 + sidecar 同捆、移除 Wails 旧壳 |
 | M7.7 | ✅ | UI 走查修复：顶栏避让 HUD + 视图模式居中、图标轨道统一 emoji 字体、心境量表改用 `Meter*` 令牌并按 `Tone` 着色（新增中立刻度线）、HUD 滚动条自动隐藏、行囊空态去彩色 emoji、空态与输入占位文案更新（去掉「左侧栏」）、输入岛控制行统一高度、reduced-motion 改为不加载动效层 |
+| M8 | ✅ | UI 重构对标 beautifului.dev：设计系统 v3 扁平发丝线（page/canvas/surface/inset + 单一蓝 accent）、移除毛玻璃/亚克力/氛围光、常驻折叠侧栏（224/52）与 68px 顶栏、阅读列 820、右栏 304；两端同步移除「心智星图」功能（Web 的 MindGraphModal 与桌面端遗留 `UiStore.MindGraphOpen` 死状态） |
+| M9 | ✅ | 两端对齐「三栏内嵌」范式：桌面端顶栏 56px 内嵌 + 左/右栏并排（右栏 304/0，240ms 过渡，删除悬浮 HUD/`HeaderMargin`）；`Glass.axaml` → `Surfaces.axaml` 并统一 `surface*` 类名、补齐 `Button.quiet`、删除旧按钮别名；`Modal` 去亚克力改扁平 `ScrimBrush`；`EmptyState` 改 `IconGeometry`；主题默认跟随系统并持久化；Web 顶栏去展厅入口、主题持久化/跟随系统、`--glass-*` 兼容层整体删除、六项 CSS 门禁收紧（`!important` 14→4、重复选择器 18→0、颜色字面值与玻璃残留归零） |
 
 > 旧 Wails 桌面壳已**移除**（见上）。

@@ -1,6 +1,8 @@
+/* 右栏内容：档案 Markdown 排版、量表、行囊与前情回顾。
+   由 styles.css 第 3247-3804 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
+   因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
 
-
-/* Dossier Markdown 内部排版美化 */
+/* Dossier Markdown 内部排版 */
 .dossier-markdown-body {
   display: flex;
   flex-direction: column;
@@ -14,7 +16,7 @@
 
 .dossier-h1, .dossier-h2, .dossier-h3 {
   margin: 6px 0 2px 0;
-  font-weight: 700;
+  font-weight: var(--fw-semibold);
   color: var(--text-main);
 }
 .dossier-h1 { font-size: 13.5px; border-bottom: 1px solid var(--border-light); padding-bottom: 2px; }
@@ -27,12 +29,12 @@
   gap: 6px;
   align-self: flex-start;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-solid);
-  background: var(--accent-subtle, rgba(234, 88, 12, 0.08));
-  border: 1px solid var(--accent-border, rgba(234, 88, 12, 0.2));
+  font-weight: var(--fw-semibold);
+  color: var(--accent-glow);
+  background: var(--accent-subtle);
+  border: 1px solid color-mix(in srgb, var(--accent-solid) 25%, transparent);
   padding: 2px 8px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   margin-top: 4px;
 }
 
@@ -42,24 +44,21 @@
 }
 
 .dossier-bracket-tag {
-  color: var(--accent-solid);
-  font-weight: 600;
-  background: rgba(0, 0, 0, 0.04);
+  color: var(--accent-glow);
+  font-weight: var(--fw-semibold);
+  background: var(--bg-muted);
   padding: 1px 4px;
   border-radius: 3px;
 }
-[data-theme="dark"] .dossier-bracket-tag {
-  background: rgba(255, 255, 255, 0.08);
-}
 
 .dossier-code-inline {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono);
   font-size: 11px;
   padding: 1px 4px;
   border-radius: 3px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-light);
-  color: var(--accent-solid);
+  color: var(--accent-glow);
 }
 
 .dossier-blockquote {
@@ -69,7 +68,7 @@
   background: var(--bg-surface);
   color: var(--text-muted);
   font-style: italic;
-  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .dossier-ul {
@@ -88,15 +87,14 @@
   color: var(--text-dim);
 }
 
-/* 属性表：V2/V3 卡里 {"Key": ("v")}、Key：（"v"）一类土制属性列表的落点。
-   键固定成窄列右对齐，值换行左对齐，长文本不再糊成一堵墙。 */
+/* 属性表：V2/V3 卡里 {"Key": ("v")}、Key：（"v"）一类土制属性列表的落点。 */
 .dossier-attr-grid {
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 6px 8px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   background: var(--bg-subtle);
 }
 
@@ -116,7 +114,7 @@
 
 .dossier-attr-key {
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
   text-align: right;
 }
@@ -135,7 +133,7 @@
   font-style: italic;
 }
 
-/* Section Component */
+/* HUD 区块 */
 .hud-block {
   display: flex;
   flex-direction: column;
@@ -144,7 +142,7 @@
 
 .hud-block-title {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--fw-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
@@ -153,14 +151,14 @@
   align-items: center;
 }
 
-/* Minimalist Black & White Meters */
+/* 心境三维量表 */
 .meter-box-minimal {
   display: flex;
   flex-direction: column;
   gap: 10px;
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 12px 14px;
   box-shadow: var(--shadow-sm);
 }
@@ -177,17 +175,43 @@
   justify-content: space-between;
   align-items: center;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--text-main);
 }
 
 #meter-num-aff,
 #meter-num-trust,
 #meter-num-alert {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.02em;
+}
+
+.meter-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--meter-track);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.meter-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-medium) var(--ease-smooth-out),
+              background-color var(--duration-fast) var(--ease-smooth-out);
+}
+
+#meter-fill-aff {
+  background: var(--meter-aff);
+}
+#meter-fill-trust {
+  background: var(--meter-trust);
+}
+#meter-fill-alert {
+  background: var(--meter-alert);
 }
 
 .meter-delta-float {
@@ -196,10 +220,10 @@
   top: -1px;
   padding: 1px 5px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: var(--fw-semibold);
   border-radius: var(--radius-full);
   pointer-events: none;
-  animation: floatDeltaUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: floatDeltaUp 1.4s var(--ease-smooth-out) forwards;
   z-index: 20;
 }
 
@@ -255,17 +279,7 @@
   }
 }
 
-.item-bubble-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-  border-bottom: 1px solid var(--border-light);
-  padding-bottom: 3px;
-  margin-bottom: 2px;
-}
-
+/* 行囊 */
 .slot-icon-quiet {
   font-size: 15px;
   color: var(--text-main);
@@ -273,7 +287,7 @@
 
 .slot-name-label {
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--text-main);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -302,14 +316,14 @@
 }
 
 .hud-empty-card .empty-card-icon {
-  font-size: 20px;
+  display: inline-flex;
   line-height: 1;
   opacity: 0.8;
 }
 
 .hud-empty-card .empty-card-text {
   font-size: 11.5px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   color: var(--text-muted);
 }
 
@@ -329,12 +343,13 @@
   background: var(--bg-subtle);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
-  transition: var(--transition-fast);
+  transition: border-color var(--duration-quick) var(--ease-smooth-out),
+              background-color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .checkpoint-card:hover {
   border-color: var(--border-mid);
-  background: var(--bg-elevated);
+  background: var(--bg-surface);
 }
 
 .checkpoint-card-header {
@@ -345,7 +360,7 @@
 
 .checkpoint-card-tag {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--fw-semibold);
   color: var(--text-main);
   display: inline-flex;
   align-items: center;
@@ -371,7 +386,7 @@
 }
 
 .checkpoint-attr-pill {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--text-main);
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
@@ -386,11 +401,11 @@
   color: var(--text-dim);
   margin-top: 4px;
   padding-top: 4px;
-  border-top: 1px dashed var(--border-subtle);
+  border-top: 1px dashed var(--border-light);
 }
 
 .checkpoint-tension-label {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-style: normal;
   color: var(--text-muted);
 }

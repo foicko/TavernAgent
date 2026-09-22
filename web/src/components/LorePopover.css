@@ -1,5 +1,51 @@
-/* 世界书悬浮卡：定位由 styles.css 的 .lore-popover 负责，这里只补内容样式。 */
-.lore-pop-keys {
+/* 世界书悬停卡：外壳来自 ui/Popover，这里只排内容。 */
+.lore-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lore-card__tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.lore-card__title {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+
+.lore-card__desc {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.lore-card__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+.lore-card__keys {
   font-size: var(--fs-xs);
   color: var(--text-dim);
+}
+
+.lore-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }

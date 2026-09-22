@@ -40,6 +40,8 @@ export interface StoryMessage {
   suppressedOptions?: number;
   turnNumber?: number;
   thinking?: string;
+  /** 思考耗时（秒）：settle 后显示「思考了 N 秒」。 */
+  thinkingSeconds?: number;
 }
 
 export interface OptionView {
@@ -98,6 +100,7 @@ export interface StoryState extends DirectorSliceState {
   phase: TurnPhase;
   thinkingText: string;
   turnThinking: Record<string, string>;
+  turnThinkingSeconds: Record<string, number>;
   lastTurnId: string | null;
   error: string | null;
   hud: WorldState | null;

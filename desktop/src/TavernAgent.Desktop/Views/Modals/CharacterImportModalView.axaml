@@ -11,10 +11,13 @@
       <StackPanel Width="820" Spacing="12">
 
         <!-- dropzone -->
-        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusLg}" Padding="24"
+        <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="24"
                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
           <StackPanel Spacing="8" HorizontalAlignment="Center">
-            <TextBlock Text="🎭" FontSize="30" HorizontalAlignment="Center" />
+            <Border Width="48" Height="48" CornerRadius="{DynamicResource RadiusLg}" HorizontalAlignment="Center"
+                    Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+              <Path Classes="icon" Data="{StaticResource IconDownload}" Width="22" Height="22" />
+            </Border>
             <TextBlock Text="正在读取角色设定与开场…" HorizontalAlignment="Center"
                        FontSize="{DynamicResource FsSm}" IsVisible="{Binding Parsing}" />
             <TextBlock Text="拖入或选择角色卡" HorizontalAlignment="Center"
@@ -33,9 +36,9 @@
         <StackPanel Spacing="10" IsVisible="{Binding HasPreview}">
           <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
             <Panel Grid.Column="0" Width="64" Height="64">
-              <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
-                <TextBlock Text="🎭" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           IsVisible="{Binding NoAvatar}" />
+              <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}"
+                      BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                <Path Classes="icon" Data="{StaticResource IconMask}" Width="22" Height="22" IsVisible="{Binding NoAvatar}" />
               </Border>
               <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
             </Panel>

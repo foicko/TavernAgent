@@ -1,0 +1,34 @@
+/* 头像：发丝线描边，无图时 inset 面 + 首字 */
+.ui-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  user-select: none;
+}
+
+.ui-avatar--circle {
+  border-radius: var(--radius-full);
+}
+
+.ui-avatar--rounded {
+  border-radius: var(--radius-md);
+}
+
+.ui-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ui-avatar__initial {
+  display: inline-flex;
+}

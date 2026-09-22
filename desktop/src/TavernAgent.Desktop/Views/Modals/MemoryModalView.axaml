@@ -29,12 +29,12 @@
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
           <StackPanel>
-            <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="🧠" Title="暂无记忆条目"
+            <c:EmptyState IsVisible="{Binding IsEmpty}" IconGeometry="{StaticResource IconBrain}" Title="暂无记忆条目"
                           Description="推进剧情后，见证、推测与秘密会在此沉淀并可修订。" />
             <ItemsControl ItemsSource="{Binding Rows}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:MemoryRowViewModel">
-                  <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="12" Margin="0,0,0,8">
+                  <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="12" Margin="0,0,0,8">
                     <StackPanel Spacing="6">
                       <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Classes="state-pill"><TextBlock Text="{Binding KindLabel}" FontSize="10" /></Border>
@@ -49,9 +49,14 @@
                         <Button Classes="ui-btn sm ghost" Command="{Binding TogglePinCommand}" Content="{Binding PinLabel}" />
                         <Button Classes="ui-btn sm ghost" Command="{Binding ToggleHideCommand}" Content="{Binding HideLabel}" />
                         <Button Classes="ui-btn sm ghost" Command="{Binding ToggleExpandCommand}"
-                                Content="证据 ▼" IsVisible="{Binding HasEvidence}" />
+                                IsVisible="{Binding HasEvidence}">
+                          <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="证据" VerticalAlignment="Center" />
+                            <Path Classes="icon" Data="{StaticResource IconChevronDown}" Width="11" Height="11" />
+                          </StackPanel>
+                        </Button>
                       </StackPanel>
-                      <Border IsVisible="{Binding IsExpanded}" Classes="glass-subtle" Padding="10"
+                      <Border IsVisible="{Binding IsExpanded}" Classes="surface-inset" Padding="10"
                               CornerRadius="{DynamicResource RadiusSm}">
                         <StackPanel Spacing="4">
                           <TextBlock Text="{Binding SourceQuote, StringFormat=引文：{0}}" TextWrapping="Wrap"
@@ -69,10 +74,20 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-          <Button Classes="ui-btn sm quiet" Command="{Binding PrevPageCommand}" IsEnabled="{Binding HasPrev}" Content="‹ 上一页" />
+          <Button Classes="ui-btn sm quiet" Command="{Binding PrevPageCommand}" IsEnabled="{Binding HasPrev}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <Path Classes="icon" Data="{StaticResource IconChevronLeft}" Width="12" Height="12" />
+              <TextBlock Text="上一页" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
           <TextBlock Text="{Binding Total, StringFormat=共 {0} 条}" VerticalAlignment="Center"
                      FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextDimBrush}" />
-          <Button Classes="ui-btn sm quiet" Command="{Binding NextPageCommand}" IsEnabled="{Binding HasNext}" Content="下一页 ›" />
+          <Button Classes="ui-btn sm quiet" Command="{Binding NextPageCommand}" IsEnabled="{Binding HasNext}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <TextBlock Text="下一页" VerticalAlignment="Center" />
+              <Path Classes="icon" Data="{StaticResource IconChevronRight}" Width="12" Height="12" />
+            </StackPanel>
+          </Button>
         </StackPanel>
       </Grid>
     </c:Modal.Body>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../app/api";
 import type { LorebookPage, SessionView } from "../app/types";
+import { Button } from "../ui/Button";
 
 const emptyPage = (): LorebookPage => ({ entries: [], hasMore: false, nextOffset: 0 });
 
@@ -33,7 +34,7 @@ export function LorebookPanel({ view }: { view: SessionView }) {
     }} />
     <h3>世界书词条 <small>已加载 {page.entries.length} 条</small></h3>
     <p className="story-map-muted">条目来自本次开局的角色卡；是否进入生成上下文由触发词决定。</p>
-    {error && <p role="alert" className="story-map-error">{error} <button onClick={() => setRevision(value => value + 1)}>重试</button></p>}
+    {error && <p role="alert" className="story-map-error">{error} <Button size="sm" variant="outline" onClick={() => setRevision(value => value + 1)}>重试</Button></p>}
     {!loading && !error && page.entries.length === 0 && <p className="story-map-muted">{query ? "没有匹配的世界书词条。" : "此会话没有公开世界书词条。"}</p>}
     {page.entries.map(match => <details className="lore-entry-card" key={match.bookIndex + ":" + match.entryIndex}>
       <summary className="lore-entry-top"><span className="lore-entry-title">{match.entry.title || match.entry.keys?.[0] || "未命名条目"}</span><span className="lore-toggle-pill">{match.entry.enabled ? "按词触发" : "已禁用"}</span></summary>
@@ -43,7 +44,7 @@ export function LorebookPanel({ view }: { view: SessionView }) {
       <div className="lorebook-content">{match.entry.content}</div>
     </details>)}
     {loading && <p role="status">检索中…</p>}
-    {page.hasMore && <button className="btn-quiet" disabled={loading} onClick={() => setOffset(page.nextOffset)}>加载更多词条</button>}
+    {page.hasMore && <Button size="sm" variant="outline" disabled={loading} onClick={() => setOffset(page.nextOffset)}>加载更多词条</Button>}
     <h3>剧情秘密</h3>
     {secrets.length === 0 && <p className="story-map-muted">{query ? "没有匹配的秘密标题。" : "此会话没有秘密条目。"}</p>}
     {secrets.map(secret => <article className="lore-entry-card" key={secret.secretId}>

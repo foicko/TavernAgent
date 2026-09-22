@@ -44,12 +44,16 @@
               <Border Grid.Column="0" Classes="chip" HorizontalAlignment="Left">
                 <TextBlock Text="{Binding ExpressionTitle}" FontSize="{DynamicResource FsXs}" />
               </Border>
-              <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding OpenFullTachieCommand}"
-                      Content="⛶ 全身" />
+              <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding OpenFullTachieCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconExpand}" Width="12" Height="12" />
+                  <TextBlock Text="全身" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
             </Grid>
 
             <StackPanel VerticalAlignment="Bottom" Margin="10" Spacing="6">
-              <Border Classes="glass-subtle" CornerRadius="999" Padding="3" HorizontalAlignment="Center">
+              <Border Classes="surface-inset" CornerRadius="999" Padding="3" HorizontalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="3">
                   <Button Classes="seg" Classes.active="{Binding IsAlertExpr}" Command="{Binding SetAlertCommand}" Content="警觉" />
                   <Button Classes="seg" Classes.active="{Binding IsCalmExpr}" Command="{Binding SetCalmCommand}" Content="冷静" />
@@ -83,9 +87,24 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <Border Classes="chip"><TextBlock Text="{Binding Character.StateBadge, StringFormat=🎭 {0}}" FontSize="10" /></Border>
-            <Border Classes="chip"><TextBlock Text="{Binding Character.AllianceBadge, StringFormat=🏛️ {0}}" FontSize="10" /></Border>
-            <Border Classes="chip"><TextBlock Text="{Binding Character.VoiceBadge, StringFormat=🎙️ {0}}" FontSize="10" /></Border>
+            <Border Classes="chip">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="11" Height="11" />
+                <TextBlock Text="{Binding Character.StateBadge}" FontSize="10" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <Border Classes="chip">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconUsers}" Width="11" Height="11" />
+                <TextBlock Text="{Binding Character.AllianceBadge}" FontSize="10" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <Border Classes="chip">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconMic}" Width="11" Height="11" />
+                <TextBlock Text="{Binding Character.VoiceBadge}" FontSize="10" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
           </StackPanel>
         </StackPanel>
 
@@ -95,7 +114,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
               <Border Grid.Column="0" Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"
                       Background="{DynamicResource SubtleBrush}">
-                <TextBlock Text="📜" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconScroll}" Width="17" Height="17" />
               </Border>
               <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
                 <TextBlock Text="角色设定与世界观" FontSize="13" FontWeight="SemiBold" />
@@ -110,7 +129,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
               <Border Grid.Column="0" Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"
                       Background="{DynamicResource SubtleBrush}">
-                <TextBlock Text="🤝" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconLink}" Width="17" Height="17" />
               </Border>
               <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
                 <TextBlock Text="主动契约与承诺" FontSize="13" FontWeight="SemiBold" />
@@ -127,7 +146,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
               <Border Grid.Column="0" Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"
                       Background="{DynamicResource SubtleBrush}">
-                <TextBlock Text="🧠" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconDatabase}" Width="17" Height="17" />
               </Border>
               <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
                 <TextBlock Text="认知记忆库" FontSize="13" FontWeight="SemiBold" />
@@ -142,7 +161,7 @@
         </StackPanel>
 
         <!-- Meters -->
-        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="12">
+        <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="12">
           <StackPanel Spacing="10">
             <TextBlock Text="心境三维量表 · 实时投影" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -212,7 +231,7 @@
                   <Button.Flyout>
                     <Flyout Placement="Top">
                       <Border x:DataType="vm:InventoryItemViewModel" Width="180"
-                              Classes="glass-elevated" Padding="8">
+                              Classes="surface-elevated" Padding="8">
                         <StackPanel Spacing="4">
                           <TextBlock Text="{Binding Name, StringFormat={}{0} 动作}" FontSize="10"
                                      Foreground="{DynamicResource TextDimBrush}" />
@@ -248,25 +267,34 @@
         </StackPanel>
 
         <!-- Checkpoint -->
-        <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="12"
+        <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="12"
                 IsVisible="{Binding Checkpoint.HasAny}">
           <StackPanel Spacing="10">
             <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
                     Command="{Binding Checkpoint.ToggleCommand}">
               <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="📖 前情回顾与交接" HorizontalAlignment="Left" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Left">
+                  <Path Classes="icon" Data="{StaticResource IconBook}" Width="13" Height="13" />
+                  <TextBlock Text="前情回顾与交接" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding Checkpoint.ToggleLabel}"
                            Foreground="{DynamicResource TextDimBrush}" />
               </Grid>
             </Button>
             <StackPanel Spacing="10" IsVisible="{Binding Checkpoint.IsExpanded}">
               <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasNarrativeArc}">
-                <TextBlock Text="📜 剧情推进" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconScroll}" Width="12" Height="12" />
+                  <TextBlock Text="剧情推进" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
                 <TextBlock Text="{Binding Checkpoint.NarrativeArc}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
                            Foreground="{DynamicResource TextSecondaryBrush}" />
               </StackPanel>
               <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasMindsets}">
-                <TextBlock Text="🌊 角色心境与暗涌" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" />
+                  <TextBlock Text="角色心境与暗涌" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
                 <ItemsControl ItemsSource="{Binding Checkpoint.Mindsets}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="vm:CheckpointMindset">
@@ -282,12 +310,18 @@
                            IsVisible="{Binding Checkpoint.HiddenTension, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
               </StackPanel>
               <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasOpenLoops}">
-                <TextBlock Text="⏳ 待解悬念与约定" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconClock}" Width="12" Height="12" />
+                  <TextBlock Text="待解悬念与约定" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
                 <TextBlock Text="{Binding Checkpoint.OpenLoops}" TextWrapping="Wrap" Classes="mono"
                            FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
               </StackPanel>
               <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasMilestones}">
-                <TextBlock Text="🚩 阶段里程碑" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" />
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconFlag}" Width="12" Height="12" />
+                  <TextBlock Text="阶段里程碑" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
                 <TextBlock Text="{Binding Checkpoint.Milestones}" TextWrapping="Wrap" Classes="mono"
                            FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
               </StackPanel>

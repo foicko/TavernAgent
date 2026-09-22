@@ -1,4 +1,4 @@
-// LeftRail: 左侧多维导航栏 (48px 图标停靠轨 / 270px 完整内容)
+// LeftRail: 左侧多维导航栏 (52px 图标停靠轨 / 224px 完整内容，见 tokens.css 的 --rail-left-*)
 import React, { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useUi } from "../stores/uiStore";
@@ -19,6 +19,8 @@ import {
   deleteImportedCardRemote,
 } from "../lib/characterCardStore";
 import { openCard } from "../lib/cardLaunch";
+import { Icon } from "../ui/Icon";
+import { Tabs } from "../ui/Tabs";
 import "./LeftRail.css";
 
 function formatSessionTime(isoString?: string): string {
@@ -174,7 +176,7 @@ export const LeftRail: React.FC = () => {
       {/* Collapsed Icon View (Dock Mode) */}
       <div className="rail-collapsed-view">
         <button className="collapsed-icon-btn" onClick={toggleLeftRail} title="展开左侧栏 (Ctrl+[)">
-          ›
+          <Icon name="chevronRight" size={16} />
         </button>
         <div className="rail-dock-divider" />
         <div
@@ -183,7 +185,7 @@ export const LeftRail: React.FC = () => {
           title="因果分支树 (点击展开)"
           onClick={() => openLeftTabAndExpand("tree")}
         >
-          枝
+          <Icon name="leaf" size={17} />
         </div>
         <div
           className={`collapsed-icon-btn ${leftTab === "characters" ? "active" : ""}`}
@@ -191,7 +193,7 @@ export const LeftRail: React.FC = () => {
           title="角色档案库 (点击展开)"
           onClick={() => openLeftTabAndExpand("characters")}
         >
-          人
+          <Icon name="user" size={17} />
         </div>
         <div
           className={`collapsed-icon-btn ${leftTab === "lore" ? "active" : ""}`}
@@ -199,7 +201,7 @@ export const LeftRail: React.FC = () => {
           title="世界书词条 (点击展开)"
           onClick={() => openLeftTabAndExpand("lore")}
         >
-          典
+          <Icon name="book" size={17} />
         </div>
         <div
           className={`collapsed-icon-btn ${leftTab === "sessions" ? "active" : ""}`}
@@ -207,7 +209,7 @@ export const LeftRail: React.FC = () => {
           title="剧本会话史 (点击展开)"
           onClick={() => openLeftTabAndExpand("sessions")}
         >
-          卷
+          <Icon name="clock" size={17} />
         </div>
       </div>
 
@@ -216,48 +218,36 @@ export const LeftRail: React.FC = () => {
         {/* 移动端抽屉顶栏关闭按钮 */}
         <div className="mobile-drawer-header mobile-only">
           <span className="mobile-drawer-title">
-            <span>📚</span> 剧本与角色
+            <Icon name="book" size={15} /> 剧本与角色
           </span>
-          <button className="modal-close-btn" onClick={toggleLeftRail} title="收起目录">
-            ✕
+          <button className="modal-close-btn" onClick={toggleLeftRail} title="收起目录" aria-label="收起目录">
+            <Icon name="close" size={15} />
           </button>
         </div>
 
         <div className="rail-tab-header">
-          <button
-            className={`rail-subtab-btn ${leftTab === "tree" ? "active" : ""}`}
-            id="subtab-btn-tree"
-            onClick={() => switchLeftTab("tree")}
-          >
-            因果分支
-          </button>
-          <button
-            className={`rail-subtab-btn ${leftTab === "characters" ? "active" : ""}`}
-            id="subtab-btn-characters"
-            onClick={() => switchLeftTab("characters")}
-          >
-            角色库
-          </button>
-          <button
-            className={`rail-subtab-btn ${leftTab === "lore" ? "active" : ""}`}
-            id="subtab-btn-lore"
-            onClick={() => switchLeftTab("lore")}
-          >
-            世界书
-          </button>
-          <button
-            className={`rail-subtab-btn ${leftTab === "sessions" ? "active" : ""}`}
-            id="subtab-btn-sessions"
-            onClick={() => switchLeftTab("sessions")}
-          >
-            会话
-          </button>
+          <Tabs
+            label="左栏页签"
+            className="rail-subtabs"
+            variant="segmented"
+            size="sm"
+            fill
+            value={leftTab}
+            onChange={(next) => switchLeftTab(next)}
+            items={[
+              { value: "tree", id: "subtab-btn-tree", label: "因果分支" },
+              { value: "characters", id: "subtab-btn-characters", label: "角色库" },
+              { value: "lore", id: "subtab-btn-lore", label: "世界书" },
+              { value: "sessions", id: "subtab-btn-sessions", label: "会话" },
+            ]}
+          />
           <button
             className="rail-collapse-handle-btn"
             onClick={toggleLeftRail}
             title="收起左侧栏 (Ctrl+[)"
+            aria-label="收起左侧栏"
           >
-            ‹
+            <Icon name="chevronLeft" size={15} />
           </button>
         </div>
 
@@ -268,7 +258,7 @@ export const LeftRail: React.FC = () => {
             id="view-tree"
             style={{ "--lr-panel-display": leftTab === "tree" ? "block" : "none" } as React.CSSProperties}
           >
-            {currentView && <><button className="story-map-open btn-quiet" onClick={() => setStoryMapOpen(true)}>打开剧情分支图</button><StoryOutlineSection view={currentView} /></>}
+            {currentView && <><button className="story-map-open btn-quiet" onClick={() => setStoryMapOpen(true)}><Icon name="grid" size={13} /> 打开剧情分支图</button><StoryOutlineSection view={currentView} /></>}
             <div className="tree-lead-label">
               <span>分支拓扑 (Branch Graph)</span>
               <span className="tree-lead-hint">可点击节点回溯</span>
@@ -279,7 +269,7 @@ export const LeftRail: React.FC = () => {
 
               {displayTreeNodes.length === 0 ? (
                 <div className="tree-empty-card">
-                  <div className="tree-empty-icon">🌱</div>
+                  <div className="tree-empty-icon"><Icon name="leaf" size={22} /></div>
                   <div className="tree-empty-title">
                     因果树未播种
                   </div>
@@ -306,7 +296,7 @@ export const LeftRail: React.FC = () => {
                           {node.isViewing && <span className="node-badge-viewing">当前视角</span>}
                         </div>
                         {node.isActive ? (
-                          <span className="node-state-pill active">活跃中 ⚡</span>
+                          <span className="node-state-pill active">活跃中</span>
                         ) : node.isFork ? (
                           <span className="node-state-pill fork">已封存分支</span>
                         ) : (
@@ -345,14 +335,14 @@ export const LeftRail: React.FC = () => {
                               }}
                               title="收起选项"
                             >
-                              ✕
+                              <Icon name="close" size={12} />
                             </button>
                           </div>
 
                           {isConfirming ? (
                             <div className="probe-fork-confirm-box">
                               <div className="probe-fork-confirm-text">
-                                🌿 确定从<strong>【{node.tag}】</strong>派生新平行因果分支？
+                                <Icon name="leaf" size={12} /> 确定从<strong>【{node.tag}】</strong>派生新平行因果分支？
                               </div>
                               <div className="probe-fork-confirm-actions">
                                 <button
@@ -367,7 +357,7 @@ export const LeftRail: React.FC = () => {
                                     setProbeNodeId(null);
                                   }}
                                 >
-                                  ✓ 确认开辟
+                                  <Icon name="check" size={12} /> 确认开辟
                                 </button>
                                 <button
                                   className="probe-btn-cancel"
@@ -381,7 +371,7 @@ export const LeftRail: React.FC = () => {
                             <div className="probe-actions-stack">
                               {node.isViewing ? (
                                 <div className="probe-viewing-badge">
-                                  <span>👁️ 当前主窗口正在显示此节点</span>
+                                  <span><Icon name="eye" size={12} /> 当前主窗口正在显示此节点</span>
                                 </div>
                               ) : (
                                 <button
@@ -396,7 +386,7 @@ export const LeftRail: React.FC = () => {
                                   }}
                                   title="切换主窗口视角至该历史快照"
                                 >
-                                  <span>👁️</span>
+                                  <Icon name="eye" size={13} />
                                   <span>回溯定位至此快照</span>
                                 </button>
                               )}
@@ -410,7 +400,7 @@ export const LeftRail: React.FC = () => {
                                   onClick={() => setBranchConfirmId(node.id)}
                                   title="从该快照分叉新时间线"
                                 >
-                                  <span>🌿</span>
+                                  <Icon name="leaf" size={13} />
                                   <span>开辟分支</span>
                                 </button>
                                 {node.canRegenerate && hasBackendNodes && (
@@ -418,12 +408,12 @@ export const LeftRail: React.FC = () => {
                                     className="probe-btn-sub"
                                     onClick={() => {
                                       void regenerate(node.id);
-                                      notifyQuiet(`🔄 正在重新生成【${node.tag}】的变体回复... ⚡`);
+                                      notifyQuiet(`正在重新生成【${node.tag}】的变体回复...`);
                                       setProbeNodeId(null);
                                     }}
                                     title="在兄弟节点上重跑大模型变体回复"
                                   >
-                                    <span>🔄</span>
+                                    <Icon name="refresh" size={13} />
                                     <span>重生变体</span>
                                   </button>
                                 )}
@@ -464,7 +454,7 @@ export const LeftRail: React.FC = () => {
 
                   {totalCards === 0 && (
                     <div className="hud-empty-card" style={{ padding: "16px 12px", textAlign: "center" }}>
-                      <div style={{ fontSize: "20px", marginBottom: "6px" }}>🎭</div>
+                      <div style={{ marginBottom: "6px", color: "var(--text-dim)" }}><Icon name="user" size={22} /></div>
                       <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>暂无角色卡，请点击上方「+ 导入 / 创建角色卡」开始</div>
                     </div>
                   )}
@@ -620,7 +610,7 @@ export const LeftRail: React.FC = () => {
 
             {sessions.length === 0 ? (
               <div className="session-empty-state">
-                <div className="empty-icon">📜</div>
+                <div className="empty-icon"><Icon name="scroll" size={22} /></div>
                 <div className="empty-title">暂无历史故事会话</div>
                 <div className="empty-desc">
                   点击下方按钮开辟，或直接在底部输入框发言开启全新故事。
@@ -726,7 +716,7 @@ export const LeftRail: React.FC = () => {
                 onClick={() => void startNewSessionForCurrentChar()}
                 title={`基于【${char.name}】开辟全新平行故事分支`}
               >
-                <span className="session-primary-icon">✨</span>
+                <Icon name="sparkles" size={14} className="session-primary-icon" />
                 <span>与「{char.shortName}」开启新故事</span>
               </button>
 
@@ -735,19 +725,19 @@ export const LeftRail: React.FC = () => {
                   className="session-utility-btn"
                   onClick={() => {
                     void exportSession();
-                    notifyQuiet("正在打包导出 .tavernpack 会话剧本... 📦");
+                    notifyQuiet("正在打包导出 .tavernpack 会话剧本...");
                   }}
                   disabled={!currentView}
                   title="导出当前会话为 .tavernpack 剧情包"
                 >
-                  <span>📦 导出剧本</span>
+                  <Icon name="download" size={13} /> 导出剧本
                 </button>
 
                 <label
                   className="session-utility-btn"
                   title="导入 .tavernpack 或 ZIP 剧本包"
                 >
-                  <span>📥 导入剧本</span>
+                  <Icon name="upload" size={13} /> 导入剧本
                   <input
                     type="file"
                     accept=".tavernpack,.zip"
@@ -756,7 +746,7 @@ export const LeftRail: React.FC = () => {
                       const file = e.target.files?.[0];
                       if (file) {
                         void importSession(file).catch(() => {});
-                        notifyQuiet(`正在导入剧本包：${file.name}... ⏳`);
+                        notifyQuiet(`正在导入剧本包：${file.name}...`);
                       }
                       e.target.value = "";
                     }}
@@ -771,7 +761,7 @@ export const LeftRail: React.FC = () => {
                   onClick={() => switchLeftTab("characters")}
                   title="前往角色档案库切换人物"
                 >
-                  👥 角色库
+                  <Icon name="users" size={13} /> 角色库
                 </button>
                 <span className="link-divider">·</span>
                 <button
@@ -780,7 +770,7 @@ export const LeftRail: React.FC = () => {
                   onClick={() => setCharImportOpen(true)}
                   title="导入新角色卡 PNG 或 JSON"
                 >
-                  ➕ 导入角色卡
+                  <Icon name="plus" size={13} /> 导入角色卡
                 </button>
               </div>
             </div>

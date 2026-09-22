@@ -44,12 +44,17 @@
         <StackPanel Spacing="10">
           <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsEditing}">
             <TextBlock Grid.Column="0" Text="模型连接" FontSize="{DynamicResource FsSm}" VerticalAlignment="Center" />
-            <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding NewConnectionCommand}" Content="＋ 新建连接" />
+            <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding NewConnectionCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconPlus}" Width="12" Height="12" />
+                <TextBlock Text="新建连接" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </Grid>
 
           <c:Banner Classes="success" Message="{Binding Notice}" IsVisible="{Binding HasNotice}" />
 
-          <c:EmptyState IsVisible="{Binding ShowEmpty}" Icon="🔌" Title="还没有模型连接"
+          <c:EmptyState IsVisible="{Binding ShowEmpty}" IconGeometry="{StaticResource IconPlug}" Title="还没有模型连接"
                         Description="新建一条连接，填入模型名与接口地址即可开始。" />
 
           <ItemsControl ItemsSource="{Binding Connections}" IsVisible="{Binding HasConnections}">

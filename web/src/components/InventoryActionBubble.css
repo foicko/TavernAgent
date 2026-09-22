@@ -1,56 +1,29 @@
-/* 背包动作气泡：定位/层级/排列都在这里，坐标由组件以内联 left/top 给出。 */
-.item-bubble-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-drawer);
-}
-
-/* 可见性由组件条件渲染控制（不可见时直接不挂载），因此这里不再有 display: none 的开关态。 */
-.item-action-bubble {
-  position: fixed;
-  z-index: calc(var(--z-drawer) + 1);
+/* 背包动作气泡：外壳来自 ui/Popover，这里只排内容。 */
+.inv-bubble {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 176px;
-  padding: 8px;
-  transform: translate(-50%, -100%);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  box-shadow: var(--glass-shadow-lg), inset 0 1px 1.5px 0 var(--glass-specular-top);
-  animation: fadeInDown 0.14s ease-out;
+  padding: var(--space-2);
 }
 
-.item-bubble-buttons {
+.inv-bubble__title {
+  padding: 2px 6px 6px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.inv-bubble__actions {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
-.item-action-btn {
-  padding: 6px 10px;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  background: var(--glass-pill-bg);
-  color: var(--text-main);
-  font-family: inherit;
-  font-size: var(--fs-sm);
+.inv-bubble__act {
+  justify-content: flex-start;
   text-align: left;
-  cursor: pointer;
-  transition: var(--transition-fast);
-  white-space: nowrap;
-}
-
-.item-action-btn:hover:not(:disabled) {
-  background: var(--glass-pill-bg-hover);
-  border-color: var(--glass-border-hover);
-  transform: translateX(2px);
-}
-
-.item-action-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+  white-space: normal;
 }

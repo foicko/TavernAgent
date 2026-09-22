@@ -1,0 +1,96 @@
+/* 卡片：三档表面 × 四档内距；interactive 卡片只做边框/阴影变化与 1px 抬升 */
+.ui-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-main);
+  font: inherit;
+  text-align: left;
+}
+
+.ui-card--surface {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-card--inset {
+  background: var(--bg-subtle);
+  box-shadow: none;
+}
+
+.ui-card--elevated {
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-float);
+}
+
+.ui-card--pad-none { padding: 0; }
+.ui-card--pad-sm { padding: var(--space-3); }
+.ui-card--pad-md { padding: var(--space-4); }
+.ui-card--pad-lg { padding: var(--space-5); }
+
+.ui-card--interactive {
+  width: 100%;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color var(--duration-quick) var(--ease-smooth-out),
+              box-shadow var(--duration-quick) var(--ease-smooth-out),
+              background-color var(--duration-quick) var(--ease-smooth-out),
+              transform var(--duration-micro) var(--ease-smooth-out);
+}
+
+.ui-card--interactive:hover:not(:disabled) {
+  border-color: var(--border-mid);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.ui-card--interactive:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.ui-card--interactive:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.ui-card--interactive:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ui-card__title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  color: var(--text-main);
+}
+
+.ui-card__description {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.ui-card__content {
+  min-width: 0;
+}
+
+.ui-card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}

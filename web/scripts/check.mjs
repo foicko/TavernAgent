@@ -2,7 +2,7 @@
 // 1) CSS token 契约：styles/tokens.css 必须声明设计令牌，且 styles.css 必须 import 它
 // 2) 组件层级：web/src/components 只允许 import 自 app/stores/lib/ui/react，禁止跨层反向依赖
 // 3) 原语层级：web/src/ui 是叶子层，只允许依赖 react 与 ../lib（禁止依赖 stores/app/components）
-// 4) CSS 预算与去重：文件行数、!important、跨文件重复选择器、死类名四项**棘轮**门禁
+// 4) CSS 预算与去重：文件行数、!important、跨文件重复选择器、死类名、颜色字面值、玻璃残留六项**棘轮**门禁
 //
 // 棘轮的含义：基线（scripts/css-baseline.json）记录"已经存在的债"，只允许变小不允许变大；
 // 新文件/新条目按零容忍处理。收紧基线用 `node scripts/check.mjs --update-css-baseline`，
@@ -120,7 +120,7 @@ const updateBaseline = process.argv.includes("--update-css-baseline");
 if (updateBaseline) {
   const previous = existsSync(baselinePath)
     ? JSON.parse(readFileSync(baselinePath, "utf8"))
-    : { fileLines: {}, important: {}, duplicates: [], deadClasses: [] };
+    : { fileLines: {}, important: {}, duplicates: [], deadClasses: [], literalColors: {}, glassRefs: {} };
   const next = {
     $comment: "由 node scripts/check.mjs --update-css-baseline 生成；只允许收紧，放宽会在输出中打印。",
     maxFileLines: MAX_FILE_LINES,
@@ -131,6 +131,8 @@ if (updateBaseline) {
     important: Object.fromEntries(Object.entries(metrics.important).sort()),
     duplicates: metrics.duplicates,
     deadClasses: metrics.deadClasses,
+    literalColors: Object.fromEntries(Object.entries(metrics.literalColors).sort()),
+    glassRefs: Object.fromEntries(Object.entries(metrics.glassRefs).sort()),
   };
   const relaxed = [];
   // 遍历两边键的并集：只看旧键会漏掉"新增的文件里带了多少 !important"。
@@ -140,10 +142,12 @@ if (updateBaseline) {
     if (now > was) relaxed.push(`fileLines ${path}: ${was} → ${now}`);
   }
   const importantTotal = (table) => Object.values(table ?? {}).reduce((a, b) => a + b, 0);
-  for (const path of new Set([...Object.keys(previous.important ?? {}), ...Object.keys(next.important)])) {
-    const was = previous.important?.[path] ?? 0;
-    const now = next.important[path] ?? 0;
-    if (now > was) relaxed.push(`important ${path}: ${was} → ${now}`);
+  for (const [key, label] of [["important", "important"], ["literalColors", "literalColor"], ["glassRefs", "glassRef"]]) {
+    for (const path of new Set([...Object.keys(previous[key] ?? {}), ...Object.keys(next[key])])) {
+      const was = previous[key]?.[path] ?? 0;
+      const now = next[key][path] ?? 0;
+      if (now > was) relaxed.push(`${label} ${path}: ${was} → ${now}`);
+    }
   }
   for (const key of next.duplicates) {
     if (!(previous.duplicates ?? []).includes(key)) relaxed.push(`duplicate ${key}`);
@@ -156,7 +160,9 @@ if (updateBaseline) {
   console.log(
     `  !important 总量：${importantTotal(previous.important)} → ${importantTotal(next.important)}；` +
       `跨文件重复选择器：${(previous.duplicates ?? []).length} → ${next.duplicates.length}；` +
-      `死类名：${(previous.deadClasses ?? []).length} → ${next.deadClasses.length}`,
+      `死类名：${(previous.deadClasses ?? []).length} → ${next.deadClasses.length}；` +
+      `颜色字面值：${importantTotal(previous.literalColors)} → ${importantTotal(next.literalColors)}；` +
+      `玻璃残留：${importantTotal(previous.glassRefs)} → ${importantTotal(next.glassRefs)}`,
   );
   if (relaxed.length > 0) {
     console.error(`⚠️  基线被放宽 ${relaxed.length} 项（评审时必须解释原因）：`);
@@ -191,6 +197,28 @@ for (const [path, count] of Object.entries(metrics.important)) {
   }
 }
 
+// 4.5 颜色字面值棘轮：组件样式只能引用 tokens.css 的令牌；存量只减不增。
+for (const [path, count] of Object.entries(metrics.literalColors)) {
+  const allowed = baseline.literalColors?.[path] ?? 0;
+  if (count > allowed) {
+    console.error(`✗ ${path} 新增颜色字面值（${allowed} → ${count}）：请改用 tokens.css 里的令牌（或 color-mix 派生）`);
+    cssOk = false;
+  } else if (count < allowed) {
+    stale.push(`literalColor ${path}: ${allowed} → ${count}`);
+  }
+}
+
+// 4.6 玻璃残留棘轮：backdrop-filter 与 --glass-* 兼容别名不得新增。
+for (const [path, count] of Object.entries(metrics.glassRefs)) {
+  const allowed = baseline.glassRefs?.[path] ?? 0;
+  if (count > allowed) {
+    console.error(`✗ ${path} 新增玻璃残留（backdrop-filter / var(--glass-）（${allowed} → ${count}）：扁平体系不用毛玻璃`);
+    cssOk = false;
+  } else if (count < allowed) {
+    stale.push(`glassRef ${path}: ${allowed} → ${count}`);
+  }
+}
+
 // 4.3 跨文件重复选择器棘轮：同一选择器在多个文件中重复声明会让层叠顺序难以推理。
 const baselineDuplicates = new Set(baseline.duplicates ?? []);
 for (const key of metrics.duplicates) {
@@ -221,10 +249,12 @@ for (const cls of baselineDead) {
 }
 
 if (cssOk) {
+  const total = (table) => Object.values(table ?? {}).reduce((a, b) => a + b, 0);
   console.log(
     `✓ CSS 预算检查通过（${Object.keys(metrics.lineCounts).length} 个文件，` +
-      `${Object.values(metrics.important).reduce((a, b) => a + b, 0)} 处 !important，` +
-      `${metrics.duplicates.length} 个跨文件重复选择器，${metrics.deadClasses.length} 个已知死类名）`,
+      `${total(metrics.important)} 处 !important，` +
+      `${metrics.duplicates.length} 个跨文件重复选择器，${metrics.deadClasses.length} 个已知死类名，` +
+      `${total(metrics.literalColors)} 处颜色字面值，${total(metrics.glassRefs)} 处玻璃残留）`,
   );
 } else {
   process.exitCode = 1;

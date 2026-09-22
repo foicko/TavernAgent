@@ -208,11 +208,54 @@ export function classesOf(selector) {
 }
 
 /**
- * 采集全部 CSS 指标：行数、!important、跨文件重复选择器、死类名。
+ * 令牌逃逸计数：非 tokens.css 文件里的颜色字面值（#hex / rgb / rgba / hsl）。
+ * 设计系统要求组件样式只引用令牌；这里按"出现次数"记账，供棘轮门禁使用。
+ * 注释与字符串里的不算（与 !important 计数同一口径）。
+ */
+export function countLiteralColors(css) {
+  return countPattern(css, /#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/gi);
+}
+
+/**
+ * 玻璃残留计数：`backdrop-filter` 与 `var(--glass-`。
+ * 扁平发丝线体系不允许毛玻璃，兼容别名也要逐步清零。
+ */
+export function countGlassRefs(css) {
+  return countPattern(css, /backdrop-filter\s*:|var\(--glass-/g);
+}
+
+function countPattern(css, pattern) {
+  // 先剥掉注释与字符串，再数：/* #fff */ 或 content: "#" 不该被记账。
+  let stripped = "";
+  let i = 0;
+  while (i < css.length) {
+    const c = css[i];
+    if (c === "/" && css[i + 1] === "*") {
+      const end = css.indexOf("*/", i + 2);
+      i = end === -1 ? css.length : end + 2;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < css.length && css[j] !== c) {
+        if (css[j] === "\\") j += 1;
+        j += 1;
+      }
+      i = j + 1;
+      continue;
+    }
+    stripped += c;
+    i += 1;
+  }
+  return (stripped.match(pattern) ?? []).length;
+}
+
+/**
+ * 采集全部 CSS 指标：行数、!important、跨文件重复选择器、死类名、颜色字面值、玻璃残留。
  * 返回的 map 同时带上"类名 → 定义于哪些文件""选择器 → 出现在哪些文件"，供门禁打印证据。
  */
 export function collectCssMetrics(root) {
-  const metrics = { lineCounts: {}, important: {}, duplicates: [], deadClasses: [] };
+  const metrics = { lineCounts: {}, important: {}, duplicates: [], deadClasses: [], literalColors: {}, glassRefs: {} };
   const selectorFiles = new Map();
   const classFiles = new Map();
   for (const full of listCssFiles(join(root, "src"))) {
@@ -221,6 +264,13 @@ export function collectCssMetrics(root) {
     metrics.lineCounts[path] = css.split("\n").length;
     const important = countImportant(css);
     if (important > 0) metrics.important[path] = important;
+    // tokens.css 是唯一允许写颜色字面值的地方。
+    if (path !== "src/styles/tokens.css") {
+      const literals = countLiteralColors(css);
+      if (literals > 0) metrics.literalColors[path] = literals;
+      const glass = countGlassRefs(css);
+      if (glass > 0) metrics.glassRefs[path] = glass;
+    }
     for (const rule of parseRules(css)) {
       if (!rule.selector || rule.selector.startsWith("@")) continue;
       const key = `${rule.context}||${rule.selector}`;

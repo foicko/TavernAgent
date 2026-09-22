@@ -4,6 +4,7 @@ import { api, setStoredAuthToken } from "../app/api";
 import { clearSessionCache } from "../stores/storyStore";
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
 import "./AuthPairingModal.css";
 
@@ -76,7 +77,7 @@ export const AuthPairingModal: React.FC<Props> = ({ open, onSuccess, onClose }) 
     >
       <div className="pairing-lead">
         <span className="pairing-icon" aria-hidden="true">
-          🔐
+          <Icon name="lock" size={22} />
         </span>
         <p>
           检测到您正通过局域网远程连接本服务。为保护您的故事记录与模型 API Key 额度，请输入服务端启动控制台打印的{" "}

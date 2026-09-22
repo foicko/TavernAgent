@@ -14,9 +14,6 @@
     <Setter Property="Transitions" Value="{x:Null}" />
   </Style>
 
-  <Style Selector="Border.composer-island:focus-within">
-    <Setter Property="RenderTransform" Value="{x:Null}" />
-  </Style>
   <Style Selector="Button.ui-btn:pointerover">
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>
@@ -24,6 +21,9 @@
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>
   <Style Selector="Button.decision-card:pointerover">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.decision-card:pressed">
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>
   <Style Selector="Button.node-item:pointerover">

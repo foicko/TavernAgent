@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
+import { Icon } from "./Icon";
 import "./Disclosure.css";
 
 export interface DisclosureProps {
@@ -42,7 +43,7 @@ export function Disclosure({
         onClick={toggle}
       >
         <span className={["ui-disclosure__caret", isOpen ? "ui-disclosure__caret--open" : ""].filter(Boolean).join(" ")} aria-hidden="true">
-          ▶
+          <Icon name="chevronRight" size={13} />
         </span>
         <span className="ui-disclosure__summary">{summary}</span>
         <span className="ui-disclosure__spacer" />

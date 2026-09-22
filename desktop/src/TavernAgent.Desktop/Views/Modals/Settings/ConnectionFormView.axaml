@@ -56,7 +56,9 @@
             <TextBox Grid.Column="0" Text="{Binding ApiKey}" PasswordChar="●"
                      RevealPassword="{Binding ShowKey}" PlaceholderText="留空 = 保持不变" />
             <Button Grid.Column="1" Classes="icon" Margin="6,0,0,0" Command="{Binding ToggleKeyCommand}"
-                    Content="👁" ToolTip.Tip="显示 / 隐藏密钥" />
+                    ToolTip.Tip="显示 / 隐藏密钥">
+              <Path Classes="icon" Data="{StaticResource IconEye}" Width="15" Height="15" />
+            </Button>
           </Grid>
         </c:Field.Body>
       </c:Field>

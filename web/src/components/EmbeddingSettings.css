@@ -1,4 +1,4 @@
-/* EmbeddingSettings.css: 向量检索与嵌入模型配置面板样式 */
+/* EmbeddingSettings.css: 向量检索与嵌入模型配置面板样式（颜色全部走令牌） */
 
 .embedding-settings-page {
   display: flex;
@@ -34,16 +34,16 @@
 
 .embedding-slider {
   width: 100%;
-  accent-color: var(--color-primary, #6366f1);
+  accent-color: var(--accent-solid);
   cursor: pointer;
 }
 
 .embedding-probe-card {
   margin-top: var(--space-2);
   padding: var(--space-3);
-  background: var(--bg-surface-subtle, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
-  border-radius: var(--radius-md, 8px);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -54,7 +54,19 @@
   align-items: center;
   justify-content: space-between;
   font-size: var(--fs-sm);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
+}
+
+.embedding-probe-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-success);
+}
+
+.embedding-probe-latency {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
 }
 
 .embedding-probe-meta {
@@ -66,34 +78,60 @@
 }
 
 .embedding-probe-meta span strong {
-  color: var(--text-primary);
+  color: var(--text-main);
+}
+
+.embedding-probe-advice {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  opacity: 0.9;
+}
+
+.embedding-preview-caption {
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
 }
 
 .embedding-preview-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   padding: var(--space-2);
-  background: var(--bg-code, rgba(0, 0, 0, 0.25));
-  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
   color: var(--text-dim);
   overflow-x: auto;
   white-space: nowrap;
 }
 
 .embedding-tip-box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border-left: 3px solid var(--color-primary, #6366f1);
-  background: var(--bg-surface-subtle, rgba(255, 255, 255, 0.02));
+  border-left: 3px solid var(--accent-solid);
+  background: var(--bg-subtle);
   font-size: var(--fs-xs);
   color: var(--text-dim);
   line-height: 1.5;
 }
 
+.embedding-tip-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent-amber);
+}
+
 .embedding-tip-box code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background: var(--bg-code, rgba(0, 0, 0, 0.2));
+  font-family: var(--font-mono);
+  background: var(--bg-muted);
   padding: 1px 4px;
   border-radius: 3px;
-  color: var(--text-primary);
+  color: var(--text-main);
+}
+
+@media (max-width: 768px) {
+  .embedding-two-col {
+    grid-template-columns: 1fr;
+  }
 }

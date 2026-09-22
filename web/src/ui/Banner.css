@@ -15,7 +15,9 @@
 
 .ui-banner__icon {
   flex-shrink: 0;
-  line-height: 1.2;
+  display: inline-flex;
+  margin-top: 1px;
+  color: var(--text-dim);
 }
 
 .ui-banner__body {
@@ -27,9 +29,17 @@
   border-left-color: var(--color-info);
 }
 
+.ui-banner--info .ui-banner__icon {
+  color: var(--color-info);
+}
+
 .ui-banner--ok {
   border-left-color: var(--color-success);
   color: var(--text-main);
+}
+
+.ui-banner--ok .ui-banner__icon {
+  color: var(--color-success);
 }
 
 .ui-banner--warn {
@@ -37,9 +47,17 @@
   color: var(--text-main);
 }
 
+.ui-banner--warn .ui-banner__icon {
+  color: var(--color-warning);
+}
+
 .ui-banner--error {
   border-left-color: var(--color-danger-text);
   background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.ui-banner--error .ui-banner__icon {
   color: var(--color-danger-text);
 }
 

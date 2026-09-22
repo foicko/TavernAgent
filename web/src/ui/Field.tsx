@@ -8,6 +8,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
 } from "react";
 import "./Field.css";
 
@@ -87,6 +88,21 @@ export function Select({ id, className = "", children, ...rest }: SelectProps) {
     >
       {children}
     </select>
+  );
+}
+
+type TextAreaProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"> & { className?: string };
+
+/** 多行输入：与 TextInput 同一套外观与 Field 自动关联。 */
+export function TextArea({ id, className = "", ...rest }: TextAreaProps) {
+  const field = useField();
+  return (
+    <textarea
+      {...rest}
+      id={id ?? field.id}
+      aria-describedby={rest["aria-describedby"] ?? field.describedBy}
+      className={["ui-input", "ui-textarea", className].filter(Boolean).join(" ")}
+    />
   );
 }
 

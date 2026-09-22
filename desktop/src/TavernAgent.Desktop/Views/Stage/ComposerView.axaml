@@ -6,7 +6,7 @@
              x:DataType="vm:ComposerViewModel">
   <Grid RowDefinitions="Auto,Auto" Margin="20,0,20,16" MaxWidth="840" HorizontalAlignment="Center">
     <Border Grid.Row="1"
-            Classes="glass-elevated composer-island anim-rise-in-bottom"
+            Classes="surface-elevated composer-island anim-rise-in-bottom"
             CornerRadius="24"
             Padding="16,12">
       <StackPanel Spacing="10">
@@ -15,7 +15,12 @@
         <Grid ColumnDefinitions="*,Auto">
           <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
             <Button Classes="ui-btn sm ghost" Command="{Binding ToggleNoteCommand}"
-                    Classes.has-note="{Binding HasNote}" Content="✎ 注记" />
+                    Classes.has-note="{Binding HasNote}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12" />
+                <TextBlock Text="注记" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Border Width="1" Height="16" VerticalAlignment="Center"
                     Background="{DynamicResource BorderBrush}" />
             <ItemsControl ItemsSource="{Binding AvailableActions}" IsVisible="{Binding HasActions}">
@@ -34,7 +39,7 @@
 
             <Button Classes="ui-btn sm quiet" Command="{Binding OpenDirectorCommand}" ToolTip.Tip="导演模式">
               <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="🎬" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconFilm}" Width="13" Height="13" />
                 <TextBlock Text="导演" VerticalAlignment="Center" />
                 <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                          Fill="{DynamicResource SuccessBrush}"
@@ -61,7 +66,9 @@
         <Border IsVisible="{Binding HasAction}" Classes="chip" HorizontalAlignment="Left">
           <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBlock Text="{Binding ActionLabel}" FontSize="{DynamicResource FsXs}" />
-            <Button Classes="ui-btn sm ghost" Command="{Binding ClearActionCommand}" Content="✕" Padding="4,0" />
+            <Button Classes="ui-btn sm ghost" Command="{Binding ClearActionCommand}" Padding="4,0" ToolTip.Tip="取消检定">
+              <Path Classes="icon" Data="{StaticResource IconClose}" Width="12" Height="12" />
+            </Button>
           </StackPanel>
         </Border>
 
@@ -92,7 +99,7 @@
             <Button Classes="ui-btn sm quiet" Height="30" ToolTip.Tip="上下文占用">
               <Button.Flyout>
                 <Flyout Placement="Top">
-                  <Border DataContext="{Binding Context}" Width="272" Classes="glass-elevated" Padding="14">
+                  <Border DataContext="{Binding Context}" Width="272" Classes="surface-elevated" Padding="14">
                     <StackPanel Spacing="10">
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Text="上下文占用" FontWeight="SemiBold"
@@ -165,14 +172,14 @@
             <Button Classes="ui-btn danger" Height="30" IsVisible="{Binding CanCancel}"
                     Command="{Binding CancelCommand}">
               <StackPanel Orientation="Horizontal" Spacing="5">
-                <TextBlock Text="■" FontSize="11" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconStop}" Width="11" Height="11" />
                 <TextBlock Text="停止" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
             <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding CanContinue}"
                     Command="{Binding ContinueCommand}">
               <StackPanel Orientation="Horizontal" Spacing="5">
-                <TextBlock Text="▶" FontSize="11" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconPlay}" Width="11" Height="11" />
                 <TextBlock Text="继续" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
@@ -180,7 +187,7 @@
                     Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}">
               <StackPanel Orientation="Horizontal" Spacing="5">
                 <TextBlock Text="发送" VerticalAlignment="Center" />
-                <TextBlock Text="↵" FontSize="11" Opacity="0.8" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="11" Height="11" Opacity="0.8" />
               </StackPanel>
             </Button>
           </StackPanel>

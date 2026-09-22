@@ -221,7 +221,6 @@ export function buildCommands(): Command[] {
     panel("panel:settings", "打开模型与偏好设置", ["settings", "shezhi", "peizhi", "moxing"], () => useSettings.getState().openSettings()),
     panel("panel:worldbook", "打开世界书", ["worldbook", "lore", "shijieshu", "shezhi"], () => useUi.getState().setWorldbookModalOpen(true)),
     panel("panel:memory", "打开记忆银行", ["memory", "jiyiyinhang", "jiyi"], () => useUi.getState().setMemoryModalOpen(true), !!view),
-    panel("panel:mind-graph", "打开心像图谱", ["graph", "xinxiang", "tupu", "guanxi"], () => useUi.getState().setMindGraphOpen(true), !!view),
     panel("panel:dossier", "打开人物档案", ["dossier", "renwudangan", "renshe"], () => useUi.getState().setDossierModalOpen(true)),
     panel("panel:promises", "打开承诺清单", ["promise", "pledge", "chengnuo"], () => useUi.getState().setPromisesModalOpen(true)),
     panel("panel:tachie", "查看全身立绘", ["tachie", "litai", "quanshen"], () => useUi.getState().setFullTachieOpen(true)),

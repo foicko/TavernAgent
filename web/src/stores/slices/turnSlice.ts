@@ -27,6 +27,9 @@ export let turnCursor: { turnId: string; id: string } | null = null;
 export let activeTurnSub: { turnId: string; sessionId: string; stop: () => void; synchronize: (committed?: boolean) => void } | null = null;
 export const TURN_STATUS_INTERVAL_MS = 5000;
 
+/** 每轮首个 thinking 事件的时间戳，用于 settle 后显示「思考了 N 秒」。 */
+const thinkingStartedAt = new Map<string, number>();
+
 export function detachTurnStream(turnId?: string) {
   if (turnId && activeTurnSub?.turnId !== turnId) return;
   activeTurnSub?.stop();
@@ -165,6 +168,7 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
     case "turn.thinking": {
       const payload = ev.data as { thinking?: string };
       if (payload?.thinking) {
+        if (!thinkingStartedAt.has(turnId)) thinkingStartedAt.set(turnId, Date.now());
         setStoryState((prev) => ({
           thinkingText: prev.thinkingText + payload.thinking,
           turnThinking: {
@@ -437,12 +441,20 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     const completedTurnId = get().lastTurnId;
     const completedThinking = get().thinkingText;
     const turnThinking = { ...get().turnThinking };
+    const turnThinkingSeconds = { ...get().turnThinkingSeconds };
     if (completedTurn && completedTurnId && completedThinking) {
       turnThinking[completedTurnId] = completedThinking;
+      const startedAt = thinkingStartedAt.get(completedTurnId);
+      const seconds = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 1000)) : undefined;
+      if (seconds) {
+        turnThinkingSeconds[completedTurnId] = seconds;
+        if (fresh.headNode?.nodeId) turnThinkingSeconds[fresh.headNode.nodeId] = seconds;
+      }
       if (fresh.headNode?.nodeId) {
         turnThinking[fresh.headNode.nodeId] = completedThinking;
       }
     }
+    if (completedTurn && completedTurnId) thinkingStartedAt.delete(completedTurnId);
     if (completedTurn) detachTurnStream(get().lastTurnId ?? undefined);
     if (!st.viewNodeId) {
       sessionViewCache.set(fresh.sessionId, fresh);
@@ -451,7 +463,8 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
       view: fresh,
       hud: fresh.state,
       turnThinking,
-      messages: messagesFromNodes(fresh, turnThinking),
+      turnThinkingSeconds,
+      messages: messagesFromNodes(fresh, turnThinking, turnThinkingSeconds),
       ...(["generating", "truncated", "awaiting_confirm"].includes(get().phase) && get().lastTurnId ? {} : { draftBlocks: [], draftOptions: [] }),
       ...(completedTurn ? { phase: "idle" as const, thinkingText: "" } : {}),
       error: null,

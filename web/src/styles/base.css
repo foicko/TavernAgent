@@ -49,7 +49,14 @@ body {
   display: flex;
   flex-direction: column;
   line-height: 1.6;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color var(--duration-fast) var(--ease-smooth-out),
+              color var(--duration-fast) var(--ease-smooth-out);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* 全站共用的入场关键帧：淡入（各域文件只引用，不重复声明） */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

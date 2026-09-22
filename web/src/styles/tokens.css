@@ -4,10 +4,10 @@
    本文件是全站颜色 / 间距 / 圆角 / 阴影 / 字号 / 层级 / 动效的唯一声明处，
    由 styles.css 通过 @import 引入（必须先于其它规则，保证层叠顺序）。
 
-   融合规范：
-   - ui.shadcn.com: 中性无杂色语义层级、精细 Focus Ring 与高可读对比度
-   - transitions.dev: 物理级缓动曲线与微节奏时序 (micro / quick / fast / medium)
-   - beautifului.dev & rareui.com: 亚像素高光描边 (Specular Hairline) 与多层微阴影
+   对标规范：beautifului.dev —— 「纸墨」扁平发丝线体系
+   - page / canvas / surface / inset / field 五层中性面
+   - ink / ink-2 / ink-3 三级文字，单一蓝色强调色
+   - 1px 发丝线描边 + 柔和低透明阴影，不使用毛玻璃 / 装饰渐变
 
    约定：
    - 新增视觉常量一律加在这里，组件样式只允许引用令牌，不写字面值。
@@ -26,12 +26,32 @@
   --text: var(--text-main);
   --muted: var(--text-muted);
   --accent: var(--accent-solid);
-  --danger: #b91c1c;
+  --danger: #e3474c;
   --rr: var(--radius-sm);
   --r-m: var(--radius-md);
   --r-l: var(--radius-lg);
   --font: var(--font-body);
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* beautifului.dev 语义别名（组件新样式优先引用这一组） */
+  --color-page: var(--bg-base);
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-inset: var(--bg-subtle);
+  --color-field: var(--bg-muted);
+  --color-hover: var(--border-subtle);
+  --color-hover-2: var(--border-mid);
+  --color-line: var(--border-light);
+  --color-line-strong: var(--border-mid);
+  --color-line-soft: var(--border-subtle);
+  --color-ink: var(--text-main);
+  --color-ink-2: var(--text-muted);
+  --color-ink-3: var(--text-dim);
+  --color-accent-ink: var(--accent-glow);
+  --color-accent-tint: var(--accent-subtle);
+  --color-green-tint: var(--color-success-bg);
+  --color-orange-tint: var(--color-warn-bg);
+  --color-red-tint: var(--color-danger-bg);
 
   /* transitions.dev 动效物理规范令牌 */
   --duration-micro: 80ms;     /* 极速触感：按键 scale(0.98)、抖动微反馈 */
@@ -39,83 +59,102 @@
   --duration-fast: 250ms;     /* 适中推进：模态框出现、抽屉展开、分段导航滑块 */
   --duration-medium: 350ms;   /* 柔和过渡：侧栏收放、吐司通知滑入 */
   --duration-slow: 450ms;     /* 宏观叙事：长篇流式过渡、全局视图切换 */
+  --duration-normal: var(--duration-fast); /* 兼容旧引用：等同 fast */
 
   /* 缓动曲线 */
-  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1); /* 主流平滑减速 (transitions.dev) */
+  --ease-smooth-out: cubic-bezier(0.23, 1, 0.32, 1); /* 主流平滑减速 (beautifului 房型曲线) */
   --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);   /* 弹性入场 (徽章/微指示) */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);       /* 阻尼弹簧 */
 }
 
 /* --------------------------------------------------------------------------
-   1. 纯净纸白（现代极简白色主题：Shadcn Slate / Clean Pure White）
+   1. 纯净纸白（beautifului light）
    -------------------------------------------------------------------------- */
 :root {
   /* 表面与底层 */
-  --bg-base: #f8fafc;
-  --bg-canvas: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
+  --bg-base: #fafafb;      /* page */
+  --bg-canvas: #f1f2f3;    /* canvas：下沉画布 */
+  --bg-surface: #ffffff;   /* surface：卡片 */
+  --bg-subtle: #f7f8f9;    /* inset：内嵌井 */
   --bg-elevated: #ffffff;
 
-  /* 边框：高清晰中性细线，纯净现代 */
-  --border-light: #e2e8f0;
-  --border-mid: #cbd5e1;
-  --border-dark: #0f172a;
-  --border-subtle: #f1f5f9;
+  /* 边框：发丝线 */
+  --border-light: #ecedef;   /* line */
+  --border-mid: #e0e2e5;     /* line-strong */
+  --border-dark: #1f2124;    /* ink */
+  --border-subtle: #f4f5f6;  /* hover */
 
-  /* 文本梯度 (墨黑深阶) */
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
+  /* 文本梯度（墨黑深阶） */
+  --text-main: #1f2124;    /* ink */
+  --text-muted: #62656b;   /* ink-2 */
+  --text-dim: #9a9da3;     /* ink-3 */
 
-  /* 核心强调色与反差色 */
-  --accent-solid: #0f172a;
+  /* 强调色（beautifului 蓝） */
+  --accent-solid: #0285ff;
   --accent-contrast: #ffffff;
-  --accent-subtle: rgba(15, 23, 42, 0.05);
-  --accent-glow: #475569;
-  --accent-amber: #b45309;
-  --accent-green: #15803d;
+  --accent-subtle: #e9f3ff;
+  --accent-glow: #0070dd;
+  --accent-amber: #ef720d;
+  --accent-green: #199a4d;
 
-  /* 焦点环 (shadcn focus ring) */
-  --ring: rgba(15, 23, 42, 0.22);
+  /* 焦点环 */
+  --ring: rgba(2, 133, 255, 0.38);
   --ring-offset: 2px;
-  --ring-glow: rgba(15, 23, 42, 0.15);
+  --ring-glow: rgba(2, 133, 255, 0.22);
+  --shadow-ring: 0 0 0 2px var(--ring);
+
+  /* 遮罩：扁平 scrim，不使用毛玻璃 */
+  --scrim: rgba(14, 15, 18, 0.5);
 
   /* 刻度槽与填充 */
-  --meter-track: #f1f5f9;
-  --meter-fill: #0f172a;
+  --meter-track: #ecedef;
+  --meter-fill: #0285ff;
+  /* 心境量表三色（aff 温情 / trust 信任 / alert 戒心） */
+  --meter-aff: #e11d48;
+  --meter-trust: #0284c7;
+  --meter-alert: #d97706;
+
+  /* 记忆银行分类边线（亲历 / 推断 / 秘密） */
+  --memory-episodic: #2b3e58;
+  --memory-inference: #5c4728;
+  --memory-secret: #6e3232;
 
   /* 语义反馈色 */
-  --color-danger-text: #be123c;
-  --color-danger-bg: rgba(190, 18, 60, 0.06);
-  --color-warn-border: #f59e0b;
-  --color-warn-bg: rgba(245, 158, 11, 0.08);
-  --color-node-muted: #64748b;
+  --color-danger-text: #e3474c;
+  --color-danger-bg: rgba(227, 71, 76, 0.08);
+  --color-warn-border: #ef720d;
+  --color-warn-bg: rgba(239, 114, 13, 0.08);
+  --color-success-bg: rgba(25, 154, 77, 0.09);
+  --color-node-muted: #62656b;
 
   /* 状态三色 */
-  --color-success: #16a34a;
-  --color-warning: #ea580c;
-  --color-info: #0284c7;
+  --color-success: #199a4d;
+  --color-warning: #ef720d;
+  --color-info: #0285ff;
 
-  --bg-muted: #f1f5f9;
-  --bg-panel: #f8fafc;
+  --bg-muted: #f2f2f3;     /* field */
+  --bg-panel: #fafafb;
 
-  /* 字体族：文学衬线 + 精准无衬线现代界面 */
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-  --font-display: 'Cinzel', 'Noto Serif SC', serif;
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* 字体族：现代无衬线界面 + 保留叙事衬线正文 */
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --font-sans: var(--font-body);
+  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-narrative: 'Noto Serif SC', Georgia, "Songti SC", serif;
 
-  /* 骨架尺寸 */
-  --header-h: 46px;
-  --rail-left-w: 280px;
-  --rail-right-w: 310px;
+  /* 骨架尺寸（beautifului shell） */
+  --header-h: 56px;
+  --rail-left-w: 224px;
+  --rail-left-collapsed-w: 52px;
+  --rail-right-w: 304px;
+  --reading-w: 820px;
 
-  /* 圆角 */
+  /* 圆角（beautifului：chip 6 / control 8 / card 10 / window 14 / pill 999） */
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
   --radius-full: 9999px;
 
   /* 间距 */
@@ -139,10 +178,10 @@
   --fw-medium: 500;
   --fw-semibold: 600;
 
-  /* 多层微阴影 (rareui / shadcn 分级) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
-  --shadow-float: 0 16px 36px -8px rgba(15, 23, 42, 0.10), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  /* 阴影：发丝环 + 柔和低透明层 (beautifului shadow-hairline/card/overlay) */
+  --shadow-sm: 0 0 0 1px var(--border-light), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 0 0 1px var(--border-light), 0 2px 8px rgba(16, 24, 40, 0.08);
+  --shadow-float: 0 0 0 1px var(--border-light), 0 8px 28px rgba(16, 24, 40, 0.12);
 
   /* 层级 */
   --z-base: 1;
@@ -155,95 +194,75 @@
 
   /* 动效 */
   --transition-fast: all 0.16s var(--ease-smooth-out);
+}
 
-  /* 水晶拟态与亚像素高光 (beautifului.dev 规范) */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-bg-subtle: rgba(241, 245, 249, 0.80);
-  --glass-bg-elevated: rgba(255, 255, 255, 0.96);
-  --glass-pill-bg: rgba(15, 23, 42, 0.04);
-  --glass-pill-bg-hover: rgba(15, 23, 42, 0.08);
-  --glass-pill-bg-active: #0f172a;
-  --glass-pill-text-active: #ffffff;
-  --glass-border: rgba(15, 23, 42, 0.08);
-  --glass-border-light: rgba(255, 255, 255, 0.90);
-  --glass-border-hover: rgba(15, 23, 42, 0.16);
-  --glass-specular-top: rgba(255, 255, 255, 0.95);
-  --glass-specular-bottom: rgba(15, 23, 42, 0.03);
-  --glass-shadow: rgba(0, 0, 0, 0.04);
-  --glass-shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
-  --glass-blur: blur(14px) saturate(140%);
-  --glass-blur-subtle: blur(8px) saturate(130%);
-  --glass-spring-ease: var(--ease-spring);
+/* 断点约定：全站只保留 480 / 768 / 1024 / 1280 四档（CSS 变量不能进 @media，
+   由注释与 scripts/check.mjs 的样式门禁共同维护）。手机顶栏 48px 的覆盖见
+   src/styles/responsive.css 的 @media (max-width: 768px)。 */
+
+/* 减少动态：把动效令牌归零，所有走令牌的过渡/动画自动失效，无需 !important。 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-micro: 0ms;
+    --duration-quick: 0ms;
+    --duration-fast: 0ms;
+    --duration-medium: 0ms;
+    --duration-slow: 0ms;
+    --duration-normal: 0ms;
+    --transition-fast: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
-   2. 曜石墨黑（现代极简黑色主题：Shadcn Zinc / Obsidian Studio）
+   2. 曜石墨黑（beautifului dark）
    -------------------------------------------------------------------------- */
 [data-theme="dark"] {
-  --bg-base: #09090b;
-  --bg-canvas: #09090b;
-  --bg-surface: #121215;
-  --bg-subtle: #18181b;
-  --bg-elevated: #1d1e24;
+  --bg-base: #17181a;      /* page */
+  --bg-canvas: #1c1d1f;    /* canvas */
+  --bg-surface: #232427;   /* surface */
+  --bg-subtle: #1f2022;    /* inset */
+  --bg-elevated: #28292d;
 
-  --border-light: rgba(255, 255, 255, 0.08);
-  --border-mid: rgba(255, 255, 255, 0.14);
-  --border-dark: #fafafa;
-  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-light: #2e3033;
+  --border-mid: #3a3c40;
+  --border-dark: #f2f3f4;
+  --border-subtle: #26272a;
 
-  --text-main: #f8fafc;
-  --text-muted: #a1a1aa;
-  --text-dim: #71717a;
+  --text-main: #f2f3f4;
+  --text-muted: #a5a8ad;
+  --text-dim: #6c6f75;
 
-  --accent-solid: #f8fafc;
-  --accent-contrast: #09090b;
-  --accent-subtle: rgba(248, 250, 252, 0.06);
-  --accent-glow: #94a3b8;
-  --accent-amber: #f59e0b;
-  --accent-green: #22c55e;
+  --accent-solid: #3d9aff;
+  --accent-contrast: #ffffff;
+  --accent-subtle: rgba(61, 154, 255, 0.16);
+  --accent-glow: #7ec0ff;
+  --accent-amber: #f68f3c;
+  --accent-green: #3cbb72;
 
-  /* 焦点环 (深色高辨识聚焦) */
-  --ring: rgba(248, 250, 252, 0.28);
+  /* 焦点环 */
+  --ring: rgba(61, 154, 255, 0.42);
   --ring-offset: 2px;
-  --ring-glow: rgba(255, 255, 255, 0.16);
+  --ring-glow: rgba(61, 154, 255, 0.24);
 
-  --meter-track: #18181b;
-  --meter-fill: #f8fafc;
+  --meter-track: #2e3033;
+  --meter-fill: #3d9aff;
 
-  --color-danger-text: #fb7185;
-  --color-danger-bg: rgba(251, 113, 133, 0.1);
-  --color-warn-border: #d97706;
-  --color-warn-bg: rgba(217, 119, 6, 0.12);
-  --color-node-muted: #71717a;
+  --color-danger-text: #ee5c61;
+  --color-danger-bg: rgba(238, 92, 97, 0.14);
+  --color-warn-border: #f68f3c;
+  --color-warn-bg: rgba(246, 143, 60, 0.14);
+  --color-success-bg: rgba(60, 187, 114, 0.14);
+  --color-node-muted: #6c6f75;
 
-  --color-success: #22c55e;
-  --color-warning: #f97316;
-  --color-info: #38bdf8;
+  --color-success: #3cbb72;
+  --color-warning: #f68f3c;
+  --color-info: #3d9aff;
 
-  --bg-muted: #18181b;
-  --bg-panel: #121215;
+  --bg-muted: #2b2c2f;
+  --bg-panel: #1c1d1f;
 
-  /* 深色微阴影 */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.35);
-  --shadow-float: 0 20px 48px -10px rgba(0, 0, 0, 0.75), 0 8px 18px -4px rgba(0, 0, 0, 0.45);
-
-  /* 液态玻璃特效令牌 (深色主题) */
-  --glass-bg: rgba(18, 18, 21, 0.80);
-  --glass-bg-subtle: rgba(24, 24, 27, 0.72);
-  --glass-bg-elevated: rgba(29, 30, 36, 0.92);
-  --glass-pill-bg: rgba(248, 250, 252, 0.06);
-  --glass-pill-bg-hover: rgba(248, 250, 252, 0.12);
-  --glass-pill-bg-active: #f8fafc;
-  --glass-pill-text-active: #09090b;
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-light: rgba(255, 255, 255, 0.16);
-  --glass-border-hover: rgba(255, 255, 255, 0.22);
-  --glass-specular-top: rgba(255, 255, 255, 0.15);
-  --glass-specular-bottom: rgba(0, 0, 0, 0.40);
-  --glass-shadow: rgba(0, 0, 0, 0.50);
-  --glass-shadow-lg: 0 14px 38px -4px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.40);
-  --glass-blur: blur(14px) saturate(140%);
-  --glass-blur-subtle: blur(8px) saturate(130%);
-  --glass-spring-ease: var(--ease-spring);
+  /* 深色阴影：白色发丝环 + 黑色柔和层 */
+  --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.11), 0 2px 10px rgba(0, 0, 0, 0.24);
+  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 28px rgba(0, 0, 0, 0.34);
 }

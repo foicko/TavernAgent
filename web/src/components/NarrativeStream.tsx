@@ -7,6 +7,7 @@ import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
 import { Button } from "../ui/Button";
 import { TTSPlayButton } from "./TTSButton";
+import { Icon } from "../ui/Icon";
 import { useShallow } from "zustand/react/shallow";
 import "./NarrativeStream.css";
 
@@ -149,7 +150,7 @@ export const NarrativeStream: React.FC = () => {
         {char.avatar ? (
           <img className="floating-trigger-avatar-img" src={char.avatar} alt={char.name} />
         ) : (
-          <span className="floating-trigger-avatar">🎭</span>
+          <span className="floating-trigger-avatar"><Icon name="user" size={16} /></span>
         )}
         <span className="floating-trigger-name" id="floating-trigger-name">
           {char.shortName} 档案
@@ -237,7 +238,7 @@ export const NarrativeStream: React.FC = () => {
         {/* 历史快照只读浏览提示条 */}
         {view && viewNodeId && (
           <div className="history-read-banner">
-            <span>📍 正在浏览历史快照节点（只读模式）</span>
+            <span><Icon name="flag" size={13} /> 正在浏览历史快照节点（只读模式）</span>
             <div>
               <button className="probe-btn" onClick={() => void backToHead()}>
                 返回最新进度
@@ -248,7 +249,7 @@ export const NarrativeStream: React.FC = () => {
                   void forkFrom(viewNodeId, "平行分支_" + Date.now().toString().slice(-4));
                 }}
               >
-                🌿 从此处开辟新分支
+                <Icon name="leaf" size={13} /> 从此处开辟新分支
               </button>
             </div>
           </div>
@@ -292,7 +293,7 @@ export const NarrativeStream: React.FC = () => {
                   onClick={() => handleCopy(expand(char.prologue))}
                   title="复制文学正文"
                 >
-                  ⎘ 复制
+                  <Icon name="copy" size={12} /> 复制
                 </button>
               </div>
               <div className="dialogue-meta-header">
@@ -314,7 +315,7 @@ export const NarrativeStream: React.FC = () => {
 
               <div className="prologue-guide-box">
                 <div>
-                  <span>🧭</span>
+                  <span><Icon name="compass" size={14} /></span>
                   <span>互动起手引导</span>
                 </div>
                 <div>
@@ -333,7 +334,7 @@ export const NarrativeStream: React.FC = () => {
               <div className="player-turn-container">
                 <div className="player-bubble active-player-bubble">
                   <div className="player-bubble-header">
-                    <span className="player-id-badge">✦ 玩家行动 · 第一人称</span>
+                    <span className="player-id-badge"><Icon name="sparkles" size={12} /> 玩家行动 · 第一人称</span>
                     <span className="player-turn-time">
                       回合 #{activeTurnNumber}
                       {phase === "generating" && <span className="player-sending-tag">（实时推演中）</span>}
@@ -341,7 +342,7 @@ export const NarrativeStream: React.FC = () => {
                   </div>
                   {lastInput.actionRef && (
                     <div className="dice-badge-quiet">
-                      🎲 行动检定：{view?.actions?.find((a) => a.actionId === lastInput.actionRef)?.label || lastInput.actionRef}
+                      <Icon name="dice" size={12} /> 行动检定：{view?.actions?.find((a) => a.actionId === lastInput.actionRef)?.label || lastInput.actionRef}
                     </div>
                   )}
                   <div className="player-speech-text">{renderInlineMarkdown(expand(lastInput.text))}</div>
@@ -355,7 +356,7 @@ export const NarrativeStream: React.FC = () => {
                 <div className="speaker-label">
                   <span>{char.shortName}</span>
                   <span className="speaker-delivery">
-                    {phase === "committed" ? "（回复已完成，正在同步选项…）" : "（大模型正在实时演义中... ⚡）"}
+                    {phase === "committed" ? "（回复已完成，正在同步选项…）" : "（大模型正在实时演义中...）"}
                   </span>
                 </div>
                 <span className="turn-time-stamp">
@@ -371,7 +372,7 @@ export const NarrativeStream: React.FC = () => {
                     title={thinkingOpen ? "点击折叠思考过程" : "点击展开完整思考过程"}
                   >
                     <div className="thinking-bar-main">
-                      <span className="thinking-icon">💭</span>
+                      <span className="thinking-icon"><Icon name="database" size={13} /></span>
                       <span className="thinking-title">
                         {draftBlocks.length === 0 || draftBlocks.every((b) => !b.text)
                           ? "深度推演与因果思索中..."
@@ -384,7 +385,7 @@ export const NarrativeStream: React.FC = () => {
                       )}
                     </div>
                     <span className="thinking-expand-hint">
-                      {thinkingOpen ? "收起 ▲" : "展开 ▼"}
+                      {thinkingOpen ? "收起" : "展开"} <Icon name={thinkingOpen ? "chevronUp" : "chevronDown"} size={11} />
                     </span>
                   </div>
                   {thinkingOpen && (
@@ -398,7 +399,7 @@ export const NarrativeStream: React.FC = () => {
               <div className="dialogue-content-text">
                 {draftBlocks.length === 0 || draftBlocks.every((b) => !b.text) ? (
                   <p>
-                    {thinkingText ? "正在整理思绪并撰写演义正文... ⚡" : "正在推演因果走势与角色心境... ⚡"}
+                    {thinkingText ? "正在整理思绪并撰写演义正文..." : "正在推演因果走势与角色心境..."}
                   </p>
                 ) : (
                   draftBlocks.map((b, bi) => {
@@ -435,7 +436,7 @@ export const NarrativeStream: React.FC = () => {
             <div className="decision-deck-box">
               <div className="decision-deck-header">
                 <span>
-                  ⚡ 模型输出因上下文长度截断，等待确认
+                  <Icon name="alert" size={13} /> 模型输出因上下文长度截断，等待确认
                 </span>
                 <span>状态机：awaiting_continuation</span>
               </div>
@@ -447,16 +448,16 @@ export const NarrativeStream: React.FC = () => {
                   className="btn-primary-send"
                   onClick={() => void continueTurn()}
                 >
-                  ▶ 继续讲下去 (Continue)
+                  <Icon name="play" size={12} /> 继续讲下去 (Continue)
                 </button>
                 <button
                   className="probe-btn"
                   onClick={() => void retry()}
                 >
-                  🔄 重新构思此轮 (Retry)
+                  <Icon name="refresh" size={13} /> 重新构思此轮 (Retry)
                 </button>
                 <button className="probe-btn" onClick={() => void cancel()}>
-                  ✕ 放弃
+                  <Icon name="close" size={12} /> 放弃
                 </button>
               </div>
             </div>
@@ -468,7 +469,7 @@ export const NarrativeStream: React.FC = () => {
           <div className="story-turn error-turn">
             <div className="decision-deck-box">
               <div className="error-turn__row">
-                <span className="error-turn__icon" aria-hidden="true">✕</span>
+                <span className="error-turn__icon" aria-hidden="true"><Icon name="alert" size={18} /></span>
                 <div className="error-turn__text">
                   <span className="error-turn__title">生成受阻</span>
                   <p className="error-turn__detail">{error || "网络通信异常"}</p>

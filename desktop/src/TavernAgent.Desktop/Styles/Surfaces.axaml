@@ -1,24 +1,24 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- Liquid Glass primitives + control restyles (translucent approximation). -->
+  <!-- Surface primitives + control restyles (flat ink & hairline, no blur). -->
 
-  <Style Selector="Border.glass">
-    <Setter Property="Background" Value="{DynamicResource GlassBackgroundBrush}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+  <Style Selector="Border.surface">
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusLg}" />
     <Setter Property="BoxShadow" Value="{DynamicResource ShadowMd}" />
   </Style>
 
-  <Style Selector="Border.glass-subtle">
+  <Style Selector="Border.surface-inset">
     <Setter Property="Background" Value="{DynamicResource GlassSubtleBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
   </Style>
 
-  <Style Selector="Border.glass-elevated">
+  <Style Selector="Border.surface-elevated">
     <Setter Property="Background" Value="{DynamicResource GlassElevatedBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderLightBrush}" />
     <Setter Property="BorderThickness" Value="1" />
@@ -60,7 +60,6 @@
 
   <Style Selector="Button.ui-btn:pointerover">
     <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
-    <Setter Property="RenderTransform" Value="translateY(-1px)" />
   </Style>
 
   <Style Selector="Button.ui-btn:pressed">
@@ -81,7 +80,6 @@
   </Style>
   <Style Selector="Button.ui-btn.primary:pointerover">
     <Setter Property="Opacity" Value="0.9" />
-    <Setter Property="RenderTransform" Value="translateY(-1.5px)" />
   </Style>
 
   <Style Selector="Button.ui-btn.danger">
@@ -92,7 +90,6 @@
   </Style>
   <Style Selector="Button.ui-btn.danger:pointerover">
     <Setter Property="Opacity" Value="0.9" />
-    <Setter Property="RenderTransform" Value="translateY(-1.5px)" />
   </Style>
 
   <Style Selector="Button.ui-btn.ghost">
@@ -126,6 +123,30 @@
     <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
   </Style>
 
+  <!-- quiet: surface + hairline (web outline). Replaces the legacy default look. -->
+  <Style Selector="Button.ui-btn.quiet">
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Button.ui-btn.quiet:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="Button.ui-btn.link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="Button.ui-btn.link:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource AccentAmberBrush}" />
+  </Style>
+
   <Style Selector="Button.ui-btn.sm">
     <Setter Property="Height" Value="26" />
     <Setter Property="Padding" Value="9,0" />
@@ -134,42 +155,25 @@
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
   </Style>
 
-  <!-- Legacy aliases kept for existing views -->
-  <Style Selector="Button.pill">
-    <Setter Property="CornerRadius" Value="999" />
-    <Setter Property="Padding" Value="12,6" />
-    <Setter Property="MinHeight" Value="28" />
-    <Setter Property="Background" Value="{DynamicResource GlassPillBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
-    <Setter Property="HorizontalContentAlignment" Value="Center" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
+  <Style Selector="Button.ui-btn.xs">
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Padding" Value="7,0" />
+    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
   </Style>
 
-  <Style Selector="Button.pill:pointerover">
-    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+  <Style Selector="Button.ui-btn.lg">
+    <Setter Property="Height" Value="38" />
+    <Setter Property="Padding" Value="18,0" />
+    <Setter Property="FontSize" Value="{DynamicResource FsMd}" />
   </Style>
 
-  <Style Selector="Button.pill:pressed">
-    <Setter Property="Background" Value="{DynamicResource GlassPillActiveBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource GlassPillTextActiveBrush}" />
-  </Style>
-
-  <Style Selector="Button.primary">
-    <Setter Property="CornerRadius" Value="999" />
-    <Setter Property="Padding" Value="14,7" />
-    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
-    <Setter Property="BorderThickness" Value="0" />
-  </Style>
-
-  <Style Selector="Button.danger">
-    <Setter Property="CornerRadius" Value="999" />
-    <Setter Property="Padding" Value="14,7" />
-    <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
-    <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
-    <Setter Property="BorderThickness" Value="0" />
+  <Style Selector="Button.ui-btn.icon">
+    <Setter Property="Width" Value="32" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
   </Style>
 
   <Style Selector="Button.icon">
@@ -192,6 +196,65 @@
 
   <Style Selector="TextBox:focus">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!-- Fluent controls themed to the flat ink & hairline system -->
+  <Style Selector="ComboBox">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+    <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="MinHeight" Value="32" />
+  </Style>
+  <Style Selector="ComboBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
+  </Style>
+  <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentSubtleBrush}" />
+  </Style>
+
+  <Style Selector="CheckBox">
+    <Setter Property="MinHeight" Value="26" />
+  </Style>
+
+  <Style Selector="ToggleSwitch">
+    <Setter Property="MinHeight" Value="26" />
+  </Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="{DynamicResource ElevatedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="FlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource ElevatedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusXl}" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="MenuFlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource ElevatedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+  </Style>
+
+  <Style Selector="ScrollBar">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ScrollBar:pointerover /template/ Thumb">
+    <Setter Property="Background" Value="{DynamicResource BorderMidBrush}" />
   </Style>
 
   <Style Selector="TextBlock.narrative">

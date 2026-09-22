@@ -19,7 +19,6 @@ import { InventoryActionBubble } from "./components/InventoryActionBubble";
 import { FullTachieModal } from "./components/FullTachieModal";
 import { WorldbookModal } from "./components/WorldbookModal";
 import { CharacterImportModal } from "./components/CharacterImportModal";
-import { MindGraphModal } from "./components/MindGraphModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { AuthPairingModal } from "./components/AuthPairingModal";
 
@@ -42,8 +41,6 @@ export default function App() {
     setWorldbookModalOpen,
     charImportOpen,
     setCharImportOpen,
-    mindGraphOpen,
-    setMindGraphOpen,
     paletteOpen,
     setPaletteOpen,
     toastMessage,
@@ -115,8 +112,6 @@ export default function App() {
       } else if (e.key === "Escape") {
         if (paletteOpen) {
           setPaletteOpen(false);
-        } else if (mindGraphOpen) {
-          setMindGraphOpen(false);
         } else if (fullTachieOpen) {
           setFullTachieOpen(false);
         } else if (worldbookModalOpen) {
@@ -138,8 +133,6 @@ export default function App() {
     toggleRightRail,
     paletteOpen,
     setPaletteOpen,
-    mindGraphOpen,
-    setMindGraphOpen,
     fullTachieOpen,
     setFullTachieOpen,
     worldbookModalOpen,
@@ -192,7 +185,6 @@ export default function App() {
       <FullTachieModal />
       <WorldbookModal />
       <CharacterImportModal />
-      <MindGraphModal />
       {settingsOpen && <SettingsModal onClose={closeSettings} />}
       <AuthPairingModal
         open={authPairingOpen}

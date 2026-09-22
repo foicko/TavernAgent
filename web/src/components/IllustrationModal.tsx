@@ -9,7 +9,8 @@ import {
 } from "../stores/imageSettingsStore";
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
-import { Field, Select } from "../ui/Field";
+import { Field, Select, TextArea } from "../ui/Field";
+import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
 import "./ImageSettings.css";
 import "./IllustrationModal.css";
@@ -93,13 +94,13 @@ export function IllustrationModal({
       open={open}
       onClose={onClose}
       label="生成场景插画"
-      title="🎨 生成本幕场景插画"
+      title={<><Icon name="image" size={16} /> 生成本幕场景插画</>}
       description="系统已根据当前剧情与人物动作提炼画面描述，你可以自由润色提示词后生成。"
       size="lg"
     >
       <div className="illustration-modal-body">
         <Field label="画面提示词 (Prompt)" hint="支持中英文描述，自动附带画质与风格修正词。">
-          <textarea
+          <TextArea
             className="illustration-prompt-textarea"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -130,10 +131,10 @@ export function IllustrationModal({
         </div>
 
         <div className="image-action-row">
-          <Button variant="primary" onClick={handleGenerate} disabled={loading || !prompt.trim()}>
-            {loading ? "正在绘制画面..." : "🎨 开始绘制插画"}
+          <Button variant="primary" loading={loading} onClick={handleGenerate} disabled={loading || !prompt.trim()}>
+            <Icon name="wand" size={14} /> {loading ? "正在绘制画面..." : "开始绘制插画"}
           </Button>
-          <Button variant="quiet" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             完成 / 关闭
           </Button>
         </div>
@@ -144,7 +145,7 @@ export function IllustrationModal({
           <div className="image-preview-box">
             <img src={lastResult.url} alt="生成结果" className="image-preview-img" />
             <div className="image-preview-meta">
-              ✓ 插画已绘制成功并自动关联至本回合！
+              <Icon name="checkCircle" size={13} /> 插画已绘制成功并自动关联至本回合！
             </div>
           </div>
         )}

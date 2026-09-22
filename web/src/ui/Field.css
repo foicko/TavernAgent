@@ -90,6 +90,15 @@
   font-size: var(--fs-sm);
 }
 
+/* 多行：高度由行数决定，行高恢复正常 */
+.ui-textarea {
+  height: auto;
+  min-height: 84px;
+  padding: var(--space-2) var(--space-3);
+  line-height: var(--lh-normal);
+  resize: vertical;
+}
+
 /* 带单位/后缀或行内按钮的输入组 */
 .ui-input-group {
   display: flex;

@@ -3,6 +3,7 @@ import { useUi } from "../stores/uiStore";
 import { useStory, storyBusy } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
 import { Modal } from "../ui/Modal";
+import { Icon } from "../ui/Icon";
 import "./MemoryBankModal.css";
 
 export const MemoryBankModal: React.FC = () => {
@@ -10,7 +11,6 @@ export const MemoryBankModal: React.FC = () => {
     memoryModalOpen,
     setMemoryModalOpen,
     activeCharKey,
-    setMindGraphOpen,
     notifyQuiet,
   } = useUi();
 
@@ -168,7 +168,7 @@ export const MemoryBankModal: React.FC = () => {
       size="xl"
       title={
         <span id="hud-block-memory">
-          🧠 认知记忆库
+          <Icon name="brain" size={15} /> 认知记忆库
         </span>
       }
       headerActions={
@@ -194,16 +194,6 @@ export const MemoryBankModal: React.FC = () => {
               整理
             </button>
           )}
-          <button
-            className="mem-graph-cue-btn"
-            onClick={() => {
-              close();
-              setMindGraphOpen(true);
-            }}
-            title="全景心智星图预览"
-          >
-            🕸️ 星图
-          </button>
         </div>
       }
       footer={
@@ -256,19 +246,19 @@ export const MemoryBankModal: React.FC = () => {
           className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "episodic" ? "active" : ""}`}
           onClick={() => setMemoryFilter("episodic")}
         >
-          👁️ 亲历 ({memoryCount("episodic")})
+          <Icon name="eye" size={12} /> 亲历 ({memoryCount("episodic")})
         </button>
         <button
           className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "inference" ? "active" : ""}`}
           onClick={() => setMemoryFilter("inference")}
         >
-          🧠 推测 ({memoryCount("inference")})
+          <Icon name="brain" size={12} /> 推测 ({memoryCount("inference")})
         </button>
         <button
           className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "secret" ? "active" : ""}`}
           onClick={() => setMemoryFilter("secret")}
         >
-          🔒 秘密 ({memoryCount("secret")})
+          <Icon name="lock" size={12} /> 秘密 ({memoryCount("secret")})
         </button>
         <button
           className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "hidden" ? "active" : ""}`}
@@ -301,7 +291,7 @@ export const MemoryBankModal: React.FC = () => {
       <div className="memory-bank-stream memory-modal-stream" id="memory-bank-stream">
         {filteredMemories.length === 0 ? (
           <div className="memory-empty-card">
-            <div className="memory-empty-icon">🧠</div>
+            <div className="memory-empty-icon"><Icon name="brain" size={28} /></div>
             <div className="memory-empty-title">
               {memoryError ? "暂时无法读取记忆" : memoryLoading ? "正在读取记忆…" : memoryFilter === "hidden" ? "没有隐藏的记忆" : "此分类暂无生效记忆"}
             </div>
@@ -327,7 +317,7 @@ export const MemoryBankModal: React.FC = () => {
                     notifyQuiet("已取消记忆置顶");
                   } else {
                     next.add(m.id);
-                    notifyQuiet("已置顶该条认知记忆 (优先送入上下文) 📌");
+                    notifyQuiet("已置顶该条认知记忆 (优先送入上下文)");
                   }
                   return next;
                 });
@@ -345,7 +335,7 @@ export const MemoryBankModal: React.FC = () => {
                     notifyQuiet("已恢复该记忆可见性");
                   } else {
                     next.add(m.id);
-                    notifyQuiet("已在当前世界线屏蔽该记忆 👁️");
+                    notifyQuiet("已在当前世界线屏蔽该记忆");
                   }
                   return next;
                 });
@@ -369,7 +359,7 @@ export const MemoryBankModal: React.FC = () => {
                 } else {
                   setCustomContents((prev) => ({ ...prev, [m.id]: editDraft.trim() }));
                   setEditedIds((prev) => new Set(prev).add(m.id));
-                  notifyQuiet("已成功保存 CoW 纠偏记忆 ✍️");
+                  notifyQuiet("已成功保存 CoW 纠偏记忆");
                 }
               }
               setEditingId(null);
@@ -405,7 +395,7 @@ export const MemoryBankModal: React.FC = () => {
                       disabled={m.isBackend && memoryReadOnly}
                       title="置顶强化召回"
                     >
-                      {isPinned ? "📌 已置顶" : "📌 置顶"}
+                      <Icon name="pin" size={11} /> {isPinned ? "已置顶" : "置顶"}
                     </button>
                     <button className="mem-act-btn" disabled={m.isBackend && memoryReadOnly} onClick={startEdit} title="纠正当前分支的记忆">
                       纠正
@@ -479,7 +469,7 @@ export const MemoryBankModal: React.FC = () => {
                   <div className="mem-entity-tags">
                     {(m.entities || []).map((ent) => (
                       <span key={ent} className="mem-entity-pill">
-                        🏷️ {ent}
+                        <Icon name="tag" size={10} /> {ent}
                       </span>
                     ))}
                   </div>

@@ -1,0 +1,50 @@
+/* 锚定浮层：扁平 elevated 面 + 发丝线 + 浮起阴影；开 250ms 弹簧、关 150ms 平滑
+   （transitions.dev 05-menu-dropdown：从锚点方向生长，关比开快）。 */
+.ui-popover {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  min-width: 200px;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: var(--space-3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  box-shadow: var(--shadow-float);
+  outline: none;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  animation: ui-popover-in var(--duration-fast) var(--ease-spring) both;
+}
+
+.ui-popover[data-state="closing"] {
+  pointer-events: none;
+  animation: ui-popover-out var(--duration-quick) var(--ease-smooth-out) both;
+}
+
+.ui-popover[data-side="top"] { transform-origin: bottom center; }
+.ui-popover[data-side="bottom"] { transform-origin: top center; }
+.ui-popover[data-side="left"] { transform-origin: right center; }
+.ui-popover[data-side="right"] { transform-origin: left center; }
+
+@keyframes ui-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ui-popover-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}

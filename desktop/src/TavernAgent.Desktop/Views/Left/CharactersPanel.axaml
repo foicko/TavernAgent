@@ -11,13 +11,15 @@
     <StackPanel Orientation="Horizontal" Spacing="6">
       <TextBlock Text="{Binding Cards.Count, StringFormat=已收录角色卡 ({0})}"
                  FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" />
-      <Button Classes="ui-btn sm ghost" Command="{Binding RefreshCommand}" Content="↻" Padding="4,0" />
+      <Button Classes="ui-btn sm ghost" Command="{Binding RefreshCommand}" Padding="4,0" ToolTip.Tip="刷新角色卡">
+        <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="13" Height="13" />
+      </Button>
     </StackPanel>
 
     <TextBlock Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                TextWrapping="Wrap" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource DangerBrush}" />
 
-    <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="🎭" Title="暂无角色卡"
+    <c:EmptyState IsVisible="{Binding IsEmpty}" IconGeometry="{StaticResource IconMask}" Title="暂无角色卡"
                   Description="点击上方「+ 导入 / 创建角色卡」开始。" />
 
     <ItemsControl ItemsSource="{Binding Cards}">
@@ -50,8 +52,10 @@
               </Button>
 
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <Button Classes="ui-btn sm ghost" Content="🗑" Padding="4,0"
-                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}" />
+                <Button Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="移除角色卡"
+                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}">
+                  <Path Classes="icon danger" Data="{StaticResource IconTrash}" Width="13" Height="13" />
+                </Button>
                 <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsConfirmingDelete}">
                   <Button Classes="ui-btn sm danger" Content="确认移除" Command="{Binding ConfirmDeleteCommand}" />
                   <Button Classes="ui-btn sm quiet" Content="取消" Command="{Binding CancelDeleteCommand}" />

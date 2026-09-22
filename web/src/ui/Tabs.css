@@ -1,0 +1,145 @@
+/* 分段控件 / 页签：唯一实现。
+   高亮块用 --tab-x / --tab-w（由 Tabs.tsx 量出）定位，250ms 对称滑动
+   （transitions.dev 16-tabs-sliding：开合同曲线同时长，不做回弹）。 */
+.ui-tabs {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  isolation: isolate;
+}
+
+.ui-tabs--fill {
+  display: flex;
+  width: 100%;
+}
+
+.ui-tabs--fill .ui-tabs__tab {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+}
+
+/* 胶囊轨道 */
+.ui-tabs--segmented {
+  padding: 3px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  background: var(--bg-muted);
+}
+
+.ui-tabs--underline {
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ui-tabs__indicator {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform var(--duration-fast) var(--ease-smooth-out),
+              width var(--duration-fast) var(--ease-smooth-out),
+              opacity var(--duration-quick) var(--ease-smooth-out);
+  transform: translateX(var(--tab-x, 0px));
+  width: var(--tab-w, 0px);
+}
+
+.ui-tabs--segmented .ui-tabs__indicator {
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: var(--radius-full);
+  background: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-tabs--underline .ui-tabs__indicator {
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--text-main);
+}
+
+.ui-tabs__tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: color var(--duration-quick) var(--ease-smooth-out),
+              transform var(--duration-micro) var(--ease-smooth-out);
+}
+
+.ui-tabs--md .ui-tabs__tab {
+  height: 28px;
+  padding: 0 13px;
+}
+
+.ui-tabs--sm .ui-tabs__tab {
+  height: 22px;
+  padding: 0 9px;
+  font-size: var(--fs-xs);
+}
+
+.ui-tabs--underline .ui-tabs__tab {
+  height: 32px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.ui-tabs__tab:hover:not(:disabled):not(.active) {
+  color: var(--text-main);
+}
+
+.ui-tabs__tab:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.ui-tabs--segmented .ui-tabs__tab.active {
+  color: var(--bg-surface);
+  font-weight: var(--fw-semibold);
+}
+
+.ui-tabs--underline .ui-tabs__tab.active {
+  color: var(--text-main);
+  font-weight: var(--fw-semibold);
+}
+
+.ui-tabs__tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-tabs__tab:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.ui-tabs__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ui-tabs__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

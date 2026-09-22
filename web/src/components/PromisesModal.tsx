@@ -2,8 +2,20 @@ import React from "react";
 import { useUi } from "../stores/uiStore";
 import { useStory } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
+import { Button } from "../ui/Button";
+import { EmptyState } from "../ui/EmptyState";
+import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
+import { Pill, type PillTone } from "../ui/Pill";
 import "./PromisesModal.css";
+
+const STATE_PILLS: Record<string, { label: string; tone: PillTone }> = {
+  proposed: { label: "口头提议", tone: "warning" },
+  active: { label: "誓约生效中", tone: "success" },
+  fulfilled: { label: "已践行达成", tone: "neutral" },
+  broken: { label: "已违背", tone: "danger" },
+  cancelled: { label: "已解除", tone: "neutral" },
+};
 
 export const PromisesModal: React.FC = () => {
   const { promisesModalOpen, setPromisesModalOpen, activeCharKey } = useUi();
@@ -16,14 +28,6 @@ export const PromisesModal: React.FC = () => {
   const livePromises = hud?.promises ? Object.values(hud.promises) : [];
   const close = () => setPromisesModalOpen(false);
 
-  const statePillMap: Record<string, { label: string; color: string }> = {
-    proposed: { label: "口头提议", color: "var(--accent-amber, #d97706)" },
-    active: { label: "誓约生效中", color: "var(--accent-green, #10b981)" },
-    fulfilled: { label: "已践行达成", color: "var(--text-dim)" },
-    broken: { label: "已违背", color: "var(--color-warn-border, #ef4444)" },
-    cancelled: { label: "已解除", color: "var(--text-dim)" },
-  };
-
   return (
     <Modal
       open={promisesModalOpen}
@@ -34,15 +38,15 @@ export const PromisesModal: React.FC = () => {
       closeLabel="关闭契约弹窗"
       size="md"
       title={
-        <span>
-          🤝 主动契约与承诺
-        </span>
+        <>
+          <Icon name="handshake" size={16} /> 主动契约与承诺
+        </>
       }
       footer={
         <div className="btn-row">
-          <button type="button" className="btn-solid" onClick={close}>
+          <Button variant="primary" onClick={close}>
             关闭
-          </button>
+          </Button>
         </div>
       }
     >
@@ -53,20 +57,15 @@ export const PromisesModal: React.FC = () => {
       {livePromises.length > 0 ? (
         <div className="promises-modal-list">
           {livePromises.map((p) => {
-            const pill = statePillMap[p.state] || { label: p.state, color: "var(--accent-glow)" };
+            const pill = STATE_PILLS[p.state] || { label: p.state, tone: "info" as PillTone };
             return (
               <div key={p.promiseId} className="promises-modal-card">
                 <div className="promises-modal-card-head">
                   <span className="promises-modal-type-title">
-                    <span>📜</span>
+                    <Icon name="scroll" size={13} />
                     <span>约见 / 誓约</span>
                   </span>
-                  <span
-                    className="promises-modal-status-badge"
-                    style={{ color: pill.color, borderColor: pill.color }}
-                  >
-                    {pill.label}
-                  </span>
+                  <Pill tone={pill.tone} className="ui-pill--sm">{pill.label}</Pill>
                 </div>
                 <div className="promises-modal-text">{p.content}</div>
                 {p.sourceNodeId && (
@@ -79,22 +78,20 @@ export const PromisesModal: React.FC = () => {
           })}
         </div>
       ) : view ? (
-        <div className="promises-modal-empty">
-          <div className="promises-modal-empty-icon">📜</div>
-          <div className="promises-modal-empty-title">当前分支暂无有效契约与承诺</div>
-          <div>在与角色的互动中，主动给出约定将触发契约机制并持久沉淀在世界账本中。</div>
-        </div>
+        <EmptyState
+          icon={<Icon name="scroll" size={18} />}
+          title="当前分支暂无有效契约与承诺"
+          description="在与角色的互动中，主动给出约定将触发契约机制并持久沉淀在世界账本中。"
+        />
       ) : (
         <div className="promises-modal-list">
           <div className="promises-modal-card">
             <div className="promises-modal-card-head">
               <span className="promises-modal-type-title">
-                <span>📜</span>
+                <Icon name="scroll" size={13} />
                 <span>{char.pledge.title}</span>
               </span>
-              <span className="promises-modal-status-badge" style={{ color: "var(--accent-green, #10b981)" }}>
-                {char.pledge.status}
-              </span>
+              <Pill tone="success" className="ui-pill--sm">{char.pledge.status}</Pill>
             </div>
             <div className="promises-modal-text">{char.pledge.text}</div>
           </div>

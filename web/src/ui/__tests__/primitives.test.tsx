@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button, IconButton } from "../Button";
 import { Disclosure } from "../Disclosure";
 import { Field, NumberInput, Select, TextInput } from "../Field";
+import { Icon } from "../Icon";
 import { ListRow } from "../ListRow";
 import { Menu, MenuItem, MenuSeparator } from "../Menu";
 import { Modal } from "../Modal";
@@ -111,7 +112,7 @@ describe("Button", () => {
   });
 
   it("gives icon buttons an accessible name from label", () => {
-    render(<IconButton label="关闭">✕</IconButton>);
+    render(<IconButton label="关闭"><Icon name="close" /></IconButton>);
     const button = screen.getByLabelText("关闭");
     expect(button.getAttribute("title")).toBe("关闭");
   });

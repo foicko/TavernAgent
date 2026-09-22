@@ -38,14 +38,14 @@
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-md);
+  transition: all var(--duration-quick) var(--ease-spring);
 }
 
 .btn-solid:hover:not(:disabled) {
   opacity: 0.92;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  box-shadow: var(--shadow-float);
 }
 
 .btn-solid:disabled {
@@ -90,4 +90,11 @@
   flex-direction: column;
   gap: var(--space-2);
   margin-top: var(--space-2);
+}
+
+/* 内联 SVG 图标（ui/Icon 原语）：统一垂直居中与不收缩 */
+.ui-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
 }

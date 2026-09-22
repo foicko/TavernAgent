@@ -1,4 +1,4 @@
-/* IllustrationModal.css: 场景生图弹窗与回合插画样式 */
+/* IllustrationModal.css: 场景生图弹窗与回合插画样式（扁平面 + 发丝线，颜色全部走令牌） */
 
 .illustration-modal-body {
   display: flex;
@@ -7,32 +7,17 @@
 }
 
 .illustration-prompt-textarea {
-  width: 100%;
   min-height: 90px;
-  resize: vertical;
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  color: var(--text-main);
-  background: var(--bg-surface-subtle, rgba(255, 255, 255, 0.05));
-  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
-  border-radius: var(--radius-md, 8px);
-  padding: var(--space-2) var(--space-3);
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.illustration-prompt-textarea:focus {
-  border-color: var(--color-primary, #6366f1);
 }
 
 .turn-illustration-wrap {
   margin-top: var(--space-3);
   position: relative;
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.12));
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-light);
+  background: var(--bg-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 .turn-illustration-img {
@@ -41,7 +26,7 @@
   max-height: 420px;
   object-fit: cover;
   cursor: zoom-in;
-  transition: transform 0.25s ease;
+  transition: transform var(--duration-fast) var(--ease-smooth-out);
 }
 
 .turn-illustration-wrap:hover .turn-illustration-img {
@@ -53,10 +38,16 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
-  background: rgba(14, 15, 18, 0.85);
-  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-surface);
   font-size: var(--fs-xs);
   color: var(--text-dim);
+}
+
+.turn-illustration-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .turn-illustration-actions {
@@ -68,19 +59,24 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(12px);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
   cursor: zoom-out;
+  animation: ui-lightbox-in var(--duration-fast) var(--ease-smooth-out);
+}
+
+@keyframes ui-lightbox-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .lightbox-img {
   max-width: 95vw;
   max-height: 92vh;
   object-fit: contain;
-  border-radius: var(--radius-md, 8px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
 }

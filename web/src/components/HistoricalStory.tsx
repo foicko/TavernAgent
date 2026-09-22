@@ -3,6 +3,7 @@ import type { OptionView, StoryMessage, TurnPhase } from "../stores/storyTypes";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { useStory } from "../stores/storyStore";
+import { Icon, type IconName } from "../ui/Icon";
 import { TurnActions } from "./TurnActions";
 import { TurnEvidence } from "./TurnEvidence";
 import { TTSPlayButton } from "./TTSButton";
@@ -10,8 +11,8 @@ import { TurnIllustration } from "./TurnIllustration";
 import { IllustrationModal } from "./IllustrationModal";
 import "./HistoricalStory.css";
 
-/** 历史已提交回合的思考过程折叠组件 */
-const CommittedThinkingSection: React.FC<{ thinking: string }> = ({ thinking }) => {
+/** 历史已提交回合的思考过程折叠组件（settle 态：思考已完成，可展开回看） */
+const CommittedThinkingSection: React.FC<{ thinking: string; seconds?: number }> = ({ thinking, seconds }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className={`thinking-container committed ${open ? "is-expanded" : "is-collapsed"}`}>
@@ -19,11 +20,12 @@ const CommittedThinkingSection: React.FC<{ thinking: string }> = ({ thinking }) 
         onClick={() => setOpen((prev) => !prev)}
         onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setOpen(prev => !prev); } }}>
         <div className="thinking-bar-main">
-          <span className="thinking-icon">💭</span>
+          <span className="thinking-icon"><Icon name="brain" size={13} /></span>
           <span className="thinking-title">思考过程 (Reasoning)</span>
+          {seconds ? <span className="thinking-duration">思考了 {seconds} 秒</span> : null}
         </div>
         <span className="thinking-expand-hint">
-          {open ? "收起 ▲" : "展开 ▼"}
+          {open ? "收起" : "展开"} <Icon name={open ? "chevronUp" : "chevronDown"} size={12} />
         </span>
       </div>
       {open && (
@@ -35,6 +37,13 @@ const CommittedThinkingSection: React.FC<{ thinking: string }> = ({ thinking }) 
   );
 };
 
+/** 抉择意图 → 图标与语义色：颜色只从令牌取，不写字面色。 */
+const INTENT_BADGES: Record<string, { label: string; icon: IconName; accent: string }> = {
+  aggressive: { label: "强势威慑", icon: "swords", accent: "var(--color-danger-text)" },
+  clever: { label: "机智试探", icon: "lightbulb", accent: "var(--color-info)" },
+  emotional: { label: "共情抚慰", icon: "handshake", accent: "var(--color-success)" },
+  chaotic: { label: "出其不意", icon: "dice", accent: "var(--accent-amber)" },
+};
 
 interface HistoricalStoryProps {
   storyMessages: StoryMessage[];
@@ -71,19 +80,20 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       onClick={() => setIllustrationTarget({ turnId: msg.id, blocks: msg.blocks, fallbackText: msg.blocks.map((b) => b.text).join("\n") })}
                       title="生成本幕场景插画"
                     >
-                      🎨 生图
+                      <Icon name="image" size={13} /> 生图
                     </button>
                     <button
                       className="turn-tool-btn"
                       onClick={() => handleCopy(msg.blocks.map((b) => b.text).join("\n"))}
                       title="复制文学正文"
                     >
-                      ⎘ 复制
+                      <Icon name="copy" size={13} /> 复制
                     </button>
                   </div>
                   <div className="dialogue-meta-header">
                     <div className="speaker-label">
-                      <span>✦ 命运序章 · 场景起步</span>
+                      <Icon name="sparkles" size={14} />
+                      <span>命运序章 · 场景起步</span>
                     </div>
                     <span className="turn-time-stamp">开场白</span>
                   </div>
@@ -106,7 +116,7 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                     <div className="player-turn-container">
                       <div className="player-bubble">
                         <div className="player-bubble-header">
-                          <span className="player-id-badge">✦ 玩家行动 · 第一人称</span>
+                          <span className="player-id-badge"><Icon name="sparkles" size={11} /> 玩家行动 · 第一人称</span>
                           <span className="player-turn-time">回合 #{msg.turnNumber ?? idx}</span>
                         </div>
                         <div className="player-speech-text">{renderInlineMarkdown(expand(msg.inputText))}</div>
@@ -131,21 +141,21 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                         onClick={() => setIllustrationTarget({ turnId: msg.id, blocks: msg.blocks, fallbackText: msg.blocks.map((b) => b.text).join("\n") })}
                         title="生成本幕场景插画"
                       >
-                        🎨 生图
+                        <Icon name="image" size={13} /> 生图
                       </button>
                       <button
                         className="turn-tool-btn"
                         onClick={() => handleQuote(characterName, msg.blocks.map((b) => b.text).join("\n"))}
                         title="引用此句并带入输入框"
                       >
-                        ❝ 引用
+                        <Icon name="quote" size={13} /> 引用
                       </button>
                       <button
                         className="turn-tool-btn"
                         onClick={() => handleCopy(msg.blocks.map((b) => b.text).join("\n"))}
                         title="复制文学正文"
                       >
-                        ⎘ 复制
+                        <Icon name="copy" size={13} /> 复制
                       </button>
 
                     </div>
@@ -155,7 +165,7 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       </div>
                       <span className="turn-time-stamp">回合 #{msg.turnNumber ?? idx}</span>
                     </div>
-                    {msg.thinking && <CommittedThinkingSection thinking={msg.thinking} />}
+                    {msg.thinking && <CommittedThinkingSection thinking={msg.thinking} seconds={msg.thinkingSeconds} />}
                     <div className="dialogue-content-text">
                       {msg.blocks.map((b, bi) => {
                         if (b.kind === "dialogue") {
@@ -201,21 +211,15 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       viewMode === "studio" && (
                         <div className="decision-deck-box">
                           <div className="decision-deck-header">
-                            <span>✦ 剧情抉择分支（点击直接推进，或填入输入框）</span>
+                            <span><Icon name="sparkles" size={12} /> 剧情抉择分支（点击直接推进，或填入输入框）</span>
                             <span>多意图推演</span>
                           </div>
                           <div className="decision-grid choice-grid">
                             {msg.options.map((opt) => {
-                              const intentBadges: Record<string, { label: string; icon: string; border: string }> = {
-                                aggressive: { label: "强势威慑", icon: "⚔️", border: "#e57373" },
-                                clever: { label: "机智试探", icon: "💡", border: "#64b5f6" },
-                                emotional: { label: "共情抚慰", icon: "🤝", border: "#81c784" },
-                                chaotic: { label: "出其不意", icon: "🎲", border: "#ba68c8" },
-                              };
-                              const b = intentBadges[opt.intent] || {
+                              const b = INTENT_BADGES[opt.intent] || {
                                 label: opt.intent,
-                                icon: "✦",
-                                border: "var(--border-mid)",
+                                icon: "sparkles" as IconName,
+                                accent: "var(--border-mid)",
                               };
                               return (
                                 <div
@@ -225,14 +229,14 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                                   tabIndex={0}
                                   onClick={() => void chooseOption(opt)}
                                   onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); void chooseOption(opt); } }}
-                                  style={{ "--decision-accent": b.border } as React.CSSProperties}
+                                  style={{ "--decision-accent": b.accent } as React.CSSProperties}
                                   title="点击推进该抉择"
                                 >
                                   <div>
                                     <span>
-                                      {b.icon} {b.label}
+                                      <Icon name={b.icon} size={12} /> {b.label}
                                     </span>
-                                    <span>推进 ↵</span>
+                                    <span>推进 <Icon name="cornerDownLeft" size={11} /></span>
                                   </div>
                                   <div>
                                     {opt.text}

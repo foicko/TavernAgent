@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MemoryBankModal (认知记忆库 二级页面弹窗样式)
+   MemoryBankModal (认知记忆库 二级页面弹窗样式)：扁平面 + 发丝线，类别色走令牌
    ========================================================================== */
 
 .memory-modal-window {
@@ -20,12 +20,9 @@
   flex: 1;
   min-width: 240px;
   padding: 8px 12px;
-  background: var(--glass-bg, var(--bg-canvas));
-  backdrop-filter: var(--glass-blur-subtle, blur(8px));
-  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
-  border: 1px solid var(--glass-border, var(--border-light));
-  border-radius: var(--radius-md, 10px);
-  box-shadow: var(--glass-specular-top);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
   font-size: 11px;
   color: var(--text-dim);
 }
@@ -37,12 +34,9 @@
   margin-top: 6px;
   border: none;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--meter-track);
   overflow: hidden;
-}
-
-[data-theme="dark"] .memory-modal-quota-box progress {
-  background: rgba(255, 255, 255, 0.08);
+  accent-color: var(--accent-solid);
 }
 
 .memory-modal-quota-box progress::-webkit-progress-bar {
@@ -51,7 +45,7 @@
 }
 
 .memory-modal-quota-box progress::-webkit-progress-value {
-  background: linear-gradient(90deg, var(--accent-solid), var(--accent-muted, #3b82f6));
+  background: var(--accent-solid);
   border-radius: var(--radius-full);
 }
 
@@ -62,25 +56,21 @@
 
 .memory-modal-search {
   width: 100%;
-  height: 36px;
+  height: 34px;
   padding: 0 14px;
-  border-radius: var(--radius-full);
-  background: var(--glass-bg, var(--bg-canvas));
-  backdrop-filter: var(--glass-blur-subtle, blur(8px));
-  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
-  border: 1px solid var(--glass-border, var(--border-light));
-  box-shadow: var(--glass-specular-top);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
   font-size: 12px;
   color: var(--text-main);
   box-sizing: border-box;
-  transition: var(--transition-fast);
+  transition: border-color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .memory-modal-search:focus {
   outline: none;
   border-color: var(--accent-solid);
-  box-shadow: var(--glass-focus-glow, 0 0 0 3px rgba(59, 130, 246, 0.2));
-  background: var(--bg-surface);
+  box-shadow: var(--shadow-ring);
 }
 
 /* 类别过滤器 */
@@ -92,29 +82,33 @@
 }
 
 .memory-modal-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11.5px;
+  font-family: inherit;
   padding: 4px 12px;
   border-radius: var(--radius-full);
-  background: var(--glass-pill-bg, rgba(20, 20, 20, 0.04));
-  border: 1px solid var(--glass-border, var(--border-light));
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
   color: var(--text-dim);
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: color var(--duration-quick) var(--ease-smooth-out),
+              background-color var(--duration-quick) var(--ease-smooth-out),
+              border-color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .memory-modal-filter-btn:hover {
   color: var(--text-main);
-  border-color: var(--glass-border-hover, var(--border-mid));
+  border-color: var(--border-mid);
   background: var(--bg-surface);
-  transform: translateY(-0.5px);
 }
 
 .memory-modal-filter-btn.active {
-  background: var(--accent-solid);
-  color: var(--accent-contrast);
-  border-color: var(--accent-solid);
-  font-weight: 600;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  background: var(--text-main);
+  color: var(--bg-surface);
+  border-color: var(--text-main);
+  font-weight: var(--fw-semibold);
 }
 
 /* 记忆流列表 */
@@ -129,43 +123,42 @@
 }
 
 .memory-modal-stream .memory-item-card {
-  background: var(--glass-bg, var(--bg-surface));
-  backdrop-filter: var(--glass-blur-subtle, blur(8px));
-  -webkit-backdrop-filter: var(--glass-blur-subtle, blur(8px));
-  border: 1px solid var(--glass-border, var(--border-light));
-  border-left: 3.5px solid var(--border-mid);
-  border-radius: var(--radius-md, 10px);
-  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.03);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: border-color var(--duration-quick) var(--ease-smooth-out),
+              box-shadow var(--duration-quick) var(--ease-smooth-out),
+              background-color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .memory-modal-stream .memory-item-card:hover {
-  border-color: var(--glass-border-hover, var(--border-dark));
-  box-shadow: var(--glass-specular-top), 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: var(--border-mid);
+  box-shadow: var(--shadow-md);
 }
 
 .memory-modal-stream .memory-item-card.category-episodic {
-  border-left-color: #3b82f6;
+  border-left-color: var(--color-info);
 }
 
 .memory-modal-stream .memory-item-card.category-inference {
-  border-left-color: #8b5cf6;
+  border-left-color: var(--accent-amber);
 }
 
 .memory-modal-stream .memory-item-card.category-secret {
-  border-left-color: #ef4444;
+  border-left-color: var(--color-danger-text);
 }
 
 .memory-modal-stream .memory-item-card.recalled {
-  border-color: rgba(210, 170, 70, 0.45);
-  box-shadow: var(--glass-specular-top), 0 0 12px rgba(210, 170, 70, 0.18);
+  border-color: color-mix(in srgb, var(--accent-amber) 45%, transparent);
 }
 
 .memory-modal-stream .memory-item-card.pinned {
-  background: rgba(210, 170, 70, 0.08);
-  border-color: rgba(210, 170, 70, 0.35);
+  background: color-mix(in srgb, var(--accent-amber) 8%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--accent-amber) 35%, transparent);
 }
 
 .memory-modal-stream .memory-item-card.hidden {
@@ -186,7 +179,7 @@
   line-height: 1.45;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--transition-fast);
+  transition: color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .memory-modal-stream .memory-item-card.is-collapsed .mem-item-content:hover {
@@ -206,4 +199,113 @@
 .memory-modal-stream .memory-item-card.is-expanded .mem-item-content {
   line-height: 1.6;
   color: var(--text-main);
+}
+
+/* 记忆类别小徽标 */
+.memory-modal-stream .category-episodic .mem-type-badge {
+  color: var(--color-info);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: var(--fw-semibold);
+}
+
+.memory-modal-stream .category-inference .mem-type-badge {
+  color: var(--accent-amber);
+  background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: var(--fw-semibold);
+}
+
+.memory-modal-stream .category-secret .mem-type-badge {
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: var(--fw-semibold);
+}
+
+/* 记忆操作按钮组 */
+.memory-modal-stream .mem-act-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+  font-family: inherit;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  transition: color var(--duration-quick) var(--ease-smooth-out),
+              background-color var(--duration-quick) var(--ease-smooth-out),
+              border-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.memory-modal-stream .mem-act-btn:hover:not(:disabled) {
+  color: var(--text-main);
+  border-color: var(--border-mid);
+  background: var(--bg-surface);
+}
+
+.memory-modal-stream .mem-act-btn.pinned-active {
+  color: var(--accent-amber);
+  background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-amber) 35%, transparent);
+  font-weight: var(--fw-semibold);
+}
+
+.memory-modal-stream .mem-act-btn.mem-toggle-expand-btn {
+  color: var(--accent-glow);
+  font-weight: var(--fw-semibold);
+}
+
+.memory-modal-stream .mem-act-btn.mem-toggle-expand-btn:hover:not(:disabled) {
+  background: var(--accent-subtle);
+  border-color: var(--accent-solid);
+}
+
+/* 证据与来源呼出抽屉 */
+.memory-modal-stream .memory-evidence {
+  margin-top: 4px;
+  padding: 6px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.memory-modal-stream .memory-evidence summary {
+  cursor: pointer;
+  font-weight: var(--fw-semibold);
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.memory-modal-stream .memory-evidence summary:hover {
+  color: var(--text-main);
+}
+
+.memory-modal-stream .memory-evidence blockquote {
+  margin: 4px 0 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--accent-solid);
+  color: var(--text-main);
+  font-style: italic;
+}
+
+/* 实体胶囊标签 */
+.memory-modal-stream .mem-entity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  font-size: 9.5px;
+  color: var(--text-dim);
 }

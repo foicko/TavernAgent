@@ -10,6 +10,7 @@
 import { useState } from "react";
 import type { StoryMessage } from "../stores/storyTypes";
 import { useStory } from "../stores/storyStore";
+import { Icon } from "../ui/Icon";
 import "./TurnEvidence.css";
 
 const OUTCOME_LABEL: Record<string, string> = {
@@ -54,13 +55,13 @@ export function TurnEvidence({ msg }: { msg: StoryMessage }) {
             // 收起台阶也要说一声：读者要能分清"这一轮本来没有抉择"与
             // "系统没有把选项摆出来"——两者对"我现在该做什么"含义完全不同。
             <span className="evidence-chip muted-chip" title="按「只在关键节点」规则收起">
-              ✦ <span className="evidence-chip-label">未摆出选项</span>
+              <Icon name="sparkles" size={11} /> <span className="evidence-chip-label">未摆出选项</span>
               <span className="evidence-chip-text">{suppressed} 条（本轮承接上一轮抉择）</span>
             </span>
           )}
           {note !== "" && (
             <span className="evidence-chip note-chip" title="本轮注记（非叙事）：只约束这一次演绎">
-              ✎ <span className="evidence-chip-label">本轮注记</span>
+              <Icon name="note" size={11} /> <span className="evidence-chip-label">本轮注记</span>
               <span className="evidence-chip-text">{note}</span>
             </span>
           )}
@@ -71,7 +72,7 @@ export function TurnEvidence({ msg }: { msg: StoryMessage }) {
                 : check.outcome === "critical_failure" ? "is-down" : "is-down";
             return (
               <span key={check.rollId} className={`evidence-chip dice-chip ${tone}`} title="规则检定结果">
-                🎲 <span className="evidence-chip-label">{label}</span>
+                <Icon name="dice" size={11} /> <span className="evidence-chip-label">{label}</span>
                 <span className="evidence-chip-text">{OUTCOME_LABEL[check.outcome] ?? check.outcome}</span>
               </span>
             );
@@ -96,7 +97,7 @@ export function TurnEvidence({ msg }: { msg: StoryMessage }) {
           onClick={() => setOpen((prev) => !prev)}
           title="展开本轮依据：检定明细与参考到的记忆"
         >
-          {open ? "收起依据 ▲" : `展开依据 ▼（${counts.join(" · ")}）`}
+          {open ? "收起依据" : `展开依据（${counts.join(" · ")}）`} <Icon name={open ? "chevronUp" : "chevronDown"} size={11} />
         </button>
       )}
 

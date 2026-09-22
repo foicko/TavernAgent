@@ -24,22 +24,14 @@
   max-width: 200px;
   padding: 4px 12px;
   border-radius: var(--radius-full, 9999px);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg-subtle);
-  backdrop-filter: var(--glass-blur-subtle);
-  -webkit-backdrop-filter: var(--glass-blur-subtle);
-  box-shadow: inset 0 1px 1px 0 var(--glass-specular-top), 0 1px 3px var(--glass-shadow);
-  transition: transform 0.2s var(--glass-spring-ease),
-              background-color 0.16s ease,
-              border-color 0.16s ease,
-              box-shadow 0.16s ease;
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  transition: background-color 0.16s ease, border-color 0.16s ease;
 }
 
 .header-active-model-pill:hover {
-  border-color: var(--glass-border-hover);
-  background: var(--glass-bg-elevated);
-  transform: translateY(-0.5px);
-  box-shadow: inset 0 1px 1.5px 0 var(--glass-specular-top), var(--shadow-sm);
+  border-color: var(--border-mid);
+  background: var(--bg-subtle);
 }
 
 .header-active-model-pill:active {
@@ -56,7 +48,7 @@
 
 .active-model-indicator-dot.active {
   background: var(--color-success);
-  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-success) 20%, transparent);
 }
 
 .active-model-indicator-dot.idle {
@@ -119,12 +111,3 @@
   line-height: 1;
 }
 
-.rail-toggle-glyph--emoji {
-  font-size: 15px;
-}
-
-/* 模式切换按钮里的图标字形 */
-.tab-icon {
-  font-size: var(--fs-md);
-  line-height: 1;
-}

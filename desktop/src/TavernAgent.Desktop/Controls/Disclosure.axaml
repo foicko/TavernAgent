@@ -10,14 +10,18 @@
                   Background="Transparent"
                   BorderThickness="0"
                   Padding="4">
-      <Grid ColumnDefinitions="*,Auto">
-        <TextBlock Grid.Column="0"
+      <Grid ColumnDefinitions="Auto,*">
+        <!-- Chevron rotates 90deg when expanded (web: .ui-disclosure__caret) -->
+        <Path Grid.Column="0" Classes="icon disclosure-caret"
+              Data="{StaticResource IconChevronRight}"
+              Width="13" Height="13" Margin="0,0,8,0"
+              Classes.open="{Binding $parent[controls:Disclosure].IsExpanded}" />
+        <TextBlock Grid.Column="1"
                    Text="{Binding $parent[controls:Disclosure].Header}"
                    FontSize="{DynamicResource FsMd}"
                    FontWeight="Medium"
                    VerticalAlignment="Center"
                    Foreground="{DynamicResource TextPrimaryBrush}" />
-        <TextBlock Grid.Column="1" Text="▾" Foreground="{DynamicResource TextDimBrush}" />
       </Grid>
     </ToggleButton>
     <ContentPresenter Content="{Binding $parent[controls:Disclosure].Body}"

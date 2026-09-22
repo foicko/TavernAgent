@@ -1,11 +1,12 @@
-/* 状态胶囊 / 标签 / 状态点：参考 beautifului.dev tool chips 与 shadcn badge 规范 */
+/* 状态胶囊 / 标签 / 状态点：扁平 inset 面 + 发丝线（shadcn badge / beautifului chip）。
+   语义色调一律由令牌通过 color-mix 派生，不写字面色。 */
 .ui-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-pill-bg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-subtle);
   color: var(--text-muted);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
@@ -13,11 +14,9 @@
   padding: 4px var(--space-2);
   max-width: 100%;
   min-width: 0;
-  box-shadow: inset 0 1px 0.5px 0 var(--glass-specular-top);
-  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
-              background-color var(--duration-quick, 150ms) ease,
-              border-color var(--duration-quick, 150ms) ease,
-              color var(--duration-quick, 150ms) ease;
+  transition: background-color var(--duration-quick) var(--ease-smooth-out),
+              border-color var(--duration-quick) var(--ease-smooth-out),
+              color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .ui-pill--sm {
@@ -26,32 +25,31 @@
 }
 
 .ui-pill--accent {
-  background: var(--glass-pill-bg-active);
-  border-color: var(--glass-pill-bg-active);
-  color: var(--glass-pill-text-active);
-  box-shadow: var(--shadow-sm);
+  background: var(--text-main);
+  border-color: var(--text-main);
+  color: var(--bg-surface);
 }
 
 .ui-pill--success {
-  border-color: rgba(46, 125, 50, 0.3);
-  background: rgba(46, 125, 50, 0.08);
+  border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
   color: var(--color-success);
 }
 
 .ui-pill--warning {
-  border-color: rgba(237, 108, 2, 0.3);
-  background: rgba(237, 108, 2, 0.08);
+  border-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
   color: var(--color-warning);
 }
 
 .ui-pill--info {
-  border-color: rgba(2, 136, 209, 0.3);
-  background: rgba(2, 136, 209, 0.08);
+  border-color: color-mix(in srgb, var(--color-info) 35%, transparent);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
   color: var(--color-info);
 }
 
 .ui-pill--danger {
-  border-color: var(--color-warn-border);
+  border-color: color-mix(in srgb, var(--color-danger-text) 35%, transparent);
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
 }

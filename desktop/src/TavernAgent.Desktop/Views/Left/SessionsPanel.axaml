@@ -12,7 +12,7 @@
                  Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
     </Grid>
 
-    <Border Classes="glass-subtle" CornerRadius="999" Padding="3" HorizontalAlignment="Stretch">
+    <Border Classes="surface-inset" CornerRadius="999" Padding="3" HorizontalAlignment="Stretch">
       <Grid ColumnDefinitions="*,*">
         <Button Grid.Column="0" Classes="seg" Classes.active="{Binding IsAllFilter}"
                 HorizontalAlignment="Stretch" Command="{Binding SetAllFilterCommand}"
@@ -23,7 +23,7 @@
       </Grid>
     </Border>
 
-    <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="📜" Title="暂无历史故事会话"
+    <c:EmptyState IsVisible="{Binding IsEmpty}" IconGeometry="{StaticResource IconScroll}" Title="暂无历史故事会话"
                   Description="点击下方按钮开辟，或直接在底部输入框发言开启全新故事。" />
 
     <ItemsControl ItemsSource="{Binding Rows}">
@@ -55,8 +55,10 @@
               </Button>
 
               <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <Button Classes="ui-btn sm ghost" Content="🗑" Padding="4,0"
-                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}" />
+                <Button Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="删除会话"
+                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}">
+                  <Path Classes="icon danger" Data="{StaticResource IconTrash}" Width="13" Height="13" />
+                </Button>
                 <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsConfirmingDelete}">
                   <Button Classes="ui-btn sm danger" Content="确认删除" Command="{Binding ConfirmDeleteCommand}" />
                   <Button Classes="ui-btn sm quiet" Content="取消" Command="{Binding CancelDeleteCommand}" />
@@ -73,14 +75,32 @@
             Command="{Binding NewStoryCommand}" Content="{Binding NewStoryLabel}" />
     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
       <Button Grid.Column="0" Classes="ui-btn quiet" HorizontalAlignment="Stretch"
-              Click="OnExportClick" Content="📦 导出剧本"
-              IsEnabled="{Binding HasCurrentView}" />
-      <Button Grid.Column="1" Classes="ui-btn quiet" HorizontalAlignment="Stretch"
-              Click="OnImportClick" Content="📥 导入剧本" />
+              Click="OnExportClick" IsEnabled="{Binding HasCurrentView}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Path Classes="icon" Data="{StaticResource IconDownload}" Width="13" Height="13" />
+          <TextBlock Text="导出剧本" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Grid.Column="1" Classes="ui-btn quiet" HorizontalAlignment="Stretch" Click="OnImportClick">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Path Classes="icon" Data="{StaticResource IconUpload}" Width="13" Height="13" />
+          <TextBlock Text="导入剧本" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
     </Grid>
     <StackPanel Orientation="Horizontal" Spacing="10">
-      <Button Classes="ui-btn sm ghost" Command="{Binding GoCharactersCommand}" Content="👥 角色库" />
-      <Button Classes="ui-btn sm ghost" Command="{Binding GoImportCommand}" Content="➕ 导入角色卡" />
+      <Button Classes="ui-btn sm ghost" Command="{Binding GoCharactersCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="5">
+          <Path Classes="icon" Data="{StaticResource IconUsers}" Width="12" Height="12" />
+          <TextBlock Text="角色库" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <Button Classes="ui-btn sm ghost" Command="{Binding GoImportCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="5">
+          <Path Classes="icon" Data="{StaticResource IconPlus}" Width="12" Height="12" />
+          <TextBlock Text="导入角色卡" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
     </StackPanel>
   </StackPanel>
 </UserControl>

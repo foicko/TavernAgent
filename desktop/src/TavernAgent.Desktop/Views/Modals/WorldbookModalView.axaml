@@ -11,12 +11,12 @@
                    Foreground="{DynamicResource TextDimBrush}"
                    Text="这里是内置的示例词条，用于说明世界书的结构；它们不是当前会话的设置。当前会话的世界书请在左栏「世界书」页签中检索与查看。" />
         <TextBox Text="{Binding Search}" PlaceholderText="检索示例词条…" />
-        <c:EmptyState IsVisible="{Binding IsEmpty}" Icon="📖" Title="没有匹配的示例词条"
+        <c:EmptyState IsVisible="{Binding IsEmpty}" IconGeometry="{StaticResource IconBook}" Title="没有匹配的示例词条"
                       Description="当前版本未内置示例词条；请到左栏「世界书」页签查看本会话的词条与秘密。" />
         <ItemsControl ItemsSource="{Binding Entries}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:LoreExample">
-              <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="12" Margin="0,0,0,8">
+              <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="12" Margin="0,0,0,8">
                 <StackPanel Spacing="6">
                   <TextBlock Text="{Binding Title}" FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" />
                   <Border Classes="state-pill" HorizontalAlignment="Left">

@@ -193,9 +193,9 @@ public sealed partial class MessageViewModel : ObservableObject
 
     public bool ShowDecisionDeck => IsLast && IsAssistant && HasOptions && _stage.IsIdle && _stage.IsStudioMode;
 
-    public string EvidenceToggleLabel => IsEvidenceExpanded ? "收起依据 ▲" : $"展开依据 ▼（{EvidenceCounts}）";
+    public string EvidenceToggleLabel => IsEvidenceExpanded ? "收起依据" : $"展开依据（{EvidenceCounts}）";
 
-    public string ThinkingToggleLabel => IsThinkingExpanded ? "收起 ▲" : "展开 ▼";
+    public string ThinkingToggleLabel => IsThinkingExpanded ? "收起" : "展开";
 
     [RelayCommand]
     private void ToggleThinking() => IsThinkingExpanded = !IsThinkingExpanded;

@@ -96,7 +96,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
     public string ThinkingTitle => DraftBlocks.Count == 0 || DraftBlocks.All(b => b.IsEmpty)
         ? "深度推演与因果思索中..."
         : "思考过程 (Reasoning)";
-    public string ThinkingToggleLabel => IsThinkingExpanded ? "收起 ▲" : "展开 ▼";
+    public string ThinkingToggleLabel => IsThinkingExpanded ? "收起" : "展开";
 
     public TurnPhase Phase => Story.Phase;
     public bool Busy => Story.IsBusy;

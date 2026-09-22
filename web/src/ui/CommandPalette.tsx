@@ -4,6 +4,8 @@
 // 依赖面：react 与 ../lib/commands（纯模块，不含 store）——叶子层约束见 scripts/check.mjs。
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { filterCommands, isCommandEnabled, sectionize, type Command } from "../lib/commands";
+import { Icon } from "./Icon";
+import { Kbd } from "./Kbd";
 import "./CommandPalette.css";
 
 export interface CommandPaletteProps {
@@ -124,10 +126,7 @@ export function CommandPalette({
     >
       <div className="ui-command-palette" role="dialog" aria-modal="true" aria-label={label} onKeyDown={handleKeyDown}>
         <div className="ui-command-palette__search">
-          <svg className="ui-command-palette__search-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-            <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10.5 10.5 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <Icon name="search" size={15} className="ui-command-palette__search-icon" />
           <input
             ref={inputRef}
             className="ui-command-palette__input"
@@ -143,7 +142,7 @@ export function CommandPalette({
             placeholder={placeholder}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <kbd className="ui-command-palette__key">Esc</kbd>
+          <Kbd>Esc</Kbd>
         </div>
 
         <ul className="ui-command-palette__list" id={listId} role="listbox" aria-label={label} ref={listRef}>
@@ -195,14 +194,14 @@ export function CommandPalette({
 
         <div className="ui-command-palette__footer">
           <span>
-            <kbd className="ui-command-palette__key">↑</kbd>
-            <kbd className="ui-command-palette__key">↓</kbd> 选择
+            <Kbd>↑</Kbd>
+            <Kbd>↓</Kbd> 选择
           </span>
           <span>
-            <kbd className="ui-command-palette__key">Enter</kbd> 执行
+            <Kbd>Enter</Kbd> 执行
           </span>
           <span>
-            <kbd className="ui-command-palette__key">Esc</kbd> 关闭
+            <Kbd>Esc</Kbd> 关闭
           </span>
         </div>
       </div>

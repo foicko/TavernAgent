@@ -26,9 +26,9 @@
     border: 0;
     border-top: 1px solid var(--border-mid);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.28);
+    box-shadow: var(--shadow-float);
     transform: translateY(105%);
-    transition: transform var(--duration-fast) var(--ease-smooth-out);
+    transition: transform var(--duration-medium) var(--ease-smooth-out);
     padding-top: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     overflow-y: auto;
@@ -88,8 +88,8 @@
     height: 190px;
   }
 
-  /* 抽屉内的子页签：横向可滚动，单项不低于 44px 高。 */
-  .rail-subtab-btn {
+  /* 抽屉内的子页签：单项不低于 44px 高（触控目标）。 */
+  .rail-subtabs .ui-tabs__tab {
     min-height: 44px;
     padding: 0 12px;
   }

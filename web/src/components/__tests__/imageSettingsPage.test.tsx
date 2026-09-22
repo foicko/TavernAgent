@@ -42,7 +42,7 @@ describe("ImageSettingsPage", () => {
 
     render(<ImageSettingsPage />);
 
-    const testBtn = screen.getByText("🎨 试运行生图");
+    const testBtn = screen.getByText("试运行生图");
     fireEvent.click(testBtn);
 
     await waitFor(() => {

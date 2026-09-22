@@ -1,14 +1,21 @@
-// LorePopover: 正文世界书词条悬浮简报卡 (严格对齐设计原型)
+// LorePopover: 正文世界书词条悬浮简报卡（锚定在命中词坐标，纯展示，不抢焦点）
 import React from "react";
 import { useUi } from "../stores/uiStore";
+import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
+import { Popover } from "../ui/Popover";
 import "./LorePopover.css";
 
 export const LorePopover: React.FC = () => {
-  const { lorePopover, hideLorePop, injectComposerText, setWorldbookModalOpen } = useUi();
+  const lorePopover = useUi((s) => s.lorePopover);
+  const hideLorePop = useUi((s) => s.hideLorePop);
+  const injectComposerText = useUi((s) => s.injectComposerText);
+  const setWorldbookModalOpen = useUi((s) => s.setWorldbookModalOpen);
 
-  if (!lorePopover || !lorePopover.visible) return null;
+  const open = !!lorePopover?.visible;
 
   const handleQuote = () => {
+    if (!lorePopover) return;
     injectComposerText(`*关于【${lorePopover.title}】的线索* `);
     hideLorePop();
   };
@@ -19,33 +26,46 @@ export const LorePopover: React.FC = () => {
   };
 
   return (
-    // 位置来自命中词的屏幕坐标，属于数据驱动几何，仍以内联 left/top 传入
-    <div
-      className="lore-popover"
-      id="lore-popover"
-      style={{ left: `${lorePopover.x}px`, top: `${lorePopover.y}px` }}
-      onMouseLeave={hideLorePop}
+    <Popover
+      open={open}
+      onClose={hideLorePop}
+      anchor={lorePopover ? { x: lorePopover.x, y: lorePopover.y } : null}
+      label="世界书词条"
+      side="bottom"
+      align="start"
+      offset={0}
+      autoFocus={false}
+      returnFocus={false}
+      onPointerLeave={hideLorePop}
+      width={290}
+      className="lore-card"
     >
-      <div className="lore-pop-tag">📖 世界书词条</div>
-      <div className="lore-pop-title" id="lore-pop-title">
-        {lorePopover.title}
-      </div>
-      <div className="lore-pop-desc" id="lore-pop-desc">
-        {lorePopover.desc}
-      </div>
-      <div className="lore-pop-footer">
-        <span className="lore-pop-keys" id="lore-pop-keys">
-          触发词：{lorePopover.keys}
-        </span>
-        <div className="lore-pop-btn-group">
-          <button className="lore-pop-btn-quote" onClick={handleQuote}>
-            引用至输入框 ↵
-          </button>
-          <button className="lore-pop-link" onClick={handleOpenWorldbook}>
-            查看全貌 →
-          </button>
-        </div>
-      </div>
-    </div>
+      {lorePopover ? (
+        <>
+          <div className="lore-card__tag">
+            <Icon name="book" size={12} /> 世界书词条
+          </div>
+          <div className="lore-card__title" id="lore-pop-title">
+            {lorePopover.title}
+          </div>
+          <div className="lore-card__desc" id="lore-pop-desc">
+            {lorePopover.desc}
+          </div>
+          <div className="lore-card__footer">
+            <span className="lore-card__keys" id="lore-pop-keys">
+              触发词：{lorePopover.keys}
+            </span>
+            <div className="lore-card__actions">
+              <Button size="sm" variant="secondary" onClick={handleQuote}>
+                <Icon name="cornerDownLeft" size={12} /> 引用
+              </Button>
+              <Button size="sm" variant="ghost" onClick={handleOpenWorldbook}>
+                查看全貌 <Icon name="arrowRight" size={12} />
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : null}
+    </Popover>
   );
 };

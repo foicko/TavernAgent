@@ -8,6 +8,23 @@ export type LeftSubtab = "tree" | "characters" | "lore" | "sessions";
 export type TachieExpression = "alert" | "calm" | "smile" | "whisper";
 export type ThemeMode = "light" | "dark";
 
+const THEME_STORAGE_KEY = "tavernagent.theme";
+
+/** 首帧主题：用户显式选择优先，否则跟随系统 prefers-color-scheme。 */
+export function resolveInitialTheme(): ThemeMode {
+  if (typeof window === "undefined") return "light";
+  const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (saved === "light" || saved === "dark") return saved;
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+/** 只改 DOM 属性，不动 store（供首帧与系统变化监听复用）。 */
+export function applyThemeToDocument(theme: ThemeMode): void {
+  if (typeof document === "undefined") return;
+  if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+  else document.documentElement.removeAttribute("data-theme");
+}
+
 export interface MeterDelta {
   id: string;
   meterIndex: 1 | 2 | 3;
@@ -55,7 +72,6 @@ interface UiState {
   charImportOpen: boolean;
   /** 从卡库直接开新局时携带的 cardId；导入弹窗据此预填而不必重新上传文件。 */
   pendingCardId: string | null;
-  mindGraphOpen: boolean;
   blueprintOpen: boolean;
   /** 命令面板（Ctrl/Cmd+K）。它是最上层浮层：Esc 链里排在所有弹窗之前。 */
   paletteOpen: boolean;
@@ -94,7 +110,6 @@ interface UiState {
   setCharImportOpen: (open: boolean) => void;
   /** openCharImportWithCard 用卡库里的既有卡打开导入/开局弹窗（预填，无需重新上传）。 */
   openCharImportWithCard: (cardId: string) => void;
-  setMindGraphOpen: (open: boolean) => void;
   setBlueprintOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
   togglePalette: () => void;
@@ -131,7 +146,7 @@ export const useUi = create<UiState>((set, get) => ({
   isRightRailCollapsed: typeof window !== "undefined" ? window.innerWidth < 1200 : false,
   leftTab: "tree",
 
-  theme: "light",
+  theme: resolveInitialTheme(),
 
   activeCharKey: DEFAULT_PRESET_KEY,
   tachieExpression: "alert",
@@ -140,7 +155,6 @@ export const useUi = create<UiState>((set, get) => ({
   worldbookModalOpen: false,
   charImportOpen: false,
   pendingCardId: null,
-  mindGraphOpen: false,
   blueprintOpen: false,
   paletteOpen: false,
   dossierModalOpen: false,
@@ -212,23 +226,14 @@ export const useUi = create<UiState>((set, get) => ({
 
   toggleTheme: () => {
     const next = get().theme === "dark" ? "light" : "dark";
-    set({ theme: next });
-    if (next === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      get().notifyQuiet("已切换为：墨黑幽夜主题");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      get().notifyQuiet("已切换为：乳白纸墨主题");
-    }
+    get().setTheme(next);
+    get().notifyQuiet(next === "dark" ? "已切换为：墨黑幽夜主题" : "已切换为：乳白纸墨主题");
   },
 
   setTheme: (theme) => {
     set({ theme });
-    if (theme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
+    applyThemeToDocument(theme);
+    if (typeof window !== "undefined") window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   },
 
   switchActiveCharacter: (key) => {
@@ -255,7 +260,6 @@ export const useUi = create<UiState>((set, get) => ({
   setWorldbookModalOpen: (open) => set({ worldbookModalOpen: open }),
   setCharImportOpen: (open) => set((s) => ({ charImportOpen: open, pendingCardId: open ? s.pendingCardId : null })),
   openCharImportWithCard: (cardId) => set({ charImportOpen: true, pendingCardId: cardId }),
-  setMindGraphOpen: (open) => set({ mindGraphOpen: open }),
   setBlueprintOpen: (open) => set({ blueprintOpen: open }),
   setPaletteOpen: (open) => set({ paletteOpen: open }),
   togglePalette: () => set((s) => ({ paletteOpen: !s.paletteOpen })),
@@ -319,3 +323,14 @@ export const useUi = create<UiState>((set, get) => ({
     }));
   },
 }));
+
+// 用户未手动选择主题时，跟随系统 prefers-color-scheme 的变化。
+if (typeof window !== "undefined" && window.matchMedia) {
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", (event) => {
+    if (window.localStorage.getItem(THEME_STORAGE_KEY)) return;
+    const next: ThemeMode = event.matches ? "dark" : "light";
+    useUi.setState({ theme: next });
+    applyThemeToDocument(next);
+  });
+}

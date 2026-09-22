@@ -4,25 +4,16 @@
              x:Class="TavernAgent.Desktop.Controls.Modal"
              Focusable="True">
   <Grid>
-    <!-- Blurred backdrop with opaque fallback tint -->
-    <ExperimentalAcrylicBorder Name="Scrim">
-      <ExperimentalAcrylicBorder.Material>
-        <ExperimentalAcrylicMaterial BackgroundSource="Digger"
-                                     TintColor="#0E0F12"
-                                     TintOpacity="0.35"
-                                     MaterialOpacity="0.55"
-                                     FallbackColor="#8C0E0F12" />
-      </ExperimentalAcrylicBorder.Material>
-    </ExperimentalAcrylicBorder>
+    <!-- Flat scrim (beautifului): opaque tint, no blur (web scrim token) -->
+    <Border Name="Scrim" Background="{DynamicResource ScrimBrush}" />
 
     <Border Name="Card"
-            Classes="glass-elevated anim-pop"
+            Classes="surface-elevated anim-pop"
             Margin="24"
             MaxWidth="{Binding $parent[controls:Modal].DialogWidth}"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            MinWidth="280"
-            BoxShadow="{DynamicResource Elevation4}">
+            MinWidth="280">
       <DockPanel LastChildFill="True">
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="20,16,12,12">
           <TextBlock Grid.Column="0"
@@ -32,8 +23,9 @@
                      VerticalAlignment="Center"
                      TextWrapping="Wrap"
                      Foreground="{DynamicResource TextPrimaryBrush}" />
-          <Button Grid.Column="1" Classes="icon soft-brush" Name="CloseButton" Content="✕"
-                  ToolTip.Tip="关闭" />
+          <Button Grid.Column="1" Classes="icon soft-brush" Name="CloseButton" ToolTip.Tip="关闭">
+            <Path Classes="icon" Data="{StaticResource IconClose}" Width="14" Height="14" />
+          </Button>
         </Grid>
         <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource BorderBrush}" />
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

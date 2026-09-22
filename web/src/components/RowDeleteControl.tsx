@@ -6,6 +6,7 @@
 //
 // 两个列表（角色卡库、故事列表）共用同一个控件，避免各写一套确认逻辑。
 import type { MouseEvent } from "react";
+import { Icon } from "../ui/Icon";
 import "./RowDeleteControl.css";
 
 export interface RowDeleteControlProps {
@@ -62,7 +63,7 @@ export function RowDeleteControl({
           title={idleLabel}
           onClick={(event) => stop(event, onAsk)}
         >
-          🗑
+          <Icon name="trash" size={13} />
         </button>
       )}
     </div>

@@ -7,7 +7,13 @@ import type { CardPreview } from "../app/types";
 import { useStory } from "../stores/storyStore";
 import { api } from "../app/api";
 import { DEFAULT_PLAYER_NAME } from "../lib/characterMacros";
+import { Avatar } from "../ui/Avatar";
+import { Banner } from "../ui/Banner";
+import { Button } from "../ui/Button";
+import { Field, Select, TextArea, TextInput } from "../ui/Field";
+import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Modal";
+import { Tag } from "../ui/Pill";
 import "./CharacterImportModal.css";
 
 export const CharacterImportModal: React.FC = () => {
@@ -205,7 +211,7 @@ export const CharacterImportModal: React.FC = () => {
             if (f) void handleFile(f);
           }}
         />
-        <div className="import-dropzone__icon">📥</div>
+        <div className="import-dropzone__icon"><Icon name="download" size={22} /></div>
         <div className="import-dropzone__title">
           {parsing ? "正在读取角色设定与开场…" : "点击或拖拽 PNG / JSON 角色卡至此"}
         </div>
@@ -215,20 +221,16 @@ export const CharacterImportModal: React.FC = () => {
       </div>
 
       {/* 解析成功预览 */}
-      {error && <p className="story-map-error" role="alert">{error}</p>}
+      {error && <Banner tone="error">{error}</Banner>}
       {importedPreview && (
         <div className="char-import-preview">
           <div className="char-import-preview__row">
-            {importedPreview.avatar ? (
-              <img src={importedPreview.avatar} alt={importedPreview.name} className="char-import-preview__avatar" />
-            ) : (
-              <div className="char-import-preview__avatar--placeholder">🎭</div>
-            )}
+            <Avatar src={importedPreview.avatar} name={importedPreview.name} size={64} shape="rounded" className="char-import-preview__avatar" />
             <div className="char-import-preview__main">
               <div className="char-import-preview__title-row">
                 <span className="char-import-preview__name">解析就绪：{importedPreview.name}</span>
                 {importedPreview.format && (
-                  <span className="char-import-preview__format">{importedPreview.format}</span>
+                  <Tag tone="info">{importedPreview.format}</Tag>
                 )}
                 {importedPreview.creator && (
                   <span className="char-import-preview__creator">by {importedPreview.creator}</span>
@@ -237,7 +239,7 @@ export const CharacterImportModal: React.FC = () => {
               {importedPreview.tags && importedPreview.tags.length > 0 && (
                 <div className="char-import-preview__tags">
                   {importedPreview.tags.slice(0, 5).map((t, idx) => (
-                    <span key={idx} className="char-import-preview__tag">#{t}</span>
+                    <Tag key={idx}>#{t}</Tag>
                   ))}
                 </div>
               )}
@@ -246,28 +248,37 @@ export const CharacterImportModal: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="grid2 char-import-preview__fields">
-            <label className="field"><span>玩家姓名</span><input value={playerName} disabled={creating} maxLength={80} onChange={event => setPlayerName(event.target.value)} /></label>
-            <label className="field"><span>身份或背景（可选）</span><input value={playerRole} disabled={creating} maxLength={400} placeholder="例如：来自南方的游历者" onChange={event => setPlayerRole(event.target.value)} /></label>
+          <div className="char-import-preview__fields">
+            <Field label="玩家姓名">
+              <TextInput value={playerName} disabled={creating} maxLength={80} onChange={event => setPlayerName(event.target.value)} />
+            </Field>
+            <Field label="身份或背景（可选）">
+              <TextInput value={playerRole} disabled={creating} maxLength={400} placeholder="例如：来自南方的游历者" onChange={event => setPlayerRole(event.target.value)} />
+            </Field>
           </div>
-          {importedPreview.openings.length > 0 ? <label className="field char-import-preview__opening">
-            <span>选择开场</span>
-            <select value={openingId} disabled={creating} onChange={event => setOpeningId(event.target.value)}>
-              {importedPreview.openings.map((opening, index) => <option key={opening.variantId || index} value={opening.variantId}>{opening.title || `开场 ${index + 1}`}</option>)}
-            </select>
-          </label> : <label className="field char-import-preview__opening">
-            <span>这张卡没有开场，请填写故事的第一幕</span>
-            <textarea rows={4} value={customOpening} disabled={creating} onChange={event => setCustomOpening(event.target.value)} />
-          </label>}
-          {importedPreview.warnings && importedPreview.warnings.length > 0 && (
-            <div className="char-import-preview__warnings">
-              兼容提示：{importedPreview.warnings.join("；")}
-            </div>
+          {importedPreview.openings.length > 0 ? (
+            <Field label="选择开场" className="char-import-preview__opening">
+              <Select value={openingId} disabled={creating} onChange={event => setOpeningId(event.target.value)}>
+                {importedPreview.openings.map((opening, index) => <option key={opening.variantId || index} value={opening.variantId}>{opening.title || `开场 ${index + 1}`}</option>)}
+              </Select>
+            </Field>
+          ) : (
+            <Field label="这张卡没有开场，请填写故事的第一幕" className="char-import-preview__opening">
+              <TextArea rows={4} value={customOpening} disabled={creating} onChange={event => setCustomOpening(event.target.value)} />
+            </Field>
           )}
-          <div className="btn-row char-import-preview__actions">
-            <button className="btn-solid" disabled={creating || parsing || !playerName.trim() || (importedPreview.openings.length === 0 && !customOpening.trim())} onClick={handleConfirmImport}>
+          {importedPreview.warnings && importedPreview.warnings.length > 0 && (
+            <Banner tone="warn">兼容提示：{importedPreview.warnings.join("；")}</Banner>
+          )}
+          <div className="char-import-preview__actions">
+            <Button
+              variant="primary"
+              loading={creating}
+              disabled={creating || parsing || !playerName.trim() || (importedPreview.openings.length === 0 && !customOpening.trim())}
+              onClick={handleConfirmImport}
+            >
               {creating ? "创建中…" : "开启冒险"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -275,7 +286,7 @@ export const CharacterImportModal: React.FC = () => {
       {/* 预设卡片一键体验矩阵（仅在存在内置预设时展示） */}
       {SELECTABLE_PRESET_KEYS.length > 0 && (
         <div>
-          <div className="char-preset-picker__title">✦ 选择内置角色</div>
+          <div className="char-preset-picker__title"><Icon name="sparkles" size={13} /> 选择内置角色</div>
           <div className="char-preset-picker__grid">
             {SELECTABLE_PRESET_KEYS.map((key) => {
               const c = CHARACTER_PRESETS[key];

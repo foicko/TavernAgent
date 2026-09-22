@@ -4,6 +4,7 @@
 // 触到架构门禁的文件行数上限。所有类名与 id 原样保留，样式仍在 styles.css/LeftRail.css。
 import { storedCardTag } from "../lib/characterPresentation";
 import type { StoredCharacterCard } from "../lib/characterCardStore";
+import { Icon } from "../ui/Icon";
 import { RowDeleteControl } from "./RowDeleteControl";
 import "./CharacterCardRow.css";
 
@@ -53,7 +54,7 @@ export function CharacterCardRow({
         <img src={card.avatar} alt={card.name} className="char-card-thumb" />
       ) : (
         <div className="char-card-thumb char-card-thumb--fallback" aria-hidden="true">
-          🎭
+          <Icon name="mask" size={18} />
         </div>
       )}
       <div className="char-card-info">

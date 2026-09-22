@@ -19,7 +19,7 @@
       <StackPanel Spacing="6">
         <Grid ColumnDefinitions="*,Auto">
           <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-            <TextBlock Text="✦" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
+            <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" Stroke="{DynamicResource AccentAmberBrush}" />
             <TextBlock Text="玩家行动 · 第一人称"
                        FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -35,14 +35,16 @@
     </Border>
 
     <!-- Assistant / opening turn card -->
-    <Border Classes="glass-subtle msg-card" Padding="20" CornerRadius="{DynamicResource RadiusLg}">
+    <Border Classes="surface-inset msg-card" Padding="20" CornerRadius="{DynamicResource RadiusLg}">
       <StackPanel Spacing="12">
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Grid.Column="0"
-                     Text="✦ 命运序章 · 场景起步"
-                     IsVisible="{Binding IsOpening}"
-                     FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
-                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                      IsVisible="{Binding IsOpening}">
+            <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" Stroke="{DynamicResource AccentAmberBrush}" />
+            <TextBlock Text="命运序章 · 场景起步"
+                       FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+          </StackPanel>
           <TextBlock Grid.Column="0"
                      Text="{Binding TurnLabel}"
                      IsVisible="{Binding !IsOpening}"
@@ -55,21 +57,39 @@
 
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowToolbar}"
                       Classes="msg-actions">
-            <Button Classes="ui-btn sm ghost" Click="OnCopyClick" ToolTip.Tip="复制文学正文" Content="⎘ 复制" />
+            <Button Classes="ui-btn sm ghost" Click="OnCopyClick" ToolTip.Tip="复制文学正文">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconCopy}" Width="12" Height="12" />
+                <TextBlock Text="复制" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
-                    Command="{Binding QuoteCommand}" ToolTip.Tip="引用此句" Content="❝ 引用" />
+                    Command="{Binding QuoteCommand}" ToolTip.Tip="引用此句">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconQuote}" Width="12" Height="12" />
+                <TextBlock Text="引用" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding RegenerateCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="重新生成" Content="🔄" />
+                    ToolTip.Tip="重新生成">
+              <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="13" Height="13" />
+            </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding ToggleRegenCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="带要求重演" Content="✎" />
+                    ToolTip.Tip="带要求重演">
+              <Path Classes="icon" Data="{StaticResource IconNote}" Width="13" Height="13" />
+            </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding ForkCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="从此处分叉" Content="🌿" />
+                    ToolTip.Tip="从此处分叉">
+              <Path Classes="icon" Data="{StaticResource IconLeaf}" Width="13" Height="13" />
+            </Button>
             <Button Classes="ui-btn sm ghost"
                     Command="{Binding DrawIllustrationCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="生成本幕插画" Content="🎨" />
+                    ToolTip.Tip="生成本幕插画">
+              <Path Classes="icon" Data="{StaticResource IconImage}" Width="13" Height="13" />
+            </Button>
             <Button Classes="ui-btn sm ghost"
                     Command="{Binding Tts.PlayCommand}"
                     Content="{Binding Tts.Label}" ToolTip.Tip="{Binding Tts.Tooltip}" />
@@ -85,17 +105,23 @@
                     Command="{Binding ToggleThinkingCommand}">
               <Grid ColumnDefinitions="Auto,*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                  <TextBlock Text="🧠" FontSize="13" VerticalAlignment="Center" />
+                  <Path Classes="icon" Data="{StaticResource IconDatabase}" Width="13" Height="13" />
                   <TextBlock Text="深度思维链 (Reasoning Flow)"
                              FontWeight="SemiBold"
                              FontSize="{DynamicResource FsXs}"
                              VerticalAlignment="Center"
                              Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
-                <TextBlock Grid.Column="2" Text="{Binding ThinkingToggleLabel}"
-                           FontSize="{DynamicResource FsXs}"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextDimBrush}" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding ThinkingToggleLabel}"
+                             FontSize="{DynamicResource FsXs}"
+                             VerticalAlignment="Center"
+                             Foreground="{DynamicResource TextDimBrush}" />
+                  <Path Classes="icon" Data="{StaticResource IconChevronUp}" Width="10" Height="10"
+                        Stroke="{DynamicResource TextDimBrush}" IsVisible="{Binding IsThinkingExpanded}" />
+                  <Path Classes="icon" Data="{StaticResource IconChevronDown}" Width="10" Height="10"
+                        Stroke="{DynamicResource TextDimBrush}" IsVisible="{Binding !IsThinkingExpanded}" />
+                </StackPanel>
               </Grid>
             </Button>
             <Border IsVisible="{Binding IsThinkingExpanded}"
@@ -134,8 +160,18 @@
           <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBlock Text="{Binding Illustration.Caption}" FontSize="{DynamicResource FsXs}"
                        VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" />
-            <Button Classes="ui-btn sm ghost" Command="{Binding Illustration.EnlargeCommand}" Content="🔍 放大" />
-            <Button Classes="ui-btn sm ghost" Command="{Binding Illustration.RedrawCommand}" Content="🔄 重绘" />
+            <Button Classes="ui-btn sm ghost" Command="{Binding Illustration.EnlargeCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconSearch}" Width="12" Height="12" />
+                <TextBlock Text="放大" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Classes="ui-btn sm ghost" Command="{Binding Illustration.RedrawCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="12" Height="12" />
+                <TextBlock Text="重绘" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </StackPanel>
         </StackPanel>
 
@@ -167,7 +203,7 @@
               <DataTemplate DataType="vm:CheckEvidenceViewModel">
                 <Border Classes="chip" Margin="0,0,6,6">
                   <StackPanel Orientation="Horizontal" Spacing="5">
-                    <TextBlock Text="🎲" FontSize="{DynamicResource FsXs}" />
+                    <Path Classes="icon" Data="{StaticResource IconDice}" Width="11" Height="11" />
                     <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBlock Text="{Binding OutcomeLabel}" FontSize="{DynamicResource FsXs}"
@@ -178,17 +214,27 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
 
-          <TextBlock IsVisible="{Binding HasSuppressed}" FontSize="{DynamicResource FsXs}"
-                     Text="✦ 本轮承接上一轮抉择，未摆出选项"
-                     Foreground="{DynamicResource TextDimBrush}" />
+          <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding HasSuppressed}">
+            <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="11" Height="11" Stroke="{DynamicResource TextDimBrush}" />
+            <TextBlock FontSize="{DynamicResource FsXs}"
+                       Text="本轮承接上一轮抉择，未摆出选项"
+                       Foreground="{DynamicResource TextDimBrush}" />
+          </StackPanel>
 
           <Button Classes="ui-btn sm ghost" HorizontalAlignment="Left"
                   IsVisible="{Binding HasEvidenceDetail}"
-                  Command="{Binding ToggleEvidenceCommand}"
-                  Content="{Binding EvidenceToggleLabel}" />
+                  Command="{Binding ToggleEvidenceCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+              <TextBlock Text="{Binding EvidenceToggleLabel}" VerticalAlignment="Center" />
+              <Path Classes="icon" Data="{StaticResource IconChevronUp}" Width="10" Height="10"
+                    IsVisible="{Binding IsEvidenceExpanded}" />
+              <Path Classes="icon" Data="{StaticResource IconChevronDown}" Width="10" Height="10"
+                    IsVisible="{Binding !IsEvidenceExpanded}" />
+            </StackPanel>
+          </Button>
 
           <Border IsVisible="{Binding IsEvidenceExpanded}"
-                  Classes="glass-subtle" Padding="12" CornerRadius="{DynamicResource RadiusMd}">
+                  Classes="surface-inset" Padding="12" CornerRadius="{DynamicResource RadiusMd}">
             <StackPanel Spacing="10">
               <StackPanel Spacing="4" IsVisible="{Binding HasChecks}">
                 <TextBlock Text="检定" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
@@ -231,7 +277,7 @@
         </StackPanel>
 
         <!-- Inline editors -->
-        <Border IsVisible="{Binding IsRegenOpen}" Classes="glass-subtle" Padding="12"
+        <Border IsVisible="{Binding IsRegenOpen}" Classes="surface-inset" Padding="12"
                 CornerRadius="{DynamicResource RadiusMd}">
           <StackPanel Spacing="8">
             <TextBlock Text="带要求重演" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
@@ -245,7 +291,7 @@
           </StackPanel>
         </Border>
 
-        <Border IsVisible="{Binding IsEditingText}" Classes="glass-subtle" Padding="12"
+        <Border IsVisible="{Binding IsEditingText}" Classes="surface-inset" Padding="12"
                 CornerRadius="{DynamicResource RadiusMd}">
           <StackPanel Spacing="8">
             <TextBlock Text="改写正文" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
@@ -258,7 +304,7 @@
           </StackPanel>
         </Border>
 
-        <Border IsVisible="{Binding IsEditingInput}" Classes="glass-subtle" Padding="12"
+        <Border IsVisible="{Binding IsEditingInput}" Classes="surface-inset" Padding="12"
                 CornerRadius="{DynamicResource RadiusMd}">
           <StackPanel Spacing="8">
             <TextBlock Text="改写玩家输入" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}"
@@ -273,29 +319,43 @@
 
         <!-- Candidate / version switcher -->
         <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasCandidates}">
-          <Button Classes="ui-btn sm ghost" Command="{Binding PrevCandidateCommand}" Content="‹" ToolTip.Tip="查看上一个候选版本" />
+          <Button Classes="ui-btn sm ghost" Command="{Binding PrevCandidateCommand}" ToolTip.Tip="查看上一个候选版本">
+            <Path Classes="icon" Data="{StaticResource IconChevronLeft}" Width="13" Height="13" />
+          </Button>
           <TextBlock Text="{Binding CandidateLabel}" VerticalAlignment="Center"
                      FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
-          <Button Classes="ui-btn sm ghost" Command="{Binding NextCandidateCommand}" Content="›" ToolTip.Tip="查看下一个候选版本" />
+          <Button Classes="ui-btn sm ghost" Command="{Binding NextCandidateCommand}" ToolTip.Tip="查看下一个候选版本">
+            <Path Classes="icon" Data="{StaticResource IconChevronRight}" Width="13" Height="13" />
+          </Button>
         </StackPanel>
 
         <!-- Turn action row -->
         <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowToolbar}"
                     IsEnabled="{Binding CanAct}">
           <Button Classes="ui-btn sm ghost" IsVisible="{Binding HasInputText}"
-                  Command="{Binding ToggleEditInputCommand}" Content="💬 改输入" />
-          <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditTextCommand}" Content="✏️ 改正文" />
+                  Command="{Binding ToggleEditInputCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12" />
+              <TextBlock Text="改输入" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditTextCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12" />
+              <TextBlock Text="改正文" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
         </StackPanel>
 
         <!-- Decision deck (ApprovalCard inspired by beautifului.dev) -->
         <Border IsVisible="{Binding ShowDecisionDeck}"
-                Classes="glass-subtle"
+                Classes="surface-inset"
                 Padding="16"
                 CornerRadius="{DynamicResource RadiusLg}">
           <StackPanel Spacing="12">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="✦" Foreground="{DynamicResource AccentAmberBrush}" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" Stroke="{DynamicResource AccentAmberBrush}" />
                 <TextBlock Text="剧情抉择分支 · 人在回路推演"
                            FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -317,12 +377,15 @@
                     <StackPanel Spacing="6" MaxWidth="240">
                       <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                          <TextBlock Text="{Binding Icon}" FontSize="13" VerticalAlignment="Center" />
+                          <Path Classes="icon" Data="{Binding IconGeometry}" Width="13" Height="13" />
                           <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
                                      Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                         <Border Grid.Column="1" Classes="chip" Padding="5,1">
-                          <TextBlock Text="选定 ↵" FontSize="9" Foreground="{DynamicResource TextDimBrush}" />
+                          <StackPanel Orientation="Horizontal" Spacing="3">
+                            <TextBlock Text="选定" FontSize="9" Foreground="{DynamicResource TextDimBrush}" />
+                            <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="9" Height="9" Stroke="{DynamicResource TextDimBrush}" />
+                          </StackPanel>
                         </Border>
                       </Grid>
                       <TextBlock Text="{Binding Text}" TextWrapping="Wrap"

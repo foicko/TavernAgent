@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useDialogFocus } from "../lib/useDialogFocus";
 import { IconButton } from "./Button";
+import { Icon } from "./Icon";
 import "./Modal.css";
 
 export interface ModalProps {
@@ -14,7 +15,7 @@ export interface ModalProps {
   /** 头部右侧操作区（关闭按钮之前）。 */
   headerActions?: ReactNode;
   footer?: ReactNode;
-  size?: "sm" | "md" | "lg" | "xl" | "full";
+  size?: "sm" | "md" | "lg" | "xl";
   /** 内容贴边：body 去掉内边距与间距，交给内容自绘布局（图谱、灯箱等）。 */
   flush?: boolean;
   /**
@@ -91,7 +92,7 @@ export function Modal({
           {headerActions ? <div className="ui-modal__head-actions">{headerActions}</div> : null}
           {dismissible || closeDisabled ? (
             <IconButton label={closeLabel} disabled={closeDisabled} onClick={onClose}>
-              ✕
+              <Icon name="close" size={14} />
             </IconButton>
           ) : null}
         </div>

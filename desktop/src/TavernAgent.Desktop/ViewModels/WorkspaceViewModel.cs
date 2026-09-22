@@ -1,4 +1,3 @@
-using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TavernAgent.Core.Stores;
@@ -72,31 +71,24 @@ public sealed partial class WorkspaceViewModel : ViewModelBase
 
     public bool IsStudioMode => !IsReadingMode;
 
-    public double LeftRailWidth => IsReadingMode ? 0 : 56;
+    /// <summary>Width of the persistent left column (224 expanded / 52 icon dock / 0 in reading).</summary>
+    public double LeftRailWidth => IsStudioMode ? (_ui.LeftCollapsed ? 52 : 224) : 0;
 
-    public double RightRailWidth => 0;
+    /// <summary>Width of the inline right column (304 expanded / 0 collapsed or reading).</summary>
+    public double RightRailWidth => IsStudioMode && !_ui.RightCollapsed ? 304 : 0;
 
-    public bool ShowLeftRail => !IsReadingMode;
+    public bool ShowLeftRail => IsStudioMode;
 
-    public bool ShowRightRail => false;
+    /// <summary>Inline right rail column visibility (parallels <see cref="RightRailWidth"/>).</summary>
+    public bool ShowRightRail => IsStudioMode && !_ui.RightCollapsed;
 
     public bool ShowRightRailRecall => !IsReadingMode && _ui.RightCollapsed;
 
-    public bool ShowFlyout => _ui.FlyoutOpen && IsStudioMode;
+    /// <summary>Left panel expanded into the persistent column (web: full rail view).</summary>
+    public bool ShowLeftPanel => IsStudioMode && !_ui.LeftCollapsed;
 
-    public bool ShowHud => !IsReadingMode && !_ui.RightCollapsed;
-
-    public bool ShowChrome => IsStudioMode;
-
-    public double AmbientIntensity => IsReadingMode ? 1.0 : 0.7;
-
-    public double HeaderSpacerHeight => IsStudioMode ? 68 : 0;
-
-    /// <summary>
-    /// Insets the floating header so it never slides under the floating right HUD
-    /// (rail gutter on the left, HUD gutter on the right when the HUD is docked open).
-    /// </summary>
-    public Thickness HeaderMargin => new(68, 10, ShowHud ? 344 : 16, 0);
+    /// <summary>Collapsed icon dock (web: rail-collapsed-view).</summary>
+    public bool ShowIconDock => IsStudioMode && _ui.LeftCollapsed;
 
     public bool IsLeftCollapsed => _ui.LeftCollapsed;
 
@@ -163,19 +155,6 @@ public sealed partial class WorkspaceViewModel : ViewModelBase
     private void ToggleTheme() => _ui.ToggleTheme();
 
     [RelayCommand]
-    private void OpenShowcase()
-    {
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://localhost:5174")
-            {
-                UseShellExecute = true,
-            });
-        }
-        catch { /* ignore browser spawn error */ }
-    }
-
-    [RelayCommand]
     private void EnterStudio() => _ui.SwitchViewMode(ViewportMode.Studio);
 
     [RelayCommand]
@@ -216,12 +195,8 @@ public sealed partial class WorkspaceViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowLeftRail));
         OnPropertyChanged(nameof(ShowRightRail));
         OnPropertyChanged(nameof(ShowRightRailRecall));
-        OnPropertyChanged(nameof(ShowFlyout));
-        OnPropertyChanged(nameof(ShowHud));
-        OnPropertyChanged(nameof(ShowChrome));
-        OnPropertyChanged(nameof(AmbientIntensity));
-        OnPropertyChanged(nameof(HeaderSpacerHeight));
-        OnPropertyChanged(nameof(HeaderMargin));
+        OnPropertyChanged(nameof(ShowLeftPanel));
+        OnPropertyChanged(nameof(ShowIconDock));
         OnPropertyChanged(nameof(IsLeftCollapsed));
         OnPropertyChanged(nameof(IsRightCollapsed));
         OnPropertyChanged(nameof(LeftTab));

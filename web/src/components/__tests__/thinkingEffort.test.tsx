@@ -108,6 +108,6 @@ describe("ThinkingEffortControl · 输入台右下角", () => {
     seed([{ ...deepseek, reasoningEffort: "medium" }]);
     await openMenu();
     const current = screen.getByRole("menuitemradio", { name: /^中/ });
-    expect(current.textContent).toContain("✓");
+    expect(current.querySelector(".thinking-effort__check svg")).toBeTruthy();
   });
 });

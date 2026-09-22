@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ContextMetricsPopover } from "../ContextMetricsPopover";
 import { useSettings } from "../../stores/settingsStore";
@@ -121,7 +121,7 @@ describe("ContextMetricsPopover UI", () => {
     expect(useSettings.getState().settingsOpen).toBe(true);
   });
 
-  it("closes popover on Escape key", () => {
+  it("closes popover on Escape key", async () => {
     render(<ContextMetricsPopover inputText="" />);
 
     const triggerBtn = screen.getByRole("button", { name: "实时上下文统计" });
@@ -129,6 +129,7 @@ describe("ContextMetricsPopover UI", () => {
     expect(screen.getByText("上下文窗口")).toBeTruthy();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByText("上下文窗口")).toBeNull();
+    // 浮层有 150ms 的离场过渡，关闭后再从文档移除。
+    await waitFor(() => expect(screen.queryByText("上下文窗口")).toBeNull());
   });
 });

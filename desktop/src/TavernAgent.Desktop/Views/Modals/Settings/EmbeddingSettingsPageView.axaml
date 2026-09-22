@@ -54,7 +54,7 @@
               </StackPanel>
             </c:Field.Body>
           </c:Field>
-          <Border Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="10">
+          <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="10">
             <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
                        Foreground="{DynamicResource TextSecondaryBrush}"
                        Text="本地部署提示：先安装 Ollama 并运行 `ollama pull bge-small-zh-v1.5`，保持 11434 端口可访问。" />

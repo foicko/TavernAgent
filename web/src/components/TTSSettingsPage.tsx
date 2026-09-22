@@ -6,6 +6,7 @@ import { useTTSSettings, type TTSEngine } from "../stores/ttsSettingsStore";
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
 import { Field, TextInput, Select } from "../ui/Field";
+import { Icon } from "../ui/Icon";
 import { Section } from "../ui/Section";
 import { Switch } from "../ui/Switch";
 import "./TTSSettings.css";
@@ -216,10 +217,10 @@ export function TTSSettingsPage() {
         </Field>
 
         <div className="tts-action-row">
-          <Button variant="primary" onClick={handleTestPlayback} disabled={testing}>
-            {testing ? "正在发音..." : "🔊 试听发音"}
+          <Button variant="primary" loading={testing} onClick={handleTestPlayback} disabled={testing}>
+            <Icon name="volume" size={14} /> {testing ? "正在发音..." : "试听发音"}
           </Button>
-          <Button variant="quiet" onClick={resetToDefaults}>
+          <Button variant="outline" onClick={resetToDefaults}>
             恢复默认
           </Button>
         </div>

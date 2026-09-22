@@ -1,55 +1,47 @@
 /* ==========================================================================
    历史已提交回合（HistoricalStory 局部样式）
    --------------------------------------------------------------------------
-   令牌一律取自 src/styles/tokens.css；无对应令牌的字面值就地保留并注明。
-
+   令牌一律取自 src/styles/tokens.css；不写字面色。
    作用域说明（不能新增 className，HistoricalStory 也没有自己的根节点）：
    - .story-turn 是 HistoricalStory 每条已提交回合的外层容器，但 NarrativeStream
-     也复用同类名。这里只在「再加一层限定」的前提下定义规则；
-     凡是与 NarrativeStream 重叠的选择器，其声明值与其原内联值完全一致，
-     因此不会改变 NarrativeStream 的实际渲染结果（其内联样式优先级更高）。
-   - .block-dialogue / .block-monologue / .btn-solid 按约定不在本文件定义，
-     由仓库其它位置统一放置。
+     也复用同类名。这里只在「再加一层限定」的前提下定义规则。
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. 回合卡片
    -------------------------------------------------------------------------- */
-/* 开场序章：深色描边 + 强调色左边框（.opening-turn 为 HistoricalStory 独有） */
+/* 开场序章：强调色左边框（.opening-turn 为 HistoricalStory 独有） */
 .story-turn.opening-turn > .dialogue-turn-wrap {
-  border-color: var(--border-mid);
-  border-left: 3.5px solid var(--accent-solid);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--glass-specular-top), 0 4px 16px rgba(0, 0, 0, 0.04);
+  border-color: var(--border-light);
+  border-left: 3px solid var(--accent-solid);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-/* 已提交回合：中描边 + 表面底色
-   （与 NarrativeStream 重叠，但其对应节点均带相同内联值，实际渲染不变） */
+/* 已提交回合：细描边 + 表面底色 */
 .story-turn:not(.opening-turn) > .dialogue-turn-wrap {
   border-color: var(--border-light);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   background: var(--bg-surface);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-sm);
 }
 
-/* 旁白段落：紧凑段距与行高（覆盖 styles.css 的 1.85 行高） */
+/* 旁白段落：紧凑段距与行高 */
 .story-turn .block-narration {
   margin-bottom: var(--space-2);
-  line-height: 1.8; /* 无对应行高令牌（--lh-tight=1.35 / --lh-normal=1.6） */
+  line-height: 1.8;
 }
 
 /* 玩家输入卡与下一张卡片之间的间距 */
 .story-turn > .player-turn-container {
-  margin-bottom: 14px; /* 无对应间距令牌（--space-3=12 / --space-4=16） */
+  margin-bottom: 14px;
 }
 
 /* --------------------------------------------------------------------------
-   2. 意图抉择卡
+   2. 意图抉择卡（ApprovalCard · beautifului）
    -------------------------------------------------------------------------- */
-/* HistoricalStory 的抉择卡嵌在 .dialogue-turn-wrap 内；
-   NarrativeStream 的 .decision-deck-box 直接挂在 .story-turn 下，故不受影响。 */
 .dialogue-turn-wrap .decision-deck-box {
-  margin-top: 14px; /* 无对应间距令牌 */
+  margin-top: 14px;
   border-top: 1px dashed var(--border-light);
   padding-top: var(--space-3);
 }
@@ -64,21 +56,21 @@
   color: var(--text-dim);
 }
 
-/* 单张抉择卡：Liquid Glass 悬浮卡片 + 意图色胶囊发光标 + 顶层镜面高光 (参考 rareui.com 规范) */
+/* 单张抉择卡：扁平卡片 + 意图色竖条 */
 .decision-card-btn {
   position: relative;
   overflow: hidden;
   padding: 10px 14px 10px 18px;
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   background: var(--bg-surface);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-specular-top);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   touch-action: manipulation;
-  transition: transform var(--duration-micro, 80ms) var(--ease-smooth-out),
-              background-color var(--duration-quick, 150ms) ease,
-              border-color var(--duration-quick, 150ms) ease,
-              box-shadow var(--duration-quick, 150ms) ease;
+  transition: transform var(--duration-micro) var(--ease-smooth-out),
+              background-color var(--duration-quick) var(--ease-smooth-out),
+              border-color var(--duration-quick) var(--ease-smooth-out),
+              box-shadow var(--duration-quick) var(--ease-smooth-out);
 }
 
 .decision-card-btn::before {
@@ -87,33 +79,32 @@
   left: 6px;
   top: 10px;
   bottom: 10px;
-  width: 3.5px;
+  width: 3px;
   border-radius: var(--radius-full);
   background: var(--decision-accent, var(--accent-solid));
-  transition: opacity var(--duration-quick, 150ms) ease;
+  transition: top var(--duration-quick) var(--ease-smooth-out),
+              bottom var(--duration-quick) var(--ease-smooth-out);
 }
 
 .decision-card-btn:hover {
-  background: var(--bg-elevated);
   border-color: var(--border-mid);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-specular-top);
-}
-
-.decision-card-btn:active {
-  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .decision-card-btn:hover::before {
   top: 7px;
   bottom: 7px;
-  width: 4px;
-  box-shadow: 0 0 10px var(--decision-accent, var(--accent-solid));
 }
 
 .decision-card-btn:active {
-  transform: translateY(0);
-  box-shadow: var(--glass-specular-top), 0 2px 6px rgba(0, 0, 0, 0.06);
+  transform: scale(0.99);
+  box-shadow: var(--shadow-sm);
+}
+
+.decision-card-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 /* 卡片第一行：意图标签 + 「推进 ↵」 */
@@ -134,19 +125,27 @@
   border-radius: var(--radius-full);
   background: var(--bg-subtle);
   border: 1px solid var(--border-light);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--text-main);
   font-size: 10.5px;
 }
 
+.decision-card-btn > div:first-child > span:first-child .ui-icon {
+  color: var(--decision-accent, var(--accent-solid));
+}
+
 .decision-card-btn > div:first-child > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 10px;
   color: var(--text-dim);
-  transition: all 0.18s ease;
+  transition: color var(--duration-quick) var(--ease-smooth-out),
+              transform var(--duration-quick) var(--ease-smooth-out);
 }
 
 .decision-card-btn:hover > div:first-child > span:last-child {
-  color: var(--accent-solid);
+  color: var(--accent-glow);
   transform: translateX(2px);
 }
 

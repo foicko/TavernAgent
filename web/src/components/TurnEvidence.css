@@ -20,7 +20,7 @@
   gap: 6px;
   padding: 3px 9px;
   border: 1px solid var(--border-light);
-  border-radius: var(--r-m, 8px);
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
   font-size: 12px;
   line-height: 1.6;
@@ -56,7 +56,7 @@
 }
 
 .dice-chip {
-  background: var(--accent-subtle, var(--bg-subtle));
+  background: var(--accent-subtle);
 }
 
 /* 玩家注记是“要求”而不是“结果”，用虚线与斜体与其它筹码分开。 */
@@ -71,39 +71,45 @@
 }
 
 .turn-evidence-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   align-self: flex-start;
   padding: 2px 4px;
   border: none;
   background: none;
   color: var(--text-dim);
   font-size: 11px;
+  font-family: inherit;
   cursor: pointer;
-  border-radius: var(--r-s, 4px);
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .turn-evidence-toggle:hover {
-  color: var(--accent-solid);
+  color: var(--accent-glow);
 }
 
 .turn-evidence-toggle:focus-visible {
-  outline: 2px solid var(--accent-solid);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
 .turn-evidence-panel {
   border: 1px solid var(--border-light);
-  border-radius: var(--r-m, 8px);
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  animation: fadeInDown var(--duration-quick) var(--ease-smooth-out);
 }
 
 .evidence-section > h4 {
   margin: 0 0 4px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   color: var(--text-dim);
   text-transform: none;

@@ -9,6 +9,7 @@ import {
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
 import { Field, Select, TextInput } from "../ui/Field";
+import { Icon } from "../ui/Icon";
 import { Section } from "../ui/Section";
 import "./ImageSettings.css";
 
@@ -141,10 +142,10 @@ export function ImageSettingsPage() {
         </div>
 
         <div className="image-action-row">
-          <Button variant="primary" onClick={handleTestGenerate} disabled={testing}>
-            {testing ? "正在绘制测试图..." : "🎨 试运行生图"}
+          <Button variant="primary" loading={testing} onClick={handleTestGenerate} disabled={testing}>
+            <Icon name="wand" size={14} /> {testing ? "正在绘制测试图..." : "试运行生图"}
           </Button>
-          <Button variant="quiet" onClick={resetToDefaults}>
+          <Button variant="outline" onClick={resetToDefaults}>
             恢复默认
           </Button>
         </div>
@@ -155,7 +156,7 @@ export function ImageSettingsPage() {
           <div className="image-preview-box">
             <img src={testResult.url} alt="生图预览" className="image-preview-img" />
             <div className="image-preview-meta">
-              ✓ 图像生成成功并已本地落盘：{testResult.id}
+              <Icon name="checkCircle" size={13} /> 图像生成成功并已本地落盘：{testResult.id}
             </div>
           </div>
         )}

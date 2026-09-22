@@ -9,30 +9,46 @@
     <StackPanel Grid.Row="0" Spacing="6" HorizontalAlignment="Center">
       <Button Classes="rail-btn" Classes.active="{Binding IsTreeTabActive}"
               Classes.visited="{Binding IsTreeTabVisited}"
-              Command="{Binding ShowTreeCommand}" Content="🌿" ToolTip.Tip="因果分支" />
+              Command="{Binding ShowTreeCommand}" ToolTip.Tip="因果分支">
+        <Path Classes="icon" Data="{StaticResource IconLeaf}" />
+      </Button>
       <Button Classes="rail-btn" Classes.active="{Binding IsCharactersTabActive}"
               Classes.visited="{Binding IsCharactersTabVisited}"
-              Command="{Binding ShowCharactersCommand}" Content="🎭" ToolTip.Tip="角色卡库" />
+              Command="{Binding ShowCharactersCommand}" ToolTip.Tip="角色卡库">
+        <Path Classes="icon" Data="{StaticResource IconUser}" />
+      </Button>
       <Button Classes="rail-btn" Classes.active="{Binding IsLoreTabActive}"
               Classes.visited="{Binding IsLoreTabVisited}"
-              Command="{Binding ShowLoreCommand}" Content="📖" ToolTip.Tip="世界书" />
+              Command="{Binding ShowLoreCommand}" ToolTip.Tip="世界书">
+        <Path Classes="icon" Data="{StaticResource IconBook}" />
+      </Button>
       <Button Classes="rail-btn" Classes.active="{Binding IsSessionsTabActive}"
               Classes.visited="{Binding IsSessionsTabVisited}"
-              Command="{Binding ShowSessionsCommand}" Content="🕰️" ToolTip.Tip="历史会话" />
+              Command="{Binding ShowSessionsCommand}" ToolTip.Tip="历史会话">
+        <Path Classes="icon" Data="{StaticResource IconClock}" />
+      </Button>
     </StackPanel>
 
     <!-- Center: director -->
     <StackPanel Grid.Row="1" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
       <Border Width="20" Classes="divider" />
       <Button Classes="rail-btn" Classes.active="{Binding IsDirectorActive}"
-              Command="{Binding OpenDirectorCommand}" Content="🎬" ToolTip.Tip="导演模式" />
+              Command="{Binding OpenDirectorCommand}" ToolTip.Tip="导演模式">
+        <Path Classes="icon" Data="{StaticResource IconFilm}" />
+      </Button>
     </StackPanel>
 
     <!-- Bottom: palette / theme / settings -->
     <StackPanel Grid.Row="2" Spacing="6" HorizontalAlignment="Center">
-      <Button Classes="rail-btn" Command="{Binding OpenPaletteCommand}" Content="🔍" ToolTip.Tip="命令面板 (Ctrl+K)" />
-      <Button Classes="rail-btn" Command="{Binding ToggleThemeCommand}" Content="🌓" ToolTip.Tip="切换主题" />
-      <Button Classes="rail-btn" Command="{Binding OpenSettingsCommand}" Content="⚙️" ToolTip.Tip="设置" />
+      <Button Classes="rail-btn" Command="{Binding OpenPaletteCommand}" ToolTip.Tip="命令面板 (Ctrl+K)">
+        <Path Classes="icon" Data="{StaticResource IconSearch}" />
+      </Button>
+      <Button Classes="rail-btn" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="切换主题">
+        <Path Classes="icon" Data="{StaticResource IconSun}" />
+      </Button>
+      <Button Classes="rail-btn" Command="{Binding OpenSettingsCommand}" ToolTip.Tip="设置">
+        <Path Classes="icon" Data="{StaticResource IconSliders}" />
+      </Button>
     </StackPanel>
   </Grid>
 </UserControl>

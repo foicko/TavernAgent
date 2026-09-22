@@ -57,7 +57,7 @@ describe("TTSSettingsPage", () => {
     const playSpy = vi.spyOn(ttsPlayer, "play").mockResolvedValue(undefined);
     render(<TTSSettingsPage />);
 
-    const testBtn = screen.getByText("🔊 试听发音");
+    const testBtn = screen.getByText("试听发音");
     fireEvent.click(testBtn);
 
     await waitFor(() => {

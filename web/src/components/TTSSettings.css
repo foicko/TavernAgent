@@ -27,7 +27,7 @@
 
 .tts-speed-slider {
   width: 100%;
-  accent-color: var(--color-primary, #6366f1);
+  accent-color: var(--accent-solid);
   cursor: pointer;
 }
 
@@ -36,4 +36,10 @@
   align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .tts-two-col {
+    grid-template-columns: 1fr;
+  }
 }

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useStory } from "../stores/storyStore";
 import { parseStoryCheckpoint } from "../lib/storyCheckpoint";
+import { Icon } from "../ui/Icon";
 import "./StoryCheckpointSection.css";
 
 export function StoryCheckpointSection() {
@@ -32,8 +33,10 @@ export function StoryCheckpointSection() {
           }
         }}
       >
-        <span>📖 前情回顾与交接</span>
-        <span className="story-checkpoint-toggle-hint">{expanded ? "收起 ▲" : "展开 ▼"}</span>
+        <span><Icon name="book" size={12} /> 前情回顾与交接</span>
+        <span className="story-checkpoint-toggle-hint">
+          {expanded ? "收起" : "展开"} <Icon name={expanded ? "chevronUp" : "chevronDown"} size={11} />
+        </span>
       </div>
 
       {expanded && (
@@ -41,7 +44,7 @@ export function StoryCheckpointSection() {
           {narrativeArc && (
             <div className="checkpoint-card">
               <div className="checkpoint-card-header">
-                <span className="checkpoint-card-tag">📜 剧情推进</span>
+                <span className="checkpoint-card-tag"><Icon name="scroll" size={12} /> 剧情推进</span>
               </div>
               <p className="checkpoint-card-text">{narrativeArc}</p>
             </div>
@@ -50,7 +53,7 @@ export function StoryCheckpointSection() {
           {(mindsets.length > 0 || hiddenTension) && (
             <div className="checkpoint-card">
               <div className="checkpoint-card-header">
-                <span className="checkpoint-card-tag">🌊 角色心境与暗涌</span>
+                <span className="checkpoint-card-tag"><Icon name="waves" size={12} /> 角色心境与暗涌</span>
               </div>
               {mindsets.map((m, idx) => (
                 <div key={idx} className="checkpoint-card-mindset">
@@ -70,7 +73,7 @@ export function StoryCheckpointSection() {
           {openLoops && (
             <div className="checkpoint-card">
               <div className="checkpoint-card-header">
-                <span className="checkpoint-card-tag">⏳ 待解悬念与约定</span>
+                <span className="checkpoint-card-tag"><Icon name="hourglass" size={12} /> 待解悬念与约定</span>
               </div>
               <pre className="checkpoint-card-pre">
                 {openLoops}
@@ -81,7 +84,7 @@ export function StoryCheckpointSection() {
           {milestones && (
             <div className="checkpoint-card">
               <div className="checkpoint-card-header">
-                <span className="checkpoint-card-tag">🚩 阶段里程碑</span>
+                <span className="checkpoint-card-tag"><Icon name="flag" size={12} /> 阶段里程碑</span>
               </div>
               <pre className="checkpoint-card-pre">
                 {milestones}

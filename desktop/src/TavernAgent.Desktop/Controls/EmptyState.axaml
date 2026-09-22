@@ -3,10 +3,25 @@
              xmlns:controls="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Controls.EmptyState">
   <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16">
+    <!-- Linear icon in a hairline tile (web: .ui-empty__icon) -->
+    <Border Width="36" Height="36"
+            CornerRadius="{DynamicResource RadiusMd}"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            HorizontalAlignment="Center"
+            IsVisible="{Binding $parent[controls:EmptyState].IconGeometry, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <Path Classes="icon"
+            Data="{Binding $parent[controls:EmptyState].IconGeometry}"
+            Width="18" Height="18"
+            Stroke="{DynamicResource TextDimBrush}" />
+    </Border>
+    <!-- Legacy text glyph: only when no geometry was provided -->
     <TextBlock Text="{Binding $parent[controls:EmptyState].Icon}"
-               FontSize="28"
+               FontSize="{DynamicResource FsXl}"
                HorizontalAlignment="Center"
-               Opacity="0.7" />
+               Opacity="0.7"
+               IsVisible="{Binding $parent[controls:EmptyState].IconGeometry, Converter={x:Static ObjectConverters.IsNull}}" />
     <TextBlock Text="{Binding $parent[controls:EmptyState].Title}"
                IsVisible="{Binding $parent[controls:EmptyState].Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                FontSize="{DynamicResource FsMd}"

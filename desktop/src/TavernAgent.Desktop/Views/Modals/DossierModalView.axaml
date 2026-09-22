@@ -31,7 +31,7 @@
           </ListBox>
         </StackPanel>
 
-        <Border Grid.Column="1" Classes="glass-subtle" CornerRadius="{DynamicResource RadiusMd}" Padding="14">
+        <Border Grid.Column="1" Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="14">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <SelectableTextBlock Text="{Binding SelectedTab.Content}" TextWrapping="Wrap" Classes="narrative"
                                  FontSize="{DynamicResource FsSm}" />

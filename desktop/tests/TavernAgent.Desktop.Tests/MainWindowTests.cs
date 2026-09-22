@@ -68,53 +68,60 @@ public class WorkspaceViewTests
     private static WorkspaceViewModel Fresh() => new(new UiStore());
 
     [AvaloniaFact]
-    public void Workspace_Renders_With_Default_Geometry()
+    public void Workspace_Renders_With_Default_Three_Column_Geometry()
     {
         var ws = Fresh();
         var view = new WorkspaceView { DataContext = ws };
 
         Assert.NotNull(view);
-        Assert.Equal(56d, ws.LeftRailWidth);
-        Assert.Equal(0d, ws.RightRailWidth);
+        Assert.Equal(224d, ws.LeftRailWidth);
+        Assert.Equal(304d, ws.RightRailWidth);
         Assert.True(ws.IsStudioMode);
-        Assert.True(ws.ShowChrome);
-        Assert.True(ws.ShowHud);
-        Assert.False(ws.ShowFlyout);
+        Assert.True(ws.ShowLeftRail);
+        Assert.True(ws.ShowRightRail);
+        Assert.False(ws.ShowRightRailRecall);
+        Assert.True(ws.ShowLeftPanel);
+        Assert.False(ws.ShowIconDock);
         ws.Dispose();
     }
 
     [AvaloniaFact]
-    public void Flyout_Toggles_And_Hud_Collapses()
+    public void Panel_Toggles_And_Right_Rail_Collapses()
     {
         var ws = Fresh();
 
+        // Panel starts expanded (default); activating the same tab collapses to the icon dock.
+        Assert.True(ws.ShowLeftPanel);
         ws.LeftRail.ShowTreeCommand.Execute(null);
-        Assert.True(ws.ShowFlyout);
+        Assert.False(ws.ShowLeftPanel);
+        Assert.True(ws.ShowIconDock);
+
         ws.LeftRail.ShowTreeCommand.Execute(null);
-        Assert.False(ws.ShowFlyout);
+        Assert.True(ws.ShowLeftPanel);
 
         ws.ToggleRightRailCommand.Execute(null);
-        Assert.False(ws.ShowHud);
+        Assert.False(ws.ShowRightRail);
+        Assert.Equal(0d, ws.RightRailWidth);
         Assert.True(ws.ShowRightRailRecall);
         ws.Dispose();
     }
 
     [AvaloniaFact]
-    public void Header_Insets_So_It_Never_Slides_Under_The_Hud()
+    public void Reading_Mode_Hides_Rails_But_Keeps_Header()
     {
         var ws = Fresh();
-
-        // HUD docked open: the header must stop before the 320px HUD + gutters.
-        Assert.True(ws.ShowHud);
-        Assert.Equal(344d, ws.HeaderMargin.Right);
-        Assert.Equal(68d, ws.HeaderMargin.Left);
-
-        ws.ToggleRightRailCommand.Execute(null);
-        Assert.False(ws.ShowHud);
-        Assert.Equal(16d, ws.HeaderMargin.Right);
-
         ws.EnterReadingCommand.Execute(null);
-        Assert.Equal(16d, ws.HeaderMargin.Right);
+        Assert.True(ws.IsReadingMode);
+        Assert.Equal(0d, ws.LeftRailWidth);
+        Assert.Equal(0d, ws.RightRailWidth);
+        Assert.False(ws.ShowLeftRail);
+        Assert.False(ws.ShowRightRail);
+        Assert.False(ws.ShowLeftPanel);
+
+        ws.EnterStudioCommand.Execute(null);
+        Assert.True(ws.IsStudioMode);
+        Assert.Equal(224d, ws.LeftRailWidth);
+        Assert.Equal(304d, ws.RightRailWidth);
         ws.Dispose();
     }
 
@@ -131,24 +138,6 @@ public class WorkspaceViewTests
         Assert.False(ws.LeftRail.IsLoreTabActive);
         Assert.True(ws.LeftRail.IsLoreTabVisited);
         Assert.False(ws.LeftRail.IsTreeTabVisited);
-        ws.Dispose();
-    }
-
-    [AvaloniaFact]
-    public void Reading_Mode_Hides_Chrome()
-    {
-        var ws = Fresh();
-        ws.EnterReadingCommand.Execute(null);
-        Assert.True(ws.IsReadingMode);
-        Assert.Equal(0d, ws.LeftRailWidth);
-        Assert.False(ws.ShowChrome);
-        Assert.False(ws.ShowFlyout);
-        Assert.False(ws.ShowHud);
-        Assert.Equal(1.0, ws.AmbientIntensity);
-
-        ws.EnterStudioCommand.Execute(null);
-        Assert.True(ws.IsStudioMode);
-        Assert.True(ws.ShowChrome);
         ws.Dispose();
     }
 

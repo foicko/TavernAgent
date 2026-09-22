@@ -9,6 +9,7 @@ import { useDismiss } from "../lib/useDismiss";
 import { activePrimaryInstance, useSettings } from "../stores/settingsStore";
 import { useUi } from "../stores/uiStore";
 import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 import { Menu, MenuItem } from "../ui/Menu";
 import "./ThinkingEffortControl.css";
 
@@ -63,16 +64,7 @@ export function ThinkingEffortControl() {
         onClick={() => setOpen((value) => !value)}
       >
         <span className="thinking-effort__name">思考 {effortLabel(effort)}</span>
-        <svg className="thinking-effort__caret" viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
-          <path
-            d="M2 3.5L5 6.5L8 3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Icon name="chevronDown" size={12} className="thinking-effort__caret" />
       </Button>
 
       <Menu
@@ -92,7 +84,7 @@ export function ThinkingEffortControl() {
             meta={
               option.value === effort ? (
                 <span className="thinking-effort__check" aria-hidden="true">
-                  ✓
+                  <Icon name="check" size={12} />
                 </span>
               ) : null
             }

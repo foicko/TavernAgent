@@ -8,6 +8,7 @@ import { primaryCharacterId, affectionPercent } from "../lib/characterState";
 import { DossierModal } from "./DossierModal";
 import { PromisesModal } from "./PromisesModal";
 import { MemoryBankModal } from "./MemoryBankModal";
+import { Icon, type IconName } from "../ui/Icon";
 import "./RightRail.css";
 
 export const RightRail: React.FC = () => {
@@ -76,7 +77,7 @@ export const RightRail: React.FC = () => {
         name: item.name,
         title: item.name,
         status: item.keepsake ? "核心信物" : `数量: ${item.quantity}`,
-        icon: item.keepsake ? "⏱️" : "📦",
+        icon: item.keepsake ? "clock" : "package",
         acts: [
           { key: "inspect", label: `仔细端详 ${item.name}`, text: `我将【${item.name}】握在手心仔细端详，思索其背后的渊源与线索...` },
           { key: "show", label: `向对方出示 ${item.name}`, text: `我将【${item.name}】轻轻置于桌面推向对方眼前，观察其神色变化。` },
@@ -95,10 +96,10 @@ export const RightRail: React.FC = () => {
   };
 
   const exprTitles: Record<TachieExpression, string> = {
-    alert: "🎭 神态：警觉审视",
-    calm: "🎭 神态：冷静自持",
-    smile: "🎭 神态：微露释怀",
-    whisper: "🎭 神态：动容微温",
+    alert: "神态：警觉审视",
+    calm: "神态：冷静自持",
+    smile: "神态：微露释怀",
+    whisper: "神态：动容微温",
   };
 
   const deltas1 = meterDeltas.filter((d) => d.meterIndex === 1);
@@ -147,7 +148,8 @@ export const RightRail: React.FC = () => {
               onClick={() => setFullTachieOpen(true)}
               title="展开高清全身立绘与图鉴"
             >
-              <span>⛶ 全身</span>
+              <Icon name="expand" size={13} />
+              <span>全身</span>
             </button>
           </div>
 
@@ -211,15 +213,15 @@ export const RightRail: React.FC = () => {
           )}
           <div className="dossier-badges-row">
             <span className="dossier-badge" id="dossier-badge-state">
-              <span className="dossier-badge-icon">🎭</span>
+              <Icon name="sparkles" size={12} className="dossier-badge-icon" />
               <span>{char.stateBadge}</span>
             </span>
             <span className="dossier-badge" id="dossier-badge-alliance">
-              <span className="dossier-badge-icon">🏛️</span>
+              <Icon name="users" size={12} className="dossier-badge-icon" />
               <span>{char.allianceBadge}</span>
             </span>
             <span className="dossier-badge" id="dossier-badge-voice">
-              <span className="dossier-badge-icon">🎙️</span>
+              <Icon name="mic" size={12} className="dossier-badge-icon" />
               <span>{char.voiceBadge}</span>
             </span>
           </div>
@@ -235,13 +237,13 @@ export const RightRail: React.FC = () => {
           onClick={() => setDossierModalOpen(true)}
           title="点击展开完整角色人设、世界观与对话范例"
         >
-          <div className="hud-nav-tile-icon">📜</div>
+          <div className="hud-nav-tile-icon"><Icon name="scroll" size={16} /></div>
           <div className="hud-nav-tile-body">
             <div className="hud-nav-tile-title">角色设定与世界观</div>
             <div className="hud-nav-tile-subtitle">人设性格 · 场景规则 · 范例与说明</div>
           </div>
           <div className="hud-nav-tile-badge">详情</div>
-          <div className="hud-nav-tile-arrow">›</div>
+          <div className="hud-nav-tile-arrow"><Icon name="chevronRight" size={16} /></div>
         </button>
 
         {/* 主动契约与承诺 */}
@@ -251,7 +253,7 @@ export const RightRail: React.FC = () => {
           onClick={() => setPromisesModalOpen(true)}
           title="点击查看约定、许诺与违诺状态"
         >
-          <div className="hud-nav-tile-icon">🤝</div>
+          <div className="hud-nav-tile-icon"><Icon name="handshake" size={16} /></div>
           <div className="hud-nav-tile-body">
             <div className="hud-nav-tile-title">主动契约与承诺</div>
             <div className="hud-nav-tile-subtitle">
@@ -267,15 +269,15 @@ export const RightRail: React.FC = () => {
           type="button"
           className="hud-nav-tile"
           onClick={() => setMemoryModalOpen(true)}
-          title="点击查看并修订亲历观察、推测记忆与心智星图"
+          title="点击查看并修订亲历观察与推测记忆"
         >
-          <div className="hud-nav-tile-icon">🧠</div>
+          <div className="hud-nav-tile-icon"><Icon name="database" size={16} /></div>
           <div className="hud-nav-tile-body">
             <div className="hud-nav-tile-title">认知记忆库</div>
             <div className="hud-nav-tile-subtitle">亲历观察 · 反思推演 · 分支独立 CoW</div>
           </div>
           <div className="hud-nav-tile-badge">{memoryCount} 条</div>
-          <div className="hud-nav-tile-arrow">›</div>
+          <div className="hud-nav-tile-arrow"><Icon name="chevronRight" size={16} /></div>
         </button>
       </div>
 
@@ -353,7 +355,7 @@ export const RightRail: React.FC = () => {
         <div className="item-slot-grid">
           {liveInventory.length === 0 ? (
             <div className="hud-empty-card hud-empty-card--full">
-              <span className="empty-card-icon">🎒</span>
+              <Icon name="package" size={18} className="empty-card-icon" />
               <span className="empty-card-text">随身包裹空空如也</span>
             </div>
           ) : (
@@ -367,7 +369,7 @@ export const RightRail: React.FC = () => {
                 }}
                 title="点击呼出信物动作"
               >
-                <div className="slot-icon-quiet">{item.icon}</div>
+                <div className="slot-icon-quiet"><Icon name={item.icon as IconName} size={16} /></div>
                 <div className="slot-name-label">{item.name}</div>
                 <div className="slot-status-label">{item.status}</div>
               </div>

@@ -13,6 +13,7 @@ import { ttsPlayer } from "../lib/ttsPlayer";
 import { useStory } from "../stores/storyStore";
 import { useTTSSettings } from "../stores/ttsSettingsStore";
 import { useUi } from "../stores/uiStore";
+import { Icon, type IconName } from "../ui/Icon";
 
 export interface TTSPlayButtonProps {
   /** 结构化回合块（优先） */
@@ -143,10 +144,12 @@ export const TTSPlayButton: React.FC<TTSPlayButtonProps> = ({
   };
 
   let title = isPlaying ? "停止朗读" : dialogueOnly ? "朗读角色台词" : "朗读正文";
-  let label = isPlaying ? "⏹ 停止" : "🔊 朗读";
+  let label = isPlaying ? "停止" : "朗读";
+  let icon: IconName = isPlaying ? "stop" : "volume";
 
   if (noDialogueNotice) {
-    label = "🔇 仅旁白";
+    label = "仅旁白";
+    icon = "volumeOff";
     title = "本段无角色对白（已在语音设置中开启“只读角色台词”）";
   } else if (!isPlaying && dialogueOnly && !extracted.hasDialogue) {
     title = "本段仅有旁白，无角色对白（只读台词模式）";
@@ -160,7 +163,7 @@ export const TTSPlayButton: React.FC<TTSPlayButtonProps> = ({
       title={title}
       aria-label={title}
     >
-      {label}
+      <Icon name={icon} size={13} /> {label}
     </button>
   );
 };

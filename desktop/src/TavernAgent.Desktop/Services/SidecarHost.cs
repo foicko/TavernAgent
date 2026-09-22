@@ -34,7 +34,8 @@ public static class SidecarHost
 /// <summary>Persisted desktop UI preferences (theme, window size) — replaces localStorage.</summary>
 public sealed class DesktopSettings
 {
-    public string Theme { get; set; } = "dark";
+    /// <summary>Explicit user choice ("light"/"dark"); empty means follow the system theme.</summary>
+    public string Theme { get; set; } = "";
 
     public double WindowWidth { get; set; } = 1440;
 

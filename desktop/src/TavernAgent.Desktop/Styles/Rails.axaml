@@ -68,13 +68,13 @@
     <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
   </Style>
   <Style Selector="Border.state-pill.active">
-    <Setter Property="Background" Value="#1410B981" />
+    <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}" />
   </Style>
   <Style Selector="Border.state-pill TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
   </Style>
   <Style Selector="Border.state-pill.active TextBlock">
-    <Setter Property="Foreground" Value="#059669" />
+    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
   </Style>
   <Style Selector="Border.metric-chip">
     <Setter Property="CornerRadius" Value="3" />

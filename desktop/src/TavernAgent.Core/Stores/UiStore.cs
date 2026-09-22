@@ -46,9 +46,6 @@ public sealed class UiStore : ObservableStore
     private string? _pendingCardId;
     public string? PendingCardId { get => _pendingCardId; private set => SetProperty(ref _pendingCardId, value); }
 
-    private bool _mindGraphOpen;
-    public bool MindGraphOpen { get => _mindGraphOpen; private set => SetProperty(ref _mindGraphOpen, value); }
-
     private bool _blueprintOpen;
     public bool BlueprintOpen { get => _blueprintOpen; private set => SetProperty(ref _blueprintOpen, value); }
 
@@ -121,19 +118,25 @@ public sealed class UiStore : ObservableStore
         FlyoutOpen = true;
     }
 
-    /// <summary>Icon-rail behaviour: clicking the active tab again closes the flyout.</summary>
+    /// <summary>Sidebar behaviour: clicking the active tab again collapses the panel to the icon dock.</summary>
     public void ToggleFlyout(LeftSubtab tab)
     {
-        if (FlyoutOpen && LeftTab == tab)
+        if (!LeftCollapsed && LeftTab == tab)
         {
+            LeftCollapsed = true;
             FlyoutOpen = false;
             return;
         }
         LeftTab = tab;
+        LeftCollapsed = false;
         FlyoutOpen = true;
     }
 
-    public void CloseFlyout() => FlyoutOpen = false;
+    public void CloseFlyout()
+    {
+        FlyoutOpen = false;
+        LeftCollapsed = true;
+    }
 
     public void SwitchViewMode(ViewportMode mode)
     {
@@ -200,7 +203,6 @@ public sealed class UiStore : ObservableStore
         PendingCardId = cardId;
     }
 
-    public void SetMindGraphOpen(bool open) => MindGraphOpen = open;
     public void SetBlueprintOpen(bool open) => BlueprintOpen = open;
     public void SetDirectorOpen(bool open) => DirectorOpen = open;
     public void SetPaletteOpen(bool open) => PaletteOpen = open;

@@ -15,7 +15,7 @@
       <StackPanel MaxWidth="820" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
 
         <!-- Reading mode banner -->
-        <Border IsVisible="{Binding ShowReadingBanner}" Classes="glass-subtle" Padding="20"
+        <Border IsVisible="{Binding ShowReadingBanner}" Classes="surface-inset" Padding="20"
                 CornerRadius="{DynamicResource RadiusLg}">
           <StackPanel Spacing="8" HorizontalAlignment="Center">
             <TextBlock Text="{Binding SceneTitle, StringFormat=《{0} · 编年篇章》}"
@@ -31,18 +31,30 @@
         <Button IsVisible="{Binding HasMoreHistory}" Classes="ui-btn sm quiet"
                 HorizontalAlignment="Center"
                 Command="{Binding LoadOlderCommand}"
-                IsEnabled="{Binding !IsLoadingOlder}"
-                Content="↑ 查看更早的剧情历史" />
+                IsEnabled="{Binding !IsLoadingOlder}">
+          <StackPanel Orientation="Horizontal" Spacing="5">
+            <Path Classes="icon" Data="{StaticResource IconArrowUp}" Width="12" Height="12" />
+            <TextBlock Text="查看更早的剧情历史" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
 
         <!-- History read-only banner -->
-        <Border IsVisible="{Binding IsHistoryView}" Classes="glass-subtle" Padding="14"
+        <Border IsVisible="{Binding IsHistoryView}" Classes="surface-inset" Padding="14"
                 CornerRadius="{DynamicResource RadiusMd}">
           <Grid ColumnDefinitions="*,Auto">
-            <TextBlock Grid.Column="0" Text="📍 正在浏览历史快照节点（只读模式）"
-                       VerticalAlignment="Center" FontSize="{DynamicResource FsSm}" />
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <Path Classes="icon" Data="{StaticResource IconFlag}" Width="13" Height="13" />
+              <TextBlock Text="正在浏览历史快照节点（只读模式）"
+                         VerticalAlignment="Center" FontSize="{DynamicResource FsSm}" />
+            </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
               <Button Classes="ui-btn sm quiet" Command="{Binding BackToHeadCommand}" Content="返回最新进度" />
-              <Button Classes="ui-btn sm primary" Command="{Binding ForkViewCommand}" Content="🌿 从此处开辟新分支" />
+              <Button Classes="ui-btn sm primary" Command="{Binding ForkViewCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconLeaf}" Width="12" Height="12" />
+                  <TextBlock Text="从此处开辟新分支" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
             </StackPanel>
           </Grid>
         </Border>
@@ -57,13 +69,16 @@
         </ItemsControl>
 
         <!-- Prologue card -->
-        <Border IsVisible="{Binding ShowPrologue}" Classes="glass-subtle" Padding="16"
+        <Border IsVisible="{Binding ShowPrologue}" Classes="surface-inset" Padding="16"
                 CornerRadius="{DynamicResource RadiusLg}">
           <StackPanel Spacing="12">
             <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Grid.Column="0" Text="✦ 命运序章 · 场景起步"
-                         FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
-                         Foreground="{DynamicResource TextSecondaryBrush}" />
+              <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" Stroke="{DynamicResource AccentAmberBrush}" />
+                <TextBlock Text="命运序章 · 场景起步"
+                           FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+              </StackPanel>
               <TextBlock Grid.Column="1" Text="开场白" FontSize="{DynamicResource FsXs}"
                          Foreground="{DynamicResource TextDimBrush}" />
             </Grid>
@@ -91,7 +106,7 @@
             <StackPanel Spacing="6">
               <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                  <TextBlock Text="✦" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
+                  <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" Stroke="{DynamicResource AccentAmberBrush}" />
                   <TextBlock Text="玩家行动 · 第一人称" FontSize="{DynamicResource FsXs}"
                              FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
@@ -104,18 +119,18 @@
             </StackPanel>
           </Border>
 
-          <Border Classes="glass-subtle msg-card" Padding="20" CornerRadius="{DynamicResource RadiusLg}">
+          <Border Classes="surface-inset msg-card" Padding="20" CornerRadius="{DynamicResource RadiusLg}">
             <StackPanel Spacing="12">
               <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                   <Ellipse Width="7" Height="7" Fill="{DynamicResource SuccessBrush}" VerticalAlignment="Center" />
                   <TextBlock Text="{Binding CharShortName}" FontWeight="SemiBold"
                              FontSize="{DynamicResource FsSm}" VerticalAlignment="Center" />
-                  <TextBlock Text="（大模型正在实时演义中... ⚡）" FontSize="{DynamicResource FsSm}"
+                  <TextBlock Text="（大模型正在实时演义中...）" FontSize="{DynamicResource FsSm}"
                              Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
                 </StackPanel>
                 <Border Grid.Column="1" Classes="chip" Padding="6,2">
-                  <TextBlock Text="生成中 ⚡" FontSize="{DynamicResource FsXs}"
+                  <TextBlock Text="生成中" FontSize="{DynamicResource FsXs}"
                              Foreground="{DynamicResource TextSecondaryBrush}" />
                 </Border>
               </Grid>
@@ -127,14 +142,20 @@
                           Command="{Binding ToggleThinkingCommand}">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                       <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="🧠" FontSize="13" VerticalAlignment="Center" />
+                        <Path Classes="icon" Data="{StaticResource IconDatabase}" Width="13" Height="13" />
                         <TextBlock Text="{Binding ThinkingTitle}" HorizontalAlignment="Left"
                                    FontWeight="SemiBold" FontSize="{DynamicResource FsXs}"
                                    Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                       </StackPanel>
-                      <TextBlock Grid.Column="2" Text="{Binding ThinkingToggleLabel}"
-                                 FontSize="{DynamicResource FsXs}" VerticalAlignment="Center"
-                                 Foreground="{DynamicResource TextDimBrush}" />
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ThinkingToggleLabel}"
+                                   FontSize="{DynamicResource FsXs}" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextDimBrush}" />
+                        <Path Classes="icon" Data="{StaticResource IconChevronUp}" Width="10" Height="10"
+                              Stroke="{DynamicResource TextDimBrush}" IsVisible="{Binding IsThinkingExpanded}" />
+                        <Path Classes="icon" Data="{StaticResource IconChevronDown}" Width="10" Height="10"
+                              Stroke="{DynamicResource TextDimBrush}" IsVisible="{Binding !IsThinkingExpanded}" />
+                      </StackPanel>
                     </Grid>
                   </Button>
                   <Border IsVisible="{Binding IsThinkingExpanded}"
@@ -152,7 +173,7 @@
               <!-- Draft blocks & cursor -->
               <StackPanel Spacing="6">
                 <TextBlock IsVisible="{Binding !HasDraftBlocks}"
-                           Text="正在推演因果走势与角色心境... ⚡"
+                           Text="正在推演因果走势与角色心境..."
                            Classes="narrative" Opacity="0.7" />
                 <ItemsControl ItemsSource="{Binding DraftBlocks}">
                   <ItemsControl.ItemTemplate>
@@ -171,12 +192,15 @@
         </StackPanel>
 
         <!-- Truncated control -->
-        <Border IsVisible="{Binding IsTruncated}" Classes="glass-subtle" Padding="16"
+        <Border IsVisible="{Binding IsTruncated}" Classes="surface-inset" Padding="16"
                 CornerRadius="{DynamicResource RadiusLg}">
           <StackPanel Spacing="10">
             <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Text="⚡ 模型输出因上下文长度截断，等待确认" FontSize="{DynamicResource FsSm}"
-                         FontWeight="SemiBold" />
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Path Classes="icon warn" Data="{StaticResource IconAlert}" Width="13" Height="13" />
+                <TextBlock Text="模型输出因上下文长度截断，等待确认" FontSize="{DynamicResource FsSm}"
+                           FontWeight="SemiBold" VerticalAlignment="Center" />
+              </StackPanel>
               <TextBlock Text="状态机：awaiting_continuation" FontSize="{DynamicResource FsXs}"
                          Foreground="{DynamicResource TextDimBrush}" />
             </Grid>
@@ -184,19 +208,34 @@
                        TextWrapping="Wrap" FontSize="{DynamicResource FsSm}"
                        Foreground="{DynamicResource TextSecondaryBrush}" />
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Classes="ui-btn primary" Command="{Binding ContinueCommand}" Content="▶ 继续讲下去" />
-              <Button Classes="ui-btn quiet" Command="{Binding RetryCommand}" Content="🔄 重新构思此轮" />
-              <Button Classes="ui-btn quiet" Command="{Binding CancelCommand}" Content="✕ 放弃" />
+              <Button Classes="ui-btn primary" Command="{Binding ContinueCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconPlay}" Width="11" Height="11" />
+                  <TextBlock Text="继续讲下去" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="ui-btn quiet" Command="{Binding RetryCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="12" Height="12" />
+                  <TextBlock Text="重新构思此轮" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="ui-btn quiet" Command="{Binding CancelCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon" Data="{StaticResource IconClose}" Width="12" Height="12" />
+                  <TextBlock Text="放弃" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
             </StackPanel>
           </StackPanel>
         </Border>
 
         <!-- Error card -->
-        <Border IsVisible="{Binding HasError}" Classes="glass-subtle" Padding="16"
+        <Border IsVisible="{Binding HasError}" Classes="surface-inset" Padding="16"
                 CornerRadius="{DynamicResource RadiusLg}">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Grid.Column="0" Text="✕" Foreground="{DynamicResource DangerBrush}"
-                       FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0" />
+            <Path Grid.Column="0" Classes="icon danger" Data="{StaticResource IconAlert}" Width="18" Height="18"
+                  Margin="0,0,12,0" />
             <StackPanel Grid.Column="1" Spacing="2">
               <TextBlock Text="生成受阻" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}" />
               <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="{DynamicResource FsSm}"
@@ -208,7 +247,7 @@
 
         <!-- No story -->
         <c:EmptyState IsVisible="{Binding !HasStory}"
-                      Icon="🪶" Title="还没有正在推演的剧本"
+                      IconGeometry="{StaticResource IconFeather}" Title="还没有正在推演的剧本"
                       Description="导入角色卡开启冒险，或先用默认角色创建新故事。">
           <c:EmptyState.Body>
             <Button Classes="ui-btn primary" Command="{Binding StartNeutralSessionCommand}" Content="开始新故事" />

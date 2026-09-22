@@ -7,6 +7,7 @@
 import { useState } from "react";
 import type { StoryMessage } from "../stores/storyStore";
 import { storyBusy, useStory } from "../stores/storyStore";
+import { Icon } from "../ui/Icon";
 import "./TurnActions.css";
 
 export function TurnActions({ msg }: { msg: StoryMessage }) {
@@ -30,7 +31,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
     return (
       <div className="turn-editor">
         <div>
-          ✏️ 改正文 · 将落为纯叙事候选（不改变世界状态，原回合保持不变）
+          <Icon name="note" size={13} /> 改正文 · 将落为纯叙事候选（不改变世界状态，原回合保持不变）
         </div>
         <textarea
           value={draft}
@@ -66,7 +67,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
     return (
       <div className="turn-editor">
         <div>
-          ✎ 带要求重演 · 从上一轮状态重新演绎这一段（原时间线保留，可来回对比）
+          <Icon name="note" size={13} /> 带要求重演 · 从上一轮状态重新演绎这一段（原时间线保留，可来回对比）
         </div>
         <textarea
           value={guidance}
@@ -98,7 +99,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
     return (
       <div className="turn-editor">
         <div>
-          💬 改输入 · 将从上一轮派生新分支并重新生成演义（原时间线保留）
+          <Icon name="note" size={13} /> 改输入 · 将从上一轮派生新分支并重新生成演义（原时间线保留）
         </div>
         <textarea
           value={draft}
@@ -141,7 +142,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
             onClick={() => void viewAt(group[currentIdx - 1].nodeId)}
             title="查看上一候选版本"
           >
-            ‹
+            <Icon name="chevronLeft" size={14} />
           </button>
           <span>
             版本 {currentIdx + 1} / {group.length}
@@ -152,7 +153,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
             onClick={() => void viewAt(group[currentIdx + 1].nodeId)}
             title="查看下一候选版本"
           >
-            ›
+            <Icon name="chevronRight" size={14} />
           </button>
         </div>
       ) : (
@@ -167,11 +168,11 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
           onClick={() => void regenerate(msg.id)}
           title="以父节点状态为基准重写文本，保留本次掷骰结果"
         >
-          🔄 重新生成
+          <Icon name="refresh" size={13} /> 重新生成
         </button>
         {!!msg.checks?.length && (
           <button className="btn-quiet" disabled={busy} onClick={() => void regenerate(msg.id, true)} title="新建候选分支，重新掷骰并演绎新结果">
-            🎲 重新掷骰
+            <Icon name="dice" size={13} /> 重新掷骰
           </button>
         )}
         <button
@@ -183,7 +184,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
           }}
           title="带着一句要求重演这一段（例如：更克制些、让 NPC 先开口）"
         >
-          ✎ 带要求重演
+          <Icon name="note" size={13} /> 带要求重演
         </button>
         <button
           className="btn-quiet"
@@ -194,7 +195,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
           }}
           title="手动修改此轮叙事（存为叙事候选）"
         >
-          ✏️ 改正文
+          <Icon name="note" size={13} /> 改正文
         </button>
         {msg.inputText && (
           <button
@@ -206,7 +207,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
             }}
             title="修改玩家在这一轮的输入并重新推演"
           >
-            💬 改输入
+            <Icon name="note" size={13} /> 改输入
           </button>
         )}
         <button
@@ -215,7 +216,7 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
           onClick={() => void forkFrom(msg.id)}
           title="从本节点切出一条新时间线分支"
         >
-          🌿 分叉
+          <Icon name="leaf" size={13} /> 分叉
         </button>
       </div>
     </div>

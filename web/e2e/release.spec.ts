@@ -149,7 +149,7 @@ test("LAN boundary contracts and invalid inputs", async ({ request }) => {
   expect((await paired.json()).token).toBeTruthy();
 });
 
-test("story graph opens immutable history and the memory graph restores focus", async ({ page }, info) => {
+test("story graph opens immutable history and the memory bank restores focus", async ({ page }, info) => {
   const seeded = await seed(page, "图谱与历史验收");
   const input = page.locator(".composer-textarea");
   for (const text of ["我查看灯塔。", "我在港口停下脚步。"]) {
@@ -180,15 +180,12 @@ test("story graph opens immutable history and the memory graph restores focus", 
   await expect(page.locator(".history-read-banner")).toHaveCount(0);
   await expect(input).toBeEnabled();
   if (info.project.name === "narrow") await page.getByLabel("角色立绘与状态").click();
-  // 星图入口现在位于**认知记忆库弹窗**里（不再挂在右栏）：必须先把记忆库打开。
-  // 弹窗会先于星图关掉（触发按钮随之卸载），所以关闭星图后焦点回到记忆库的入口磁贴。
-  const memoryTile = page.getByTitle("点击查看并修订亲历观察、推测记忆与心智星图");
+  // 认知记忆库入口挂在右栏；打开后按 Esc 关闭，焦点应回到入口磁贴。
+  const memoryTile = page.getByTitle("点击查看并修订亲历观察与推测记忆");
   await memoryTile.click();
-  await expect(page.getByRole("dialog", { name: "认知记忆库" })).toBeVisible();
-  await page.getByTitle("全景心智星图预览").click();
-  await expect(page.getByRole("dialog", { name: "心智与实体星图" })).toBeFocused();
+  await expect(page.getByRole("dialog", { name: "认知记忆库" })).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "心智与实体星图" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "认知记忆库" })).toHaveCount(0);
   await expect(memoryTile).toBeFocused();
 });
 

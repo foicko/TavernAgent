@@ -1,0 +1,87 @@
+/* 吐司堆叠：墨色反白胶囊，底部升起；旧条目按 --toast-depth 向后缩退。 */
+.ui-toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 74px;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: min(80vw, 520px);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.ui-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: 7px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  background: var(--text-main);
+  color: var(--bg-surface);
+  box-shadow: var(--shadow-float);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  pointer-events: auto;
+  transform: scale(calc(1 - var(--toast-depth, 0) * 0.04));
+  opacity: calc(1 - var(--toast-depth, 0) * 0.25);
+  transition: transform var(--duration-fast) var(--ease-smooth-out),
+              opacity var(--duration-fast) var(--ease-smooth-out);
+  animation: ui-toast-in var(--duration-medium) var(--ease-spring) both;
+}
+
+.ui-toast[data-state="closing"] {
+  pointer-events: none;
+  animation: ui-toast-out var(--duration-medium) var(--ease-smooth-out) both;
+}
+
+@keyframes ui-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ui-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+.ui-toast__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.ui-toast--success .ui-toast__icon { color: var(--accent-green); }
+.ui-toast--warning .ui-toast__icon { color: var(--accent-amber); }
+.ui-toast--danger .ui-toast__icon { color: var(--color-danger-text); }
+
+.ui-toast__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-toast__close {
+  color: inherit;
+  opacity: 0.7;
+  margin-right: -6px;
+}
+
+.ui-toast__close:hover:not(:disabled) {
+  opacity: 1;
+  background: transparent;
+  color: inherit;
+}

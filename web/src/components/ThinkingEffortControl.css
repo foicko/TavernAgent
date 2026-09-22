@@ -11,7 +11,7 @@
 
 /* 非默认档位是"有东西生效了"，给一点强调色，避免用户忘了自己调过。 */
 .thinking-effort__trigger--set .thinking-effort__name {
-  color: var(--accent-solid);
+  color: var(--accent-glow);
   font-weight: var(--fw-medium);
 }
 
@@ -21,8 +21,8 @@
 }
 
 .thinking-effort__check {
-  color: var(--accent-solid);
-  font-weight: var(--fw-bold);
+  color: var(--accent-glow);
+  font-weight: var(--fw-semibold);
   font-size: var(--fs-md);
   margin-left: var(--space-2);
 }

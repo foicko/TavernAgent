@@ -7,47 +7,19 @@ namespace TavernAgent.Desktop.Views;
 
 public partial class MainWindow : Window
 {
-    private bool _materialApplied;
-
     public MainWindow()
     {
         InitializeComponent();
         Opened += OnOpened;
 
-        // Prefer native blur behind the window; falls back to an opaque base when unsupported.
-        TransparencyLevelHint = new[]
-        {
-            WindowTransparencyLevel.AcrylicBlur,
-            WindowTransparencyLevel.Mica,
-            WindowTransparencyLevel.Blur,
-            WindowTransparencyLevel.None,
-        };
-        PropertyChanged += OnWindowPropertyChanged;
+        // Flat opaque shell (beautifului): no native acrylic/mica blur.
+        TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
     }
 
     private ShellViewModel? Vm => DataContext as ShellViewModel;
 
-    private void OnWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-    {
-        if (e.Property == ActualTransparencyLevelProperty) ApplyMaterial();
-    }
-
-    private void ApplyMaterial()
-    {
-        var active = ActualTransparencyLevel != WindowTransparencyLevel.None;
-        if (active == _materialApplied) return;
-        _materialApplied = active;
-        if (Application.Current is not { } app) return;
-
-        // Swap the ambient base so the native material shows through when available.
-        app.Resources["AppBaseBrush"] = active
-            ? app.FindResource("WindowBackgroundMaterialBrush")
-            : app.FindResource("WindowBackgroundBrush");
-    }
-
     private void OnOpened(object? sender, EventArgs e)
     {
-        ApplyMaterial();
         if (Vm is null) return;
         if (Vm.Phase == BootPhase.Failed)
         {

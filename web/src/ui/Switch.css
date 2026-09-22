@@ -33,9 +33,9 @@
   border-radius: var(--radius-full);
   border: 1px solid var(--border-mid);
   background: var(--bg-subtle);
-  transition: background-color var(--duration-fast, 250ms) var(--ease-smooth-out),
-              border-color var(--duration-fast, 250ms) var(--ease-smooth-out),
-              box-shadow var(--duration-quick, 150ms) ease;
+  transition: background-color var(--duration-fast) var(--ease-smooth-out),
+              border-color var(--duration-fast) var(--ease-smooth-out),
+              box-shadow var(--duration-quick) var(--ease-smooth-out);
 }
 
 .ui-switch__track::after {
@@ -47,9 +47,9 @@
   height: 12px;
   border-radius: 50%;
   background: var(--text-dim);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-  transition: transform var(--duration-fast, 250ms) var(--ease-smooth-out),
-              background-color var(--duration-fast, 250ms) ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--ease-spring),
+              background-color var(--duration-fast) var(--ease-smooth-out);
 }
 
 .ui-switch input:checked + .ui-switch__track {

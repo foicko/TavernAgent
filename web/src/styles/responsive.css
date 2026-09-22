@@ -39,19 +39,19 @@
 
   /* 左右栏折叠时让出更多空间给文学主舞台 */
   .workspace-layout {
-    grid-template-columns: 48px minmax(0, 1fr) 0px;
+    grid-template-columns: var(--rail-left-collapsed-w) minmax(0, 1fr) 0px;
   }
 
   body:not(.rail-left-collapsed) .workspace-layout {
-    grid-template-columns: 240px minmax(0, 1fr) 0px;
+    grid-template-columns: var(--rail-left-w) minmax(0, 1fr) 0px;
   }
 
   body:not(.rail-right-collapsed) .workspace-layout {
-    grid-template-columns: 48px minmax(0, 1fr) 280px;
+    grid-template-columns: var(--rail-left-collapsed-w) minmax(0, 1fr) var(--rail-right-w);
   }
 
   body:not(.rail-left-collapsed):not(.rail-right-collapsed) .workspace-layout {
-    grid-template-columns: 240px minmax(0, 1fr) 280px;
+    grid-template-columns: var(--rail-left-w) minmax(0, 1fr) var(--rail-right-w);
   }
 
   .mobile-only {
@@ -105,11 +105,11 @@
     flex-shrink: 0;
   }
 
-  .view-tab-btn {
+  .view-mode-tabs .ui-tabs__tab {
     padding: 3px 8px;
     font-size: 11px;
   }
-  .view-tab-btn .tab-text {
+  .view-mode-tabs .tab-text {
     display: inline;
   }
 
@@ -163,11 +163,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: var(--scrim);
     z-index: 990;
-    animation: fadeIn 0.2s ease;
+    animation: fadeIn var(--duration-fast) var(--ease-smooth-out);
   }
 
   /* ------------------------------------------------------------------------
@@ -310,13 +308,7 @@
 
   /* 世界书分栏转纵向响应 */
 
-  /* 全身立绘灯箱转上下纵向排布 */
-
-  .tachie-lightbox-stage {
-    flex: none;
-    height: 36vh;
-    min-height: 220px;
-  }
+  /* 全身立绘灯箱转上下纵向排布（.tachie-lightbox-stage 由 FullTachieModal.css 负责） */
 
   .tachie-lightbox-dossier {
     flex: 1 1 auto;
@@ -353,10 +345,9 @@
     overflow-x: auto;
   }
 
-  .rail-subtab-btn {
+  .rail-subtabs .ui-tabs__tab {
     padding: 4px 8px;
     font-size: 11px;
-    white-space: nowrap;
   }
 
   .rail-collapse-handle-btn {
@@ -381,9 +372,9 @@
   z-index: 1000;
   background: var(--bg-surface);
   border-right: 1px solid var(--border-mid);
-  box-shadow: 6px 0 28px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-float);
   transform: translateX(-105%);
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--duration-fast) var(--ease-spring);
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -406,9 +397,9 @@ body:not(.rail-left-collapsed) .rail-left {
   z-index: 1000;
   background: var(--bg-surface);
   border-left: 1px solid var(--border-mid);
-  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-float);
   transform: translateX(105%);
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--duration-fast) var(--ease-spring);
   opacity: 1;
   pointer-events: auto;
   padding-top: env(safe-area-inset-top, 0px);

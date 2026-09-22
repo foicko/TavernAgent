@@ -37,8 +37,20 @@
           </ItemsControl>
         </ScrollViewer>
 
-        <TextBlock Text="↑↓ 选择 · Enter 执行 · Esc 关闭" FontSize="{DynamicResource FsXs}"
-                   Foreground="{DynamicResource TextDimBrush}" />
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <c:Kbd Text="↑" /><c:Kbd Text="↓" />
+            <TextBlock Text="选择" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <c:Kbd Text="Enter" />
+            <TextBlock Text="执行" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <c:Kbd Text="Esc" />
+            <TextBlock Text="关闭" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" Foreground="{DynamicResource TextDimBrush}" />
+          </StackPanel>
+        </StackPanel>
       </StackPanel>
     </c:Modal.Body>
   </c:Modal>
