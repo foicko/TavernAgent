@@ -1,12 +1,33 @@
 package http
 
 import (
+	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"tavernagent/internal/util/trace"
 )
+
+// handler panic 必须转成带 traceId 的 500 错误体，而不是直接掐断连接。
+func TestHandlerPanicBecomesTracedError(t *testing.T) {
+	h := withLogging(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("boom") }), trace.NewRecorder(8))
+	req := httptest.NewRequest("GET", "http://127.0.0.1:8890/api/x", nil)
+	req.Header.Set(requestIDHeader, "trace-panic-1")
+	res := httptest.NewRecorder()
+	h.ServeHTTP(res, req)
+	if res.Code != 500 {
+		t.Fatalf("status = %d, want 500", res.Code)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {
+		t.Fatalf("错误体不是 JSON: %v (%q)", err, res.Body.String())
+	}
+	if body["code"] != "INTERNAL" || body["traceId"] != "trace-panic-1" {
+		t.Fatalf("错误体 = %v", body)
+	}
+}
 
 // requestID 相关的行为都在中间件里，所以用真实 Handler 打一次请求来验证，
 // 而不是单独测 sanitize（那是实现细节，回显与生成才是对外契约）。

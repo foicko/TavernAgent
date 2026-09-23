@@ -19,9 +19,16 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string, retryable bool, turnID string) {
-	writeJSON(w, status, map[string]any{
+	body := map[string]any{
 		"code": code, "message": message, "retryable": retryable, "turnId": turnID,
-	})
+	}
+	// traceId 与响应头 X-Request-ID 同值（由 withLogging 预先写入）：用户报错时
+	// 直接给出错误体里的 ID 即可对上服务端日志。不用 requestId 作键，避免与导演
+	// 请求的业务字段 requestId 混淆。
+	if rid := w.Header().Get(requestIDHeader); rid != "" {
+		body["traceId"] = rid
+	}
+	writeJSON(w, status, body)
 }
 
 func writeAPIError(w http.ResponseWriter, err error) {
@@ -32,6 +39,6 @@ func writeAPIError(w http.ResponseWriter, err error) {
 		return
 	}
 	// 未知错误：内部细节只进日志，对外统一给可操作的中文文案，不泄漏实现细节。
-	log.Printf("内部错误: %v", err)
+	log.Printf("内部错误 req=%s: %v", w.Header().Get(requestIDHeader), err)
 	writeError(w, 500, "INTERNAL", "服务内部错误，请稍后重试；若持续出现请查看服务端日志", true, "")
 }

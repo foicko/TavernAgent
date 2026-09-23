@@ -6,6 +6,7 @@ package http
 import (
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -47,7 +48,26 @@ func withLogging(next http.Handler, tracer ports.Tracer) http.Handler {
 		span.SetAttr("path", r.URL.Path)
 
 		rec := &statusRecorder{ResponseWriter: w, status: 200}
-		next.ServeHTTP(rec, r.WithContext(ctx))
+		func() {
+			// panic 兜底：否则 net/http 只会掐断连接，客户端拿不到任何错误体，
+			// 日志里也没有请求 ID 可对。http.ErrAbortHandler 是有意中止，照原样抛出。
+			defer func() {
+				p := recover()
+				if p == nil {
+					return
+				}
+				if p == http.ErrAbortHandler {
+					panic(p)
+				}
+				log.Printf("handler panic req=%s %s %s: %v\n%s", requestID, r.Method, r.URL.Path, p, debug.Stack())
+				if !rec.wrote {
+					writeError(rec, 500, "INTERNAL", "服务内部错误，请稍后重试；若持续出现请查看服务端日志", true, "")
+				} else {
+					rec.status = 500
+				}
+			}()
+			next.ServeHTTP(rec, r.WithContext(ctx))
+		}()
 
 		duration := time.Since(start)
 		span.SetAttr("status", rec.status)
@@ -75,17 +95,28 @@ func sanitizeRequestID(raw string) string {
 type statusRecorder struct {
 	http.ResponseWriter
 	status int
+	// wrote 表示响应头已发出：之后发生 panic 就不能再写错误体了。
+	wrote bool
 }
 
 func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }
 
 func (r *statusRecorder) WriteHeader(code int) {
-	r.status = code
+	if !r.wrote {
+		r.status = code
+		r.wrote = true
+	}
 	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *statusRecorder) Write(p []byte) (int, error) {
+	r.wrote = true
+	return r.ResponseWriter.Write(p)
 }
 
 // Flush 透传：SSE 路径依赖 w.(http.Flusher) 断言，包装层必须保持该能力。
 func (r *statusRecorder) Flush() {
+	r.wrote = true
 	if f, ok := r.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
