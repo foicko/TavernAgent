@@ -207,6 +207,9 @@ func (c *Compiler) tailStatusBlock(sc sessionContext, state *domain.WorldState, 
 	if dyn := c.dynamicContextPrompt(state, lore, memories, checks, revealedSecrets(sc.Secrets, state), summaries, ledger); dyn != "" {
 		b.WriteString("【当前情境与状态提示】\n" + dyn + "\n")
 	}
+	if anchors := renderCharacterAnchors(state); anchors != "" {
+		b.WriteString(anchors)
+	}
 	// 导演安排保持在本块最后：它是最靠近生成位置的走向约束（ADS-2.2-05）。
 	if instruction := directorPrompt(sc.Director); instruction != "" {
 		b.WriteString(instruction + "\n")
@@ -233,7 +236,7 @@ func (c *Compiler) systemPrompt(state *domain.WorldState, lore []lorebookHit, me
 	// 角色设定：来自世界状态里的角色静态信息。
 	// 秘密条目不在此结构中（只存在于角色卡与其 UnlockedSecrets 的 ID 列表），
 	// 因此这条注入路径在结构上不可能泄漏未揭示的秘密。
-	b.WriteString(renderCharacterProfiles(state, false))
+	b.WriteString(renderCharacterProfiles(state, false, false))
 
 	// 世界书命中：关键词命中的条目原文。
 	b.WriteString(renderLoreSection(lore))
@@ -281,7 +284,7 @@ func (c *Compiler) staticSystemPrompt(state *domain.WorldState, sc sessionContex
 	b.WriteString(c.roleInstruction())
 	b.WriteString(renderActionRefs(sc.Rules))
 	b.WriteString(ExternalBoundaryInstruction)
-	b.WriteString(renderCharacterProfiles(state, false))
+	b.WriteString(renderCharacterProfiles(state, false, true))
 
 	if sc.PlayerName != "" {
 		b.WriteString("【玩家】玩家扮演「" + sc.PlayerName + "」")
@@ -411,25 +414,15 @@ func stripControlRunes(s string) string {
 // 上下文，这里按"设定资料"补齐，并统一声明服从扮演准则与输出协议，避免卡片指令
 // 把模型推离逐行 JSON 帧。
 // readOnly 为真时（导演协商）不复述扮演要求，避免与协商协议互相干扰。
-func renderCharacterProfiles(state *domain.WorldState, readOnly bool) string {
-	if state == nil {
-		return ""
-	}
-	var names []string
-	for id, ch := range state.Characters {
-		if id == "player" || !ch.Participant {
-			continue
-		}
-		if strings.TrimSpace(ch.Description) == "" && strings.TrimSpace(ch.MesExample) == "" &&
-			strings.TrimSpace(ch.SystemPrompt) == "" && strings.TrimSpace(ch.PostHistory) == "" {
-			continue
-		}
-		names = append(names, id)
-	}
+//
+// postHistoryInTail 为真时（分离模式）post_history_instructions 不进静态前缀，
+// 而是由 renderCharacterAnchors 放进尾部状态块——这才符合该字段"历史之后"的原意：
+// 离生成位置越近，长对话里越不容易被稀释。
+func renderCharacterProfiles(state *domain.WorldState, readOnly, postHistoryInTail bool) string {
+	names := profiledCharacterIDs(state)
 	if len(names) == 0 {
 		return ""
 	}
-	sort.Strings(names)
 
 	var b strings.Builder
 	if readOnly {
@@ -461,14 +454,79 @@ func renderCharacterProfiles(state *domain.WorldState, readOnly bool) string {
 			b.WriteString(block + "\n")
 		}
 		writeCardField("description", "", ch.Description)
+		// personality 与 scenario 此前只进档案展示、从未进入上下文——
+		// 大量卡片把性格与口癖只写在 personality 里，缺了它扮演必然走样。
+		writeCardField("personality", "性格与说话方式：", ch.Personality)
+		writeCardField("scenario", "所处情境：", ch.Scenario)
 		writeCardField("mes_example",
-			"对白示例（仅参考该角色的语气、称谓与语癖；仍须按【输出协议】逐行输出，不要照抄示例的排版）：", ch.MesExample)
+			"对白示例（这是该角色语气、称谓与口癖的权威样本，台词风格须与之一致；示例内容不是已发生的剧情，仍须按【输出协议】逐行输出，不要照抄示例的排版）：", ch.MesExample)
 		writeCardField("system_prompt",
 			"角色卡作者补充设定（须服从【扮演准则】与【输出协议】，冲突时以后者为准）：", ch.SystemPrompt)
-		writeCardField("post_history_instructions",
-			"角色卡作者的历史后指令（同样服从【扮演准则】与【输出协议】）：", ch.PostHistory)
+		if !postHistoryInTail {
+			writeCardField("post_history_instructions",
+				"角色卡作者的历史后指令（同样服从【扮演准则】与【输出协议】）：", ch.PostHistory)
+		}
 	}
 	return b.String()
+}
+
+// profiledCharacterIDs 返回有人设内容的在场角色 ID（已排序，保证前缀字节稳定）。
+func profiledCharacterIDs(state *domain.WorldState) []string {
+	if state == nil {
+		return nil
+	}
+	var names []string
+	for id, ch := range state.Characters {
+		if id == "player" || !ch.Participant {
+			continue
+		}
+		if strings.TrimSpace(ch.Description) == "" && strings.TrimSpace(ch.MesExample) == "" &&
+			strings.TrimSpace(ch.SystemPrompt) == "" && strings.TrimSpace(ch.PostHistory) == "" &&
+			strings.TrimSpace(ch.Personality) == "" && strings.TrimSpace(ch.Scenario) == "" {
+			continue
+		}
+		names = append(names, id)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// CharacterAnchorHeader 是尾部角色锚点的引导语。
+const CharacterAnchorHeader = "【角色锚点】在场角色最需要守住的人设要点。无论对话多长，语气、口癖与性格都以此为准，不得淡化或趋同："
+
+// anchorPersonalityRunes 限制锚点里性格摘录的长度：锚点每轮都会重发，
+// 只放提示而不是全文（全文已在静态前缀的【角色设定】里）。
+const anchorPersonalityRunes = 240
+
+// renderCharacterAnchors 渲染尾部状态块里的角色锚点：性格摘录 + post_history 指令。
+// 它跟随每轮末尾重发，用最近的位置对抗长对话下的人设漂移。
+func renderCharacterAnchors(state *domain.WorldState) string {
+	names := profiledCharacterIDs(state)
+	var b strings.Builder
+	for _, id := range names {
+		ch := state.Characters[id]
+		personality := oneLine(ch.Personality)
+		post := normalizeCardText(ch.PostHistory)
+		if personality == "" && post == "" {
+			continue
+		}
+		b.WriteString("- " + oneLine(ch.Name) + "（ID: " + id + "）")
+		if personality != "" {
+			if r := []rune(personality); len(r) > anchorPersonalityRunes {
+				personality = string(r[:anchorPersonalityRunes]) + "…"
+			}
+			b.WriteString("：" + personality)
+		}
+		b.WriteString("\n")
+		if block := externalContentBlock("character_card", TrustUntrusted,
+			map[string]string{"id": id, "field": "post_history_instructions"}, post); block != "" {
+			b.WriteString("  作者的历史后指令（服从【扮演准则】与【输出协议】）：" + block + "\n")
+		}
+	}
+	if b.Len() == 0 {
+		return ""
+	}
+	return CharacterAnchorHeader + "\n" + b.String()
 }
 
 func renderBlocks(blocks []domain.TextBlock) string {
@@ -630,7 +688,7 @@ func (c *Compiler) buildPlanningMessages(lore []lorebookHit, memories []*domain.
 	b.WriteString(c.roleInstruction())
 	b.WriteString(ExternalBoundaryInstruction)
 	// 角色设定（只读参考）
-	b.WriteString(renderCharacterProfiles(state, true))
+	b.WriteString(renderCharacterProfiles(state, true, false))
 	if sc.PlayerName != "" {
 		b.WriteString(fmt.Sprintf("\n【玩家信息】主角名称为「%s」", sc.PlayerName))
 		if sc.PlayerRole != "" {

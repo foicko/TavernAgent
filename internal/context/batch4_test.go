@@ -252,7 +252,7 @@ func TestProactiveTokenCompressionThreshold(t *testing.T) {
 	opts := ctxpkg.DefaultOptions()
 	// v3 是一次“必修前缀”增长（扮演准则 + 选项判定 + <player_note> 声明累计 +615 token），
 	// 这里保持“超过 75% 但装得下”的区间，故由 4500 上调。
-	opts.ContextWindow = 4900
+	opts.ContextWindow = 5200
 	opts.ReservedOutput = 500
 	opts.SafetyMargin = 200
 	// inputBudget = 4500 - 500 - 200 = 3800
