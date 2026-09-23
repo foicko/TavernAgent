@@ -10,6 +10,7 @@ import { Menu, MenuItem } from "../ui/Menu";
 import { ContextMetricsPopover } from "./ContextMetricsPopover";
 import { ModelQuickSwitch } from "./ModelQuickSwitch";
 import { ThinkingEffortControl } from "./ThinkingEffortControl";
+import { getAttributeMeta, formatActionCheckBadge } from "../lib/ruleCheck";
 import { Icon } from "../ui/Icon";
 import "./ComposerShelf.css";
 
@@ -190,6 +191,10 @@ export const ComposerShelf: React.FC = () => {
 
   const handleCheckSelect = (action: (typeof actions)[number]) => {
     setShowCheckMenu(false);
+    if (selectedAction === action.actionId) {
+      setSelectedAction(undefined);
+      return;
+    }
     setSelectedAction(action.actionId);
     if (!inputText.trim()) setInputText(action.label || action.actionId);
     textareaRef.current?.focus();
@@ -245,7 +250,7 @@ export const ComposerShelf: React.FC = () => {
                 aria-expanded={showCheckMenu}
               >
                 <Icon name="dice" size={14} className="btn-icon" />
-                <span>{selectedActionObj ? `${selectedActionObj.label || selectedActionObj.actionId} · DC ${selectedActionObj.dc}` : "规则检定"}</span>
+                <span>{selectedActionObj ? formatActionCheckBadge(selectedActionObj) : "规则检定"}</span>
                 <span className="composer-caret"><Icon name="chevronDown" size={12} /></span>
               </button>
               <Menu
@@ -259,21 +264,25 @@ export const ComposerShelf: React.FC = () => {
                 {actions.length === 0 ? (
                   <div className="ui-menu__empty">打开会话后可选择规则动作</div>
                 ) : null}
-                {actions.map((ci) => (
-                  <MenuItem
-                    key={ci.actionId}
-                    title={
-                      <>
-                        <Icon name="dice" size={12} className="check-item-icon" />
-                        {ci.label || ci.actionId}
-                      </>
-                    }
-                    meta={<span className="check-item-dc">DC {ci.dc}</span>}
-                    radio
-                    selected={selectedAction === ci.actionId}
-                    onSelect={() => handleCheckSelect(ci)}
-                  />
-                ))}
+                {actions.map((ci) => {
+                  const attr = getAttributeMeta(ci.attribute);
+                  return (
+                    <MenuItem
+                      key={ci.actionId}
+                      title={
+                        <span className="check-item-title-wrap">
+                          <Icon name="dice" size={12} className="check-item-icon" />
+                          <span className="check-item-label">{ci.label || ci.actionId}</span>
+                          <span className="check-item-attr-badge">{attr.name}</span>
+                        </span>
+                      }
+                      meta={<span className="check-item-dc">DC {ci.dc}</span>}
+                      radio
+                      selected={selectedAction === ci.actionId}
+                      onSelect={() => handleCheckSelect(ci)}
+                    />
+                  );
+                })}
               </Menu>
             </div>
 
@@ -319,12 +328,21 @@ export const ComposerShelf: React.FC = () => {
           </div>
         </div>
 
-        {selectedAction && (
-          <div className="composer-selected-action-banner">
+        {selectedActionObj && (
+          <div className="composer-selected-action-banner" role="status" aria-live="polite">
             <span className="selected-action-info">
-              <Icon name="dice" size={13} /> 已选择检定：<strong>{actions.find((a) => a.actionId === selectedAction)?.label || selectedAction}</strong>
+              <Icon name="dice" size={13} className="selected-action-dice" />
+              <span>已选择检定：<strong>{selectedActionObj.label || selectedActionObj.actionId}</strong></span>
+              <span className="selected-action-pill attr-pill">{getAttributeMeta(selectedActionObj.attribute).name}</span>
+              <span className="selected-action-pill dc-pill">DC {selectedActionObj.dc}</span>
             </span>
-            <button type="button" className="btn-quiet btn-action-cancel" onClick={() => setSelectedAction(undefined)}>
+            <button
+              type="button"
+              className="btn-quiet btn-action-cancel"
+              onClick={() => setSelectedAction(undefined)}
+              title="取消当前检定，恢复为自由推演"
+              aria-label="取消检定"
+            >
               <Icon name="close" size={12} /> 取消检定
             </button>
           </div>
@@ -394,8 +412,11 @@ export const ComposerShelf: React.FC = () => {
                 +
               </button>
               {selectedActionObj ? (
-                <div className="composer-mode-badge amber">
-                  <Icon name="dice" size={12} /> DC {selectedActionObj.dc} 检定
+                <div
+                  className="composer-mode-badge amber"
+                  title={`已挂载检定：${selectedActionObj.label || selectedActionObj.actionId}（${getAttributeMeta(selectedActionObj.attribute).name} · DC ${selectedActionObj.dc}）`}
+                >
+                  <Icon name="dice" size={12} /> {formatActionCheckBadge(selectedActionObj)}
                 </div>
               ) : directorActive ? (
                 <div className="composer-mode-badge amber">

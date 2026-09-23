@@ -132,7 +132,7 @@
                                    TextWrapping="Wrap"
                                    FontFamily="{DynamicResource FontMono}"
                                    FontSize="12"
-                                   LineHeight="1.7"
+                                   LineHeight="20"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
             </Border>
           </StackPanel>
@@ -337,6 +337,13 @@
             <StackPanel Orientation="Horizontal" Spacing="5">
               <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12" />
               <TextBlock Text="改输入" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Classes="ui-btn sm ghost" IsVisible="{Binding HasChecks}"
+                  Command="{Binding RecheckCommand}" ToolTip.Tip="新建候选分支：重新投掷 d20 规则骰，以此新判定结果派生重演">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <Path Classes="icon" Data="{StaticResource IconDice}" Width="12" Height="12" />
+              <TextBlock Text="重新掷骰" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
           <Button Classes="ui-btn sm ghost" Command="{Binding ToggleEditTextCommand}">

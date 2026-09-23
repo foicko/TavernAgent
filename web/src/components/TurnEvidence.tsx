@@ -10,15 +10,9 @@
 import { useState } from "react";
 import type { StoryMessage } from "../stores/storyTypes";
 import { useStory } from "../stores/storyStore";
+import { getAttributeMeta, getOutcomeMeta } from "../lib/ruleCheck";
 import { Icon } from "../ui/Icon";
 import "./TurnEvidence.css";
-
-const OUTCOME_LABEL: Record<string, string> = {
-  success: "成功",
-  failure: "失败",
-  critical_success: "大成功",
-  critical_failure: "大失败",
-};
 
 const MEMORY_KIND_LABEL: Record<string, string> = {
   observed: "见证",
@@ -66,14 +60,20 @@ export function TurnEvidence({ msg }: { msg: StoryMessage }) {
             </span>
           )}
           {checks.map((check) => {
-            const label = actions?.find((a) => a.actionId === check.actionId)?.label || check.attribute;
-            const tone = check.outcome === "critical_success" ? "is-up"
+            const attr = getAttributeMeta(check.attribute);
+            const label = actions?.find((a) => a.actionId === check.actionId)?.label || `${attr.name}检定`;
+            const meta = getOutcomeMeta(check.outcome);
+            const tone = check.outcome === "critical_success" ? "is-up is-crit-up"
               : check.outcome === "success" ? "is-up"
-                : check.outcome === "critical_failure" ? "is-down" : "is-down";
+                : check.outcome === "critical_failure" ? "is-down is-crit-down" : "is-down";
+            const modSign = check.attributeModifier >= 0 ? "+" : "";
+            const title = `${label}（${attr.name}）· 掷骰：d20 = ${check.natural}，修正 ${modSign}${check.attributeModifier}，总值 ${check.total} / DC ${check.dc}（${meta.label}）`;
             return (
-              <span key={check.rollId} className={`evidence-chip dice-chip ${tone}`} title="规则检定结果">
-                <Icon name="dice" size={11} /> <span className="evidence-chip-label">{label}</span>
-                <span className="evidence-chip-text">{OUTCOME_LABEL[check.outcome] ?? check.outcome}</span>
+              <span key={check.rollId} className={`evidence-chip dice-chip ${tone}`} title={title}>
+                <Icon name="dice" size={11} />
+                <span className="evidence-chip-label">{label}</span>
+                <span className="evidence-chip-text">{meta.label}</span>
+                {meta.isCrit && <span className="evidence-chip-crit-mark" aria-hidden="true">{meta.symbol}</span>}
               </span>
             );
           })}
@@ -106,16 +106,66 @@ export function TurnEvidence({ msg }: { msg: StoryMessage }) {
           {checks.length > 0 && (
             <section className="evidence-section">
               <h4>检定</h4>
-              {checks.map((check) => (
-                <div key={check.rollId} className="evidence-row">
-                  <span className="evidence-row-title">
-                    {check.attribute}：d20 = {check.natural}，修正 {check.attributeModifier >= 0 ? "+" : ""}
-                    {check.attributeModifier}，总值 {check.total} / DC {check.dc} ·{" "}
-                    {OUTCOME_LABEL[check.outcome] ?? check.outcome}
-                  </span>
-                  {check.permanentEffect && <span className="evidence-row-note">永久影响：{check.permanentEffect}</span>}
-                </div>
-              ))}
+              <div className="evidence-checks-list">
+                {checks.map((check) => {
+                  const attr = getAttributeMeta(check.attribute);
+                  const label = actions?.find((a) => a.actionId === check.actionId)?.label || `${attr.name}检定`;
+                  const meta = getOutcomeMeta(check.outcome);
+                  const isNat20 = check.natural === 20;
+                  const isNat1 = check.natural === 1;
+                  const modSign = check.attributeModifier >= 0 ? "+" : "";
+                  return (
+                    <div key={check.rollId} className={`evidence-check-card ${meta.badgeClass}`}>
+                      <div className="check-card-header">
+                        <div className="check-card-title-group">
+                          <Icon name="dice" size={12} className="check-card-dice-icon" />
+                          <span className="check-card-label">{label}</span>
+                          <span className="check-card-attr-badge">{attr.name} {attr.abbr}</span>
+                        </div>
+                        <span className={`check-outcome-badge ${meta.badgeClass}`}>
+                          {meta.symbol} {meta.label}
+                        </span>
+                      </div>
+
+                      <div className="check-card-formula">
+                        <div className="check-card-formula-text">
+                          {check.attribute}：d20 = {check.natural}，修正 {modSign}{check.attributeModifier}，总值 {check.total} / DC {check.dc} · {meta.label}
+                        </div>
+                        <div className="check-card-formula-pills" aria-label="骰点算式拆解">
+                          <span className={`formula-pill ${isNat20 ? "is-nat20" : isNat1 ? "is-nat1" : ""}`}>
+                            <span className="formula-pill-lbl">d20</span>
+                            <strong>{check.natural}</strong>
+                            {isNat20 && <span className="formula-tag">Nat 20</span>}
+                            {isNat1 && <span className="formula-tag">Nat 1</span>}
+                          </span>
+                          <span className="formula-op">+</span>
+                          <span className="formula-pill">
+                            <span className="formula-pill-lbl">修正</span>
+                            <strong>{modSign}{check.attributeModifier}</strong>
+                          </span>
+                          <span className="formula-op">=</span>
+                          <span className={`formula-pill formula-total ${meta.isSuccess ? "pill-up" : "pill-down"}`}>
+                            <span className="formula-pill-lbl">总值</span>
+                            <strong>{check.total}</strong>
+                          </span>
+                          <span className="formula-vs">vs</span>
+                          <span className="formula-pill formula-dc">
+                            <span className="formula-pill-lbl">目标</span>
+                            <strong>DC {check.dc}</strong>
+                          </span>
+                        </div>
+                      </div>
+
+                      {check.permanentEffect && (
+                        <div className="evidence-permanent-effect">
+                          <Icon name="sparkles" size={11} />
+                          <span>永久影响：{check.permanentEffect}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
 

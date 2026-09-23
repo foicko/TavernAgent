@@ -33,14 +33,25 @@ public sealed partial class PromisesModalViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName == nameof(UiStore.PromisesModalOpen))
         {
-            OnPropertyChanged(nameof(IsOpen));
-            if (IsOpen) Rebuild();
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            void Apply()
+            {
+                OnPropertyChanged(nameof(IsOpen));
+                if (IsOpen) Rebuild();
+            }
+            if (dispatch.CheckAccess()) Apply();
+            else dispatch.Post(Apply);
         }
     }
 
     private void OnStoryChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(StoryStore.View) or nameof(StoryStore.Hud)) Rebuild();
+        if (e.PropertyName is nameof(StoryStore.View) or nameof(StoryStore.Hud))
+        {
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            if (dispatch.CheckAccess()) Rebuild();
+            else dispatch.Post(Rebuild);
+        }
     }
 
     public void Rebuild()

@@ -197,8 +197,14 @@ public sealed partial class DirectorViewModel : WorkspaceChildViewModel, IDispos
     private void OnUiChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(UiStore.DirectorOpen)) return;
-        OnPropertyChanged(nameof(IsOpen));
-        if (IsOpen) _ = OpenAsync();
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
+        {
+            OnPropertyChanged(nameof(IsOpen));
+            if (IsOpen) _ = OpenAsync();
+        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     public async Task OpenAsync()
@@ -220,7 +226,9 @@ public sealed partial class DirectorViewModel : WorkspaceChildViewModel, IDispos
             or nameof(StoryStore.DirectorLoading) or nameof(StoryStore.DirectorSaving)
             or nameof(StoryStore.DirectorCommanding) or nameof(StoryStore.DirectorError))
         {
-            SyncFromStore();
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            if (dispatch.CheckAccess()) SyncFromStore();
+            else dispatch.Post(SyncFromStore);
         }
     }
 

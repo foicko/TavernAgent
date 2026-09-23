@@ -205,7 +205,63 @@
   <Style Selector="Button.ui-btn.primary Path.icon">
     <Setter Property="Stroke" Value="{DynamicResource AccentContrastBrush}" />
   </Style>
+  <Style Selector="Button.ui-btn.active Path.icon">
+    <Setter Property="Stroke" Value="{DynamicResource AccentContrastBrush}" />
+  </Style>
   <Style Selector="Button.ui-btn.danger Path.icon">
     <Setter Property="Stroke" Value="{DynamicResource AccentContrastBrush}" />
+  </Style>
+
+  <!-- Window Caption Buttons (Desktop Shell) -->
+  <Style Selector="Button.caption-btn">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.caption-btn Path">
+    <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
+    <Setter Property="StrokeThickness" Value="1.3" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="Fill" Value="Transparent" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Width" Value="10" />
+    <Setter Property="Height" Value="10" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.caption-btn:pointerover">
+    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+  </Style>
+  <Style Selector="Button.caption-btn:pointerover Path">
+    <Setter Property="Stroke" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+  <Style Selector="Button.caption-btn:pressed">
+    <Setter Property="Background" Value="{DynamicResource SurfaceInsetBrush}" />
+  </Style>
+
+  <!-- Close button hover: Windows-native crimson alert state -->
+  <Style Selector="Button.caption-btn.close-btn:pointerover">
+    <Setter Property="Background" Value="#E81123" />
+  </Style>
+  <Style Selector="Button.caption-btn.close-btn:pointerover Path">
+    <Setter Property="Stroke" Value="#FFFFFF" />
+  </Style>
+  <Style Selector="Button.caption-btn.close-btn:pressed">
+    <Setter Property="Background" Value="#C4101E" />
+  </Style>
+  <Style Selector="Button.caption-btn.close-btn:pressed Path">
+    <Setter Property="Stroke" Value="#FFFFFF" />
   </Style>
 </Styles>

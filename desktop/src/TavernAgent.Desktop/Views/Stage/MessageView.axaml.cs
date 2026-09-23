@@ -16,6 +16,10 @@ public partial class MessageView : UserControl
     {
         if (DataContext is not MessageViewModel vm) return;
         IClipboard? clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-        if (clipboard is not null) await clipboard.SetTextAsync(vm.PlainText);
+        if (clipboard is not null)
+        {
+            await clipboard.SetTextAsync(vm.PlainText);
+            vm.NotifyCopied();
+        }
     }
 }

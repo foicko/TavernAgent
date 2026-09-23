@@ -6,7 +6,7 @@
              x:DataType="palette:CommandPaletteViewModel">
   <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="命令面板" DialogWidth="640">
     <c:Modal.Body>
-      <StackPanel Width="580" Spacing="10">
+      <StackPanel MaxWidth="580" HorizontalAlignment="Stretch" Spacing="10">
         <TextBox x:Name="SearchBox" Text="{Binding Query}" KeyDown="OnSearchKeyDown"
                  PlaceholderText="输入命令，如：设置 / 世界书 / 主题 / 会话…" />
 

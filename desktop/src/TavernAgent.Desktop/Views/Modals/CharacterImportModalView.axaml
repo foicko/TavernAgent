@@ -6,9 +6,9 @@
              x:Class="TavernAgent.Desktop.Views.Modals.CharacterImportModalView"
              x:DataType="vm:CharacterImportViewModel">
   <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}"
-           Title="选择角色，开始新故事" DialogWidth="880">
+           Title="选择角色，开始新故事" DialogWidth="800">
     <c:Modal.Body>
-      <StackPanel Width="820" Spacing="12">
+      <StackPanel MaxWidth="760" Spacing="12">
 
         <!-- dropzone -->
         <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="24"

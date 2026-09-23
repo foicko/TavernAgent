@@ -55,16 +55,37 @@ public class SingleInstanceTests
     [Fact]
     public void Second_Acquire_Fails_While_First_Held()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "tavernagent-si-" + Guid.NewGuid().ToString("N"));
+        var id = Guid.NewGuid().ToString("N");
+        var dir = Path.Combine(Path.GetTempPath(), "tavernagent-si-" + id);
+        var testMutex = "tavernagent-test-si-" + id;
         Directory.CreateDirectory(dir);
         try
         {
             if (OperatingSystem.IsWindows())
             {
-                // Named mutex is process-wide; two acquires in one process share ownership semantics.
-                // Validate the non-Windows file-lock path is skipped and first acquire succeeds.
-                using var first = SingleInstance.TryAcquire(dir);
+                using var first = SingleInstance.TryAcquire(dir, testMutex);
                 Assert.True(first.Acquired);
+
+                // Mutex is thread-bound on Windows; another thread must fail to acquire while held.
+                var thread1 = Environment.CurrentManagedThreadId;
+                int thread2 = -1;
+                bool secondAcquired = true;
+                var t = new Thread(() =>
+                {
+                    thread2 = Environment.CurrentManagedThreadId;
+                    using var second = SingleInstance.TryAcquire(dir, testMutex);
+                    secondAcquired = second.Acquired;
+                });
+                t.Start();
+                t.Join();
+                Assert.NotEqual(thread1, thread2);
+                Assert.False(secondAcquired);
+
+                first.Dispose();
+
+                // After dispose, subsequent acquire succeeds.
+                using var third = SingleInstance.TryAcquire(dir, testMutex);
+                Assert.True(third.Acquired);
             }
             else
             {
@@ -73,6 +94,10 @@ public class SingleInstanceTests
                 var second = SingleInstance.TryAcquire(dir);
                 Assert.False(second.Acquired);
                 second.Dispose();
+
+                first.Dispose();
+                using var third = SingleInstance.TryAcquire(dir);
+                Assert.True(third.Acquired);
             }
         }
         finally

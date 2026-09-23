@@ -88,7 +88,7 @@
       <Color x:Key="C.BorderSubtle">#26272A</Color>
       <Color x:Key="C.TextMain">#F2F3F4</Color>
       <Color x:Key="C.TextMuted">#A5A8AD</Color>
-      <Color x:Key="C.TextDim">#6C6F75</Color>
+      <Color x:Key="C.TextDim">#85888F</Color>
       <Color x:Key="C.AccentSolid">#3D9AFF</Color>
       <Color x:Key="C.AccentContrast">#FFFFFF</Color>
       <Color x:Key="C.AccentSubtle">#293D9AFF</Color>
@@ -239,9 +239,9 @@
   <x:Double x:Key="FsLg">16</x:Double>
   <x:Double x:Key="FsXl">20</x:Double>
   <x:Double x:Key="Fs2xl">26</x:Double>
-  <x:Double x:Key="LhTight">1.35</x:Double>
-  <x:Double x:Key="LhNormal">1.6</x:Double>
-  <x:Double x:Key="LhNarrative">1.78</x:Double>
+  <x:Double x:Key="LhTight">18.0</x:Double>
+  <x:Double x:Key="LhNormal">22.0</x:Double>
+  <x:Double x:Key="LhNarrative">26.0</x:Double>
 
   <!-- Motion (ms; easings as cubic-bezier control points) -->
   <x:Double x:Key="DurationMicroMs">80</x:Double>

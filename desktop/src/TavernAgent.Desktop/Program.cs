@@ -13,6 +13,15 @@ internal static class Program
         TaskScheduler.UnobservedTaskException += (_, e) => { LogCrash(e.Exception, "Task"); e.SetObserved(); };
         try
         {
+            // Single instance must win BEFORE starting Avalonia or sidecar.
+            // If another instance is running, activate its window and exit cleanly.
+            using var singleInstance = SingleInstance.TryAcquire(DesktopPaths.DataDir);
+            if (!singleInstance.Acquired)
+            {
+                singleInstance.ActivateExisting();
+                return;
+            }
+
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex)

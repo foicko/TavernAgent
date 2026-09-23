@@ -6,7 +6,7 @@
              x:DataType="vm:WorldbookModalViewModel">
   <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="世界书示例" DialogWidth="720">
     <c:Modal.Body>
-      <StackPanel Width="660" Spacing="12">
+      <StackPanel MaxWidth="660" HorizontalAlignment="Stretch" Spacing="12">
         <TextBlock TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
                    Foreground="{DynamicResource TextDimBrush}"
                    Text="这里是内置的示例词条，用于说明世界书的结构；它们不是当前会话的设置。当前会话的世界书请在左栏「世界书」页签中检索与查看。" />

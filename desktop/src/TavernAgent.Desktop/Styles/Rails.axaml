@@ -5,8 +5,8 @@
   <Style Selector="Button.subtab">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
-    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Padding" Value="4,5" />
     <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -14,6 +14,7 @@
   </Style>
   <Style Selector="Button.subtab:pointerover">
     <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
   <Style Selector="Button.subtab.active">
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />

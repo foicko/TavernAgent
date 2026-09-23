@@ -34,6 +34,8 @@ public sealed class CharacterPresentation
     public string Monogram => string.IsNullOrEmpty(ShortName) ? "?" : ShortName[..1];
 
     public string PledgeTitle => "尚未立下契约";
+    public bool IsActive => StagePill == "当前主角" || StagePill == "已载入";
+    public bool ShowSubtitle => !string.IsNullOrWhiteSpace(Name) && !string.Equals(Name.Trim(), ShortName.Trim(), StringComparison.Ordinal);
 
     public static CharacterPresentation Resolve(string? charKey, SessionView? view)
     {
@@ -56,15 +58,23 @@ public sealed class CharacterPresentation
              || avatar.StartsWith("http", StringComparison.OrdinalIgnoreCase)
              || File.Exists(avatar));
 
+        var hasActiveStory = view is not null;
+        var hasActiveChar = character is not null;
+
+        var stagePill = hasActiveChar ? "当前主角" : (hasActiveStory ? "已载入" : preset.StagePill);
+        var stateBadge = hasActiveStory ? "状态：持续同步" : preset.StateBadge;
+        var allianceBadge = hasActiveStory ? "关系：主线羁绊" : preset.AllianceBadge;
+        var voiceBadge = hasActiveStory ? "叙事：沉浸演绎" : preset.VoiceBadge;
+
         return new CharacterPresentation
         {
             Name = rawName,
             ShortName = shortName,
             Role = NarrativeText.FirstLine(character?.Description) ?? preset.Role,
-            StagePill = preset.StagePill,
-            StateBadge = preset.StateBadge,
-            AllianceBadge = preset.AllianceBadge,
-            VoiceBadge = preset.VoiceBadge,
+            StagePill = stagePill,
+            StateBadge = stateBadge,
+            AllianceBadge = allianceBadge,
+            VoiceBadge = voiceBadge,
             ModalDesc = string.IsNullOrWhiteSpace(character?.Description) ? preset.ModalDesc : character!.Description!,
             AvatarSource = avatarUsable ? avatar : null,
             PlayerName = player,

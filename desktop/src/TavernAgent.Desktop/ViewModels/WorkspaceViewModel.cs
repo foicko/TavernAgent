@@ -188,40 +188,58 @@ public sealed partial class WorkspaceViewModel : ViewModelBase
 
     private void OnUiChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        OnPropertyChanged(nameof(IsReadingMode));
-        OnPropertyChanged(nameof(IsStudioMode));
-        OnPropertyChanged(nameof(LeftRailWidth));
-        OnPropertyChanged(nameof(RightRailWidth));
-        OnPropertyChanged(nameof(ShowLeftRail));
-        OnPropertyChanged(nameof(ShowRightRail));
-        OnPropertyChanged(nameof(ShowRightRailRecall));
-        OnPropertyChanged(nameof(ShowLeftPanel));
-        OnPropertyChanged(nameof(ShowIconDock));
-        OnPropertyChanged(nameof(IsLeftCollapsed));
-        OnPropertyChanged(nameof(IsRightCollapsed));
-        OnPropertyChanged(nameof(LeftTab));
-        OnPropertyChanged(nameof(LeftTabTree));
-        OnPropertyChanged(nameof(LeftTabCharacters));
-        OnPropertyChanged(nameof(LeftTabLore));
-        OnPropertyChanged(nameof(LeftTabSessions));
-        OnPropertyChanged(nameof(IsDarkTheme));
-        OnPropertyChanged(nameof(ThemeLabel));
-        OnPropertyChanged(nameof(ToastMessage));
-        OnPropertyChanged(nameof(HasToast));
-        OnPropertyChanged(nameof(IsSettingsOpen));
-        OnPropertyChanged(nameof(IsPaletteOpen));
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
+        {
+            OnPropertyChanged(nameof(IsReadingMode));
+            OnPropertyChanged(nameof(IsStudioMode));
+            OnPropertyChanged(nameof(LeftRailWidth));
+            OnPropertyChanged(nameof(RightRailWidth));
+            OnPropertyChanged(nameof(ShowLeftRail));
+            OnPropertyChanged(nameof(ShowRightRail));
+            OnPropertyChanged(nameof(ShowRightRailRecall));
+            OnPropertyChanged(nameof(ShowLeftPanel));
+            OnPropertyChanged(nameof(ShowIconDock));
+            OnPropertyChanged(nameof(IsLeftCollapsed));
+            OnPropertyChanged(nameof(IsRightCollapsed));
+            OnPropertyChanged(nameof(LeftTab));
+            OnPropertyChanged(nameof(LeftTabTree));
+            OnPropertyChanged(nameof(LeftTabCharacters));
+            OnPropertyChanged(nameof(LeftTabLore));
+            OnPropertyChanged(nameof(LeftTabSessions));
+            OnPropertyChanged(nameof(IsDarkTheme));
+            OnPropertyChanged(nameof(ThemeLabel));
+            OnPropertyChanged(nameof(ToastMessage));
+            OnPropertyChanged(nameof(HasToast));
+            OnPropertyChanged(nameof(IsSettingsOpen));
+            OnPropertyChanged(nameof(IsPaletteOpen));
+        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     private void OnSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        OnPropertyChanged(nameof(ActiveModelName));
-        OnPropertyChanged(nameof(HasActiveModel));
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
+        {
+            OnPropertyChanged(nameof(ActiveModelName));
+            OnPropertyChanged(nameof(HasActiveModel));
+        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     internal void NotifyStoryChanged()
     {
-        OnPropertyChanged(nameof(BreadcrumbTitle));
-        OnPropertyChanged(nameof(HasStory));
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
+        {
+            OnPropertyChanged(nameof(BreadcrumbTitle));
+            OnPropertyChanged(nameof(HasStory));
+        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     public override void Dispose()

@@ -12,14 +12,19 @@
                  Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
     </Grid>
 
-    <Border Classes="surface-inset" CornerRadius="999" Padding="3" HorizontalAlignment="Stretch">
+    <Border Classes="surface-inset" CornerRadius="999" Padding="2" HorizontalAlignment="Stretch">
       <Grid ColumnDefinitions="*,*">
         <Button Grid.Column="0" Classes="seg" Classes.active="{Binding IsAllFilter}"
-                HorizontalAlignment="Stretch" Command="{Binding SetAllFilterCommand}"
-                Content="{Binding TotalCount, StringFormat=全部 ({0})}" />
+                HorizontalAlignment="Stretch" Command="{Binding SetAllFilterCommand}">
+          <TextBlock Text="{Binding TotalCount, StringFormat=全部 ({0})}" FontSize="11"
+                     TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Button>
         <Button Grid.Column="1" Classes="seg" Classes.active="{Binding IsCurrentFilter}"
                 HorizontalAlignment="Stretch" Command="{Binding SetCurrentFilterCommand}"
-                Content="{Binding FilterCurrentLabel}" />
+                ToolTip.Tip="{Binding FilterCurrentLabel}">
+          <TextBlock Text="{Binding FilterCurrentLabel}" FontSize="11"
+                     TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Button>
       </Grid>
     </Border>
 
@@ -71,36 +76,44 @@
     </ItemsControl>
 
     <!-- Action shelf -->
-    <Button Classes="ui-btn primary" HorizontalAlignment="Stretch"
-            Command="{Binding NewStoryCommand}" Content="{Binding NewStoryLabel}" />
+    <Button Classes="ui-btn primary sm" HorizontalAlignment="Stretch" Height="32"
+            Command="{Binding NewStoryCommand}" ToolTip.Tip="{Binding NewStoryTooltip}">
+      <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+        <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="13" Height="13" />
+        <TextBlock Text="{Binding NewStoryLabel}" FontSize="12" FontWeight="SemiBold"
+                   TextTrimming="CharacterEllipsis" MaxWidth="165" VerticalAlignment="Center" />
+      </StackPanel>
+    </Button>
+
     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-      <Button Grid.Column="0" Classes="ui-btn quiet" HorizontalAlignment="Stretch"
+      <Button Grid.Column="0" Classes="ui-btn quiet sm" HorizontalAlignment="Stretch" Height="30"
               Click="OnExportClick" IsEnabled="{Binding HasCurrentView}">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <Path Classes="icon" Data="{StaticResource IconDownload}" Width="13" Height="13" />
-          <TextBlock Text="导出剧本" VerticalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
+          <Path Classes="icon" Data="{StaticResource IconDownload}" Width="12" Height="12" />
+          <TextBlock Text="导出剧本" FontSize="11.5" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="1" Classes="ui-btn quiet" HorizontalAlignment="Stretch" Click="OnImportClick">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <Path Classes="icon" Data="{StaticResource IconUpload}" Width="13" Height="13" />
-          <TextBlock Text="导入剧本" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="ui-btn quiet sm" HorizontalAlignment="Stretch" Height="30" Click="OnImportClick">
+        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
+          <Path Classes="icon" Data="{StaticResource IconUpload}" Width="12" Height="12" />
+          <TextBlock Text="导入剧本" FontSize="11.5" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
     </Grid>
-    <StackPanel Orientation="Horizontal" Spacing="10">
-      <Button Classes="ui-btn sm ghost" Command="{Binding GoCharactersCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="5">
+
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+      <Button Grid.Column="0" Classes="ui-btn ghost sm" HorizontalAlignment="Stretch" Height="28" Command="{Binding GoCharactersCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
           <Path Classes="icon" Data="{StaticResource IconUsers}" Width="12" Height="12" />
-          <TextBlock Text="角色库" VerticalAlignment="Center" />
+          <TextBlock Text="角色库" FontSize="11.5" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
-      <Button Classes="ui-btn sm ghost" Command="{Binding GoImportCommand}">
-        <StackPanel Orientation="Horizontal" Spacing="5">
+      <Button Grid.Column="1" Classes="ui-btn ghost sm" HorizontalAlignment="Stretch" Height="28" Command="{Binding GoImportCommand}">
+        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
           <Path Classes="icon" Data="{StaticResource IconPlus}" Width="12" Height="12" />
-          <TextBlock Text="导入角色卡" VerticalAlignment="Center" />
+          <TextBlock Text="导入角色卡" FontSize="11.5" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
-    </StackPanel>
+    </Grid>
   </StackPanel>
 </UserControl>

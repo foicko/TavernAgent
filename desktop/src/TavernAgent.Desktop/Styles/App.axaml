@@ -1,4 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- Reserved for global behavior styles (focus scope, reduced-motion, etc.). -->
+  <!-- WindowDrawnDecorations: default title bar height 0 to prevent extra spacing -->
+  <Style Selector="WindowDrawnDecorations">
+    <Setter Property="DefaultTitleBarHeight" Value="0" />
+  </Style>
 </Styles>

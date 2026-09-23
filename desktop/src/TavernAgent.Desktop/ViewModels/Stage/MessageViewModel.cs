@@ -213,6 +213,8 @@ public sealed partial class MessageViewModel : ObservableObject
         if (option is not null) _ = _stage.ChooseOptionAsync(option);
     }
 
+    public void NotifyCopied() => _stage.Ui.NotifyQuiet("已复制文学正文到剪贴板");
+
     [RelayCommand]
     private void Quote() => _stage.InjectQuote(PlainText);
 
@@ -221,6 +223,9 @@ public sealed partial class MessageViewModel : ObservableObject
 
     [RelayCommand]
     private async Task Regenerate() => await _stage.RegenerateAsync(this, null).ConfigureAwait(true);
+
+    [RelayCommand]
+    private async Task Recheck() => await _stage.RegenerateAsync(this, null, recheck: true).ConfigureAwait(true);
 
     [RelayCommand]
     private void ToggleRegen()

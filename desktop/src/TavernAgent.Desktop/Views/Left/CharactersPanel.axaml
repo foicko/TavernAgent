@@ -5,16 +5,22 @@
              x:Class="TavernAgent.Desktop.Views.Left.CharactersPanel"
              x:DataType="vm:CharactersPanelViewModel">
   <StackPanel Spacing="12">
-    <Button Classes="ui-btn primary" HorizontalAlignment="Stretch"
-            Command="{Binding ImportCommand}" Content="+ 导入 / 创建角色卡" />
+    <Button Classes="ui-btn primary sm" HorizontalAlignment="Stretch" Height="32"
+            Command="{Binding ImportCommand}">
+      <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+        <Path Classes="icon" Data="{StaticResource IconPlus}" Width="12" Height="12" />
+        <TextBlock Text="导入 / 创建角色卡" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+      </StackPanel>
+    </Button>
 
-    <StackPanel Orientation="Horizontal" Spacing="6">
-      <TextBlock Text="{Binding Cards.Count, StringFormat=已收录角色卡 ({0})}"
-                 FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" />
-      <Button Classes="ui-btn sm ghost" Command="{Binding RefreshCommand}" Padding="4,0" ToolTip.Tip="刷新角色卡">
-        <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="13" Height="13" />
+    <Grid ColumnDefinitions="*,Auto" Margin="2,4,2,2">
+      <TextBlock Grid.Column="0" Text="{Binding Cards.Count, StringFormat=已收录角色卡 ({0})}"
+                 FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="ui-btn sm ghost" Command="{Binding RefreshCommand}" Padding="6,2" ToolTip.Tip="刷新角色卡">
+        <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="12" Height="12" />
       </Button>
-    </StackPanel>
+    </Grid>
 
     <TextBlock Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                TextWrapping="Wrap" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource DangerBrush}" />

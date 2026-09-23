@@ -6,7 +6,7 @@ using TavernAgent.Core.Stores;
 
 namespace TavernAgent.Desktop.ViewModels.Stage;
 
-public sealed record MacroPill(string Label, string Text);
+public sealed record MacroPill(string Label, string Text, string Prefix = "", string Suffix = "");
 
 public sealed record ModelQuickItem(string Id, string Name, bool IsPrimary);
 
@@ -22,10 +22,21 @@ public sealed partial class ComposerViewModel : ObservableObject
         _stage = stage;
         Macros = new[]
         {
-            new MacroPill("对白", "「」"),
-            new MacroPill("动作", "**"),
-            new MacroPill("潜台词", "（）"),
+            new MacroPill("「」对白", "「」", "「", "」"),
+            new MacroPill("﹡动作", "**", "*", "*"),
+            new MacroPill("（）心声", "（）", "（", "）"),
         };
+        if (_stage.Director is not null)
+        {
+            _stage.Director.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(DirectorViewModel.IsActive))
+                {
+                    OnPropertyChanged(nameof(IsDirectorModeBadgeVisible));
+                    OnPropertyChanged(nameof(IsFreeformModeBadgeVisible));
+                }
+            };
+        }
         Refresh();
     }
 
@@ -61,15 +72,22 @@ public sealed partial class ComposerViewModel : ObservableObject
     public bool HasActions => AvailableActions.Count > 0;
     public bool HasModels => Models.Count > 0;
     public string ActionLabel => SelectedAction?.Label ?? "";
+    public string ActionBadgeLabel => SelectedAction is not null ? $"DC {SelectedAction.Dc} {SelectedAction.Label}" : "";
+    public string ActionFullLabel => SelectedAction is not null ? $"{SelectedAction.Label} · DC {SelectedAction.Dc}" : "";
+    public string ActionTriggerLabel => SelectedAction is not null ? $"{SelectedAction.Label} · DC {SelectedAction.Dc}" : "规则检定";
+
+    public bool IsDirectorModeBadgeVisible => !HasAction && (_stage.Director?.IsActive == true);
+    public bool IsFreeformModeBadgeVisible => !HasAction && (_stage.Director?.IsActive != true);
 
     public string Placeholder => _stage.Story.View is null
         ? "导入角色卡或打开一段会话即可开始推演…"
-        : "输入你的行动或对白…（Enter 发送，Shift+Enter 换行）";
+        : "输入你的行动或对白…";
 
     public bool CanSend => !_stage.Busy && !_stage.IsHistoryView && !string.IsNullOrWhiteSpace(Text);
     public bool CanCancel => _stage.Story.Phase == TurnPhase.Generating;
     public bool CanContinue => _stage.Story.Phase == TurnPhase.Truncated;
     public bool CanRetry => _stage.Story.Phase == TurnPhase.Failed;
+    public bool ShowSendButton => !CanCancel && !CanContinue;
     public string SendGlyph => _stage.Story.Phase == TurnPhase.Generating ? "■" : "▶";
 
     partial void OnTextChanged(string value)
@@ -85,6 +103,11 @@ public sealed partial class ComposerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(HasAction));
         OnPropertyChanged(nameof(ActionLabel));
+        OnPropertyChanged(nameof(ActionBadgeLabel));
+        OnPropertyChanged(nameof(ActionFullLabel));
+        OnPropertyChanged(nameof(ActionTriggerLabel));
+        OnPropertyChanged(nameof(IsDirectorModeBadgeVisible));
+        OnPropertyChanged(nameof(IsFreeformModeBadgeVisible));
     }
 
     partial void OnSelectedModelChanged(ModelQuickItem? value)
@@ -110,6 +133,12 @@ public sealed partial class ComposerViewModel : ObservableObject
             AvailableActions.Add(action);
         OnPropertyChanged(nameof(HasActions));
         OnPropertyChanged(nameof(Placeholder));
+        OnPropertyChanged(nameof(HasAction));
+        OnPropertyChanged(nameof(ActionBadgeLabel));
+        OnPropertyChanged(nameof(ActionFullLabel));
+        OnPropertyChanged(nameof(ActionTriggerLabel));
+        OnPropertyChanged(nameof(IsDirectorModeBadgeVisible));
+        OnPropertyChanged(nameof(IsFreeformModeBadgeVisible));
         RefreshModels();
         RaiseCan();
     }
@@ -136,6 +165,7 @@ public sealed partial class ComposerViewModel : ObservableObject
         OnPropertyChanged(nameof(CanCancel));
         OnPropertyChanged(nameof(CanContinue));
         OnPropertyChanged(nameof(CanRetry));
+        OnPropertyChanged(nameof(ShowSendButton));
         OnPropertyChanged(nameof(SendGlyph));
     }
 

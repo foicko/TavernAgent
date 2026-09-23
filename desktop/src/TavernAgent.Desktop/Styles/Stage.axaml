@@ -6,21 +6,21 @@
   <Style Selector="c|InlineMarkdownText.narration">
     <Setter Property="FontFamily" Value="{DynamicResource FontNarrative}" />
     <Setter Property="FontSize" Value="15.5" />
-    <Setter Property="LineHeight" Value="1.85" />
+    <Setter Property="LineHeight" Value="27" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
   <Style Selector="c|InlineMarkdownText.dialogue">
     <Setter Property="FontFamily" Value="{DynamicResource FontNarrative}" />
     <Setter Property="FontSize" Value="15" />
     <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="LineHeight" Value="1.8" />
+    <Setter Property="LineHeight" Value="26" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
   <Style Selector="c|InlineMarkdownText.monologue">
     <Setter Property="FontFamily" Value="{DynamicResource FontNarrative}" />
     <Setter Property="FontSize" Value="14.5" />
     <Setter Property="FontStyle" Value="Italic" />
-    <Setter Property="LineHeight" Value="1.75" />
+    <Setter Property="LineHeight" Value="25" />
     <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}" />
   </Style>
 
@@ -164,18 +164,61 @@
     <Setter Property="BoxShadow" Value="{DynamicResource ShadowMd}" />
   </Style>
 
-  <!-- Composer island: flat surface card; focus paints the accent hairline (web: .composer-card-shell) -->
+  <!-- Composer island: flat surface card; focus paints a refined hairline + soft elevation -->
   <Style Selector="Border.composer-island">
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BoxShadow" Value="{DynamicResource ShadowMd}" />
     <Setter Property="Transitions">
       <Transitions>
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.18" />
         <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" />
       </Transitions>
     </Setter>
   </Style>
   <Style Selector="Border.composer-island:focus-within">
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource Elevation3}" />
+  </Style>
+
+  <!-- Seamless composer input textbox (no nested gray box) -->
+  <Style Selector="TextBox.composer-input">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,4" />
+    <Setter Property="FontSize" Value="{DynamicResource FsMd}" />
+    <Setter Property="LineHeight" Value="22" />
+  </Style>
+  <Style Selector="TextBox.composer-input /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="TextBox.composer-input:focus /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="TextBox.composer-input:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- Composer bottom combobox pills -->
+  <Style Selector="ComboBox.composer-pill">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Background" Value="{DynamicResource GlassPillBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="8,2,6,2" />
+    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ComboBox.composer-pill:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+  </Style>
+  <Style Selector="ComboBox.composer-pill:focus">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="BoxShadow" Value="{DynamicResource ShadowMd}" />
   </Style>
 
   <!-- Disclosure caret rotates when open -->

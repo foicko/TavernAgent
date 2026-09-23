@@ -283,7 +283,12 @@ public sealed partial class StoryOutlineViewModel : WorkspaceChildViewModel
 
     private void OnStoryChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(StoryStore.View)) Rebuild();
+        if (e.PropertyName == nameof(StoryStore.View))
+        {
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            if (dispatch.CheckAccess()) Rebuild();
+            else dispatch.Post(Rebuild);
+        }
     }
 
     public override void Dispose()

@@ -68,10 +68,15 @@ internal sealed class SidecarChild : IDisposable
         {
             var spawned = WindowsProcess.Spawn(options.ExecutablePath, args, workDir);
             var job = JobObjectGuard.TryCreate();
-            if (job is not null && !job.TryAssign(spawned.ProcessId))
+            if (job is not null)
             {
-                job.Dispose();
-                job = null;
+                var assigned = job.TryAssign(spawned.ProcessHandle.DangerousGetHandle())
+                    || job.TryAssign(spawned.ProcessId);
+                if (!assigned)
+                {
+                    job.Dispose();
+                    job = null;
+                }
             }
             return new SidecarChild(null, spawned, job)
             {

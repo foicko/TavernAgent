@@ -85,19 +85,25 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
 
     private void OnUiChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(UiStore.TachieExpression))
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
         {
-            UpdateExpression();
-            OnPropertyChanged(nameof(IsAlertExpr));
-            OnPropertyChanged(nameof(IsCalmExpr));
-            OnPropertyChanged(nameof(IsSmileExpr));
-            OnPropertyChanged(nameof(IsWhisperExpr));
+            if (e.PropertyName is nameof(UiStore.TachieExpression))
+            {
+                UpdateExpression();
+                OnPropertyChanged(nameof(IsAlertExpr));
+                OnPropertyChanged(nameof(IsCalmExpr));
+                OnPropertyChanged(nameof(IsSmileExpr));
+                OnPropertyChanged(nameof(IsWhisperExpr));
+            }
+            else if (e.PropertyName is nameof(UiStore.RightCollapsed))
+            {
+                OnPropertyChanged(nameof(IsCollapsed));
+                OnPropertyChanged(nameof(ShowContent));
+            }
         }
-        else if (e.PropertyName is nameof(UiStore.RightCollapsed))
-        {
-            OnPropertyChanged(nameof(IsCollapsed));
-            OnPropertyChanged(nameof(ShowContent));
-        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     private void OnStoryChanged(object? sender, PropertyChangedEventArgs e)

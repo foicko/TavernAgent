@@ -10,6 +10,9 @@
         Width="1440" Height="900"
         MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="0"
+        WindowDecorations="BorderOnly"
         Background="{DynamicResource WindowBackgroundBrush}">
 
   <Window.KeyBindings>
@@ -19,43 +22,64 @@
   </Window.KeyBindings>
 
   <Panel>
-    <Border Name="BootOverlay" ClipToBounds="True" Background="{DynamicResource AppBaseBrush}">
-      <Grid RowDefinitions="*,Auto,Auto,*" ColumnDefinitions="*,Auto,*" MaxWidth="560" Margin="24">
-        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="16" HorizontalAlignment="Center">
-          <TextBlock Text="TavernAgent"
-                     FontSize="28"
-                     FontWeight="SemiBold"
-                     HorizontalAlignment="Center"
-                     Foreground="{DynamicResource TextPrimaryBrush}" />
-          <TextBlock Text="{Binding StatusText}"
-                     HorizontalAlignment="Center"
-                     Foreground="{DynamicResource TextSecondaryBrush}" />
-          <ProgressBar Name="BootProgress"
-                       IsIndeterminate="True"
-                       Width="220"
-                       Height="4"
-                       Foreground="{DynamicResource AccentBrush}" />
-          <TextBlock Text="{Binding ErrorText}"
-                     TextWrapping="Wrap"
-                     MaxWidth="520"
-                     IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}"
-                     Foreground="{DynamicResource DangerBrush}"
-                     FontSize="12" />
-          <TextBlock Name="BootLogTail"
-                     Text="{Binding LogTail}"
-                     TextWrapping="Wrap"
-                     MaxWidth="520"
-                     MaxHeight="220"
-                     FontFamily="Consolas,Menlo,monospace"
-                     FontSize="11"
-                     Opacity="0.75"
-                     Foreground="{DynamicResource TextSecondaryBrush}"
-                     IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <Button Content="重试"
-                  HorizontalAlignment="Center"
-                  Command="{Binding RetryCommand}"
-                  IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}" />
-        </StackPanel>
+    <Border Name="BootOverlay" ClipToBounds="True" Background="{DynamicResource AppBaseBrush}"
+            PointerPressed="OnBootOverlayPointerPressed">
+      <Grid RowDefinitions="Auto,*">
+        <!-- Top bar with caption buttons for boot screen -->
+        <Border Grid.Row="0" Height="{DynamicResource HeaderHeightPx}" Padding="14,0,8,0">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+              <Border Width="8" Height="8" CornerRadius="999" Background="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+              <TextBlock Text="TAVERN AGENT" Classes="display" FontSize="13" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+              <Button Classes="caption-btn" Click="OnMinimizeClicked" ToolTip.Tip="最小化">
+                <Path Data="{StaticResource IconWindowMinimize}" />
+              </Button>
+              <Button Classes="caption-btn close-btn" Click="OnCloseClicked" ToolTip.Tip="关闭">
+                <Path Data="{StaticResource IconClose}" />
+              </Button>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" RowDefinitions="*,Auto,Auto,*" ColumnDefinitions="*,Auto,*" MaxWidth="560" Margin="24">
+          <StackPanel Grid.Row="1" Grid.Column="1" Spacing="16" HorizontalAlignment="Center">
+            <TextBlock Text="TavernAgent"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBlock Text="{Binding StatusText}"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <ProgressBar Name="BootProgress"
+                         IsIndeterminate="True"
+                         Width="220"
+                         Height="4"
+                         Foreground="{DynamicResource AccentBrush}" />
+            <TextBlock Text="{Binding ErrorText}"
+                       TextWrapping="Wrap"
+                       MaxWidth="520"
+                       IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       Foreground="{DynamicResource DangerBrush}"
+                       FontSize="12" />
+            <TextBlock Name="BootLogTail"
+                       Text="{Binding LogTail}"
+                       TextWrapping="Wrap"
+                       MaxWidth="520"
+                       MaxHeight="220"
+                       FontFamily="Consolas,Menlo,monospace"
+                       FontSize="11"
+                       Opacity="0.75"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <Button Content="重试"
+                    HorizontalAlignment="Center"
+                    Command="{Binding RetryCommand}"
+                    IsVisible="{Binding ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          </StackPanel>
+        </Grid>
       </Grid>
     </Border>
 

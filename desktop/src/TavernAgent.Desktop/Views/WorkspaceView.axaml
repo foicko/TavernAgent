@@ -50,7 +50,7 @@
                 IsVisible="{Binding ShowRightRailRecall}">
           <Button Classes="ui-btn sm quiet"
                   Command="{Binding ToggleRightRailCommand}"
-                  ToolTip.Tip="展开角色档案">
+                  ToolTip.Tip="展开角色档案 (Ctrl+])">
             <StackPanel Orientation="Horizontal" Spacing="6">
               <Path Classes="icon" Data="{StaticResource IconUser}" Width="14" Height="14" />
               <Path Classes="icon" Data="{StaticResource IconChevronLeft}" Width="13" Height="13" />

@@ -106,8 +106,14 @@ public sealed partial class MemoryModalViewModel : WorkspaceChildViewModel
                 string.IsNullOrWhiteSpace(Search) ? null : Search,
                 Kind == "all" ? null : Kind,
                 page).ConfigureAwait(true);
-            Rows.Clear();
-            foreach (var m in Story.Memories) Rows.Add(new MemoryRowViewModel(this, m));
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            void Populate()
+            {
+                Rows.Clear();
+                foreach (var m in Story.Memories) Rows.Add(new MemoryRowViewModel(this, m));
+            }
+            if (dispatch.CheckAccess()) Populate();
+            else dispatch.Post(Populate);
         }
         catch (Exception ex)
         {
@@ -137,15 +143,25 @@ public sealed partial class MemoryModalViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName == nameof(UiStore.MemoryModalOpen))
         {
-            OnPropertyChanged(nameof(IsOpen));
-            if (IsOpen) _ = LoadAsync(null);
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            void Apply()
+            {
+                OnPropertyChanged(nameof(IsOpen));
+                if (IsOpen) _ = LoadAsync(null);
+            }
+            if (dispatch.CheckAccess()) Apply();
+            else dispatch.Post(Apply);
         }
     }
 
     private void OnStoryChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(StoryStore.MemoryPaging) or nameof(StoryStore.MemoryUsage))
-            RaiseFilters();
+        {
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            if (dispatch.CheckAccess()) RaiseFilters();
+            else dispatch.Post(RaiseFilters);
+        }
     }
 
     public override void Dispose()

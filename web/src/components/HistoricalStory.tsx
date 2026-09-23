@@ -2,6 +2,7 @@ import React, { memo, useState } from "react";
 import type { OptionView, StoryMessage, TurnPhase } from "../stores/storyTypes";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
+import { formatActionCheckBadge } from "../lib/ruleCheck";
 import { useStory } from "../stores/storyStore";
 import { Icon, type IconName } from "../ui/Icon";
 import { TurnActions } from "./TurnActions";
@@ -59,6 +60,7 @@ interface HistoricalStoryProps {
 export const HistoricalStory = memo(function HistoricalStory({ storyMessages, characterName, phase, viewMode, handleCopy, handleQuote, chooseOption }: HistoricalStoryProps) {
   // 与实时流共用同一套宏替换：历史回合里同样不该出现 {{char}}/{{user}}。
   const playerName = useStory((s) => s.view?.state?.characters?.["player"]?.name) || DEFAULT_PLAYER_NAME;
+  const actions = useStory((s) => s.view?.actions);
   const expand = (text?: string) => replaceMacros(text ?? "", { charName: characterName, userName: playerName });
 
   const [illustrationTarget, setIllustrationTarget] = useState<{
@@ -119,6 +121,11 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                           <span className="player-id-badge"><Icon name="sparkles" size={11} /> 玩家行动 · 第一人称</span>
                           <span className="player-turn-time">回合 #{msg.turnNumber ?? idx}</span>
                         </div>
+                        {!!msg.checks?.length && (
+                          <div className="dice-badge-quiet" title="本轮发起的规则检定">
+                            <Icon name="dice" size={12} /> 行动检定：{formatActionCheckBadge(actions?.find((a) => a.actionId === msg.checks![0].actionId), { attribute: msg.checks[0].attribute, dc: msg.checks[0].dc })}
+                          </div>
+                        )}
                         <div className="player-speech-text">{renderInlineMarkdown(expand(msg.inputText))}</div>
                       </div>
                     </div>

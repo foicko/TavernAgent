@@ -16,6 +16,7 @@ public sealed partial class CharactersPanelViewModel : WorkspaceChildViewModel
     public CharactersPanelViewModel(WorkspaceViewModel workspace) : base(workspace)
     {
         Story.PropertyChanged += OnStoryChanged;
+        _ = ReloadAsync();
     }
 
     public StoryStore Story => Workspace.Story;
@@ -125,7 +126,14 @@ public sealed partial class CharactersPanelViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName is nameof(StoryStore.View) or nameof(StoryStore.Sessions))
         {
-            foreach (var row in Cards) row.RefreshState();
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            void Apply()
+            {
+                if (Cards.Count == 0 && !IsLoading) _ = ReloadAsync();
+                else foreach (var row in Cards) row.RefreshState();
+            }
+            if (dispatch.CheckAccess()) Apply();
+            else dispatch.Post(Apply);
         }
     }
 

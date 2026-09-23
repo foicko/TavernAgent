@@ -37,14 +37,25 @@ public sealed partial class DossierModalViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName == nameof(UiStore.DossierModalOpen))
         {
-            OnPropertyChanged(nameof(IsOpen));
-            if (IsOpen) Rebuild();
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            void Apply()
+            {
+                OnPropertyChanged(nameof(IsOpen));
+                if (IsOpen) Rebuild();
+            }
+            if (dispatch.CheckAccess()) Apply();
+            else dispatch.Post(Apply);
         }
     }
 
     private void OnStoryChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(StoryStore.View)) Rebuild();
+        if (e.PropertyName == nameof(StoryStore.View))
+        {
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            if (dispatch.CheckAccess()) Rebuild();
+            else dispatch.Post(Rebuild);
+        }
     }
 
     public void Rebuild()

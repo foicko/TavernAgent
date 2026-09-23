@@ -38,6 +38,7 @@ public partial class Modal : UserControl
         CloseButton.Click += OnCloseClick;
         KeyDown += OnKeyDown;
         IsOpenProperty.Changed.AddClassHandler<Modal>((m, e) => m.OnIsOpenChanged((bool)e.NewValue!));
+        DialogWidthProperty.Changed.AddClassHandler<Modal>((m, e) => m.UpdateCardConstraints(m.Bounds.Size));
     }
 
     public bool IsOpen { get => GetValue(IsOpenProperty); set => SetValue(IsOpenProperty, value); }
@@ -72,6 +73,32 @@ public partial class Modal : UserControl
     private void OnIsOpenChanged(bool open)
     {
         IsVisible = open;
-        if (open) Dispatcher.UIThread.Post(() => Card.Focus(), DispatcherPriority.Input);
+        if (open)
+        {
+            UpdateCardConstraints(Bounds.Size);
+            Dispatcher.UIThread.Post(() => Card.Focus(), DispatcherPriority.Input);
+        }
+    }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        UpdateCardConstraints(e.NewSize);
+    }
+
+    private void UpdateCardConstraints(Size size)
+    {
+        var targetWidth = DialogWidth > 0 ? DialogWidth : 720d;
+        var clampedWidth = size.Width > 0
+            ? Math.Max(280, Math.Min(targetWidth, size.Width - 32))
+            : targetWidth;
+
+        Card.Width = clampedWidth;
+        Card.MaxWidth = clampedWidth;
+
+        if (size.Height > 0)
+        {
+            Card.MaxHeight = Math.Max(200, size.Height - 32);
+        }
     }
 }

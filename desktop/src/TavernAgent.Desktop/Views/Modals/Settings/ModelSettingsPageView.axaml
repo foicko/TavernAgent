@@ -6,7 +6,7 @@
              x:DataType="settings:ModelSettingsPageViewModel">
   <StackPanel Spacing="12">
 
-    <c:Section Title="角色">
+    <c:Section Title="模型槽位与分工 (Slots)">
       <c:Section.Body>
         <StackPanel Spacing="6">
           <ItemsControl ItemsSource="{Binding SlotPickers}">
@@ -39,7 +39,7 @@
       </c:Section.Body>
     </c:Section>
 
-    <c:Section Title="连接">
+    <c:Section Title="服务商连接 (Connections)">
       <c:Section.Body>
         <StackPanel Spacing="10">
           <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsEditing}">

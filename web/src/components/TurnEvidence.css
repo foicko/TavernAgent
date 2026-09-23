@@ -59,6 +59,33 @@
   background: var(--accent-subtle);
 }
 
+.evidence-chip.dice-chip.is-crit-up {
+  border-color: color-mix(in srgb, var(--accent-amber) 60%, var(--border-light));
+  background: color-mix(in srgb, var(--accent-amber) 12%, var(--bg-subtle));
+}
+
+.evidence-chip.dice-chip.is-crit-up .evidence-chip-text {
+  color: var(--accent-amber);
+  font-weight: var(--fw-semibold);
+}
+
+.evidence-chip.dice-chip.is-crit-down {
+  border-color: color-mix(in srgb, var(--color-danger-text) 70%, var(--border-light));
+  background: color-mix(in srgb, var(--color-danger-bg) 60%, transparent);
+}
+
+.evidence-chip.dice-chip.is-crit-down .evidence-chip-text {
+  color: var(--color-danger-text);
+  font-weight: var(--fw-semibold);
+}
+
+.evidence-chip-crit-mark {
+  font-size: 10px;
+  line-height: 1;
+  margin-left: 2px;
+  color: currentColor;
+}
+
 /* 玩家注记是“要求”而不是“结果”，用虚线与斜体与其它筹码分开。 */
 .note-chip {
   border-style: dashed;
@@ -125,11 +152,6 @@
   line-height: 1.7;
 }
 
-.evidence-row-title {
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
 .evidence-row-text {
   color: var(--text-main);
   overflow-wrap: anywhere;
@@ -157,4 +179,208 @@
 
 .muted-chip .evidence-chip-text {
   color: var(--text-dim);
+}
+
+/* 规则检定卡片结构化呈现 */
+.evidence-checks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evidence-check-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.evidence-check-card.outcome-crit-success {
+  border-color: color-mix(in srgb, var(--accent-amber) 40%, var(--border-light));
+  border-left: 3px solid var(--accent-amber);
+  background: color-mix(in srgb, var(--accent-amber) 4%, var(--bg-surface));
+}
+
+.evidence-check-card.outcome-success {
+  border-left: 3px solid var(--color-success);
+}
+
+.evidence-check-card.outcome-failure {
+  border-left: 3px solid var(--border-mid);
+}
+
+.evidence-check-card.outcome-crit-failure {
+  border-color: color-mix(in srgb, var(--color-danger-text) 40%, var(--border-light));
+  border-left: 3px solid var(--color-danger-text);
+  background: color-mix(in srgb, var(--color-danger-bg) 40%, var(--bg-surface));
+}
+
+.check-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.check-card-title-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.check-card-dice-icon {
+  color: var(--text-muted);
+}
+
+.outcome-crit-success .check-card-dice-icon {
+  color: var(--accent-amber);
+}
+
+.check-card-label {
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-main);
+}
+
+.check-card-attr-badge {
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-subtle);
+  color: var(--text-dim);
+  border: 1px solid var(--border-light);
+}
+
+.check-outcome-badge {
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.check-outcome-badge.outcome-crit-success {
+  background: color-mix(in srgb, var(--accent-amber) 16%, transparent);
+  color: var(--accent-amber);
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 32%, transparent);
+}
+
+.check-outcome-badge.outcome-success {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.check-outcome-badge.outcome-failure {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+
+.check-outcome-badge.outcome-crit-failure {
+  background: color-mix(in srgb, var(--color-danger-bg) 80%, transparent);
+  color: var(--color-danger-text);
+  border: 1px solid color-mix(in srgb, var(--color-danger-text) 30%, transparent);
+}
+
+.check-card-formula {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.check-card-formula-text {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.check-card-formula-pills {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.formula-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  font-size: 11px;
+  color: var(--text-main);
+}
+
+.formula-pill-lbl {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.formula-pill.is-nat20 {
+  border-color: color-mix(in srgb, var(--accent-amber) 50%, transparent);
+  background: color-mix(in srgb, var(--accent-amber) 14%, transparent);
+  color: var(--accent-amber);
+}
+
+.formula-pill.is-nat1 {
+  border-color: color-mix(in srgb, var(--color-danger-text) 50%, transparent);
+  background: color-mix(in srgb, var(--color-danger-bg) 80%, transparent);
+  color: var(--color-danger-text);
+}
+
+.formula-tag {
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: var(--radius-xs);
+  background: currentColor;
+  color: var(--bg-surface);
+  font-weight: var(--fw-bold);
+}
+
+.formula-op,
+.formula-vs {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: var(--fw-medium);
+}
+
+.formula-total.pill-up {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--border-light));
+  color: var(--color-success);
+  font-weight: var(--fw-bold);
+}
+
+.formula-total.pill-down {
+  border-color: color-mix(in srgb, var(--color-danger-text) 40%, var(--border-light));
+  color: var(--color-danger-text);
+  font-weight: var(--fw-bold);
+}
+
+.formula-dc {
+  border-color: var(--border-mid);
+  color: var(--text-main);
+  font-weight: var(--fw-semibold);
+}
+
+.evidence-permanent-effect {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--accent-amber) 30%, transparent);
+  color: var(--accent-amber);
 }

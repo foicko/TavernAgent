@@ -36,8 +36,14 @@ public sealed partial class WorldbookModalViewModel : WorkspaceChildViewModel
     private void OnUiChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(UiStore.WorldbookModalOpen)) return;
-        OnPropertyChanged(nameof(IsOpen));
-        if (IsOpen) Rebuild();
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
+        {
+            OnPropertyChanged(nameof(IsOpen));
+            if (IsOpen) Rebuild();
+        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     private void Rebuild()

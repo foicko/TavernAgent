@@ -12,7 +12,7 @@
                  FontSize="{DynamicResource FsLg}" FontWeight="SemiBold"
                  VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
       <Button Grid.Column="1" Classes="icon soft-brush"
-              Command="{Binding CollapseCommand}" ToolTip.Tip="收起面板">
+              Command="{Binding CollapseCommand}" ToolTip.Tip="收起面板 (Ctrl+[)">
         <Path Classes="icon" Data="{StaticResource IconClose}" Width="14" Height="14" />
       </Button>
     </Grid>
@@ -21,7 +21,10 @@
 
     <Grid Grid.Row="2" RowDefinitions="Auto,*">
       <!-- Tabs -->
-      <Border Grid.Row="0" Padding="10,8">
+      <Border Grid.Row="0" Margin="14,6,14,8"
+              Classes="surface-inset"
+              CornerRadius="{DynamicResource RadiusFull}"
+              Padding="3">
         <Grid ColumnDefinitions="*,*,*,*">
           <Button Grid.Column="0" Classes="subtab" Classes.active="{Binding IsTreeTab}"
                   Command="{Binding ShowTreeCommand}" Content="因果" />

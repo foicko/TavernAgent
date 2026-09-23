@@ -19,10 +19,10 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
 
     public StageViewModel(WorkspaceViewModel workspace) : base(workspace)
     {
-        Composer = new ComposerViewModel(this);
         Context = new ContextMetricsViewModel();
         Illustration = new IllustrationModalViewModel(workspace);
         Director = new DirectorViewModel(workspace);
+        Composer = new ComposerViewModel(this);
         Story.PropertyChanged += OnStoryPropertyChanged;
         IllustrationStore.Instance.Changed += OnIllustrationChanged;
         RebuildAll();
@@ -212,10 +212,10 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
     public async Task ChooseOptionAsync(OptionViewModel option)
         => await Story.ChooseOptionAsync(new OptionView { OptionId = option.OptionId, Intent = option.Intent, Text = option.Text }).ConfigureAwait(true);
 
-    public async Task RegenerateAsync(MessageViewModel message, string? guidance)
+    public async Task RegenerateAsync(MessageViewModel message, string? guidance, bool recheck = false)
     {
         if (message.IsOpening) return;
-        await Story.RegenerateAsync(message.Id, recheck: false, guidance: guidance).ConfigureAwait(true);
+        await Story.RegenerateAsync(message.Id, recheck: recheck, guidance: guidance).ConfigureAwait(true);
     }
 
     public async Task EditTextAsync(MessageViewModel message, List<TextBlock> blocks)
@@ -382,9 +382,11 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         CharName = name;
         CharShortName = CleanShortName(!string.IsNullOrWhiteSpace(character?.Nickname) ? character!.Nickname! : name);
         CharRole = FirstLine(character?.Description) ?? preset.Role;
-        CharStagePill = preset.StagePill;
-        CharStateBadge = preset.StateBadge;
-        CharVoiceBadge = preset.VoiceBadge;
+        var hasActiveStory = view is not null;
+        var hasActiveChar = character is not null;
+        CharStagePill = hasActiveChar ? "当前主角" : (hasActiveStory ? "已载入" : preset.StagePill);
+        CharStateBadge = hasActiveStory ? "状态：持续同步" : preset.StateBadge;
+        CharVoiceBadge = hasActiveStory ? "叙事：沉浸演绎" : preset.VoiceBadge;
 
         var avatar = character?.Avatar;
         AvatarUrl = !string.IsNullOrEmpty(avatar) && (avatar.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
@@ -473,11 +475,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         return string.IsNullOrWhiteSpace(player) ? NarrativeText.DefaultPlayerName : player!;
     }
 
-    private static string CleanShortName(string name)
-    {
-        var first = name.Split('\n', '\r')[0].Trim();
-        return first.Length <= 12 ? first : first[..12];
-    }
+    private static string CleanShortName(string name) => NarrativeText.CleanShortName(name);
 
     private static string? FirstLine(string? text)
     {

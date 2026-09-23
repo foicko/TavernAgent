@@ -22,20 +22,40 @@ public sealed class SingleInstance : IDisposable
     public bool Acquired => _acquired;
 
     /// <summary>Try to become the primary instance. When false, another instance is running.</summary>
-    public static SingleInstance TryAcquire(string dataDir)
+    public static SingleInstance TryAcquire(string dataDir, string? mutexName = null)
     {
         var si = new SingleInstance();
         if (OperatingSystem.IsWindows())
         {
-            var mutex = new Mutex(initiallyOwned: true, MutexName, out var createdNew);
-            if (!createdNew)
+            var name = string.IsNullOrWhiteSpace(mutexName) ? MutexName : mutexName;
+            try
             {
-                mutex.Dispose();
+                var mutex = new Mutex(false, name);
+                bool acquired = false;
+                try
+                {
+                    acquired = mutex.WaitOne(0, false);
+                }
+                catch (AbandonedMutexException)
+                {
+                    // Previous owner exited without releasing the mutex.
+                    // Windows grants ownership to this thread.
+                    acquired = true;
+                }
+
+                if (!acquired)
+                {
+                    mutex.Dispose();
+                    return si;
+                }
+                si._mutex = mutex;
+                si._acquired = true;
                 return si;
             }
-            si._mutex = mutex;
-            si._acquired = true;
-            return si;
+            catch
+            {
+                return si;
+            }
         }
 
         try
@@ -88,6 +108,9 @@ public sealed class SingleInstance : IDisposable
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 
+    [DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(IntPtr hWnd);
+
     private static void TryActivateWindows()
     {
         // Title must match MainWindow title exactly.
@@ -95,6 +118,7 @@ public sealed class SingleInstance : IDisposable
         if (hwnd == IntPtr.Zero) return;
         const int SW_RESTORE = 9;
         ShowWindow(hwnd, SW_RESTORE);
+        BringWindowToTop(hwnd);
         SetForegroundWindow(hwnd);
     }
 }

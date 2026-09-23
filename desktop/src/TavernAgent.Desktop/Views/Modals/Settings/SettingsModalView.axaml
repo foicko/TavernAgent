@@ -5,19 +5,20 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.Settings.SettingsModalView"
              x:DataType="settings:SettingsModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="设置" DialogWidth="1080">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="设置" DialogWidth="880">
     <c:Modal.Body>
-      <Grid Width="1000" Height="560" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+      <Grid Height="520" HorizontalAlignment="Stretch" RowDefinitions="Auto,Auto,*" RowSpacing="12">
 
         <ItemsControl Grid.Row="0" ItemsSource="{Binding Tabs}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="6" />
+              <WrapPanel Orientation="Horizontal" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="settings:SettingsTabItem">
               <Button Classes="ui-btn sm quiet" Classes.active="{Binding IsActive}"
+                      Margin="0,0,6,6"
                       Command="{Binding SelectCommand}" CommandParameter="{Binding}" Content="{Binding Title}" />
             </DataTemplate>
           </ItemsControl.ItemTemplate>

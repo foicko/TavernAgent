@@ -4,36 +4,38 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.PromisesModalView"
              x:DataType="vm:PromisesModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="契约与承诺" DialogWidth="720">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="契约与承诺" DialogWidth="780">
     <c:Modal.Body>
-      <StackPanel Spacing="12" Height="420">
-        <TextBlock Text="{Binding CharacterName, StringFormat=与「{0}」之间的誓约与承诺}"
+      <Grid RowDefinitions="Auto,*" Height="480" RowSpacing="12">
+        <TextBlock Grid.Row="0" Text="{Binding CharacterName, StringFormat=与「{0}」之间的誓约与承诺}"
                    FontSize="{DynamicResource FsSm}" Foreground="{DynamicResource TextSecondaryBrush}" />
 
-        <c:EmptyState IsVisible="{Binding IsEmpty}" IconGeometry="{StaticResource IconHandshake}" Title="尚无契约或承诺"
-                      Description="在剧情中主动立约或达成羁绊后，会在此跟踪履约状态。" />
+        <Panel Grid.Row="1">
+          <c:EmptyState IsVisible="{Binding IsEmpty}" IconGeometry="{StaticResource IconHandshake}" Title="尚无契约或承诺"
+                        Description="在剧情中主动立约或达成羁绊后，会在此跟踪履约状态。" />
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-          <ItemsControl ItemsSource="{Binding Promises}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:PromiseRowViewModel">
-                <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="12" Margin="0,0,0,8">
-                  <StackPanel Spacing="6">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                      <Border Classes="state-pill">
-                        <TextBlock Text="{Binding StateLabel}" FontSize="10" />
-                      </Border>
+          <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsEmpty}">
+            <ItemsControl ItemsSource="{Binding Promises}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:PromiseRowViewModel">
+                  <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Padding="12" Margin="0,0,0,8">
+                    <StackPanel Spacing="6">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Classes="state-pill">
+                          <TextBlock Text="{Binding StateLabel}" FontSize="10" />
+                        </Border>
+                      </StackPanel>
+                      <TextBlock Text="{Binding Content}" TextWrapping="Wrap" FontSize="{DynamicResource FsSm}" />
+                      <TextBlock Text="{Binding SourceNodeId, StringFormat=来源节点 {0}}" FontSize="10"
+                                 Foreground="{DynamicResource TextDimBrush}" />
                     </StackPanel>
-                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap" FontSize="{DynamicResource FsSm}" />
-                    <TextBlock Text="{Binding SourceNodeId, StringFormat=来源节点 {0}}" FontSize="10"
-                               Foreground="{DynamicResource TextDimBrush}" />
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
-      </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Panel>
+      </Grid>
     </c:Modal.Body>
   </c:Modal>
 </UserControl>

@@ -171,7 +171,12 @@ export function TurnActions({ msg }: { msg: StoryMessage }) {
           <Icon name="refresh" size={13} /> 重新生成
         </button>
         {!!msg.checks?.length && (
-          <button className="btn-quiet" disabled={busy} onClick={() => void regenerate(msg.id, true)} title="新建候选分支，重新掷骰并演绎新结果">
+          <button
+            className="btn-quiet btn-recheck"
+            disabled={busy}
+            onClick={() => void regenerate(msg.id, true)}
+            title="新建候选分支：重新投掷 d20 规则骰，以此新判定结果派生重演"
+          >
             <Icon name="dice" size={13} /> 重新掷骰
           </button>
         )}

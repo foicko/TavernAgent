@@ -5,28 +5,28 @@
              x:DataType="vm:StageViewModel">
   <Border Classes="surface" Margin="24,12,24,6" Padding="14,8"
           MaxWidth="820" HorizontalAlignment="Stretch">
-    <Grid ColumnDefinitions="*,Auto">
-      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <Panel Width="38" Height="38">
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+      <Grid Grid.Column="0" ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalAlignment="Center">
+        <Panel Grid.Column="0" Width="38" Height="38">
           <Ellipse Fill="{DynamicResource AccentBrush}" />
           <TextBlock Text="{Binding CharMonogram}"
                      FontSize="15" FontWeight="SemiBold"
                      HorizontalAlignment="Center" VerticalAlignment="Center"
                      Foreground="{DynamicResource AccentContrastBrush}" />
         </Panel>
-        <StackPanel Spacing="2" VerticalAlignment="Center">
-          <StackPanel Orientation="Horizontal" Spacing="8">
+        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+          <WrapPanel Orientation="Horizontal">
             <TextBlock Text="{Binding CharShortName}" FontWeight="SemiBold"
-                       FontSize="{DynamicResource FsMd}"
-                       Foreground="{DynamicResource TextPrimaryBrush}" />
-            <Border Classes="chip"><TextBlock Text="{Binding CharStateBadge}" FontSize="{DynamicResource FsXs}" /></Border>
-            <Border Classes="chip"><TextBlock Text="{Binding CharVoiceBadge}" FontSize="{DynamicResource FsXs}" /></Border>
-          </StackPanel>
-          <TextBlock Text="{Binding CharRole}" TextTrimming="CharacterEllipsis" MaxWidth="440"
+                       FontSize="{DynamicResource FsMd}" Margin="0,0,8,0"
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+            <Border Classes="chip" Margin="0,0,6,0"><TextBlock Text="{Binding CharStateBadge}" FontSize="{DynamicResource FsXs}" /></Border>
+            <Border Classes="chip" Margin="0,0,6,0"><TextBlock Text="{Binding CharVoiceBadge}" FontSize="{DynamicResource FsXs}" /></Border>
+          </WrapPanel>
+          <TextBlock Text="{Binding CharRole}" TextTrimming="CharacterEllipsis"
                      FontSize="{DynamicResource FsXs}"
                      Foreground="{DynamicResource TextDimBrush}" />
         </StackPanel>
-      </StackPanel>
+      </Grid>
 
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
         <Button Classes="ui-btn sm quiet soft-brush" Command="{Binding RegenerateLatestCommand}"

@@ -6,10 +6,10 @@
              x:DataType="vm:BranchTreeViewModel">
   <StackPanel Spacing="12">
 
-    <Button Classes="ui-btn sm quiet" HorizontalAlignment="Stretch" Command="{Binding OpenStoryMapCommand}">
-      <StackPanel Orientation="Horizontal" Spacing="6">
+    <Button Classes="ui-btn sm quiet" HorizontalAlignment="Stretch" Height="32" Command="{Binding OpenStoryMapCommand}">
+      <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
         <Path Classes="icon" Data="{StaticResource IconMap}" Width="13" Height="13" />
-        <TextBlock Text="打开剧情分支图" VerticalAlignment="Center" />
+        <TextBlock Text="打开剧情分支图" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
       </StackPanel>
     </Button>
 

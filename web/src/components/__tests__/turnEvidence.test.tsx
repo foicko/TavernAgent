@@ -73,4 +73,22 @@ describe("TurnEvidence", () => {
     expect(screen.getByText("这次让 NPC 先开口。")).toBeTruthy();
     expect(screen.getByText("钟楼二层")).toBeTruthy();
   });
+
+  it("大成功与大失败具备专属展示与算式拆解", async () => {
+    const user = userEvent.setup();
+    render(<TurnEvidence msg={message({
+      checks: [
+        { rollId: "r_crit", actionId: "check.strength", attribute: "strength", attributeModifier: 3, natural: 20, total: 23, dc: 15, outcome: "critical_success", permanentEffect: "获得破门者称号" },
+      ],
+    })} />);
+
+    expect(screen.getByText("大成功")).toBeTruthy();
+    expect(screen.getByText("✦")).toBeTruthy();
+
+    const toggle = screen.getByRole("button", { name: /展开依据/ });
+    await user.click(toggle);
+
+    expect(screen.getByText(/Nat 20/)).toBeTruthy();
+    expect(screen.getByText(/获得破门者称号/)).toBeTruthy();
+  });
 });

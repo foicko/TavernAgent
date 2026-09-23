@@ -52,12 +52,16 @@ public static partial class NarrativeText
         return s;
     }
 
-    /// <summary>Short display name: first line, trimmed, capped (web: cleanShortName).</summary>
+    private static readonly char[] NameDelimiters = { '，', ',', '·', '-', '—', '–', '_', ':', '：', '/', '|' };
+
+    /// <summary>Short display name: primary name token, trimmed, capped (web: cleanShortName).</summary>
     public static string CleanShortName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "自定义";
         var first = name.Split('\n', '\r')[0].Trim();
-        return first.Length <= 12 ? first : first[..12];
+        var parts = first.Split(NameDelimiters, StringSplitOptions.RemoveEmptyEntries);
+        var pick = parts.Length > 0 ? parts[0].Trim() : first;
+        return pick.Length <= 10 ? pick : pick[..10];
     }
 
     /// <summary>First non-empty line, capped with ellipsis.</summary>

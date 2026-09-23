@@ -92,27 +92,37 @@ public sealed partial class LeftRailViewModel : WorkspaceChildViewModel
         if (e.PropertyName is nameof(UiStore.LeftCollapsed) or nameof(UiStore.LeftTab) or nameof(UiStore.FlyoutOpen)
             or nameof(UiStore.DirectorOpen) or nameof(UiStore.Theme))
         {
-            OnPropertyChanged(nameof(IsCollapsed));
-            OnPropertyChanged(nameof(ShowFullView));
-            OnPropertyChanged(nameof(ShowDock));
-            OnPropertyChanged(nameof(IsFlyoutOpen));
-            OnPropertyChanged(nameof(IsTreeTabActive));
-            OnPropertyChanged(nameof(IsCharactersTabActive));
-            OnPropertyChanged(nameof(IsLoreTabActive));
-            OnPropertyChanged(nameof(IsSessionsTabActive));
-            OnPropertyChanged(nameof(IsTreeTabVisited));
-            OnPropertyChanged(nameof(IsCharactersTabVisited));
-            OnPropertyChanged(nameof(IsLoreTabVisited));
-            OnPropertyChanged(nameof(IsSessionsTabVisited));
-            OnPropertyChanged(nameof(PanelTitle));
-            OnPropertyChanged(nameof(IsDirectorActive));
-            OnPropertyChanged(nameof(IsDarkTheme));
-            OnPropertyChanged(nameof(HasStory));
-            OnPropertyChanged(nameof(Tab));
-            OnPropertyChanged(nameof(IsTreeTab));
-            OnPropertyChanged(nameof(IsCharactersTab));
-            OnPropertyChanged(nameof(IsLoreTab));
-            OnPropertyChanged(nameof(IsSessionsTab));
+            var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+            void Apply()
+            {
+                if (e.PropertyName == nameof(UiStore.LeftTab))
+                {
+                    OnTabActivated(Workspace.Ui.LeftTab);
+                }
+                OnPropertyChanged(nameof(IsCollapsed));
+                OnPropertyChanged(nameof(ShowFullView));
+                OnPropertyChanged(nameof(ShowDock));
+                OnPropertyChanged(nameof(IsFlyoutOpen));
+                OnPropertyChanged(nameof(IsTreeTabActive));
+                OnPropertyChanged(nameof(IsCharactersTabActive));
+                OnPropertyChanged(nameof(IsLoreTabActive));
+                OnPropertyChanged(nameof(IsSessionsTabActive));
+                OnPropertyChanged(nameof(IsTreeTabVisited));
+                OnPropertyChanged(nameof(IsCharactersTabVisited));
+                OnPropertyChanged(nameof(IsLoreTabVisited));
+                OnPropertyChanged(nameof(IsSessionsTabVisited));
+                OnPropertyChanged(nameof(PanelTitle));
+                OnPropertyChanged(nameof(IsDirectorActive));
+                OnPropertyChanged(nameof(IsDarkTheme));
+                OnPropertyChanged(nameof(HasStory));
+                OnPropertyChanged(nameof(Tab));
+                OnPropertyChanged(nameof(IsTreeTab));
+                OnPropertyChanged(nameof(IsCharactersTab));
+                OnPropertyChanged(nameof(IsLoreTab));
+                OnPropertyChanged(nameof(IsSessionsTab));
+            }
+            if (dispatch.CheckAccess()) Apply();
+            else dispatch.Post(Apply);
         }
     }
 

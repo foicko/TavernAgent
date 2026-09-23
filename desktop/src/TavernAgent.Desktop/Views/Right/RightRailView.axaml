@@ -15,7 +15,7 @@
                      Foreground="{DynamicResource TextSecondaryBrush}" />
         </StackPanel>
         <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding ToggleCollapseCommand}"
-                Content="收起 ›" />
+                ToolTip.Tip="收起角色档案 (Ctrl+])" Content="收起 ›" />
       </Grid>
     </Border>
 
@@ -67,13 +67,17 @@
 
         <!-- Nameplate -->
         <StackPanel Spacing="6">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding Character.ShortName}" Classes="display" FontSize="16" />
-            <Border Classes="state-pill"><TextBlock Text="{Binding Character.StagePill}" FontSize="10" /></Border>
-          </StackPanel>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBlock Grid.Column="0" Text="{Binding Character.ShortName}" Classes="display" FontSize="16"
+                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <Border Grid.Column="1" Classes="state-pill" Classes.active="{Binding Character.IsActive}" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Character.StagePill}" FontSize="10" />
+            </Border>
+          </Grid>
           <TextBlock Text="{Binding Character.Name}" FontSize="{DynamicResource FsXs}"
                      Foreground="{DynamicResource TextDimBrush}"
-                     IsVisible="{Binding Character.HasAvatar}" />
+                     TextTrimming="CharacterEllipsis"
+                     IsVisible="{Binding Character.ShowSubtitle}" />
           <TextBlock Text="{Binding Character.Role}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
                      Foreground="{DynamicResource TextSecondaryBrush}" />
           <ItemsControl ItemsSource="{Binding Tags}" IsVisible="{Binding HasTags}">
@@ -86,26 +90,26 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <StackPanel Orientation="Horizontal" Spacing="6">
-            <Border Classes="chip">
+          <WrapPanel Orientation="Horizontal">
+            <Border Classes="chip" Margin="0,0,6,6">
               <StackPanel Orientation="Horizontal" Spacing="4">
                 <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="11" Height="11" />
                 <TextBlock Text="{Binding Character.StateBadge}" FontSize="10" VerticalAlignment="Center" />
               </StackPanel>
             </Border>
-            <Border Classes="chip">
+            <Border Classes="chip" Margin="0,0,6,6">
               <StackPanel Orientation="Horizontal" Spacing="4">
                 <Path Classes="icon" Data="{StaticResource IconUsers}" Width="11" Height="11" />
                 <TextBlock Text="{Binding Character.AllianceBadge}" FontSize="10" VerticalAlignment="Center" />
               </StackPanel>
             </Border>
-            <Border Classes="chip">
+            <Border Classes="chip" Margin="0,0,6,6">
               <StackPanel Orientation="Horizontal" Spacing="4">
                 <Path Classes="icon" Data="{StaticResource IconMic}" Width="11" Height="11" />
                 <TextBlock Text="{Binding Character.VoiceBadge}" FontSize="10" VerticalAlignment="Center" />
               </StackPanel>
             </Border>
-          </StackPanel>
+          </WrapPanel>
         </StackPanel>
 
         <!-- Nav tiles -->
@@ -117,7 +121,7 @@
                 <Path Classes="icon" Data="{StaticResource IconScroll}" Width="17" Height="17" />
               </Border>
               <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="角色设定与世界观" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Text="角色设定与世界观" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="人设性格 · 场景规则 · 范例与说明" FontSize="{DynamicResource FsXs}"
                            Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis" />
               </StackPanel>
@@ -132,7 +136,7 @@
                 <Path Classes="icon" Data="{StaticResource IconLink}" Width="17" Height="17" />
               </Border>
               <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="主动契约与承诺" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Text="主动契约与承诺" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="誓约状态与履约跟踪" FontSize="{DynamicResource FsXs}"
                            Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis" />
               </StackPanel>
@@ -149,7 +153,7 @@
                 <Path Classes="icon" Data="{StaticResource IconDatabase}" Width="17" Height="17" />
               </Border>
               <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                <TextBlock Text="认知记忆库" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Text="认知记忆库" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="亲历观察 · 反思推演 · 分支独立 CoW" FontSize="{DynamicResource FsXs}"
                            Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis" />
               </StackPanel>

@@ -43,8 +43,14 @@ public sealed partial class CommandPaletteViewModel : WorkspaceChildViewModel
     private void OnUiChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(UiStore.PaletteOpen)) return;
-        OnPropertyChanged(nameof(IsOpen));
-        if (IsOpen) Open();
+        var dispatch = Avalonia.Threading.Dispatcher.UIThread;
+        void Apply()
+        {
+            OnPropertyChanged(nameof(IsOpen));
+            if (IsOpen) Open();
+        }
+        if (dispatch.CheckAccess()) Apply();
+        else dispatch.Post(Apply);
     }
 
     private void Open()

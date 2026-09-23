@@ -5,11 +5,9 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Stage.StageView"
              x:DataType="vm:StageViewModel">
-  <Grid RowDefinitions="Auto,*,Auto">
+  <Grid RowDefinitions="*,Auto">
 
-    <stage:SceneBarView Grid.Row="0" DataContext="{Binding}" IsVisible="{Binding HasStory}" />
-
-    <ScrollViewer Grid.Row="1" Name="Stream"
+    <ScrollViewer Grid.Row="0" Name="Stream"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
       <StackPanel MaxWidth="820" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
@@ -41,12 +39,13 @@
         <!-- History read-only banner -->
         <Border IsVisible="{Binding IsHistoryView}" Classes="surface-inset" Padding="14"
                 CornerRadius="{DynamicResource RadiusMd}">
-          <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-              <Path Classes="icon" Data="{StaticResource IconFlag}" Width="13" Height="13" />
-              <TextBlock Text="正在浏览历史快照节点（只读模式）"
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <Grid Grid.Column="0" ColumnDefinitions="Auto,*" ColumnSpacing="6" VerticalAlignment="Center">
+              <Path Grid.Column="0" Classes="icon" Data="{StaticResource IconFlag}" Width="13" Height="13" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="正在浏览历史快照节点（只读模式）"
+                         TextTrimming="CharacterEllipsis"
                          VerticalAlignment="Center" FontSize="{DynamicResource FsSm}" />
-            </StackPanel>
+            </Grid>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
               <Button Classes="ui-btn sm quiet" Command="{Binding BackToHeadCommand}" Content="返回最新进度" />
               <Button Classes="ui-btn sm primary" Command="{Binding ForkViewCommand}">
@@ -164,7 +163,7 @@
                           BorderBrush="{DynamicResource BorderMidBrush}">
                     <SelectableTextBlock Text="{Binding ThinkingText}"
                                          TextWrapping="Wrap" FontFamily="{DynamicResource FontMono}"
-                                         FontSize="12" LineHeight="1.7"
+                                         FontSize="12" LineHeight="20"
                                          Foreground="{DynamicResource TextSecondaryBrush}" />
                   </Border>
                 </StackPanel>
@@ -256,7 +255,7 @@
       </StackPanel>
     </ScrollViewer>
 
-    <ContentControl Grid.Row="2" IsVisible="{Binding IsStudioMode}">
+    <ContentControl Grid.Row="1" IsVisible="{Binding IsStudioMode}">
       <stage:ComposerView DataContext="{Binding Composer}" />
     </ContentControl>
   </Grid>

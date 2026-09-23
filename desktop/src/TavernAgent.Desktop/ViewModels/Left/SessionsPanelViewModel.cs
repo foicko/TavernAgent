@@ -33,6 +33,7 @@ public sealed partial class SessionsPanelViewModel : WorkspaceChildViewModel
     public bool IsEmpty => Rows.Count == 0;
     public bool HasCurrentView => Story.View is not null;
     public string NewStoryLabel => $"与「{Workspace.Stage.CharShortName}」开启新故事";
+    public string NewStoryTooltip => $"基于【{Workspace.Stage.CharName}】开辟全新平行故事分支";
 
     [RelayCommand]
     private void SetAllFilter() { Filter = SessionFilter.All; Rebuild(); }
@@ -139,6 +140,7 @@ public sealed partial class SessionsPanelViewModel : WorkspaceChildViewModel
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(HasCurrentView));
         OnPropertyChanged(nameof(NewStoryLabel));
+        OnPropertyChanged(nameof(NewStoryTooltip));
     }
 
     public override void Dispose()

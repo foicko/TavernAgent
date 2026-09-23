@@ -81,21 +81,37 @@ public sealed class CheckEvidenceViewModel
         Dc = check.Dc;
         Outcome = check.Outcome;
         PermanentEffect = check.PermanentEffect;
-        Label = actionLabel ?? check.Attribute;
+        var attrName = check.Attribute.ToLowerInvariant() switch
+        {
+            "strength" or "str" => "力量",
+            "dexterity" or "dex" => "敏捷",
+            "wisdom" or "wis" => "察觉",
+            "charisma" or "cha" => "交涉",
+            "luck" or "lck" => "运气",
+            "constitution" or "con" => "体质",
+            "intelligence" or "int" => "智力",
+            "perception" or "per" => "感知",
+            _ => check.Attribute,
+        };
+        AttributeName = attrName;
+        Label = actionLabel ?? $"{attrName}检定";
         OutcomeLabel = check.Outcome switch
         {
             "success" => "成功",
             "failure" => "失败",
-            "critical_success" => "大成功",
-            "critical_failure" => "大失败",
+            "critical_success" => "大成功 ✦",
+            "critical_failure" => "大失败 ✕",
             _ => check.Outcome,
         };
         IsSuccess = check.Outcome is "success" or "critical_success";
-        Detail = $"{check.Attribute}：d20 = {check.Natural}，修正 {(check.AttributeModifier >= 0 ? "+" : "")}{check.AttributeModifier}，总值 {check.Total} / DC {check.Dc} · {OutcomeLabel}";
+        IsCritSuccess = check.Outcome is "critical_success";
+        IsCritFailure = check.Outcome is "critical_failure";
+        Detail = $"{Label}（{attrName}）：d20 = {check.Natural}，修正 {(check.AttributeModifier >= 0 ? "+" : "")}{check.AttributeModifier}，总值 {check.Total} / DC {check.Dc} · {OutcomeLabel}";
     }
 
     public string RollId { get; }
     public string Attribute { get; }
+    public string AttributeName { get; }
     public int Natural { get; }
     public int Modifier { get; }
     public int Total { get; }
@@ -105,6 +121,8 @@ public sealed class CheckEvidenceViewModel
     public string Label { get; }
     public string OutcomeLabel { get; }
     public bool IsSuccess { get; }
+    public bool IsCritSuccess { get; }
+    public bool IsCritFailure { get; }
     public string Detail { get; }
     public bool HasPermanentEffect => !string.IsNullOrEmpty(PermanentEffect);
 }

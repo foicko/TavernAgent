@@ -34,11 +34,31 @@ internal sealed class JobObjectGuard : IDisposable
         return new JobObjectGuard { _handle = handle };
     }
 
+    public bool TryAssign(IntPtr processHandle)
+    {
+        if (_disposed || _handle == IntPtr.Zero || processHandle == IntPtr.Zero) return false;
+        try
+        {
+            return AssignProcessToJobObject(_handle, processHandle);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public bool TryAssign(int processId)
     {
         if (_disposed || _handle == IntPtr.Zero) return false;
-        var process = OpenProcess(0x001F0FFF, false, processId);
-        if (process == IntPtr.Zero) return false;
+        // PROCESS_SET_QUOTA (0x0100) | PROCESS_TERMINATE (0x0001) is the access required by AssignProcessToJobObject.
+        const uint PROCESS_SET_QUOTA = 0x0100;
+        const uint PROCESS_TERMINATE = 0x0001;
+        var process = OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, false, processId);
+        if (process == IntPtr.Zero)
+        {
+            process = OpenProcess(0x001F0FFF, false, processId);
+            if (process == IntPtr.Zero) return false;
+        }
         try
         {
             return AssignProcessToJobObject(_handle, process);
