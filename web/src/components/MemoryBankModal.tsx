@@ -31,9 +31,15 @@ export const MemoryBankModal: React.FC = () => {
   async function changeMemory(id: string, patch: { content?: string; pinned?: boolean; hidden?: boolean }, message: string) {
     if (memoryReadOnly) return false;
     setMemoryBusy(true);
-    try { await reviseMemory(id, patch); notifyQuiet(message); return true; }
-    catch (error) { notifyQuiet(error instanceof Error ? error.message : "记忆操作失败，请刷新后重试"); return false; }
-    finally { setMemoryBusy(false); }
+    try {
+      // reviseMemory 守卫命中时会静默返回 false：此时不能谎报成功。
+      const applied = await reviseMemory(id, patch);
+      notifyQuiet(applied ? message : "当前状态不允许修改记忆，请刷新后重试");
+      return applied;
+    } catch (error) {
+      notifyQuiet(error instanceof Error ? error.message : "记忆操作失败，请刷新后重试");
+      return false;
+    } finally { setMemoryBusy(false); }
   }
 
   const [memoryFilter, setMemoryFilter] = useState<string>("all");
@@ -188,7 +194,12 @@ export const MemoryBankModal: React.FC = () => {
               disabled={memoryReadOnly}
               onClick={async () => {
                 setMemoryBusy(true);
-                try { await organizeMemories(); } finally { setMemoryBusy(false); }
+                try {
+                  await organizeMemories();
+                  notifyQuiet("记忆整理完成");
+                } catch (error) {
+                  notifyQuiet(error instanceof Error && error.message ? error.message : "记忆整理失败，请稍后重试");
+                } finally { setMemoryBusy(false); }
               }}
             >
               整理
@@ -236,36 +247,23 @@ export const MemoryBankModal: React.FC = () => {
       </div>
 
       <div className="memory-filter-row memory-modal-filters" id="memory-filter-row">
-        <button
-          className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "all" ? "active" : ""}`}
-          onClick={() => setMemoryFilter("all")}
-        >
-          生效 ({memoryCount("all")})
-        </button>
-        <button
-          className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "episodic" ? "active" : ""}`}
-          onClick={() => setMemoryFilter("episodic")}
-        >
-          <Icon name="eye" size={12} /> 亲历 ({memoryCount("episodic")})
-        </button>
-        <button
-          className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "inference" ? "active" : ""}`}
-          onClick={() => setMemoryFilter("inference")}
-        >
-          <Icon name="brain" size={12} /> 推测 ({memoryCount("inference")})
-        </button>
-        <button
-          className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "secret" ? "active" : ""}`}
-          onClick={() => setMemoryFilter("secret")}
-        >
-          <Icon name="lock" size={12} /> 秘密 ({memoryCount("secret")})
-        </button>
-        <button
-          className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === "hidden" ? "active" : ""}`}
-          onClick={() => setMemoryFilter("hidden")}
-        >
-          隐藏 ({memoryCount("hidden")})
-        </button>
+        {([
+          ["all", "生效", null],
+          ["episodic", "亲历", "eye"],
+          ["inference", "推测", "brain"],
+          ["secret", "秘密", "lock"],
+          ["hidden", "隐藏", null],
+        ] as Array<[string, string, "eye" | "brain" | "lock" | null]>).map(([value, label, icon]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={memoryFilter === value}
+            className={`mem-filter-btn memory-modal-filter-btn ${memoryFilter === value ? "active" : ""}`}
+            onClick={() => setMemoryFilter(value)}
+          >
+            {icon ? <Icon name={icon} size={12} /> : null} {label} ({memoryCount(value)})
+          </button>
+        ))}
       </div>
 
       {pageCount > 1 && (

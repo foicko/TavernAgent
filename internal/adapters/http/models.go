@@ -155,8 +155,10 @@ func (s *Server) probeProvider(w http.ResponseWriter, r *http.Request) {
 		writeBodyError(w, err)
 		return
 	}
+	// 非法槽位直接报错，不要静默回退到 primary——否则用户拼错槽位却得到"对另一个模型成功"。
 	if !validSlot(req.Slot) {
-		req.Slot = string(ports.SlotPrimary)
+		writeError(w, 422, "BAD_SLOT", "槽位必须是 primary/assist/reflection 之一", false, "")
+		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -10,14 +9,14 @@ import (
 
 func (s *Server) generateImage(w http.ResponseWriter, r *http.Request) {
 	var req image.GenerateOptions
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid json body", false, "")
+	if err := decodeJSON(w, r, &req, maxRequestBytes); err != nil {
+		writeBodyError(w, err)
 		return
 	}
 
 	prompt := strings.TrimSpace(req.Prompt)
 	if prompt == "" {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "prompt cannot be empty", false, "")
+		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "prompt 不能为空，请提供画面描述", false, "")
 		return
 	}
 
@@ -26,14 +25,14 @@ func (s *Server) generateImage(w http.ResponseWriter, r *http.Request) {
 		var err error
 		imgSvc, err = image.NewService("data/images")
 		if err != nil {
-			writeError(w, http.StatusServiceUnavailable, "IMAGE_SERVICE_UNAVAILABLE", err.Error(), true, "")
+			writeError(w, http.StatusServiceUnavailable, "IMAGE_SERVICE_UNAVAILABLE", "图像服务初始化失败："+err.Error(), true, "")
 			return
 		}
 	}
 
 	res, err := imgSvc.Generate(r.Context(), req)
 	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "IMAGE_GENERATION_FAILED", err.Error(), true, "")
+		writeError(w, http.StatusServiceUnavailable, "IMAGE_GENERATION_FAILED", "图像生成失败："+err.Error(), true, "")
 		return
 	}
 

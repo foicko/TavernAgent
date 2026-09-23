@@ -50,7 +50,7 @@ public sealed partial class StoryMapViewModel : WorkspaceChildViewModel
         SelectedNodeId = TargetNodeId;
         Branches.Clear();
         foreach (var b in view.Branches ?? new List<BranchView> { view.Branch }) Branches.Add(b);
-        _ = ReloadAsync();
+        ReloadAsync().SafeFireAndForget();
     }
 
     [RelayCommand] private void Close() => IsOpen = false;
@@ -63,7 +63,7 @@ public sealed partial class StoryMapViewModel : WorkspaceChildViewModel
     {
         SelectedNodeId = node.NodeId;
         UpdateSelection();
-        _ = LoadDetailAsync();
+        LoadDetailAsync().SafeFireAndForget();
     }
 
     [RelayCommand]

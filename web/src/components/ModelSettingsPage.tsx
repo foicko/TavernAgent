@@ -31,6 +31,8 @@ export function ModelSettingsPage() {
   const models = useSettings((s) => s.models);
   const providers = useSettings((s) => s.providers);
   const saving = useSettings((s) => s.saving);
+  const loadError = useSettings((s) => s.error);
+  const load = useSettings((s) => s.load);
   const optionMode = useSettings((s) => s.optionMode);
   const optionsFrequency = useSettings((s) => s.optionsFrequency);
   const autoContinue = useSettings((s) => s.autoContinue);
@@ -75,6 +77,12 @@ export function ModelSettingsPage() {
 
   return (
     <div className="model-settings-page">
+      {loadError ? (
+        <Banner tone="error">
+          模型配置读取失败：{loadError}
+          <Button size="sm" onClick={() => void load()}>重试</Button>
+        </Banner>
+      ) : null}
       <Section title="角色" description="每个角色用哪个模型。不确定就保持「跟随对话生成」。">
         {models.length === 0 ? (
           <Banner tone="info">还没有连接。先到下面的「连接」新建一个，再回来分配角色。</Banner>

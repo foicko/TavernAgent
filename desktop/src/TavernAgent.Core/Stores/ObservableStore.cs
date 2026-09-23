@@ -20,7 +20,7 @@ public abstract class ObservableStore : INotifyPropertyChanged
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        => StoreDispatcher.Dispatch(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
 }
 
 public sealed class ObservableList<T> : ObservableCollection<T>

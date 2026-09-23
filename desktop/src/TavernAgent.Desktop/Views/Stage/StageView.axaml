@@ -5,12 +5,15 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Stage.StageView"
              x:DataType="vm:StageViewModel">
-  <Grid RowDefinitions="*,Auto">
+  <Grid RowDefinitions="Auto,*,Auto">
 
-    <ScrollViewer Grid.Row="0" Name="Stream"
+    <!-- Sticky scene bar (studio mode): character + regenerate. -->
+    <stage:SceneBarView Grid.Row="0" IsVisible="{Binding IsStudioMode}" />
+
+    <ScrollViewer Grid.Row="1" Name="Stream"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-      <StackPanel MaxWidth="820" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
+      <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
 
         <!-- Reading mode banner -->
         <Border IsVisible="{Binding ShowReadingBanner}" Classes="surface-inset" Padding="20"
@@ -158,13 +161,18 @@
                     </Grid>
                   </Button>
                   <Border IsVisible="{Binding IsThinkingExpanded}"
-                          Padding="14,8,8,4"
-                          BorderThickness="2,0,0,0"
-                          BorderBrush="{DynamicResource BorderMidBrush}">
-                    <SelectableTextBlock Text="{Binding ThinkingText}"
-                                         TextWrapping="Wrap" FontFamily="{DynamicResource FontMono}"
-                                         FontSize="12" LineHeight="20"
-                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                          Classes="surface-inset"
+                          CornerRadius="{DynamicResource RadiusMd}"
+                          Padding="12,10"
+                          Margin="0,4,0,0">
+                    <ScrollViewer MaxHeight="300"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                      <SelectableTextBlock Text="{Binding ThinkingText}"
+                                           TextWrapping="Wrap" FontFamily="{DynamicResource FontMono}"
+                                           FontSize="12" LineHeight="20"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </ScrollViewer>
                   </Border>
                 </StackPanel>
               </Border>
@@ -255,7 +263,7 @@
       </StackPanel>
     </ScrollViewer>
 
-    <ContentControl Grid.Row="1" IsVisible="{Binding IsStudioMode}">
+    <ContentControl Grid.Row="2" IsVisible="{Binding IsStudioMode}">
       <stage:ComposerView DataContext="{Binding Composer}" />
     </ContentControl>
   </Grid>

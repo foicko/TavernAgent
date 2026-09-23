@@ -140,7 +140,7 @@ public sealed class TavernApiClient : IDisposable
         }
         using (res)
         {
-            var text = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            var text = await res.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
             if (!res.IsSuccessStatusCode)
             {
                 if (res.StatusCode == HttpStatusCode.Unauthorized)
@@ -190,11 +190,11 @@ public sealed class TavernApiClient : IDisposable
         {
             if (!res.IsSuccessStatusCode)
             {
-                var text = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                var text = await res.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
                 if (res.StatusCode == HttpStatusCode.Unauthorized) NotifyAuthRequired();
                 throw new ApiError((int)res.StatusCode, text);
             }
-            return await res.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
+            return await res.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
         }
     }
 
@@ -215,7 +215,7 @@ public sealed class TavernApiClient : IDisposable
         }
         using (res)
         {
-            var text = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            var text = await res.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
             if (!res.IsSuccessStatusCode)
             {
                 if (res.StatusCode == HttpStatusCode.Unauthorized) NotifyAuthRequired();
@@ -364,7 +364,7 @@ public sealed class TavernApiClient : IDisposable
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(30));
         using var res = await _http.SendAsync(reqMsg, cts.Token).ConfigureAwait(false);
-        var text = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        var text = await res.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
         if (!res.IsSuccessStatusCode)
         {
             if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized) NotifyAuthRequired();

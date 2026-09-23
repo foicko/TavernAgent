@@ -30,12 +30,14 @@ public class App : Application
             appLife.MainWindow = window;
             window.Show();
             window.Activate();
-            appLife.Exit += async (_, _) =>
+            // Blocking teardown: Avalonia does not await async Exit handlers, so a
+            // fire-and-forget dispose can be cut short and orphan the sidecar.
+            appLife.Exit += (_, _) =>
             {
-                try { await _shell.DisposeAsync(); }
+                try { _shell.Dispose(); }
                 catch { /* process teardown */ }
             };
-            _ = _shell.InitializeAsync();
+            _shell.InitializeAsync().SafeFireAndForget();
         }
 
         base.OnFrameworkInitializationCompleted();

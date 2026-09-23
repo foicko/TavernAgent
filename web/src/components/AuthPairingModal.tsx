@@ -90,6 +90,8 @@ export const AuthPairingModal: React.FC<Props> = ({ open, onSuccess, onClose }) 
           type="text"
           autoFocus
           maxLength={12}
+          inputMode="numeric"
+          pattern="[0-9]*"
           className="ui-input pairing-pin"
           aria-label="6 位配对码"
           placeholder="请输入 6 位配对码 (如 849201)"

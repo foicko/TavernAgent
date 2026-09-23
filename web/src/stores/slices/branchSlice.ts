@@ -115,8 +115,8 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
   editAssistantText: async (nodeId: string, blocks: TextBlock[]) => {
     const owner = scope();
     const view = get().view;
-    if (!view || isTurnBusy(get().phase)) return;
-    set({ error: null });
+    if (!view || isTurnBusy(get().phase) || get().branchBusy) return;
+    set({ branchBusy: true, error: null });
     try {
       const res = (await api.editTurn(view.sessionId, view.branch.branchId, {
         nodeId,
@@ -128,19 +128,25 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
       await openDerivedBranch(view.sessionId, res.branchId);
     } catch (e) {
       if (owns(owner)) set({ error: toErr(e) });
+    } finally {
+      // 无条件清除：openDerivedBranch 会切分支使 owns() 失效，条件清除会把忙碌锁死。
+      set({ branchBusy: false });
     }
   },
 
   forkFrom: async (nodeId: string, name?: string) => {
     const owner = scope();
     const view = get().view;
-    if (!view || isTurnBusy(get().phase)) return;
+    if (!view || isTurnBusy(get().phase) || get().branchBusy) return;
+    set({ branchBusy: true, error: null });
     try {
       const res = await api.forkBranch(view.sessionId, { fromNodeId: nodeId, name, expectedCharacterId: view.characterId });
       if (!owns(owner)) return;
       await openDerivedBranch(view.sessionId, res.branch.branchId);
     } catch (e) {
       if (owns(owner)) set({ error: toErr(e) });
+    } finally {
+      set({ branchBusy: false });
     }
   },
 
@@ -157,7 +163,11 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
         before: st.oldestTurnId ?? undefined,
         viewNodeId: st.viewNodeId ?? undefined,
       });
-      if (!owns(owner) || reloadSeq !== ticket) return;
+      if (!owns(owner) || reloadSeq !== ticket) {
+        // 视图已经换过：确保不把"加载中"留在这个视图上。
+        set({ loadingOlder: false });
+        return;
+      }
       const olderMessages = messagesFromNodes(older, get().turnThinking).filter((m) => m.role !== "opening");
       set({
         messages: [...olderMessages.filter(m => !get().messages.some(existing => existing.id === m.id)), ...get().messages],
@@ -166,8 +176,8 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
         loadingOlder: false,
       });
     } catch (e) {
-      if (owns(owner)) set({ loadingOlder: false });
-      throw e;
+      // 调用方用 void 调用，不能靠 throw 让用户看见；写进 error 由叙事流呈现。
+      if (owns(owner)) set({ loadingOlder: false, error: "加载更早历史失败：" + toErr(e) });
     }
   },
   };

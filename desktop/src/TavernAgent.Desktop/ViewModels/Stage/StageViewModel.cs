@@ -67,7 +67,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
 
     private void OnIllustrationChanged(object? sender, EventArgs e) => RunOnUi(() =>
     {
-        foreach (var message in _messages) _ = message.Illustration.ReloadAsync();
+        foreach (var message in _messages) message.Illustration.ReloadAsync().SafeFireAndForget();
     });
 
     public ObservableCollection<MessageViewModel> Messages { get; } = new();

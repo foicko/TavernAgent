@@ -36,14 +36,14 @@ public sealed partial class SlotPickerViewModel : ObservableObject
     partial void OnSelectedOptionChanged(OptionItem? value)
     {
         if (_suppress || value is null) return;
-        _ = _page.AssignSlotAsync(this);
+        _page.AssignSlotAsync(this).SafeFireAndForget();
     }
 
     partial void OnEnabledChanged(bool value)
     {
         OnPropertyChanged(nameof(IsPickerEnabled));
         if (_suppress || !IsReflection) return;
-        _ = _page.AssignSlotAsync(this);
+        _page.AssignSlotAsync(this).SafeFireAndForget();
     }
 
     public void Rebuild(IReadOnlyList<ModelInstance> models, ProviderConfig? config)

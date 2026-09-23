@@ -290,9 +290,20 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 				}
 			}
 
-			// 思考链增量
+			// 事件类型：payload.type 与 SSE 的 event: 行名二选一（不同网关填法不一），
+			// 优先 payload.type。真实 Responses 事件名是 response.output_text.delta
+			// 与 response.reasoning_summary_text.delta / response.reasoning_text.delta；
+			// 此前只显式认 response.text.delta（并不存在），思考摘要因此被当成正文
+			// 塞给帧解析器，污染正文并可能整轮失败。
+			evType := payload.Type
+			if evType == "" {
+				evType = ev.Event
+			}
+			isReasoning := strings.Contains(evType, "reasoning")
+
+			// 思考链增量（reasoning 事件，或供应商自带的 reasoning_delta 字段）。
 			reasoningText := payload.ReasoningDelta
-			if reasoningText == "" && (ev.Event == "response.reasoning_text.delta" || ev.Event == "response.reasoning.delta" || payload.Type == "response.reasoning_text.delta" || payload.Type == "response.reasoning.delta") {
+			if reasoningText == "" && isReasoning {
 				reasoningText = payload.Delta
 			}
 			if reasoningText != "" {
@@ -306,9 +317,10 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 				}
 			}
 
-			// 正文内容增量
+			// 正文内容增量：非 reasoning 事件携带 delta 的即为正文。
+			// response.output_text.done 等终帧只带 text、不带 delta，因此不会重复。
 			contentText := ""
-			if ev.Event == "response.text.delta" || payload.Type == "response.text.delta" || (payload.Delta != "" && reasoningText == "") {
+			if !isReasoning && payload.Delta != "" {
 				contentText = payload.Delta
 			}
 

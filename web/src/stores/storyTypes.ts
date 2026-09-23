@@ -115,6 +115,8 @@ export interface StoryState extends DirectorSliceState {
   lastInput: TurnInput | null;
   activeBranchId: string | null;
   viewNodeId: string | null;
+  /** 分支写操作（分叉 / 编辑正文候选）在途：用于禁用重复提交并展示忙碌态。 */
+  branchBusy: boolean;
   packError: string | null;
   hasMoreHistory: boolean;
   oldestTurnId: string | null;
@@ -132,7 +134,7 @@ export interface StoryState extends DirectorSliceState {
   startNewSessionForCurrentChar: () => Promise<void>;
   createSession: (opts: CreateSessionOpts) => ReturnType<typeof api.createSession>;
   createSessionFromPreset: (charKey: string) => ReturnType<typeof api.createSession>;
-  exportSession: () => Promise<void>;
+  exportSession: () => Promise<boolean>;
   importSession: (file: File) => Promise<void>;
   clearPackError: () => void;
 
@@ -142,6 +144,7 @@ export interface StoryState extends DirectorSliceState {
   cancel: () => Promise<void>;
   continueTurn: () => Promise<void>;
   retry: () => Promise<void>;
+  clearError: () => void;
   clearPending: () => void;
   prepareAction: (text: string, actionRef: string) => void;
   refreshView: () => Promise<void>;
@@ -149,7 +152,7 @@ export interface StoryState extends DirectorSliceState {
 
   // Memory Actions
   loadMemories: (options?: MemoryLoadOptions) => Promise<void>;
-  reviseMemory: (memoryId: string, patch: { content?: string; pinned?: boolean; hidden?: boolean }) => Promise<void>;
+  reviseMemory: (memoryId: string, patch: { content?: string; pinned?: boolean; hidden?: boolean }) => Promise<boolean>;
   organizeMemories: () => Promise<void>;
 
   // Branch Actions

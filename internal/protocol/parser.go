@@ -2,7 +2,9 @@ package protocol
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"io"
 	"strings"
 	"sync/atomic"
 	"unicode/utf8"
@@ -91,6 +93,10 @@ func (p *StreamParser) Mode() string {
 // TailError 返回 Finish 阶段被废弃的尾行解析错误（如有）。
 // 用于把「未收到 final」细化为可诊断的原因，例如字段名不合规。
 func (p *StreamParser) TailError() error { return p.tailErr }
+
+// Bytes 返回已喂入的总字节数。应用层用它区分「模型什么都没输出」与
+// 「输出了但不符合帧协议」——前者通常是可重试的供应商问题，后者才是协议问题。
+func (p *StreamParser) Bytes() int { return p.total }
 
 // Frames 返回已发布的块帧。
 func (p *StreamParser) Blocks() []BlockFrame { return p.draft.Blocks }
@@ -400,17 +406,34 @@ func (p *StreamParser) acceptLine(line []byte) error {
 	if p.sawFinal {
 		return ErrAfterFinal
 	}
-	has, frame, err := parseFrame(line)
+	if len(trimmed) == 0 {
+		return Invalid("empty frame line", 0)
+	}
+
+	// 一行可能挤着多个帧：模型（尤其 DeepSeek）偶尔把整个输出压成一行，
+	// 或省略帧间换行。按 JSON 值逐个切分再解析，而不是把整行当一个对象——
+	// 否则 json.Unmarshal 会因尾随数据报错，真正的帧被静默丢弃，整轮被误判为
+	// 「缺少 final」并不可重试。切分失败（非 JSON 行）走既有的降级判定。
+	values, err := splitJSONValues(trimmed)
 	if err != nil {
-		// 兼容模式降级：首个非空行是普通文本（不以 "{" 开头，不是帧尝试）且尚未发布任何帧
-		// → 整条流按纯叙事处理。
-		// 以 "{" 开头说明模型在尝试输出帧，只是格式非法：仍按协议错误硬拒绝，
-		// 避免用宽松解析掩盖残缺操作（契约 §4）。
-		if p.published == 0 && !bytes.HasPrefix(trimmed, []byte("{")) {
-			p.mode = ModeNarrative
+		return p.handleBadLine(trimmed, err)
+	}
+	for _, v := range values {
+		if err := p.acceptFrame(v); err != nil {
+			return err
+		}
+		if p.Mode() == ModeNarrative {
 			return nil
 		}
-		return err
+	}
+	return nil
+}
+
+// acceptFrame 校验并收下单个帧对象（已从一行中切出）。
+func (p *StreamParser) acceptFrame(line []byte) error {
+	has, frame, err := parseFrame(line)
+	if err != nil {
+		return p.handleBadLine(bytes.TrimSpace(line), err)
 	}
 	if !has {
 		return Invalid("empty frame line", 0)
@@ -439,4 +462,47 @@ func (p *StreamParser) acceptLine(line []byte) error {
 		return p.onFrame(frame)
 	}
 	return nil
+}
+
+// handleBadLine 决定一行解析失败时是降级为纯叙事还是硬拒绝。
+//
+// 兼容模式降级：首个非空行是普通文本（不以 "{" 开头，不是帧尝试）且尚未发布任何帧
+// → 整条流按纯叙事处理。以 "{" 开头说明模型在尝试输出帧，只是格式非法：仍按协议错误
+// 硬拒绝，避免用宽松解析掩盖残缺操作（契约 §4）。
+func (p *StreamParser) handleBadLine(trimmed []byte, err error) error {
+	if p.published == 0 && !bytes.HasPrefix(trimmed, []byte("{")) {
+		p.mode = ModeNarrative
+		return nil
+	}
+	return err
+}
+
+// splitJSONValues 把一行切成若干完整的 JSON 值（对象/数组）。
+//
+// 输入含任何非 JSON 内容或值本身非法时返回 ValidationError；返回空切片不会发生
+// （空输入由调用方提前拦截）。使用 json.Decoder 而非 strings.Split，是因为字符串
+// 内部的 "{" 不能作为切分点。
+func splitJSONValues(data []byte) ([][]byte, error) {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+	var out [][]byte
+	for {
+		var raw json.RawMessage
+		start := dec.InputOffset()
+		if err := dec.Decode(&raw); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, Invalid("malformed JSON frame: "+err.Error(), 0)
+		}
+		end := dec.InputOffset()
+		value := bytes.TrimSpace(data[start:end])
+		if len(value) > 0 {
+			out = append(out, value)
+		}
+	}
+	if len(out) == 0 {
+		return nil, Invalid("empty frame line", 0)
+	}
+	return out, nil
 }

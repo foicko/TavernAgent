@@ -36,7 +36,7 @@ public sealed class IllustrationStore : ObservableStore
         if (string.IsNullOrEmpty(turnId)) return;
         _map[turnId] = result;
         Persist();
-        Changed?.Invoke(this, EventArgs.Empty);
+        StoreDispatcher.Dispatch(() => Changed?.Invoke(this, EventArgs.Empty));
     }
 
     public void Remove(string turnId)
@@ -44,7 +44,7 @@ public sealed class IllustrationStore : ObservableStore
         if (_map.Remove(turnId))
         {
             Persist();
-            Changed?.Invoke(this, EventArgs.Empty);
+            StoreDispatcher.Dispatch(() => Changed?.Invoke(this, EventArgs.Empty));
         }
     }
 

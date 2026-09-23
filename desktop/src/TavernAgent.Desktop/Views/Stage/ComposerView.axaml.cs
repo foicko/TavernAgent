@@ -63,6 +63,10 @@ public partial class ComposerView : UserControl
             InputBox.SelectionStart = InputBox.CaretIndex;
             InputBox.SelectionEnd = InputBox.CaretIndex;
         }
+        if (DataContext is ComposerViewModel vm)
+        {
+            vm.Text = InputBox.Text ?? "";
+        }
         InputBox.Focus();
     }
 }

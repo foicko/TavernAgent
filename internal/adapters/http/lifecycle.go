@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -72,7 +73,8 @@ func (d *requestDrain) wrap(next http.Handler) http.Handler {
 		if !d.begin() {
 			// http.Server.Shutdown 已停止接受新连接，这里只是兵底：
 			// 宁可明确拒绘，也不要在存储已经关闭后让 handler 跑起来。
-			http.Error(w, "服务正在关停", http.StatusServiceUnavailable)
+			// 用统一 JSON 错误体，避免前端解析错误响应时拿到纯文本而失控。
+			writeError(w, http.StatusServiceUnavailable, "SHUTTING_DOWN", "服务正在关停，请稍后重试", true, "")
 			return
 		}
 		defer d.end()
@@ -99,14 +101,24 @@ func (d *requestDrain) wait(timeout time.Duration) error {
 }
 
 func (s *Server) ListenAndServeContext(ctx context.Context) error {
+	return s.ListenAndServeContextOnReady(ctx, nil)
+}
+
+// ListenAndServeContextOnReady 与 ListenAndServeContext 相同，但在端口真正绑定
+// 成功之后、开始服务之前调用 onReady。调用方据此打印"服务就绪"，避免端口占用
+// 时先报成功、再报失败。
+func (s *Server) ListenAndServeContextOnReady(ctx context.Context, onReady func()) error {
 	listener, err := net.Listen("tcp", s.addr)
 	if err != nil {
-		return err
+		return fmt.Errorf("无法监听 %s：%w（端口可能已被占用，请用 -addr 指定其它端口）", s.addr, err)
 	}
 	// TLS 包在监听层而不是 handler 层：这样关停、连接排空与 SSE 的写截止时间
 	// 走的还是同一条路径，不需要为 HTTPS 再维护一份生命周期。
 	if s.tlsConfig != nil {
 		listener = tls.NewListener(listener, s.tlsConfig)
+	}
+	if onReady != nil {
+		onReady()
 	}
 	return s.Serve(ctx, listener)
 }
@@ -118,7 +130,9 @@ func (s *Server) Serve(ctx context.Context, listener net.Listener) error {
 	requests, cancel := context.WithCancel(ctx)
 	defer cancel()
 	drain := newRequestDrain()
-	server := &http.Server{Handler: drain.wrap(s.Handler()), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second,
+	// ReadTimeout 覆盖整个请求体的读取：角色卡上限 32MB，慢速局域网下 30s 会把
+	// 正常上传中途掐断成不透明的连接错误。放宽到 120s；头部与空闲仍保持严格。
+	server := &http.Server{Handler: drain.wrap(s.Handler()), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 120 * time.Second, IdleTimeout: 60 * time.Second,
 		BaseContext: func(net.Listener) context.Context { return requests }}
 	served := make(chan struct{})
 	stopped := make(chan error, 1)

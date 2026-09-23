@@ -121,6 +121,12 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
   （开机自启）两个入口随之消失；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
   可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是补回 `cmd/tavernagent` 的参数，
   还是改为在 Avalonia 端提供设置项。系统托盘同样未实现。
+- **桌面端稳定性（M10 已偿还）**：启动崩溃（Avalonia 12 `WindowDrawnDecorations` /
+  `HasTitleBar is readonly`）与运行期跨线程集合崩溃（`Collection was modified`）已修复——
+  store 通知统一经 `StoreDispatcher` 投递到 UI 线程、后台任务走 `SafeFireAndForget`、
+  UI 线程异常有兜底与日志；窗口 chrome 改为 `BorderOnly` + 自绘顶栏。回归测试见
+  `StoreDispatcherTests` / `ResponsiveLayoutTests`。仍待实机验证：Windows 之外平台、系统托盘、
+  `-lan`/`-autostart` 入口。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
 ## 7. 待做功能与近期完成

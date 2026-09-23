@@ -10,6 +10,8 @@
     <Border Name="Card"
             Classes="surface-elevated anim-pop"
             Margin="16"
+            CornerRadius="{DynamicResource Radius2xl}"
+            Focusable="True"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             ClipToBounds="True"
@@ -28,9 +30,14 @@
           </Button>
         </Grid>
         <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource BorderBrush}" />
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-          <ContentPresenter Content="{Binding $parent[controls:Modal].Body}" Margin="20,16,20,20" />
-        </ScrollViewer>
+        <Panel>
+          <ScrollViewer IsVisible="{Binding !$parent[controls:Modal].HasInnerScroll}"
+                        VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ContentPresenter Content="{Binding $parent[controls:Modal].Body}" Margin="20,16,20,20" />
+          </ScrollViewer>
+          <ContentPresenter IsVisible="{Binding $parent[controls:Modal].HasInnerScroll}"
+                            Content="{Binding $parent[controls:Modal].Body}" Margin="20,16,20,20" />
+        </Panel>
       </DockPanel>
     </Border>
   </Grid>

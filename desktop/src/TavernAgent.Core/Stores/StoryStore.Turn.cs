@@ -592,6 +592,11 @@ internal static class InteractionSettingsPersisted
         }
     }
 
+    public static void Update(InteractionSettings s)
+    {
+        _cached = s;
+    }
+
     public static OptionMode OptionMode => Cached.OptionMode;
     public static OptionsFrequency OptionsFrequency => Cached.OptionsFrequency;
     public static bool AutoContinue => Cached.AutoContinue;

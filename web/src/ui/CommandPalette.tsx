@@ -38,8 +38,15 @@ export function CommandPalette({
   const activePosition = enabledFlags[activeIndex] ? activeIndex : firstEnabled;
   const active = activePosition >= 0 ? visible[activePosition] : undefined;
 
+  const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
+    // 面板随打开挂载、随关闭卸载：记住触发元素并在卸载时归还焦点。
+    triggerRef.current = (document.activeElement as HTMLElement | null) ?? null;
     inputRef.current?.focus();
+    return () => {
+      const trigger = triggerRef.current;
+      if (trigger && trigger.isConnected) trigger.focus?.();
+    };
   }, []);
 
   useEffect(() => {

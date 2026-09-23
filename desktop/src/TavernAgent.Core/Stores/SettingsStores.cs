@@ -116,5 +116,9 @@ public static class SettingsPersistence
     public static void SaveEmbedding(EmbeddingSettings s) => Save("embedding_settings.json", s);
 
     public static InteractionSettings LoadInteraction() => Load("interaction_settings.json", InteractionSettings.Defaults);
-    public static void SaveInteraction(InteractionSettings s) => Save("interaction_settings.json", s);
+    public static void SaveInteraction(InteractionSettings s)
+    {
+        InteractionSettingsPersisted.Update(s);
+        Save("interaction_settings.json", s);
+    }
 }

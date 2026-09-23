@@ -13,7 +13,7 @@ import (
 
 // ErrTruncatedStream 是供应商明确截断信号（finish_reason=length 等）。
 // 应用层据此进入 awaiting_continuation，而非视为失败。
-var ErrTruncatedStream = errors.New("stream truncated by provider")
+var ErrTruncatedStream = errors.New("模型输出被供应商截断，可继续续写")
 
 // ErrNonStreamingResponse 表示供应商返回 2xx，但正文里没有任何流式事件
 // （网关返回 HTML 错误页、JSON 错误体或空响应都属于这一类）。
@@ -21,7 +21,7 @@ var ErrTruncatedStream = errors.New("stream truncated by provider")
 // 它必须与 ErrTruncatedStream 分开：截断意味着"模型写了一半"，可以拿已发布的
 // 草稿帧续写；而非流式响应连一个帧都没有，续写无从谈起，只能归类为供应商不可用。
 // 此前二者混用，网关 200 错误页会被当成截断，用户看到一个空草稿的续写态。
-var ErrNonStreamingResponse = errors.New("provider returned no streaming events")
+var ErrNonStreamingResponse = errors.New("供应商未返回任何流式事件，可能不是流式接口或网关返回了错误页")
 
 // ErrNotFound 表示目标对象不存在。
 // 端口级语义：应用层据此返回 404，不必依赖具体适配器的错误类型。

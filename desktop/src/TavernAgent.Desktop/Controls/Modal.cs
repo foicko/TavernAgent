@@ -22,6 +22,12 @@ public partial class Modal : UserControl
     public static readonly StyledProperty<double> DialogWidthProperty =
         AvaloniaProperty.Register<Modal, double>(nameof(DialogWidth), 720d);
 
+    public static readonly StyledProperty<double> DialogHeightProperty =
+        AvaloniaProperty.Register<Modal, double>(nameof(DialogHeight), double.NaN);
+
+    public static readonly StyledProperty<bool> HasInnerScrollProperty =
+        AvaloniaProperty.Register<Modal, bool>(nameof(HasInnerScroll), false);
+
     public static readonly StyledProperty<object?> BodyProperty =
         AvaloniaProperty.Register<Modal, object?>(nameof(Body));
 
@@ -39,6 +45,8 @@ public partial class Modal : UserControl
         KeyDown += OnKeyDown;
         IsOpenProperty.Changed.AddClassHandler<Modal>((m, e) => m.OnIsOpenChanged((bool)e.NewValue!));
         DialogWidthProperty.Changed.AddClassHandler<Modal>((m, e) => m.UpdateCardConstraints(m.Bounds.Size));
+        DialogHeightProperty.Changed.AddClassHandler<Modal>((m, e) => m.UpdateCardConstraints(m.Bounds.Size));
+        HasInnerScrollProperty.Changed.AddClassHandler<Modal>((m, e) => m.UpdateCardConstraints(m.Bounds.Size));
     }
 
     public bool IsOpen { get => GetValue(IsOpenProperty); set => SetValue(IsOpenProperty, value); }
@@ -46,6 +54,10 @@ public partial class Modal : UserControl
     public string? Title { get => GetValue(TitleProperty); set => SetValue(TitleProperty, value); }
 
     public double DialogWidth { get => GetValue(DialogWidthProperty); set => SetValue(DialogWidthProperty, value); }
+
+    public double DialogHeight { get => GetValue(DialogHeightProperty); set => SetValue(DialogHeightProperty, value); }
+
+    public bool HasInnerScroll { get => GetValue(HasInnerScrollProperty); set => SetValue(HasInnerScrollProperty, value); }
 
     public object? Body { get => GetValue(BodyProperty); set => SetValue(BodyProperty, value); }
 
@@ -98,7 +110,23 @@ public partial class Modal : UserControl
 
         if (size.Height > 0)
         {
-            Card.MaxHeight = Math.Max(200, size.Height - 32);
+            // Web `.ui-modal` caps at 88vh; keep a small floor for tiny windows.
+            var maxH = Math.Max(200, size.Height * 0.88);
+            Card.MaxHeight = maxH;
+
+            if (HasInnerScroll)
+            {
+                var targetHeight = double.IsNaN(DialogHeight) ? 640d : DialogHeight;
+                Card.Height = Math.Min(targetHeight, maxH);
+            }
+            else if (!double.IsNaN(DialogHeight))
+            {
+                Card.Height = Math.Min(DialogHeight, maxH);
+            }
+            else
+            {
+                Card.ClearValue(HeightProperty);
+            }
         }
     }
 }

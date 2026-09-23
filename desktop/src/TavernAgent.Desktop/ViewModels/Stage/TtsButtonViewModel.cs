@@ -9,6 +9,7 @@ namespace TavernAgent.Desktop.ViewModels.Stage;
 public sealed partial class TtsButtonViewModel : ObservableObject
 {
     private readonly StageViewModel _stage;
+    private readonly IDisposable _ttsSub;
     private TTSSettings _settings;
 
     public TtsButtonViewModel(StageViewModel stage, string fullText, string dialogueText)
@@ -17,7 +18,10 @@ public sealed partial class TtsButtonViewModel : ObservableObject
         FullText = fullText;
         DialogueText = dialogueText;
         _settings = SettingsPersistence.LoadTts();
-        AppServices.Tts.StateChanged += OnPlayerState;
+        _ttsSub = UiEvents.Event(
+            h => AppServices.Tts.StateChanged += h,
+            h => AppServices.Tts.StateChanged -= h,
+            OnPlayerState);
     }
 
     public string FullText { get; }
@@ -95,7 +99,7 @@ public sealed partial class TtsButtonViewModel : ObservableObject
         OnPropertyChanged(nameof(Tooltip));
     }
 
-    public void Detach() => AppServices.Tts.StateChanged -= OnPlayerState;
+    public void Detach() => _ttsSub.Dispose();
 
     private static string Wire(TTSEngine e) => e switch
     {

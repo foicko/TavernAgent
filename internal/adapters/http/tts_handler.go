@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -29,17 +28,17 @@ func (s *Server) listTTSVoices(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) synthesizeTTS(w http.ResponseWriter, r *http.Request) {
 	var req ttsSynthesizeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid json body", false, "")
+	if err := decodeJSON(w, r, &req, maxRequestBytes); err != nil {
+		writeBodyError(w, err)
 		return
 	}
 	text := strings.TrimSpace(req.Text)
 	if text == "" {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "text cannot be empty", false, "")
+		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "text 不能为空，请提供要合成的文本", false, "")
 		return
 	}
 	if len([]rune(text)) > 1000 {
-		writeError(w, http.StatusBadRequest, "TEXT_TOO_LONG", "text length exceeds maximum limit of 1000 characters", false, "")
+		writeError(w, http.StatusBadRequest, "TEXT_TOO_LONG", "文本长度超过 1000 字上限，请分段合成", false, "")
 		return
 	}
 
@@ -59,7 +58,7 @@ func (s *Server) synthesizeTTS(w http.ResponseWriter, r *http.Request) {
 		Speed:       req.Speed,
 	})
 	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "TTS_UNAVAILABLE", err.Error(), true, "")
+		writeError(w, http.StatusServiceUnavailable, "TTS_UNAVAILABLE", "语音合成失败："+err.Error(), true, "")
 		return
 	}
 

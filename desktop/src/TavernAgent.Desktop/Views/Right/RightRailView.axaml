@@ -23,7 +23,7 @@
       <StackPanel Margin="14,12,14,40" Spacing="14">
 
         <!-- Tachie stage -->
-        <Border CornerRadius="{DynamicResource RadiusLg}" Height="290" ClipToBounds="True"
+        <Border CornerRadius="{DynamicResource RadiusLg}" Height="{DynamicResource TachieHeight}" ClipToBounds="True"
                 Background="{DynamicResource SubtleBrush}"
                 BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1">
           <Panel>

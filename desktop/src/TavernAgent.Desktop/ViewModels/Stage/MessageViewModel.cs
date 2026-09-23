@@ -87,6 +87,7 @@ public sealed partial class MessageViewModel : ObservableObject
     public IReadOnlyList<MemoryEvidenceViewModel> Memories { get; }
 
     public bool HasInputText { get; }
+    public bool HasInputNote => InputNote is not null;
     public bool HasThinking { get; }
     public bool ShowToolbar { get; }
     public bool HasEvidence { get; }
@@ -210,7 +211,7 @@ public sealed partial class MessageViewModel : ObservableObject
     [RelayCommand]
     private void ChooseOption(OptionViewModel? option)
     {
-        if (option is not null) _ = _stage.ChooseOptionAsync(option);
+        if (option is not null) _stage.ChooseOptionAsync(option).SafeFireAndForget();
     }
 
     public void NotifyCopied() => _stage.Ui.NotifyQuiet("已复制文学正文到剪贴板");

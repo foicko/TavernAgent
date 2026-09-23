@@ -125,15 +125,20 @@
               </Grid>
             </Button>
             <Border IsVisible="{Binding IsThinkingExpanded}"
-                    Padding="14,8,8,4"
-                    BorderThickness="2,0,0,0"
-                    BorderBrush="{DynamicResource BorderMidBrush}">
-              <SelectableTextBlock Text="{Binding Thinking}"
-                                   TextWrapping="Wrap"
-                                   FontFamily="{DynamicResource FontMono}"
-                                   FontSize="12"
-                                   LineHeight="20"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    Classes="surface-inset"
+                    CornerRadius="{DynamicResource RadiusMd}"
+                    Padding="12,10"
+                    Margin="0,4,0,0">
+              <ScrollViewer MaxHeight="300"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+                <SelectableTextBlock Text="{Binding Thinking}"
+                                     TextWrapping="Wrap"
+                                     FontFamily="{DynamicResource FontMono}"
+                                     FontSize="12"
+                                     LineHeight="20"
+                                     Foreground="{DynamicResource TextSecondaryBrush}" />
+              </ScrollViewer>
             </Border>
           </StackPanel>
         </Border>
@@ -177,6 +182,15 @@
 
         <!-- Evidence -->
         <StackPanel IsVisible="{Binding HasEvidence}" Spacing="8">
+          <Border Classes="chip" HorizontalAlignment="Left" IsVisible="{Binding HasInputNote}" Margin="0,0,6,4">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <Path Classes="icon" Data="{StaticResource IconNote}" Width="11" Height="11"
+                    Stroke="{DynamicResource TextDimBrush}" />
+              <TextBlock Text="{Binding InputNote, StringFormat=本轮注记：{0}}" FontSize="{DynamicResource FsXs}"
+                         Foreground="{DynamicResource TextSecondaryBrush}" />
+            </StackPanel>
+          </Border>
+
           <ItemsControl ItemsSource="{Binding Changes}" IsVisible="{Binding HasEvidenceLine}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate>

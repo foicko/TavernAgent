@@ -96,8 +96,8 @@ export const CharacterImportModal: React.FC = () => {
     } catch (err: unknown) {
       if (sequence !== parseSequence.current) return;
       const msg = err instanceof Error ? err.message : String(err);
+      // 只留 Banner（就地、可读），不再叠加一条重复的 toast。
       setError("卡片解析失败：" + msg);
-      notifyQuiet(`卡片解析失败：${msg}`);
     } finally {
       if (sequence === parseSequence.current) setParsing(false);
     }

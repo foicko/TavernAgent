@@ -178,7 +178,7 @@ public sealed partial class StoryStore : ObservableStore
     {
         base.OnPropertyChanged(propertyName);
         if (propertyName is not null and not nameof(PropertyChanged))
-            StateChanged?.Invoke(this, EventArgs.Empty);
+            StoreDispatcher.Dispatch(() => StateChanged?.Invoke(this, EventArgs.Empty));
     }
 
     private string PhaseWire => Phase switch

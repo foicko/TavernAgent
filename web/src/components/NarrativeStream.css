@@ -280,6 +280,14 @@
   line-height: var(--lh-normal);
   overflow-wrap: anywhere;
 }
+.error-turn__actions {
+  flex: none;
+  align-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
 .error-turn__retry {
   flex: none;
   align-self: center;

@@ -44,7 +44,10 @@
         <Path Classes="icon" Data="{StaticResource IconSearch}" />
       </Button>
       <Button Classes="rail-btn" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="切换主题">
-        <Path Classes="icon" Data="{StaticResource IconSun}" />
+        <Panel>
+          <Path Classes="icon" Data="{StaticResource IconSun}" IsVisible="{Binding IsDarkTheme}" />
+          <Path Classes="icon" Data="{StaticResource IconMoon}" IsVisible="{Binding !IsDarkTheme}" />
+        </Panel>
       </Button>
       <Button Classes="rail-btn" Command="{Binding OpenSettingsCommand}" ToolTip.Tip="设置">
         <Path Classes="icon" Data="{StaticResource IconSliders}" />

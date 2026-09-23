@@ -19,6 +19,15 @@ public sealed class UiStore : ObservableStore
     private bool _rightCollapsed;
     public bool RightCollapsed { get => _rightCollapsed; private set => SetProperty(ref _rightCollapsed, value); }
 
+    // Responsive auto-collapse, driven by the window width (web: media queries).
+    // Kept separate from the user's manual preference so resizing can re-expand
+    // without clobbering an explicit choice.
+    private bool _autoLeftCollapsed;
+    public bool AutoLeftCollapsed { get => _autoLeftCollapsed; private set => SetProperty(ref _autoLeftCollapsed, value); }
+
+    private bool _autoRightCollapsed;
+    public bool AutoRightCollapsed { get => _autoRightCollapsed; private set => SetProperty(ref _autoRightCollapsed, value); }
+
     private bool _flyoutOpen;
     public bool FlyoutOpen { get => _flyoutOpen; private set => SetProperty(ref _flyoutOpen, value); }
 
@@ -85,8 +94,17 @@ public sealed class UiStore : ObservableStore
             NotifyQuiet("纯净编年阅读模式下侧栏默认整体隐藏");
             return;
         }
-        LeftCollapsed = !LeftCollapsed;
-        NotifyQuiet(LeftCollapsed ? "左栏已收起" : "左栏已展开");
+        if (!LeftCollapsed && !AutoLeftCollapsed)
+        {
+            LeftCollapsed = true;
+            NotifyQuiet("左栏已收起");
+        }
+        else
+        {
+            LeftCollapsed = false;
+            AutoLeftCollapsed = false; // an explicit expand wins over the width rule
+            NotifyQuiet("左栏已展开");
+        }
     }
 
     public void ToggleRightRail()
@@ -96,12 +114,25 @@ public sealed class UiStore : ObservableStore
             NotifyQuiet("纯净编年阅读模式下侧栏默认整体隐藏");
             return;
         }
-        RightCollapsed = !RightCollapsed;
-        NotifyQuiet(RightCollapsed ? "右侧角色立绘与状态已收起" : "右侧角色立绘与状态已展开");
+        if (!RightCollapsed && !AutoRightCollapsed)
+        {
+            RightCollapsed = true;
+            NotifyQuiet("右侧角色立绘与状态已收起");
+        }
+        else
+        {
+            RightCollapsed = false;
+            AutoRightCollapsed = false;
+            NotifyQuiet("右侧角色立绘与状态已展开");
+        }
     }
 
     public void SetLeftRailCollapsed(bool collapsed) => LeftCollapsed = collapsed;
     public void SetRightRailCollapsed(bool collapsed) => RightCollapsed = collapsed;
+
+    /// <summary>Window-width driven collapse (does not touch the user's manual preference).</summary>
+    public void SetAutoLeftCollapsed(bool collapsed) => AutoLeftCollapsed = collapsed;
+    public void SetAutoRightCollapsed(bool collapsed) => AutoRightCollapsed = collapsed;
 
     public void CloseAllDrawers()
     {
@@ -115,13 +146,14 @@ public sealed class UiStore : ObservableStore
     {
         LeftTab = tab;
         LeftCollapsed = false;
+        AutoLeftCollapsed = false;
         FlyoutOpen = true;
     }
 
     /// <summary>Sidebar behaviour: clicking the active tab again collapses the panel to the icon dock.</summary>
     public void ToggleFlyout(LeftSubtab tab)
     {
-        if (!LeftCollapsed && LeftTab == tab)
+        if (!LeftCollapsed && !AutoLeftCollapsed && LeftTab == tab)
         {
             LeftCollapsed = true;
             FlyoutOpen = false;
@@ -129,6 +161,7 @@ public sealed class UiStore : ObservableStore
         }
         LeftTab = tab;
         LeftCollapsed = false;
+        AutoLeftCollapsed = false;
         FlyoutOpen = true;
     }
 

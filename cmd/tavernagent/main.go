@@ -109,8 +109,11 @@ func run() error {
 		}
 		pin = fmt.Sprintf("%06d", number.Int64())
 	}
-	log.Printf("🔑 局域网配对码 (LAN PIN): %s", pin)
-	log.Printf("📱 局域网设备首次访问请输入该配对码建立安全连接（本机 127.0.0.1 访问自动免检）")
+	// 仅回环绑定时局域网根本访问不到，打印配对码只会误导；非回环才提示。
+	if !isLoopbackAddr(opts.addr) {
+		log.Printf("🔑 局域网配对码 (LAN PIN): %s", pin)
+		log.Printf("📱 局域网设备首次访问请输入该配对码建立安全连接（本机 127.0.0.1 访问自动免检）")
+	}
 
 	// TLS 装配放在取锁与开库之前：证书写不进去、或选项自相矛盾时要尽早失败。
 	tlsConfig, err := buildTLSConfig(opts.tls, opts.dataDir, opts.addr, pin)
@@ -141,6 +144,6 @@ func run() error {
 	if opts.fallbackKind != "" {
 		logMsg = fmt.Sprintf("SillyDog 服务就绪：%s://%s （模型：配置驱动，兜底 %s）", scheme, opts.addr, opts.fallbackKind)
 	}
-	log.Println(logMsg)
-	return instance.Server.ListenAndServeContext(ctx)
+	// 就绪日志必须等到端口真正绑定成功之后：端口占用时先报"就绪"再报错会误导用户。
+	return instance.Server.ListenAndServeContextOnReady(ctx, func() { log.Println(logMsg) })
 }

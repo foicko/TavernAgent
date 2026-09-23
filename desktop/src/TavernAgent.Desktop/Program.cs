@@ -1,16 +1,27 @@
 using Avalonia;
+using Avalonia.Threading;
+using TavernAgent.Core.Stores;
+using TavernAgent.Desktop.Services;
 using TavernAgent.Sidecar;
 
 namespace TavernAgent.Desktop;
 
 internal static class Program
 {
+    private static int _uiErrorBurst;
+
     // Avalonia configuration, don't remove; also used by visual designer.
     [STAThread]
     public static void Main(string[] args)
     {
-        AppDomain.CurrentDomain.UnhandledException += (_, e) => LogCrash(e.ExceptionObject as Exception, "AppDomain");
-        TaskScheduler.UnobservedTaskException += (_, e) => { LogCrash(e.Exception, "Task"); e.SetObserved(); };
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => CrashLog.Write(e.ExceptionObject as Exception, "AppDomain");
+        TaskScheduler.UnobservedTaskException += (_, e) => { CrashLog.Write(e.Exception, "Task"); e.SetObserved(); };
+        // Last line of defence: without this, any UI-thread exception silently
+        // terminates the process (the reported 闪退).
+        Dispatcher.UIThread.UnhandledException += OnUiThreadException;
+        // Route every Core store notification through the UI thread so background
+        // SSE/timer updates can never mutate bound state off-thread.
+        StoreDispatcher.Post = UiDispatcher.Post;
         try
         {
             // Single instance must win BEFORE starting Avalonia or sidecar.
@@ -26,7 +37,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            LogCrash(ex, "Main");
+            CrashLog.Write(ex, "Main");
             throw;
         }
     }
@@ -36,20 +47,18 @@ internal static class Program
             .UsePlatformDetect()
             .LogToTrace();
 
-    /// <summary>Best-effort crash log under &lt;dataDir&gt;/logs/desktop-error.log.</summary>
-    private static void LogCrash(Exception? ex, string source)
+    /// <summary>
+    /// Keep the app alive on an otherwise fatal UI-thread exception: log it and
+    /// surface a single quiet notice instead of letting the process die.
+    /// </summary>
+    private static void OnUiThreadException(object? sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        try
-        {
-            var dir = Path.Combine(DesktopPaths.DataDir, "logs");
-            Directory.CreateDirectory(dir);
-            File.AppendAllText(
-                Path.Combine(dir, "desktop-error.log"),
-                $"[{DateTime.Now:O}] {source}: {ex}{Environment.NewLine}{Environment.NewLine}");
-        }
-        catch
-        {
-            // never let logging take down the process
-        }
+        CrashLog.Write(e.Exception, "UIThread");
+        e.Handled = true;
+
+        // Rate-limit the toast so a repeated render-loop failure cannot spam it.
+        if (Interlocked.Increment(ref _uiErrorBurst) > 5) return;
+        try { AppServices.Ui.NotifyQuiet("发生了一个内部错误，已记录到日志。"); }
+        catch { /* never throw from the handler */ }
     }
 }

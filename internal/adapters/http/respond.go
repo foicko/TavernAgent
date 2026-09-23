@@ -5,6 +5,8 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 
 	"tavernagent/internal/application"
@@ -23,9 +25,13 @@ func writeError(w http.ResponseWriter, status int, code, message string, retryab
 }
 
 func writeAPIError(w http.ResponseWriter, err error) {
-	if appErr, ok := err.(*application.APIError); ok {
+	// 用 errors.As 而非直接断言：APIError 可能被 %w 包裹后传上来。
+	var appErr *application.APIError
+	if errors.As(err, &appErr) {
 		writeError(w, appErr.StatusCode, appErr.Code, appErr.Message, appErr.Retryable, "")
 		return
 	}
-	writeError(w, 500, "INTERNAL", err.Error(), true, "")
+	// 未知错误：内部细节只进日志，对外统一给可操作的中文文案，不泄漏实现细节。
+	log.Printf("内部错误: %v", err)
+	writeError(w, 500, "INTERNAL", "服务内部错误，请稍后重试；若持续出现请查看服务端日志", true, "")
 }

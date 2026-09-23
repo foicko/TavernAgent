@@ -17,8 +17,7 @@
           <ItemsControl ItemsSource="{Binding Results}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="palette:CommandItem">
-                <Button Classes="ui-btn" Classes.active="{Binding IsActive}"
-                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                <Button Classes="palette-item" Classes.active="{Binding IsActive}"
                         Margin="0,0,0,4" IsEnabled="{Binding IsEnabled}"
                         CommandParameter="{Binding}"
                         Command="{Binding $parent[ItemsControl].((palette:CommandPaletteViewModel)DataContext).RunCommand}">

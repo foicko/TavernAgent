@@ -192,11 +192,11 @@ public sealed partial class BranchNodeViewModel : ObservableObject
     public string ConfirmText => $"🌿 确定从【{Tag}】派生新平行因果分支？";
 
     [RelayCommand] private void ToggleProbe() => _tree.ToggleProbe(this);
-    [RelayCommand] private void ViewAt() => _ = _tree.ViewAtAsync(this);
+    [RelayCommand] private void ViewAt() => _tree.ViewAtAsync(this).SafeFireAndForget();
     [RelayCommand] private void RequestFork() => _tree.RequestFork(this);
-    [RelayCommand] private void ConfirmFork() => _ = _tree.ConfirmForkAsync(this);
+    [RelayCommand] private void ConfirmFork() => _tree.ConfirmForkAsync(this).SafeFireAndForget();
     [RelayCommand] private void CancelFork() => _tree.CancelFork();
-    [RelayCommand] private void Regenerate() => _ = _tree.RegenerateAsync(this);
+    [RelayCommand] private void Regenerate() => _tree.RegenerateAsync(this).SafeFireAndForget();
 
     private static string FormatSigned(double v) => v > 0 ? $"+{v:0}" : $"{v:0}";
 

@@ -4,9 +4,10 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.DossierModalView"
              x:DataType="vm:DossierModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="档案与世界观" DialogWidth="880">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="档案与世界观"
+           DialogWidth="880" DialogHeight="620" HasInnerScroll="True">
     <c:Modal.Body>
-      <Grid ColumnDefinitions="200,*" ColumnSpacing="16" Height="520">
+      <Grid ColumnDefinitions="200,*" ColumnSpacing="16">
         <StackPanel Grid.Column="0" Spacing="8">
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Border Width="34" Height="34" CornerRadius="{DynamicResource RadiusMd}"

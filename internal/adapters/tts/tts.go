@@ -141,7 +141,7 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 	}
 
 	engine := strings.ToLower(strings.TrimSpace(opts.Engine))
-	if engine == "" {
+	if engine == "" || engine == "web-speech" {
 		if strings.TrimSpace(opts.BaseURL) != "" {
 			engine = "openai"
 		} else {
@@ -150,7 +150,7 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 	}
 
 	voice := opts.Voice
-	if voice == "" {
+	if voice == "" || (engine == "edge" && (strings.Contains(voice, "Desktop") || !strings.Contains(voice, "-"))) {
 		if engine == "openai" {
 			voice = "alloy"
 		} else {

@@ -82,7 +82,7 @@ public sealed partial class SettingsModalViewModel : WorkspaceChildViewModel
             _ => Models,
         };
         OnPropertyChanged(nameof(ActiveDescription));
-        _ = LoadAsync(Page);
+        LoadAsync(Page).SafeFireAndForget();
     }
 
     private static async Task LoadAsync(ViewModelBase? page)
@@ -101,7 +101,7 @@ public sealed partial class SettingsModalViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName != nameof(UiStore.SettingsOpen)) return;
         OnPropertyChanged(nameof(IsOpen));
-        if (IsOpen) _ = OnOpenedAsync();
+        if (IsOpen) OnOpenedAsync().SafeFireAndForget();
     }
 
     private async Task OnOpenedAsync()
@@ -116,5 +116,8 @@ public sealed partial class SettingsModalViewModel : WorkspaceChildViewModel
         _disposed = true;
         Workspace.Ui.PropertyChanged -= OnUiChanged;
         Models.Dispose();
+        Tts.Dispose();
+        Images.Dispose();
+        Embedding.Dispose();
     }
 }

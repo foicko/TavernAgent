@@ -82,6 +82,54 @@ func TestResponses_Stream_Success(t *testing.T) {
 	}
 }
 
+// 真实 Responses 事件名：思考摘要走 thinking、正文走 content，二者不得混淆。
+// 此前适配器只显式识别不存在的 response.text.delta，思考摘要会被当作正文，
+// 污染帧解析（用户库里 deepseek-flash 的 PROTOCOL_INVALID 失败即与此相关）。
+func TestResponses_RealEventNames_SplitReasoningAndContent(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		flusher := w.(http.Flusher)
+		events := []string{
+			"event: response.reasoning_summary_text.delta\ndata: {\"type\":\"response.reasoning_summary_text.delta\",\"delta\":\"让我想想\"}\n\n",
+			"event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"delta\":\"{\\\"v\\\":1,\\\"seq\\\":1}\"}\n\n",
+			"event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"delta\":\"\\n\"}\n\n",
+			"event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\"}}\n\n",
+			"data: [DONE]\n\n",
+		}
+		for _, ev := range events {
+			_, _ = fmt.Fprint(w, ev)
+			flusher.Flush()
+		}
+	}))
+	defer ts.Close()
+
+	var thinking, content strings.Builder
+	ctx := ports.WithThinkingCallback(context.Background(), func(d string) { thinking.WriteString(d) })
+
+	prov := New(Config{
+		BaseURL:           ts.URL,
+		Model:             "m",
+		TimeoutFirstToken: 2 * time.Second,
+		TimeoutIdle:       2 * time.Second,
+		TimeoutTotal:      5 * time.Second,
+	})
+	err := prov.Stream(ctx, ports.ChatRequest{
+		Messages: []ports.ChatMessage{{Role: "user", Content: "hi"}},
+	}, ports.OnChunkSink(func(chunk []byte) error {
+		content.Write(chunk)
+		return nil
+	}))
+	if err != nil {
+		t.Fatalf("stream: %v", err)
+	}
+	if thinking.String() != "让我想想" {
+		t.Errorf("thinking = %q, want 让我想想", thinking.String())
+	}
+	if content.String() != "{\"v\":1,\"seq\":1}\n" {
+		t.Errorf("content = %q", content.String())
+	}
+}
+
 func TestResponses_Stream_Truncated(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")

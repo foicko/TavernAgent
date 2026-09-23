@@ -6,7 +6,7 @@
              x:DataType="vm:RightRailViewModel">
   <c:Modal IsOpen="{Binding IsFullTachieOpen}" CloseCommand="{Binding CloseFullTachieCommand}" Title="全身立绘" DialogWidth="880">
     <c:Modal.Body>
-      <Grid ColumnDefinitions="320,*" ColumnSpacing="16" Height="520">
+      <Grid ColumnDefinitions="320,*" ColumnSpacing="16">
         <Border Grid.Column="0" CornerRadius="{DynamicResource RadiusLg}" ClipToBounds="True"
                 Background="{DynamicResource SubtleBrush}">
           <Panel>

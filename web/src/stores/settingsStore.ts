@@ -23,6 +23,8 @@ interface SettingsState {
   models: ModelInstance[];
   providers: ProviderConfig[];
   loaded: boolean;
+  /** 最近一次加载/刷新失败的可见原因；成功时清空。面板据此提示并可重试。 */
+  error: string | null;
   saving: boolean;
   probing: Record<string, boolean>;
   probes: Record<string, ProbeResult>;
@@ -50,6 +52,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
   models: [],
   providers: [],
   loaded: false,
+  error: null,
   saving: false,
   probing: {},
   probes: {},
@@ -61,9 +64,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
   load: async () => {
     try {
       const catalog = await api.listModels();
-      set({ models: catalog.models ?? [], providers: catalog.slots ?? [], loaded: true });
-    } catch {
-      set({ loaded: true });
+      set({ models: catalog.models ?? [], providers: catalog.slots ?? [], loaded: true, error: null });
+    } catch (e) {
+      // 不静默：记录原因并保留 loaded=true，避免消费者无限重试；面板会提示并给"重试"。
+      set({ loaded: true, error: e instanceof Error && e.message ? e.message : "加载模型配置失败" });
     }
   },
 

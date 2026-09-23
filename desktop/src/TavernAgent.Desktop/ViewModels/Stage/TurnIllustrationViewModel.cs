@@ -16,7 +16,7 @@ public sealed partial class TurnIllustrationViewModel : ObservableObject
         _stage = stage;
         TurnId = turnId;
         FallbackText = fallbackText;
-        _ = ReloadAsync();
+        ReloadAsync().SafeFireAndForget();
     }
 
     public string TurnId { get; }

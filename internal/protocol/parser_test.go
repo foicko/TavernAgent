@@ -409,22 +409,50 @@ func TestUnknownFrameTypeIsStillRejected(t *testing.T) {
 	}
 }
 
-// 一行两个 JSON 对象必须带 ValidationError 身份：应用层据此判 PROTOCOL_INVALID
-// （模型输出不合协议，重试整轮无意义），而不是当成供应商故障去整轮重试。
-// 这是真实出现过的失败形态（DeepSeek 偶发把两个帧挤到一行）。
-func TestDoubleJSONObjectLineIsProtocolInvalid(t *testing.T) {
+// 一行两个 JSON 帧是真实出现的形态（DeepSeek 偶发把两个帧挤到一行，或整段输出
+// 不带换行）。过去整行按单个对象解析 → json.Unmarshal 因尾随数据报错 → 整轮被
+// 判为 PROTOCOL_INVALID 且不可重试。现在按 JSON 值逐个切分，两帧都收下。
+func TestDoubleJSONObjectLineIsAccepted(t *testing.T) {
 	p := NewStreamParser()
 	line := mkBlock(1, BlockNarration, "a") + mkBlock(2, BlockNarration, "b")
+	if err := p.Feed([]byte(line + "\n")); err != nil {
+		t.Fatalf("一行两个连续帧应被接受，实际：%v", err)
+	}
+	// 两帧都被收下（没有 final 是另一回事：应用层据此进入续写态）。
+	if len(p.Blocks()) != 2 {
+		t.Fatalf("blocks = %d, want 2", len(p.Blocks()))
+	}
+	if _, err := p.Finish(); !errors.Is(err, ErrMissingFinal) {
+		t.Fatalf("无 final 应返回 ErrMissingFinal，实际 %v", err)
+	}
+}
+
+// 兼容不能变成放行：切分后若某一段不是合法帧，仍按协议错误拒绝（带 ValidationError
+// 身份，应用层据此判 PROTOCOL_INVALID，而不是当成供应商故障去整轮重试）。
+func TestLineWithTrailingGarbageIsRejected(t *testing.T) {
+	p := NewStreamParser()
+	line := mkBlock(1, BlockNarration, "a") + `{"v":1,"seq":2,"type":"fin`
 	err := p.Feed([]byte(line + "\n"))
 	if err == nil {
-		t.Fatal("一行两个对象应被拒绝")
+		t.Fatal("合法帧后接残片应被拒绝")
 	}
 	var validation *ValidationError
 	if !errors.As(err, &validation) {
-		t.Fatalf("错误必须带 ValidationError 身份（否则会被误判为供应商故障），实际 %T: %v", err, err)
+		t.Fatalf("错误必须带 ValidationError 身份，实际 %T: %v", err, err)
 	}
-	if !strings.Contains(validation.Reason, "malformed JSON") {
-		t.Fatalf("错误原因应说明 JSON 结构问题，实际：%s", validation.Reason)
+}
+
+// 一行两个帧但序号不连续（跳号）→ 仍按协议错误拒绝。
+func TestDoubleJSONObjectNonContiguousIsRejected(t *testing.T) {
+	p := NewStreamParser()
+	line := mkBlock(1, BlockNarration, "a") + mkBlock(3, BlockNarration, "c")
+	err := p.Feed([]byte(line + "\n"))
+	if err == nil {
+		t.Fatal("跳号帧应被拒绝")
+	}
+	var validation *ValidationError
+	if !errors.As(err, &validation) {
+		t.Fatalf("错误必须带 ValidationError 身份，实际 %T: %v", err, err)
 	}
 }
 

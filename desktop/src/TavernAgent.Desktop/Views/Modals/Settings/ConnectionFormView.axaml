@@ -34,7 +34,8 @@
     </StackPanel>
 
     <c:Banner Classes="danger" Message="{Binding AlertText}" IsVisible="{Binding HasAlert}" />
-    <c:Banner Classes="danger" Message="{Binding ProbeText}" IsVisible="{Binding HasProbe}" />
+    <c:Banner Classes.success="{Binding ProbeOk}" Classes.danger="{Binding !ProbeOk}"
+              Message="{Binding ProbeText}" IsVisible="{Binding HasProbe}" />
 
     <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
       <c:Field Grid.Column="0" Label="模型名称" Hint="例如 deepseek-chat" Error="{Binding ModelError}">

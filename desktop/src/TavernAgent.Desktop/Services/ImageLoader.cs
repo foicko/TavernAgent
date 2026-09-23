@@ -5,18 +5,50 @@ namespace TavernAgent.Desktop.Services;
 
 /// <summary>
 /// Decodes avatars / tachie / thumbnails from data URLs, local files or http(s)
-/// into Avalonia bitmaps, with an in-memory cache and optional downscaling.
+/// into Avalonia bitmaps, with a bounded in-memory cache and optional downscaling.
 /// </summary>
 public static class ImageLoader
 {
+    private const int MaxEntries = 160;
+
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
     private static readonly ConcurrentDictionary<string, Task<Bitmap?>> Cache = new();
+    private static readonly ConcurrentQueue<string> InsertionOrder = new();
 
     public static Task<Bitmap?> LoadAsync(string? source, int? decodeWidth = null)
     {
         if (string.IsNullOrWhiteSpace(source)) return Task.FromResult<Bitmap?>(null);
+
+        // Inline data URLs are large and usually single-use; caching them both
+        // wastes memory and evicts real images. Decode without caching.
+        if (source.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return LoadCoreAsync(source, decodeWidth);
+
         var key = decodeWidth is null ? source : $"{decodeWidth}|{source}";
-        return Cache.GetOrAdd(key, _ => LoadCoreAsync(source, decodeWidth));
+        if (Cache.TryGetValue(key, out var existing)) return existing;
+
+        var task = Cache.GetOrAdd(key, _ => LoadAndTrackAsync(key, source, decodeWidth));
+        InsertionOrder.Enqueue(key);
+        Trim();
+        return task;
+    }
+
+    private static async Task<Bitmap?> LoadAndTrackAsync(string key, string source, int? decodeWidth)
+    {
+        var bitmap = await LoadCoreAsync(source, decodeWidth).ConfigureAwait(false);
+        if (bitmap is null)
+        {
+            // Never cache a failure permanently — a transient network error would
+            // otherwise stick for the whole session.
+            Cache.TryRemove(key, out _);
+        }
+        return bitmap;
+    }
+
+    private static void Trim()
+    {
+        while (Cache.Count > MaxEntries && InsertionOrder.TryDequeue(out var oldest))
+            Cache.TryRemove(oldest, out _);
     }
 
     private static async Task<Bitmap?> LoadCoreAsync(string source, int? decodeWidth)

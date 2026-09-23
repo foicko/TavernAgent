@@ -42,10 +42,11 @@ export const createMemorySlice = (set: StoreSet, get: StoreGet) => ({
     }
   },
 
-  reviseMemory: async (memoryId: string, patch: { content?: string; pinned?: boolean; hidden?: boolean }) => {
+  // 返回 false 表示守卫命中、什么都没做（调用方不得据此报成功）。
+  reviseMemory: async (memoryId: string, patch: { content?: string; pinned?: boolean; hidden?: boolean }): Promise<boolean> => {
     const owner = scope();
     const view = get().view;
-    if (!view || isTurnBusy(get().phase) || get().viewNodeId || get().memoryLoading || get().memoryError) return;
+    if (!view || isTurnBusy(get().phase) || get().viewNodeId || get().memoryLoading || get().memoryError) return false;
     const payload = JSON.stringify({ sessionId: view.sessionId, branchId: view.branch.branchId, head: view.branch.headNodeId, memoryId, patch });
     const patchState = getPendingMemoryPatch();
     if (!patchState || patchState.payload !== payload) setPendingMemoryPatch({ payload, key: crypto.randomUUID() });
@@ -59,15 +60,15 @@ export const createMemorySlice = (set: StoreSet, get: StoreGet) => ({
       set({ memoryPaging: { ...emptyMemoryPaging(), search: get().memoryPaging.search, kind: get().memoryPaging.kind } });
       await get().reloadView();
     }
+    return true;
   },
 
+  // 失败向上抛：由记忆库弹窗用 toast 呈现，避免写进 story 级 error（弹窗看不到）。
   organizeMemories: async () => {
     const owner = scope();
     const view = get().view;
     if (!view || isTurnBusy(get().phase) || get().viewNodeId || get().memoryLoading || get().memoryError) return;
-    try {
-      await api.organizeMemories(view.sessionId, view.branch.branchId, view.characterId);
-      if (owns(owner)) await get().reloadView();
-    } catch (e) { if (owns(owner)) set({ error: toErr(e) }); }
+    await api.organizeMemories(view.sessionId, view.branch.branchId, view.characterId);
+    if (owns(owner)) await get().reloadView();
   },
 });

@@ -7,7 +7,7 @@
              x:DataType="vm:StoryMapViewModel">
   <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="剧情分支图" DialogWidth="920">
     <c:Modal.Body>
-    <Grid ColumnDefinitions="*,260" ColumnSpacing="12" Height="520">
+    <Grid ColumnDefinitions="*,260" ColumnSpacing="12">
 
       <!-- Graph canvas -->
       <Grid Grid.Column="0" RowDefinitions="Auto,*">

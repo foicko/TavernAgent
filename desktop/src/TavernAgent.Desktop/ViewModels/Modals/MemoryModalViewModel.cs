@@ -147,7 +147,7 @@ public sealed partial class MemoryModalViewModel : WorkspaceChildViewModel
             void Apply()
             {
                 OnPropertyChanged(nameof(IsOpen));
-                if (IsOpen) _ = LoadAsync(null);
+                if (IsOpen) LoadAsync(null).SafeFireAndForget();
             }
             if (dispatch.CheckAccess()) Apply();
             else dispatch.Post(Apply);

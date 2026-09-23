@@ -131,7 +131,13 @@ export const TopHeader: React.FC = () => {
         </button>
 
         {/* Monochrome Theme Switcher (乳白纸墨 vs 墨黑幽夜) */}
-        <button className="btn-quiet" onClick={toggleTheme} id="theme-btn" title="切换乳白 / 纯黑底色">
+        <button
+          className="btn-quiet"
+          onClick={toggleTheme}
+          id="theme-btn"
+          title={theme === "dark" ? "切换到乳白纸墨主题" : "切换到墨黑夜色主题"}
+          aria-label={theme === "dark" ? "当前为墨黑夜色主题，点击切换到乳白纸墨" : "当前为乳白纸墨主题，点击切换到墨黑夜色"}
+        >
           <span id="theme-icon" style={{ display: "inline-flex" }}>
             <Icon name={theme === "dark" ? "sun" : "moon"} size={14} />
           </span>

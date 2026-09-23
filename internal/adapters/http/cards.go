@@ -7,6 +7,7 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -136,7 +137,13 @@ func readCardUpload(w http.ResponseWriter, r *http.Request) ([]byte, bool) {
 	var data []byte
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		if err := r.ParseMultipartForm(maxCardUploadBytes); err != nil {
-			writeError(w, 400, "BAD_REQUEST", "解析表单数据失败: "+err.Error(), false, "")
+			// 体积超限与普通解析错误分开：前者是 413，且不应把英文内部信息摊给用户。
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) {
+				writeError(w, 413, "REQUEST_TOO_LARGE", "角色卡文件超过 32MB 上限，请压缩图片或改用 JSON 卡", false, "")
+				return nil, false
+			}
+			writeError(w, 400, "BAD_REQUEST", "解析上传表单失败，请重试", false, "")
 			return nil, false
 		}
 		file, ok := cardFormFile(r)
@@ -148,14 +155,14 @@ func readCardUpload(w http.ResponseWriter, r *http.Request) ([]byte, bool) {
 		var err error
 		data, err = io.ReadAll(file)
 		if err != nil {
-			writeError(w, 400, "BAD_REQUEST", "读取卡片文件失败: "+err.Error(), false, "")
+			writeError(w, 400, "BAD_REQUEST", "读取卡片文件失败，请重试", false, "")
 			return nil, false
 		}
 	} else {
 		var err error
 		data, err = io.ReadAll(r.Body)
 		if err != nil {
-			writeError(w, 400, "BAD_REQUEST", "读取请求体失败: "+err.Error(), false, "")
+			writeError(w, 400, "BAD_REQUEST", "读取请求体失败，请重试", false, "")
 			return nil, false
 		}
 	}

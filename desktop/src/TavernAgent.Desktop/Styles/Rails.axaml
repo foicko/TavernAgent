@@ -55,6 +55,10 @@
   <Style Selector="Button.node-item:pointerover">
     <Setter Property="RenderTransform" Value="translateX(3px)" />
   </Style>
+  <!-- Forked (parallel-causality) node: subtle info tint; active/viewing still win on border. -->
+  <Style Selector="Button.node-item.fork">
+    <Setter Property="Background" Value="{DynamicResource AccentSubtleBrush}" />
+  </Style>
   <Style Selector="Button.node-item.active">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
@@ -67,6 +71,12 @@
     <Setter Property="CornerRadius" Value="999" />
     <Setter Property="Padding" Value="5,1" />
     <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+  </Style>
+  <Style Selector="Border.state-pill.fork">
+    <Setter Property="Background" Value="{DynamicResource AccentSubtleBrush}" />
+  </Style>
+  <Style Selector="Border.state-pill.fork TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
   </Style>
   <Style Selector="Border.state-pill.active">
     <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}" />
@@ -96,6 +106,7 @@
   </Style>
   <Style Selector="Border.char-card.confirming">
     <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+    <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
   </Style>
 
   <Style Selector="Border.session-card">
@@ -107,6 +118,10 @@
   </Style>
   <Style Selector="Border.session-card.active">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="Border.session-card.confirming">
+    <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+    <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
   </Style>
 
   <Style Selector="Button.card-open">

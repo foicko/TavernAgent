@@ -4,10 +4,9 @@
              xmlns:dto="using:TavernAgent.Core.Dtos"
              x:Class="TavernAgent.Desktop.Views.Stage.ComposerView"
              x:DataType="vm:ComposerViewModel">
-  <Grid RowDefinitions="Auto,Auto" Margin="20,0,20,16" MaxWidth="840" HorizontalAlignment="Center">
-    <Border Grid.Row="1"
-            Classes="surface-elevated composer-island anim-rise-in-bottom"
-            CornerRadius="24"
+  <Grid Margin="20,0,20,16" MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" ClipToBounds="True">
+    <Border Classes="surface-elevated composer-island anim-rise-in-bottom"
+            CornerRadius="{DynamicResource RadiusXl}"
             Padding="16,12">
       <StackPanel Spacing="10">
 
@@ -111,10 +110,8 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="vm:MacroPill">
-                <Button Classes="ui-btn sm quiet" Content="{Binding Label}"
-                        Click="OnMacroClick"
-                        Command="{Binding $parent[ItemsControl].((vm:ComposerViewModel)DataContext).ApplyMacroCommand}"
-                        CommandParameter="{Binding}" />
+                <Button Classes="ui-btn sm quiet macro-pill" Content="{Binding Label}"
+                        Click="OnMacroClick" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -136,7 +133,7 @@
                          Foreground="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
             </StackPanel>
             <Button Grid.Column="2" Classes="ui-btn sm ghost" Command="{Binding ClearActionCommand}"
-                    Padding="6,2" Height="22" ToolTip.Tip="取消当前检定">
+                    Height="26" ToolTip.Tip="取消当前检定">
               <StackPanel Orientation="Horizontal" Spacing="4">
                 <Path Classes="icon" Data="{StaticResource IconClose}" Width="10" Height="10" />
                 <TextBlock Text="取消检定" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
@@ -157,7 +154,7 @@
               <TextBlock Text="本轮注记" FontSize="{DynamicResource FsXs}"
                          Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
             </StackPanel>
-            <TextBox Grid.Column="1" Classes="compact" Text="{Binding Note}"
+            <TextBox Grid.Column="1" Text="{Binding Note}"
                      Background="Transparent" BorderThickness="0"
                      FontSize="{DynamicResource FsSm}"
                      PlaceholderText="对本轮演绎的要求（非台词，不污染正文）：放慢节奏、多写环境…" />
@@ -280,7 +277,7 @@
                       IsVisible="{Binding HasModels}"
                       ItemsSource="{Binding Models}"
                       SelectedItem="{Binding SelectedModel}"
-                      Height="28"
+                      Height="30"
                       MinWidth="110"
                       FontSize="{DynamicResource FsXs}"
                       VerticalContentAlignment="Center"
@@ -295,7 +292,7 @@
             <ComboBox Classes="composer-pill"
                       ItemsSource="{Binding Efforts}"
                       SelectedItem="{Binding SelectedEffortItem}"
-                      Height="28"
+                      Height="30"
                       MinWidth="72"
                       FontSize="{DynamicResource FsXs}"
                       VerticalContentAlignment="Center"

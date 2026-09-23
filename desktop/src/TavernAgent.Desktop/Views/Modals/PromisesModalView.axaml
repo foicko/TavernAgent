@@ -4,9 +4,10 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.PromisesModalView"
              x:DataType="vm:PromisesModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="契约与承诺" DialogWidth="780">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="契约与承诺"
+           DialogWidth="780" DialogHeight="560" HasInnerScroll="True">
     <c:Modal.Body>
-      <Grid RowDefinitions="Auto,*" Height="480" RowSpacing="12">
+      <Grid RowDefinitions="Auto,*" RowSpacing="12">
         <TextBlock Grid.Row="0" Text="{Binding CharacterName, StringFormat=与「{0}」之间的誓约与承诺}"
                    FontSize="{DynamicResource FsSm}" Foreground="{DynamicResource TextSecondaryBrush}" />
 

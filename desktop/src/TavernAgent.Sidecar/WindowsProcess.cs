@@ -48,10 +48,7 @@ internal static partial class WindowsProcess
         string workingDirectory,
         IDictionary<string, string?>? environment = null)
     {
-        var stdoutRead = CreatePipe(out var stdoutWrite, inheritRead: false);
-        var stderrRead = CreatePipe(out var stderrWrite, inheritRead: false);
-        // All three std handles must be valid when STARTF_USESTDHANDLES is set.
-        var stdinRead = CreatePipe(out var stdinWrite, inheritRead: true);
+        var (stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinRead, stdinWrite) = CreateStdPipes();
 
         var sa = new SECURITY_ATTRIBUTES { nLength = Marshal.SizeOf<SECURITY_ATTRIBUTES>(), bInheritHandle = true };
         var si = new STARTUPINFOW
@@ -134,6 +131,38 @@ internal static partial class WindowsProcess
         TerminateProcess(handle, 1);
     }
 
+    /// <summary>
+    /// Creates the three std pipes atomically: if any CreatePipe fails, the handles
+    /// already created are disposed so the process never leaks them.
+    /// </summary>
+    private static (SafeFileHandle OutRead, SafeFileHandle OutWrite,
+                    SafeFileHandle ErrRead, SafeFileHandle ErrWrite,
+                    SafeFileHandle InRead, SafeFileHandle InWrite) CreateStdPipes()
+    {
+        var outRead = CreatePipe(out var outWrite, inheritRead: false);
+        try
+        {
+            var errRead = CreatePipe(out var errWrite, inheritRead: false);
+            try
+            {
+                var inRead = CreatePipe(out var inWrite, inheritRead: true);
+                return (outRead, outWrite, errRead, errWrite, inRead, inWrite);
+            }
+            catch
+            {
+                errRead.Dispose();
+                errWrite.Dispose();
+                throw;
+            }
+        }
+        catch
+        {
+            outRead.Dispose();
+            outWrite.Dispose();
+            throw;
+        }
+    }
+
     private static SafeFileHandle CreatePipe(out SafeFileHandle write, bool inheritRead)
     {
         var sa = new SECURITY_ATTRIBUTES
@@ -170,9 +199,36 @@ internal static partial class WindowsProcess
 
     private static string Quote(string arg)
     {
-        if (arg.Length > 0 && !arg.Any(c => char.IsWhiteSpace(c) || c is '"' ))
+        if (arg.Length > 0 && !arg.Any(c => char.IsWhiteSpace(c) || c == '"'))
             return arg;
-        return "\"" + arg.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
+        // CommandLineToArgvW rules: backslashes are literal except immediately
+        // before a quote (doubled) or before the closing quote (doubled).
+        var sb = new System.Text.StringBuilder("\"");
+        for (var i = 0; i < arg.Length; i++)
+        {
+            var backslashes = 0;
+            while (i < arg.Length && arg[i] == '\\') { backslashes++; i++; }
+
+            if (i == arg.Length)
+            {
+                sb.Append('\\', backslashes * 2);
+                break;
+            }
+
+            if (arg[i] == '"')
+            {
+                sb.Append('\\', backslashes * 2 + 1);
+                sb.Append('"');
+            }
+            else
+            {
+                sb.Append('\\', backslashes);
+                sb.Append(arg[i]);
+            }
+        }
+        sb.Append('"');
+        return sb.ToString();
     }
 
     private const uint HANDLE_FLAG_INHERIT = 0x00000001;

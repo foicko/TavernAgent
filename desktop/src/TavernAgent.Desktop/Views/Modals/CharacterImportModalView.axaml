@@ -4,15 +4,17 @@
              xmlns:dto="using:TavernAgent.Core.Dtos"
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.CharacterImportModalView"
-             x:DataType="vm:CharacterImportViewModel">
+             x:DataType="vm:CharacterImportViewModel"
+             DragDrop.AllowDrop="True">
   <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}"
            Title="选择角色，开始新故事" DialogWidth="800">
     <c:Modal.Body>
       <StackPanel MaxWidth="760" Spacing="12">
 
         <!-- dropzone -->
-        <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="24"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Border Name="DropZoneBorder" Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="24"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                DragDrop.AllowDrop="True">
           <StackPanel Spacing="8" HorizontalAlignment="Center">
             <Border Width="48" Height="48" CornerRadius="{DynamicResource RadiusLg}" HorizontalAlignment="Center"
                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">

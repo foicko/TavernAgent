@@ -57,7 +57,8 @@ public partial class CommandPaletteView : UserControl
                 break;
             case Key.Enter:
                 e.Handled = true;
-                await _vm.RunActiveAsync();
+                try { await _vm.RunActiveAsync(); }
+                catch (Exception ex) { TavernAgent.Desktop.Services.CrashLog.Write(ex, "CommandPalette.Run"); }
                 break;
         }
     }

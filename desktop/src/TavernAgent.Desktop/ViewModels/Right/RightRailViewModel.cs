@@ -96,7 +96,7 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
                 OnPropertyChanged(nameof(IsSmileExpr));
                 OnPropertyChanged(nameof(IsWhisperExpr));
             }
-            else if (e.PropertyName is nameof(UiStore.RightCollapsed))
+            else if (e.PropertyName is nameof(UiStore.RightCollapsed) or nameof(UiStore.AutoRightCollapsed))
             {
                 OnPropertyChanged(nameof(IsCollapsed));
                 OnPropertyChanged(nameof(ShowContent));
@@ -141,7 +141,7 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
         OnPropertyChanged(nameof(HasTags));
         OnPropertyChanged(nameof(Tags));
         OnPropertyChanged(nameof(TachieMonogram));
-        _ = LoadTachieAsync(Character.AvatarSource);
+        LoadTachieAsync(Character.AvatarSource).SafeFireAndForget();
         RebuildMeters();
         RebuildInventory();
         RebuildCheckpoint();

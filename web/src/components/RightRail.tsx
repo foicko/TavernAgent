@@ -156,30 +156,22 @@ export const RightRail: React.FC = () => {
           {/* 底部微交互浮层：表情差分切换器 */}
           <div className="tachie-bottom-bar">
             <div className="tachie-expr-switcher" title="实时切换角色神情差分">
-              <span
-                className={`expr-switch-btn ${tachieExpression === "alert" ? "active" : ""}`}
-                onClick={() => setTachieExpression("alert")}
-              >
-                警觉
-              </span>
-              <span
-                className={`expr-switch-btn ${tachieExpression === "calm" ? "active" : ""}`}
-                onClick={() => setTachieExpression("calm")}
-              >
-                冷静
-              </span>
-              <span
-                className={`expr-switch-btn ${tachieExpression === "smile" ? "active" : ""}`}
-                onClick={() => setTachieExpression("smile")}
-              >
-                释怀
-              </span>
-              <span
-                className={`expr-switch-btn ${tachieExpression === "whisper" ? "active" : ""}`}
-                onClick={() => setTachieExpression("whisper")}
-              >
-                动容
-              </span>
+              {([
+                ["alert", "警觉"],
+                ["calm", "冷静"],
+                ["smile", "释怀"],
+                ["whisper", "动容"],
+              ] as Array<[TachieExpression, string]>).map(([expr, label]) => (
+                <button
+                  key={expr}
+                  type="button"
+                  className={`expr-switch-btn ${tachieExpression === expr ? "active" : ""}`}
+                  aria-pressed={tachieExpression === expr}
+                  onClick={() => setTachieExpression(expr)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

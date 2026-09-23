@@ -138,13 +138,33 @@ func ReadHTTPError(resp *http.Response, decoder APIErrorDecoder) error {
 		}
 	}
 	msg := strings.TrimSpace(string(body))
-	if len(msg) > 512 {
-		msg = msg[:512]
+	// 网关/代理常见的 HTML 错误页对用户毫无意义，也不该原样塞进失败提示。
+	if looksLikeHTML(msg) {
+		msg = "供应商网关返回了非预期的 HTML 响应（通常是网关或代理错误页），请检查接口地址与网关状态"
 	}
+	msg = truncateRunes(msg, 512)
 	if msg == "" {
 		msg = "无响应体"
 	}
 	return &HTTPError{StatusCode: resp.StatusCode, Message: msg}
+}
+
+// looksLikeHTML 判断响应体是否是 HTML 错误页（大小写不敏感，允许前置空白）。
+func looksLikeHTML(s string) bool {
+	lower := strings.ToLower(strings.TrimSpace(s))
+	return strings.HasPrefix(lower, "<!doctype") || strings.HasPrefix(lower, "<html") || strings.Contains(lower, "<html")
+}
+
+// truncateRunes 按字符（而非字节）截断，避免把多字节 UTF-8 字符切成乱码。
+func truncateRunes(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max])
 }
 
 // DecodeOpenAIError 解析 OpenAI 系（Chat Completions 与 Responses）的错误体：

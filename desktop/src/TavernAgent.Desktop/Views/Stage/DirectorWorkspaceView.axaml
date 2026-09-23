@@ -60,7 +60,7 @@
         </Border>
 
         <!-- two columns -->
-        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Height="400">
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
 
           <!-- discussion -->
           <Border Grid.Column="0" Classes="surface-inset" CornerRadius="{DynamicResource RadiusLg}" Padding="12">

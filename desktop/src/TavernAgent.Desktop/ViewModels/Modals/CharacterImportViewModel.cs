@@ -78,7 +78,7 @@ public sealed partial class CharacterImportViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName != nameof(UiStore.CharImportOpen)) return;
         OnPropertyChanged(nameof(IsOpen));
-        if (IsOpen) _ = OnOpenedAsync();
+        if (IsOpen) OnOpenedAsync().SafeFireAndForget();
     }
 
     private async Task OnOpenedAsync()
@@ -140,7 +140,7 @@ public sealed partial class CharacterImportViewModel : WorkspaceChildViewModel
         foreach (var tag in (preview.Tags ?? new List<string>()).Take(5)) Tags.Add(tag);
         OnPropertyChanged(nameof(HasTags));
 
-        _ = LoadAvatarAsync(preview.Avatar);
+        LoadAvatarAsync(preview.Avatar).SafeFireAndForget();
     }
 
     private async Task LoadAvatarAsync(string? source)

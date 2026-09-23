@@ -113,13 +113,13 @@ public sealed partial class ComposerViewModel : ObservableObject
     partial void OnSelectedModelChanged(ModelQuickItem? value)
     {
         if (_suppressSelection || value is null) return;
-        _ = _stage.SwitchModelAsync(value.Id);
+        _stage.SwitchModelAsync(value.Id).SafeFireAndForget();
     }
 
     partial void OnSelectedEffortItemChanged(EffortItem? value)
     {
         if (_suppressSelection || value is null) return;
-        _ = _stage.SetEffortAsync(value.Value);
+        _stage.SetEffortAsync(value.Value).SafeFireAndForget();
     }
 
     public void SetText(string? value) => Text = value ?? "";

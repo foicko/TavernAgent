@@ -15,6 +15,7 @@ internal sealed class SidecarChild : IDisposable
     private readonly Process? _process;
     private readonly WindowsProcess.SpawnedProcess? _win;
     private readonly JobObjectGuard? _job;
+    private bool _disposed;
 
     private SidecarChild(Process? process, WindowsProcess.SpawnedProcess? win, JobObjectGuard? job)
     {
@@ -33,6 +34,7 @@ internal sealed class SidecarChild : IDisposable
     {
         get
         {
+            if (_disposed) return true;
             if (_win is not null)
                 return !WindowsProcess.IsAlive(_win.ProcessHandle, out _);
             try { return _process?.HasExited ?? true; } catch { return true; }
@@ -43,6 +45,7 @@ internal sealed class SidecarChild : IDisposable
     {
         get
         {
+            if (_disposed) return -1;
             if (_win is not null)
             {
                 WindowsProcess.IsAlive(_win.ProcessHandle, out var code);
@@ -110,12 +113,16 @@ internal sealed class SidecarChild : IDisposable
 
     public bool TrySendGracefulStop()
     {
-        if (HasExited) return true;
+        if (_disposed || HasExited) return true;
+        var id = Id;
+        // Never signal pid <= 0: on Unix kill(-1, SIGTERM) would signal every
+        // process the user can signal.
+        if (id <= 0) return false;
         if (OperatingSystem.IsWindows())
-            return GracefulStopWindows.TrySendBreak(Id);
+            return GracefulStopWindows.TrySendBreak(id);
         try
         {
-            return kill(Id, SIGTERM) == 0;
+            return kill(id, SIGTERM) == 0;
         }
         catch
         {
@@ -173,6 +180,8 @@ internal sealed class SidecarChild : IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _job?.Dispose();
         try { StdoutReader.Dispose(); } catch { /* ignore */ }
         try { StderrReader.Dispose(); } catch { /* ignore */ }
@@ -203,13 +212,23 @@ internal static class GracefulStopWindows
             if (!AttachConsole(unchecked((uint)processId)))
                 return false;
             SetConsoleCtrlHandler(null, true);
-            var ok = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, unchecked((uint)processId));
-            FreeConsole();
-            return ok;
+            try
+            {
+                return GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, unchecked((uint)processId));
+            }
+            finally
+            {
+                // Restore default Ctrl+C handling — never leave it ignored.
+                SetConsoleCtrlHandler(null, false);
+            }
         }
         catch
         {
             return false;
+        }
+        finally
+        {
+            FreeConsole();
         }
     }
 

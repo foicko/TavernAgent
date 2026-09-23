@@ -67,6 +67,22 @@ desktop/
 `SseClient` 对应 SSE 订阅（Last-Event-ID 续传、`aggregateId:seq` 去重、停顿看门狗、退避重连），
 `StoryStore`/`SettingsStore`/`UiStore` 对应各自的 Zustand store（session/turn/branch/memory/director）。
 
+### 稳定性与线程模型
+
+- **崩溃兜底**：`Program.cs` 订阅 `Dispatcher.UIThread.UnhandledException`（另有 `AppDomain` /
+  `TaskScheduler`），异常写入 `<dataDir>/logs/desktop-error.log` 并以提示条呈现，不再静默退出进程。
+- **线程模型**：Core 的 store 通知（SSE / 轮询定时器 / HTTP 续体）统一经 `Core.Stores.StoreDispatcher.Post`
+  投递到 UI 线程（宿主在 `Program.Main` 注入 `UiDispatcher.Post`）；无宿主（单测）时同步触发。
+  ViewModel 侧的订阅走 `UiEvents.PropertyChanged/Event`（返回可退订令牌）或 `UiDispatcher.Post`，
+  杜绝后台线程改绑定的 `ObservableCollection`（Avalonia `Collection was modified` 崩溃）。
+- **后台任务**：`Task.SafeFireAndForget()` 取代裸 `_ = XxxAsync()`，异常不再逃逸到 dispatcher/AppDomain。
+- **窗口 chrome**：`WindowDecorations="BorderOnly"` + 自绘顶栏（显式 `BeginMoveDrag`），
+  **不使用** `ExtendClientAreaToDecorationsHint` / `WindowDrawnDecorations`（Avalonia 12 会抛
+  `The property HasTitleBar is readonly` 启动崩溃）。退出时同步等待 sidecar 停机，避免孤儿进程。
+- **资源**：`ImageLoader` 使用有上限的缓存且失败不永久缓存；`TavernApiClient` 的响应体读取纳入 30s 超时。
+- **原生互操作**：`WindowsProcess` 命令行转义按 `CommandLineToArgvW` 规则、管道创建原子化；
+  `SidecarChild` 释放后置空句柄、`kill(-1)` 守卫；`GracefulStopWindows` 恢复 `SetConsoleCtrlHandler`。
+
 ### UI 层与主题
 
 **导航范式（v4）：扁平纸墨 · 三栏内嵌 · 命令驱动**（对标 beautifului.dev，与 Web 同构）
@@ -126,5 +142,6 @@ desktop/
 | M7.7 | ✅ | UI 走查修复：顶栏避让 HUD + 视图模式居中、图标轨道统一 emoji 字体、心境量表改用 `Meter*` 令牌并按 `Tone` 着色（新增中立刻度线）、HUD 滚动条自动隐藏、行囊空态去彩色 emoji、空态与输入占位文案更新（去掉「左侧栏」）、输入岛控制行统一高度、reduced-motion 改为不加载动效层 |
 | M8 | ✅ | UI 重构对标 beautifului.dev：设计系统 v3 扁平发丝线（page/canvas/surface/inset + 单一蓝 accent）、移除毛玻璃/亚克力/氛围光、常驻折叠侧栏（224/52）与 68px 顶栏、阅读列 820、右栏 304；两端同步移除「心智星图」功能（Web 的 MindGraphModal 与桌面端遗留 `UiStore.MindGraphOpen` 死状态） |
 | M9 | ✅ | 两端对齐「三栏内嵌」范式：桌面端顶栏 56px 内嵌 + 左/右栏并排（右栏 304/0，240ms 过渡，删除悬浮 HUD/`HeaderMargin`）；`Glass.axaml` → `Surfaces.axaml` 并统一 `surface*` 类名、补齐 `Button.quiet`、删除旧按钮别名；`Modal` 去亚克力改扁平 `ScrimBrush`；`EmptyState` 改 `IconGeometry`；主题默认跟随系统并持久化；Web 顶栏去展厅入口、主题持久化/跟随系统、`--glass-*` 兼容层整体删除、六项 CSS 门禁收紧（`!important` 14→4、重复选择器 18→0、颜色字面值与玻璃残留归零） |
+| M10 | ✅ | 桌面端稳定性与布局对齐：修复 Avalonia 12 启动崩溃（去 `WindowDrawnDecorations`）、跨线程集合崩溃（`StoreDispatcher`/`UiEvents`/`SafeFireAndForget` + UI 异常兜底）、重试泄漏与资源泄漏；响应式轨道对称可再展开（1280/1024，auto 标志与手动偏好分离）；输入岛宽度对齐 820、控制行统一 30px；Modal 单一滚动 + 焦点 + 88% 上限 + 18 圆角；补 `SceneBarView` 接线、缺失画刷、`.fork` 样式与 token 化；补回归测试 |
 
 > 旧 Wails 桌面壳已**移除**（见上）。

@@ -3,18 +3,20 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
+using TavernAgent.Desktop.Services;
 
 namespace TavernAgent.Desktop.ViewModels.Left;
 
 /// <summary>Session lorebook search + revealed secrets (web: LorebookPanel).</summary>
 public sealed partial class LorePanelViewModel : WorkspaceChildViewModel
 {
+    private readonly IDisposable _storySub;
     private bool _disposed;
     private int _nextOffset;
 
     public LorePanelViewModel(WorkspaceViewModel workspace) : base(workspace)
     {
-        Story.PropertyChanged += OnStoryChanged;
+        _storySub = UiEvents.PropertyChanged(Story, OnStoryChanged);
     }
 
     public StoryStore Story => Workspace.Story;
@@ -31,7 +33,7 @@ public sealed partial class LorePanelViewModel : WorkspaceChildViewModel
     public bool IsEmpty => !IsLoading && Entries.Count == 0;
     public bool HasSecrets => Secrets.Count > 0;
 
-    partial void OnQueryChanged(string value) => _ = SearchAsync();
+    partial void OnQueryChanged(string value) => SearchAsync().SafeFireAndForget();
 
     [RelayCommand]
     private async Task Search() => await SearchAsync().ConfigureAwait(true);
@@ -83,13 +85,13 @@ public sealed partial class LorePanelViewModel : WorkspaceChildViewModel
     {
         if (e.PropertyName != nameof(StoryStore.View)) return;
         OnPropertyChanged(nameof(HasSession));
-        _ = SearchAsync();
+        SearchAsync().SafeFireAndForget();
     }
 
     public override void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
-        Story.PropertyChanged -= OnStoryChanged;
+        _storySub.Dispose();
     }
 }

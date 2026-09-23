@@ -134,7 +134,9 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
     const next = get().sessions[0];
     if (next) {
       await get().openSession(next.sessionId);
-      useUi.getState().notifyQuiet("故事已删除，已切换到其它故事");
+      // openSession 把失败吞进 error 而不抛：这里要核对视图是否真的切过去了，避免误报成功。
+      const switched = get().view?.sessionId === next.sessionId;
+      useUi.getState().notifyQuiet(switched ? "故事已删除，已切换到其它故事" : "故事已删除，但切换故事失败，请手动选择");
     } else {
       useUi.getState().notifyQuiet("故事已删除");
     }
@@ -191,16 +193,19 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
     });
   },
 
+  // 返回是否成功：失败写入 packError（面板持久提示），由调用方决定成功提示。
   exportSession: async () => {
     const view = get().view;
-    if (!view) return;
+    if (!view) return false;
     const owner = scope();
     set({ packError: null });
     try {
       const blob = await api.exportSessionPack(view.sessionId);
       downloadBlob(blob, packFileName(view.title));
+      return true;
     } catch (e) {
       if (owns(owner)) set({ packError: "导出失败：" + toErr(e) });
+      return false;
     }
   },
 

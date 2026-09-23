@@ -1,7 +1,7 @@
 // LeftRail: 左侧多维导航栏 (52px 图标停靠轨 / 224px 完整内容，见 tokens.css 的 --rail-left-*)
 import React, { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useUi } from "../stores/uiStore";
+import { useUi, type LeftSubtab } from "../stores/uiStore";
 import { useStory, resolveCharKeyFromSession } from "../stores/storyStore";
 import { CHARACTER_PRESETS, INITIAL_LORE_ENTRIES, SELECTABLE_PRESET_KEYS } from "../lib/characterPresets";
 import { StoryMapModal, StoryOutlineSection } from "./StoryMapModal";
@@ -19,6 +19,7 @@ import {
   deleteImportedCardRemote,
 } from "../lib/characterCardStore";
 import { openCard } from "../lib/cardLaunch";
+import { Banner } from "../ui/Banner";
 import { Icon } from "../ui/Icon";
 import { Tabs } from "../ui/Tabs";
 import "./LeftRail.css";
@@ -68,12 +69,15 @@ export const LeftRail: React.FC = () => {
     importSession,
     sessionLoading,
     pendingSessionId,
+    packError,
+    clearPackError,
   } = useStory(useShallow(s => ({
     sessions: s.sessions, openSession: s.openSession, deleteSession: s.deleteSession, selectCharacter: s.selectCharacter,
     startNewSessionForCurrentChar: s.startNewSessionForCurrentChar, view: s.view, hud: s.hud,
     viewAt: s.viewAt, forkFrom: s.forkFrom, regenerate: s.regenerate,
     exportSession: s.exportSession, importSession: s.importSession,
     sessionLoading: s.sessionLoading, pendingSessionId: s.pendingSessionId,
+    packError: s.packError, clearPackError: s.clearPackError,
   })));
 
   const char = characterPresentation(activeCharKey, currentView);
@@ -160,6 +164,14 @@ export const LeftRail: React.FC = () => {
         canRegenerate: !n.tag.includes("起点"),
       }));
 
+  // 供 role="button" 的可点击容器补齐键盘语义（Enter/Space 触发）。
+  const activateOnKey = (run: () => void) => (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      run();
+    }
+  };
+
   const filteredLore = INITIAL_LORE_ENTRIES.filter((e) => {
     if (!loreFilter) return true;
     const q = loreFilter.toLowerCase();
@@ -179,38 +191,27 @@ export const LeftRail: React.FC = () => {
           <Icon name="chevronRight" size={16} />
         </button>
         <div className="rail-dock-divider" />
-        <div
-          className={`collapsed-icon-btn ${leftTab === "tree" ? "active" : ""}`}
-          id="dock-icon-tree"
-          title="因果分支树 (点击展开)"
-          onClick={() => openLeftTabAndExpand("tree")}
-        >
-          <Icon name="leaf" size={17} />
-        </div>
-        <div
-          className={`collapsed-icon-btn ${leftTab === "characters" ? "active" : ""}`}
-          id="dock-icon-characters"
-          title="角色档案库 (点击展开)"
-          onClick={() => openLeftTabAndExpand("characters")}
-        >
-          <Icon name="user" size={17} />
-        </div>
-        <div
-          className={`collapsed-icon-btn ${leftTab === "lore" ? "active" : ""}`}
-          id="dock-icon-lore"
-          title="世界书词条 (点击展开)"
-          onClick={() => openLeftTabAndExpand("lore")}
-        >
-          <Icon name="book" size={17} />
-        </div>
-        <div
-          className={`collapsed-icon-btn ${leftTab === "sessions" ? "active" : ""}`}
-          id="dock-icon-sessions"
-          title="剧本会话史 (点击展开)"
-          onClick={() => openLeftTabAndExpand("sessions")}
-        >
-          <Icon name="clock" size={17} />
-        </div>
+        {([
+          ["tree", "因果分支树", "leaf"],
+          ["characters", "角色档案库", "user"],
+          ["lore", "世界书词条", "book"],
+          ["sessions", "剧本会话史", "clock"],
+        ] as Array<[LeftSubtab, string, "leaf" | "user" | "book" | "clock"]>).map(([tab, label, icon]) => (
+          <div
+            key={tab}
+            className={`collapsed-icon-btn ${leftTab === tab ? "active" : ""}`}
+            id={`dock-icon-${tab}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`${label}（点击展开）`}
+            aria-pressed={leftTab === tab}
+            title={`${label} (点击展开)`}
+            onClick={() => openLeftTabAndExpand(tab)}
+            onKeyDown={activateOnKey(() => openLeftTabAndExpand(tab))}
+          >
+            <Icon name={icon} size={17} />
+          </div>
+        ))}
       </div>
 
       {/* Full Left Rail Content */}
@@ -285,10 +286,17 @@ export const LeftRail: React.FC = () => {
                     <div
                       key={node.id}
                       className={`node-item ${node.isActive ? "active" : ""} ${node.isViewing ? "viewing" : ""} ${isOpen ? "opened" : ""} ${node.isFork ? "fork" : ""}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isOpen}
                       onClick={() => {
                         setProbeNodeId(isOpen ? null : node.id);
                         setBranchConfirmId(null);
                       }}
+                      onKeyDown={activateOnKey(() => {
+                        setProbeNodeId(isOpen ? null : node.id);
+                        setBranchConfirmId(null);
+                      })}
                     >
                       <div className="node-turn-tag">
                         <div className="node-tag-group">
@@ -504,12 +512,22 @@ export const LeftRail: React.FC = () => {
                         key={c.key}
                         className={`char-card-entry ${isActive ? "active" : ""}`}
                         id={`roster-card-${c.key}`}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isActive}
+                        aria-label={`切换到角色 ${c.name}`}
                         onClick={() => {
                           void selectCharacter(c.key);
                           if (typeof window !== "undefined" && window.innerWidth <= 768) {
                             toggleLeftRail();
                           }
                         }}
+                        onKeyDown={activateOnKey(() => {
+                          void selectCharacter(c.key);
+                          if (typeof window !== "undefined" && window.innerWidth <= 768) {
+                            toggleLeftRail();
+                          }
+                        })}
                       >
                         <img src={c.avatar} alt={c.name} className="char-card-thumb" />
                         <div className="char-card-info">
@@ -587,6 +605,11 @@ export const LeftRail: React.FC = () => {
             className="rail-view-panel"
             style={{ "--lr-panel-display": leftTab === "sessions" ? "flex" : "none" } as React.CSSProperties}
           >
+            {packError ? (
+              <Banner tone="error" onDismiss={clearPackError}>
+                {packError}
+              </Banner>
+            ) : null}
             <div className="session-section-header">
               <div className="session-section-title">
                 <span>历史故事会话</span>
@@ -635,12 +658,22 @@ export const LeftRail: React.FC = () => {
                     <div
                       key={s.sessionId}
                       className={`session-entry-card ${isActive ? "active" : ""}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-current={isActive ? "true" : undefined}
+                      aria-label={`打开故事 ${s.title}`}
                       onClick={() => {
                         void openSession(s.sessionId);
                         if (typeof window !== "undefined" && window.innerWidth <= 768) {
                           toggleLeftRail();
                         }
                       }}
+                      onKeyDown={activateOnKey(() => {
+                        void openSession(s.sessionId);
+                        if (typeof window !== "undefined" && window.innerWidth <= 768) {
+                          toggleLeftRail();
+                        }
+                      })}
                     >
                       <div className="session-card-main">
                         <div className="session-avatar-wrapper">
@@ -724,8 +757,10 @@ export const LeftRail: React.FC = () => {
                 <button
                   className="session-utility-btn"
                   onClick={() => {
-                    void exportSession();
-                    notifyQuiet("正在打包导出 .tavernpack 会话剧本...");
+                    // 只在真正导出成功后提示；失败会写入 packError，由上方 Banner 呈现。
+                    void exportSession().then((ok) => {
+                      if (ok) notifyQuiet("已导出 .tavernpack 剧情包");
+                    });
                   }}
                   disabled={!currentView}
                   title="导出当前会话为 .tavernpack 剧情包"
@@ -736,6 +771,15 @@ export const LeftRail: React.FC = () => {
                 <label
                   className="session-utility-btn"
                   title="导入 .tavernpack 或 ZIP 剧本包"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="导入剧本包"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      event.currentTarget.querySelector<HTMLInputElement>("input[type=file]")?.click();
+                    }
+                  }}
                 >
                   <Icon name="upload" size={13} /> 导入剧本
                   <input
@@ -744,11 +788,12 @@ export const LeftRail: React.FC = () => {
                     className="session-import-input"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) {
-                        void importSession(file).catch(() => {});
-                        notifyQuiet(`正在导入剧本包：${file.name}...`);
-                      }
                       e.target.value = "";
+                      if (!file) return;
+                      // 失败会写入 packError（上方 Banner 呈现），这里只补成功提示。
+                      void importSession(file)
+                        .then(() => notifyQuiet(`已导入剧本包：${file.name}`))
+                        .catch(() => {});
                     }}
                   />
                 </label>

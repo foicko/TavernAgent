@@ -404,7 +404,9 @@ export const ComposerShelf: React.FC = () => {
               <button
                 type="button"
                 className="composer-circle-tool-btn"
-                title="快捷动作与常用词"
+                aria-label={char.macros.length > 0 ? `插入常用动作：${char.macros[0].label}` : "当前角色没有快捷动作"}
+                title={char.macros.length > 0 ? `插入常用动作：${char.macros[0].label}` : "当前角色没有快捷动作"}
+                disabled={char.macros.length === 0}
                 onClick={() => {
                   if (char.macros.length > 0) appendMacro(char.macros[0].text);
                 }}

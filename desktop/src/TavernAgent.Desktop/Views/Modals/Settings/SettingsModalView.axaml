@@ -5,9 +5,10 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.Settings.SettingsModalView"
              x:DataType="settings:SettingsModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="设置" DialogWidth="880">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="设置"
+           DialogWidth="880" DialogHeight="640" HasInnerScroll="True">
     <c:Modal.Body>
-      <Grid Height="520" HorizontalAlignment="Stretch" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+      <Grid HorizontalAlignment="Stretch" RowDefinitions="Auto,Auto,*" RowSpacing="12">
 
         <ItemsControl Grid.Row="0" ItemsSource="{Binding Tabs}">
           <ItemsControl.ItemsPanel>

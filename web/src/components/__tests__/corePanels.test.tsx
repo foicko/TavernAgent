@@ -108,6 +108,7 @@ describe("inventory, character state and memory panels", () => {
   it("wires correction, pinning, hiding and restoration to the selected memory", async () => {
     const reviseMemory = vi.fn(async (id: string, patch: Partial<MemoryView>) => {
       useStory.setState(state => ({ memories: state.memories.map(m => m.memoryId === id ? { ...m, ...patch } : m) }));
+      return true;
     });
     useStory.setState({ reviseMemory });
     const user = userEvent.setup();

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
+using TavernAgent.Desktop.Services;
 
 namespace TavernAgent.Desktop.ViewModels.Modals.Settings;
 
@@ -12,13 +13,14 @@ public sealed partial class ModelSettingsPageViewModel : WorkspaceChildViewModel
 {
     private readonly SettingsStore _settings;
     private readonly InteractionSettings _interaction;
+    private readonly IDisposable _storeSub;
     private bool _disposed;
 
     public ModelSettingsPageViewModel(WorkspaceViewModel workspace) : base(workspace)
     {
         _settings = workspace.Settings;
         _interaction = SettingsPersistence.LoadInteraction();
-        _settings.PropertyChanged += OnStoreChanged;
+        _storeSub = UiEvents.PropertyChanged(_settings, OnStoreChanged);
         foreach (var role in ModelLabels.RoleOrder)
             SlotPickers.Add(new SlotPickerViewModel(this, role));
         _optionModeFillEdit = _interaction.OptionMode == OptionMode.FillEdit;
@@ -220,6 +222,6 @@ public sealed partial class ModelSettingsPageViewModel : WorkspaceChildViewModel
     {
         if (_disposed) return;
         _disposed = true;
-        _settings.PropertyChanged -= OnStoreChanged;
+        _storeSub.Dispose();
     }
 }

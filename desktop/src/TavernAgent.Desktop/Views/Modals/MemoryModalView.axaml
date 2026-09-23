@@ -4,9 +4,10 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Modals.MemoryModalView"
              x:DataType="vm:MemoryModalViewModel">
-  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="认知记忆库" DialogWidth="900">
+  <c:Modal IsOpen="{Binding IsOpen}" CloseCommand="{Binding CloseCommand}" Title="认知记忆库"
+           DialogWidth="900" DialogHeight="640" HasInnerScroll="True">
     <c:Modal.Body>
-      <Grid RowDefinitions="Auto,Auto,*,Auto" Height="520" RowSpacing="10">
+      <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="10">
 
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
           <WrapPanel Grid.Column="0" Orientation="Horizontal">

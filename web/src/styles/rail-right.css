@@ -261,6 +261,9 @@ body.rail-right-collapsed:not(.mode-reading) .floating-rail-trigger-right {
 
 .expr-switch-btn {
   font-size: 11px;
+  font-family: inherit;
+  border: none;
+  background: transparent;
   padding: 3px 10px;
   border-radius: var(--radius-full);
   cursor: pointer;

@@ -34,12 +34,25 @@ export function Menu({
   children,
 }: MenuProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    const items = menuItems(panelRef.current);
+    // 记住触发元素：关闭时把焦点还回去，键盘用户才不会"丢失位置"到 body。
+    triggerRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    const panel = panelRef.current;
+    const items = menuItems(panel);
     const active = items.find((el) => el.getAttribute("aria-checked") === "true");
     (active ?? items[0])?.focus();
+    return () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const focused = document.activeElement as HTMLElement | null;
+      // 仅当焦点仍在菜单内或已落到 body（菜单卸载后）时才归还，避免抢走用户的新焦点。
+      if (!focused || focused === document.body || panel?.contains(focused)) {
+        trigger.focus?.();
+      }
+    };
   }, [open]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

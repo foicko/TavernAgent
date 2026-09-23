@@ -66,8 +66,10 @@ public sealed class SingleInstance : IDisposable
             si._lockFile = fs;
             si._acquired = true;
         }
-        catch (IOException)
+        catch (Exception)
         {
+            // Another instance holds the lock, or the data dir is not writable.
+            // Fail closed (treat as not acquired) rather than throwing out of boot.
             si._acquired = false;
         }
         return si;

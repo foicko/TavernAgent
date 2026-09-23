@@ -112,10 +112,11 @@
       <Image Source="{Binding Stage.LightboxImage}" Stretch="Uniform" Margin="56" />
     </Button>
 
-    <!-- Quiet toast -->
+    <!-- Quiet toast (raised above the composer island so it never covers the input) -->
     <Border HorizontalAlignment="Center"
             VerticalAlignment="Bottom"
-            Margin="0,0,0,28"
+            Margin="0,0,0,168"
+            MaxWidth="560"
             CornerRadius="{DynamicResource RadiusFull}"
             Padding="16,8"
             Background="{DynamicResource ElevatedBrush}"
@@ -126,6 +127,8 @@
             IsVisible="{Binding HasToast}"
             IsHitTestVisible="False">
       <TextBlock Text="{Binding ToastMessage}"
+                 TextWrapping="Wrap"
+                 TextAlignment="Center"
                  FontSize="{DynamicResource FsSm}"
                  Foreground="{DynamicResource TextPrimaryBrush}" />
     </Border>

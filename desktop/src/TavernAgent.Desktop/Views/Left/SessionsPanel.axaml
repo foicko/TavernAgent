@@ -34,42 +34,51 @@
     <ItemsControl ItemsSource="{Binding Rows}">
       <ItemsControl.ItemTemplate>
         <DataTemplate DataType="vm:SessionRowViewModel">
-          <Border Classes="session-card" Classes.active="{Binding IsActive}" Margin="0,0,0,8">
-            <Grid ColumnDefinitions="*,Auto">
-              <Button Grid.Column="0" Classes="card-open" Command="{Binding OpenCommand}">
-                <Grid ColumnDefinitions="Auto,*">
-                  <Panel Grid.Column="0" Width="34" Height="34">
-                    <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
-                      <TextBlock Text="{Binding Monogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                 IsVisible="{Binding !HasAvatar}" />
-                    </Border>
-                    <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
-                  </Panel>
-                  <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
-                               TextTrimming="CharacterEllipsis" MaxWidth="150" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                      <TextBlock Text="{Binding TimeText}" FontSize="10.5"
-                                 Foreground="{DynamicResource TextDimBrush}" />
-                      <Border Classes="state-pill" Classes.active="{Binding IsActive}">
-                        <TextBlock Text="{Binding StatusText}" FontSize="10" />
+          <Border Classes="session-card" Classes.active="{Binding IsActive}"
+                  Classes.confirming="{Binding IsConfirmingDelete}" Margin="0,0,0,8">
+            <Panel>
+              <!-- Normal row -->
+              <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsConfirmingDelete}">
+                <Button Grid.Column="0" Classes="card-open" Command="{Binding OpenCommand}">
+                  <Grid ColumnDefinitions="Auto,*">
+                    <Panel Grid.Column="0" Width="34" Height="34">
+                      <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
+                        <TextBlock Text="{Binding Monogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   IsVisible="{Binding !HasAvatar}" />
                       </Border>
+                      <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
+                    </Panel>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                                 TextTrimming="CharacterEllipsis" />
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding TimeText}" FontSize="10.5"
+                                   Foreground="{DynamicResource TextDimBrush}" />
+                        <Border Classes="state-pill" Classes.active="{Binding IsActive}">
+                          <TextBlock Text="{Binding StatusText}" FontSize="10" />
+                        </Border>
+                      </StackPanel>
                     </StackPanel>
-                  </StackPanel>
-                </Grid>
-              </Button>
+                  </Grid>
+                </Button>
 
-              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <Button Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="删除会话"
-                        IsVisible="{Binding !IsConfirmingDelete}" Command="{Binding RequestDeleteCommand}">
+                <Button Grid.Column="1" Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="删除会话"
+                        Command="{Binding RequestDeleteCommand}" VerticalAlignment="Center">
                   <Path Classes="icon danger" Data="{StaticResource IconTrash}" Width="13" Height="13" />
                 </Button>
-                <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsConfirmingDelete}">
-                  <Button Classes="ui-btn sm danger" Content="确认删除" Command="{Binding ConfirmDeleteCommand}" />
-                  <Button Classes="ui-btn sm quiet" Content="取消" Command="{Binding CancelDeleteCommand}" />
-                </StackPanel>
-              </StackPanel>
-            </Grid>
+              </Grid>
+
+              <!-- Confirming row: clean full-width prompt -->
+              <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsVisible="{Binding IsConfirmingDelete}">
+                <TextBlock Grid.Column="0" Text="确认删除此会话？" FontSize="{DynamicResource FsXs}"
+                           Foreground="{DynamicResource DangerBrush}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" Classes="ui-btn sm danger" Padding="8,0" Height="26" MinWidth="0"
+                        Content="删除" Command="{Binding ConfirmDeleteCommand}" />
+                <Button Grid.Column="2" Classes="ui-btn sm quiet" Padding="8,0" Height="26" MinWidth="0"
+                        Content="取消" Command="{Binding CancelDeleteCommand}" />
+              </Grid>
+            </Panel>
           </Border>
         </DataTemplate>
       </ItemsControl.ItemTemplate>

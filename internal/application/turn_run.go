@@ -259,13 +259,29 @@ func (s *TurnService) afterStream(ctx context.Context, turn *domain.TurnRequest,
 
 	draft, finishErr := parser.Finish()
 	if finishErr != nil {
-		if errors.Is(finishErr, protocol.ErrMissingFinal) && len(parser.Blocks()) > 0 {
-			reason := "已输出正文但未收到 final"
-			if te := parser.TailError(); te != nil {
-				// 尾行存在但被判定非法：把真实原因带出来，避免「未收到 final」误导排查。
-				reason = "final 帧非法或缺失: " + te.Error()
+		if errors.Is(finishErr, protocol.ErrMissingFinal) {
+			if len(parser.Blocks()) > 0 {
+				reason := "已输出正文但未收到 final"
+				if te := parser.TailError(); te != nil {
+					// 尾行存在但被判定非法：把真实原因带出来，避免「未收到 final」误导排查。
+					reason = "final 帧非法或缺失: " + te.Error()
+				}
+				s.enterContinuation(ctx, turnID, reason)
+				return
 			}
-			s.enterContinuation(ctx, turnID, reason)
+			// 一个完整帧都没有：区分「模型什么都没输出」（多为可重试的供应商/思考
+			// 预算问题）与「输出了但不符合帧协议」。后者也把尾行真实原因带出来，
+			// 不再用笼统的「缺少 final」掩盖，并允许重试以免用户被卡死。
+			if parser.Bytes() == 0 && parser.TailError() == nil {
+				s.fail(ctx, turnID, "PROVIDER_EMPTY_OUTPUT",
+					"模型没有返回任何正文（可能只输出了思考内容，或该端点未按流式返回正文），请重试", true)
+				return
+			}
+			reason := "模型输出不符合帧协议"
+			if te := parser.TailError(); te != nil {
+				reason = "模型输出不符合帧协议: " + te.Error()
+			}
+			s.fail(ctx, turnID, "PROTOCOL_INVALID", reason, true)
 			return
 		}
 		s.fail(ctx, turnID, "PROTOCOL_INVALID", "结构化回合缺少 final 帧", false)

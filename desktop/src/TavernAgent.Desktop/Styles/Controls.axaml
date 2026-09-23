@@ -51,6 +51,12 @@
   </Style>
   <Style Selector="c|Banner.success Border#BannerSurface">
     <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}" />
+  </Style>
+
+  <Style Selector="Border.dragover">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AccentSubtleBrush}" />
   </Style>
 
   <!-- v2: focus-visible rings (keyboard only) -->
@@ -242,13 +248,13 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
   <Style Selector="Button.caption-btn:pointerover">
-    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}" />
   </Style>
   <Style Selector="Button.caption-btn:pointerover Path">
     <Setter Property="Stroke" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
   <Style Selector="Button.caption-btn:pressed">
-    <Setter Property="Background" Value="{DynamicResource SurfaceInsetBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceSunkenBrush}" />
   </Style>
 
   <!-- Close button hover: Windows-native crimson alert state -->

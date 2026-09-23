@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -17,8 +16,8 @@ type embeddingProbeRequest struct {
 
 func (s *Server) probeEmbedding(w http.ResponseWriter, r *http.Request) {
 	var req embeddingProbeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid json body", false, "")
+	if err := decodeJSON(w, r, &req, maxRequestBytes); err != nil {
+		writeBodyError(w, err)
 		return
 	}
 
@@ -51,17 +50,17 @@ type embeddingsComputeRequest struct {
 
 func (s *Server) computeEmbeddings(w http.ResponseWriter, r *http.Request) {
 	var req embeddingsComputeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "invalid json body", false, "")
+	if err := decodeJSON(w, r, &req, maxRequestBytes); err != nil {
+		writeBodyError(w, err)
 		return
 	}
 
 	if len(req.Texts) == 0 {
-		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "texts array cannot be empty", false, "")
+		writeError(w, http.StatusBadRequest, "BAD_REQUEST", "texts 不能为空，请至少提供一段文本", false, "")
 		return
 	}
 	if len(req.Texts) > 128 {
-		writeError(w, http.StatusBadRequest, "TOO_MANY_TEXTS", "maximum 128 texts per embedding request", false, "")
+		writeError(w, http.StatusBadRequest, "TOO_MANY_TEXTS", "单次最多支持 128 段文本", false, "")
 		return
 	}
 

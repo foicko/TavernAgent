@@ -45,9 +45,20 @@ export function CharacterCardRow({
     <div
       className={`char-card-entry ${selected ? "active" : ""} ${confirming ? "confirming" : ""}`}
       id={`roster-card-${card.cardId}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      aria-label={`打开角色卡 ${card.name}`}
       onClick={() => {
         if (confirming) return; // 确认态下避免误触切换主角
         onOpen();
+      }}
+      onKeyDown={(event) => {
+        if (confirming) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
       }}
     >
       {card.avatar ? (

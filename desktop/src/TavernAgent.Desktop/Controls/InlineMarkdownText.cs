@@ -6,10 +6,10 @@ using Avalonia.Controls.Documents;
 namespace TavernAgent.Desktop.Controls;
 
 /// <summary>
-/// TextBlock that renders the minimal inline markdown used by the narrative
+/// SelectableTextBlock that renders the minimal inline markdown used by the narrative
 /// (web: renderInlineMarkdown) — **bold** and *italic* only, no HTML.
 /// </summary>
-public sealed class InlineMarkdownText : TextBlock
+public sealed class InlineMarkdownText : SelectableTextBlock
 {
     private static readonly Regex Inline = new(@"(\*\*[^*\n]+\*\*|\*[^*\n]+\*)", RegexOptions.Compiled);
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUi } from "../stores/uiStore";
+import { useSettings } from "../stores/settingsStore";
 import { isTurnBusy, storyBusy, useStory } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
@@ -46,13 +47,23 @@ export const NarrativeStream: React.FC = () => {
     loadingOlder,
     sessionLoading,
     pendingSessionId,
-  } = useStory(useShallow(s => ({ view: s.view, messages: s.messages, phase: s.phase, error: s.error, draftBlocks: s.draftBlocks, thinkingText: s.thinkingText, lastInput: s.lastInput, chooseOption: s.chooseOption, continueTurn: s.continueTurn, retry: s.retry, regenerate: s.regenerate, cancel: s.cancel, viewNodeId: s.viewNodeId, backToHead: s.backToHead, forkFrom: s.forkFrom, hasMoreHistory: s.hasMoreHistory, loadOlder: s.loadOlder, loadingOlder: s.loadingOlder, sessionLoading: s.sessionLoading, pendingSessionId: s.pendingSessionId })));
+    clearError,
+  } = useStory(useShallow(s => ({ view: s.view, messages: s.messages, phase: s.phase, error: s.error, draftBlocks: s.draftBlocks, thinkingText: s.thinkingText, lastInput: s.lastInput, chooseOption: s.chooseOption, continueTurn: s.continueTurn, retry: s.retry, regenerate: s.regenerate, cancel: s.cancel, viewNodeId: s.viewNodeId, backToHead: s.backToHead, forkFrom: s.forkFrom, hasMoreHistory: s.hasMoreHistory, loadOlder: s.loadOlder, loadingOlder: s.loadingOlder, sessionLoading: s.sessionLoading, pendingSessionId: s.pendingSessionId, clearError: s.clearError })));
+  const openSettings = useSettings((s) => s.openSettings);
 
   const char = characterPresentation(activeCharKey, view);
   // 导入卡的开场与正文普遍写 {{char}}/{{user}}：原样显示会把宏直接摊在故事里。
   const playerName = view?.state?.characters?.["player"]?.name || DEFAULT_PLAYER_NAME;
   const expand = (text?: string) => replaceMacros(text ?? "", { charName: char.shortName || char.name, userName: playerName });
   const scrollRef = useRef<HTMLDivElement>(null);
+  // 只有读者本来就在底部附近时才自动跟随；否则用户上滑回看会被不断拽回去。
+  const stickToBottomRef = useRef(true);
+  const NEAR_BOTTOM_PX = 120;
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
+  };
   const [thinkingOpen, setThinkingOpen] = useState(false);
 
   // 当进入新回合生成阶段时，确保思考栏默认保持单行精简展示
@@ -75,6 +86,7 @@ export const NarrativeStream: React.FC = () => {
     if (!el) return;
     if (currentSessionId && currentSessionId !== lastSessionIdRef.current) {
       lastSessionIdRef.current = currentSessionId;
+      stickToBottomRef.current = true;
       el.scrollTop = el.scrollHeight;
       if (typeof el.scrollTo === "function") {
         el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
@@ -87,9 +99,9 @@ export const NarrativeStream: React.FC = () => {
     }
   }, [currentSessionId, storyMessages.length]);
 
-  // 当故事内容或流式状态变化时自动滚动至最新
+  // 当故事内容或流式状态变化时自动滚动至最新——但仅当读者已在底部附近。
   useEffect(() => {
-    if (loadingOlder) return;
+    if (loadingOlder || !stickToBottomRef.current) return;
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -206,7 +218,7 @@ export const NarrativeStream: React.FC = () => {
       </div>
 
       {/* Narrative Flow (纯净小说流) */}
-      <div className="stage-scroll-area" id="narrative-stream" ref={scrollRef}>
+      <div className="stage-scroll-area" id="narrative-stream" ref={scrollRef} onScroll={handleScroll}>
         {/* 纯净文学编年模式专属雅致题头 */}
         <div className="reading-mode-banner">
           <div className="reading-book-title">《{char.name} · 编年篇章》</div>
@@ -369,7 +381,16 @@ export const NarrativeStream: React.FC = () => {
                 <div className={`thinking-container ${thinkingOpen ? "is-expanded" : "is-collapsed"}`}>
                   <div
                     className="thinking-toggle-bar"
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={thinkingOpen}
                     onClick={() => setThinkingOpen((prev) => !prev)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setThinkingOpen((prev) => !prev);
+                      }
+                    }}
                     title={thinkingOpen ? "点击折叠思考过程" : "点击展开完整思考过程"}
                   >
                     <div className="thinking-bar-main">
@@ -439,7 +460,7 @@ export const NarrativeStream: React.FC = () => {
                 <span>
                   <Icon name="alert" size={13} /> 模型输出因上下文长度截断，等待确认
                 </span>
-                <span>状态机：awaiting_continuation</span>
+                <span>等待你的选择</span>
               </div>
               <p>
                 大模型已生成当前叙事片段。你可以让剧情顺滑续讲、重新发起本轮尝试、或放弃当前生成。
@@ -475,14 +496,22 @@ export const NarrativeStream: React.FC = () => {
                   <span className="error-turn__title">生成受阻</span>
                   <p className="error-turn__detail">{error || "网络通信异常"}</p>
                 </div>
-                <Button
-                  className="error-turn__retry"
-                  variant="danger"
-                  size="sm"
-                  onClick={() => void retry()}
-                >
-                  重试
-                </Button>
+                <div className="error-turn__actions">
+                  <Button
+                    className="error-turn__retry"
+                    variant="danger"
+                    size="sm"
+                    onClick={() => void retry()}
+                  >
+                    重试
+                  </Button>
+                  <Button size="sm" onClick={openSettings} title="检查模型连接与密钥配置">
+                    模型设置
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={clearError} title="关闭这条错误提示">
+                    关闭
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

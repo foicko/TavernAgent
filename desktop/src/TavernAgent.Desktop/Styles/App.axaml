@@ -1,7 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- WindowDrawnDecorations: default title bar height 0 to prevent extra spacing -->
-  <Style Selector="WindowDrawnDecorations">
-    <Setter Property="DefaultTitleBarHeight" Value="0" />
-  </Style>
+  <!-- Reserved for global behavior styles (focus scope, reduced-motion, etc.).
+       NOTE: do NOT add a Style targeting WindowDrawnDecorations here. Combined
+       with ExtendClientAreaToDecorationsHint it triggered an Avalonia 12
+       "The property HasTitleBar is readonly" crash during window construction. -->
 </Styles>

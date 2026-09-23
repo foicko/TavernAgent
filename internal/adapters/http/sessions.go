@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"tavernagent/internal/application"
+	"tavernagent/internal/domain"
 	"tavernagent/internal/pack"
 )
 
@@ -59,6 +60,10 @@ func (s *Server) listSessions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeAPIError(w, err)
 		return
+	}
+	if sessions == nil {
+		// 空库时返回 [] 而不是 null：客户端期望数组。
+		sessions = []*domain.Session{}
 	}
 	writeJSON(w, 200, map[string]any{"sessions": sessions})
 }

@@ -95,7 +95,7 @@ public sealed class TtsPlayer : IDisposable
         catch (Exception ex)
         {
             lock (_gate) _lastError = ex.Message;
-            StateChanged?.Invoke(this, EventArgs.Empty);
+            RaiseStateChanged();
             return;
         }
 
@@ -109,24 +109,38 @@ public sealed class TtsPlayer : IDisposable
             lock (_gate) _lastError = "播放失败：" + ex.Message;
             Stop();
         }
-        StateChanged?.Invoke(this, EventArgs.Empty);
+        RaiseStateChanged();
     }
+
+    /// <summary>
+    /// Always raised on the UI thread: subscribers (TTS buttons/settings) push
+    /// bindable state, and the playback poll timer fires from a thread-pool thread.
+    /// </summary>
+    private void RaiseStateChanged()
+        => UiDispatcher.Post(() => StateChanged?.Invoke(this, EventArgs.Empty));
 
     private void StartPlayback(byte[] audio, string text)
     {
-        var engine = EnsureEngine();
-        var format = AudioFormat.GetFormatFromStream(new MemoryStream(audio)) ?? AudioFormat.Cd;
-        var device = EnsureDevice(format);
+        // Everything here touches native miniaudio objects that Stop()/Dispose()
+        // may free from the poll timer thread; hold the gate for the whole build.
+        lock (_gate)
+        {
+            var engine = EnsureEngine();
+            AudioFormat format;
+            using (var probe = new MemoryStream(audio))
+                format = AudioFormat.GetFormatFromStream(probe) ?? AudioFormat.Cd;
+            var device = EnsureDevice(format);
 
-        _stream = new MemoryStream(audio);
-        _provider = new StreamDataProvider(engine, format, _stream);
-        _player = new SoundPlayer(engine, format, _provider);
-        device.MasterMixer.AddComponent(_player);
-        _player.Play();
-        _currentText = text;
+            _stream = new MemoryStream(audio);
+            _provider = new StreamDataProvider(engine, format, _stream);
+            _player = new SoundPlayer(engine, format, _provider);
+            device.MasterMixer.AddComponent(_player);
+            _player.Play();
+            _currentText = text;
 
-        _poll?.Dispose();
-        _poll = new System.Threading.Timer(_ => PollPlayback(), null, 400, 400);
+            _poll?.Dispose();
+            _poll = new System.Threading.Timer(_ => PollPlayback(), null, 400, 400);
+        }
     }
 
     private void PollPlayback()
@@ -135,7 +149,7 @@ public sealed class TtsPlayer : IDisposable
         lock (_gate) stopped = _player is null || _player.State != PlaybackState.Playing;
         if (!stopped) return;
         Stop();
-        StateChanged?.Invoke(this, EventArgs.Empty);
+        RaiseStateChanged();
     }
 
     public void Stop()
@@ -179,9 +193,12 @@ public sealed class TtsPlayer : IDisposable
     public void Dispose()
     {
         Stop();
-        try { _device?.Dispose(); } catch { /* ignore */ }
-        try { _engine?.Dispose(); } catch { /* ignore */ }
-        _device = null;
-        _engine = null;
+        lock (_gate)
+        {
+            try { _device?.Dispose(); } catch { /* ignore */ }
+            try { _engine?.Dispose(); } catch { /* ignore */ }
+            _device = null;
+            _engine = null;
+        }
     }
 }

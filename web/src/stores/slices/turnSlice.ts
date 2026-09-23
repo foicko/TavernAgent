@@ -282,7 +282,9 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     const key = useUi.getState().activeCharKey;
     const epoch = navigationEpoch;
     if (!get().view) {
-      if (!key || key === "custom") { set({ error: "请先打开自定义角色会话或导入角色卡" }); return; }
+      // 输入台在调用前已清空文字：失败必须置 phase:"failed"，
+      // 否则 ComposerShelf 的恢复逻辑不会把文字还回去（静默丢输入）。
+      if (!key || key === "custom") { set({ phase: "failed", error: "请先打开自定义角色会话或导入角色卡" }); return; }
       await get().createSessionFromPreset(key);
       if (navigationEpoch !== epoch + 1 || useUi.getState().activeCharKey !== key) return;
     }
@@ -293,7 +295,7 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
       set({ error: "当前会话与角色不匹配，请重新打开会话后再发送", ...(storyBusy(get()) ? {} : { phase: "failed" as const }) });
       return;
     }
-    if (resolveCharKeyFromSession(view) !== useUi.getState().activeCharKey) { set({ error: "角色归属已变化，请重新打开会话" }); return; }
+    if (resolveCharKeyFromSession(view) !== useUi.getState().activeCharKey) { set({ phase: "failed", error: "角色归属已变化，请重新打开会话" }); return; }
     const owner = scope();
     // 注记与选项模式是本回合的演绎指令：与正文分开送，提示词里才能分别标注
     // （混进 text 会被当成角色说过的话）。选项模式取当前偏好，逐回合随请求走。
@@ -418,6 +420,9 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
   },
 
   clearPending: () => set({ pendingInput: null, pendingAction: null }),
+
+  // 关闭错误卡：清掉错误；若正处于 failed 终态，一并回到可输入的 idle。
+  clearError: () => set((s) => ({ error: null, ...(s.phase === "failed" ? { phase: "idle" as const } : {}) })),
 
   prepareAction: (text: string, actionRef: string) => {
     const current = get();

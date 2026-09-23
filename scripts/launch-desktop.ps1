@@ -1,38 +1,44 @@
 param(
     [switch]$Mock = $true,
-    [switch]$Rebuild = $false
+    [switch]$Rebuild = $false,
+    [switch]$Dist = $true
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$sidecar = Join-Path $root "build\tavernagent.exe"
 
 # 1. Clean up any existing instances
-$existing = Get-Process -Name "TavernAgent.Desktop" -ErrorAction SilentlyContinue
+$existing = Get-Process -Name "TavernAgent.Desktop", "tavernagent" -ErrorAction SilentlyContinue
 if ($existing) {
-    Write-Host "Terminating existing TavernAgent.Desktop processes..."
+    Write-Host "Terminating existing TavernAgent processes..."
     $existing | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
 }
 
-# 2. Rebuild sidecar if requested or missing
-if ($Rebuild -or -not (Test-Path $sidecar)) {
-    Write-Host "Building Go sidecar -> build/tavernagent.exe"
-    & go build -trimpath -o $sidecar (Join-Path $root "cmd\tavernagent")
-    if ($LASTEXITCODE -ne 0) { throw "go build failed" }
+# 2. Resolve paths (dist or debug build)
+if ($Dist -and (Test-Path (Join-Path $root "dist\desktop-win-x64\TavernAgent.Desktop.exe"))) {
+    $desktopExe = Join-Path $root "dist\desktop-win-x64\TavernAgent.Desktop.exe"
+    $sidecar = Join-Path $root "dist\desktop-win-x64\sidecar\tavernagent.exe"
+    Write-Host "Using published dist: $desktopExe"
+} else {
+    $sidecar = Join-Path $root "build\tavernagent.exe"
+    if ($Rebuild -or -not (Test-Path $sidecar)) {
+        Write-Host "Building Go sidecar -> build/tavernagent.exe"
+        & go build -trimpath -o $sidecar (Join-Path $root "cmd\tavernagent")
+        if ($LASTEXITCODE -ne 0) { throw "go build failed" }
+    }
+
+    $desktopCsproj = Join-Path $root "desktop\src\TavernAgent.Desktop\TavernAgent.Desktop.csproj"
+    $desktopExe = Join-Path $root "desktop\src\TavernAgent.Desktop\bin\Debug\net10.0\TavernAgent.Desktop.exe"
+
+    if (-not (Test-Path $desktopExe) -or $Rebuild) {
+        Write-Host "Building TavernAgent.Desktop..."
+        & dotnet build $desktopCsproj -c Debug
+        if ($LASTEXITCODE -ne 0) { throw "dotnet build failed" }
+    }
 }
 
-# 3. Ensure desktop app is compiled
-$desktopCsproj = Join-Path $root "desktop\src\TavernAgent.Desktop\TavernAgent.Desktop.csproj"
-$desktopExe = Join-Path $root "desktop\src\TavernAgent.Desktop\bin\Debug\net10.0\TavernAgent.Desktop.exe"
-
-if (-not (Test-Path $desktopExe) -or $Rebuild) {
-    Write-Host "Building TavernAgent.Desktop..."
-    & dotnet build $desktopCsproj -c Debug
-    if ($LASTEXITCODE -ne 0) { throw "dotnet build failed" }
-}
-
-# 4. Set environment
+# 3. Set environment
 $env:TAVERNAGENT_SIDECAR = $sidecar
 if ($Mock) {
     $env:TAVERNAGENT_PROVIDER = "mock"

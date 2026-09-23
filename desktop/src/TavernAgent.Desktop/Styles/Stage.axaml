@@ -2,6 +2,28 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="using:TavernAgent.Desktop.Controls">
 
+  <Style Selector="c|InlineMarkdownText">
+    <Setter Property="SelectionBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!-- Macro pill: compact full-radius helper in composer -->
+  <Style Selector="Button.macro-pill">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Padding" Value="9,0" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
+    <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Button.macro-pill:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+
   <!-- Narrative block typography (web: .block-narration / .block-dialogue / .block-monologue) -->
   <Style Selector="c|InlineMarkdownText.narration">
     <Setter Property="FontFamily" Value="{DynamicResource FontNarrative}" />

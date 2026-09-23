@@ -11,7 +11,9 @@ namespace TavernAgent.Desktop.ViewModels.Modals.Settings;
 public sealed partial class TtsSettingsPageViewModel : WorkspaceChildViewModel, ISettingsPage
 {
     private readonly TTSSettings _s;
+    private readonly IDisposable _ttsSub;
     private bool _loaded;
+    private bool _disposed;
 
     public TtsSettingsPageViewModel(WorkspaceViewModel workspace) : base(workspace)
     {
@@ -26,6 +28,10 @@ public sealed partial class TtsSettingsPageViewModel : WorkspaceChildViewModel, 
         _dialogueOnly = _s.DialogueOnly;
         _directorMode = _s.DirectorMode;
         _loaded = true;
+        _ttsSub = UiEvents.Event(
+            h => AppServices.Tts.StateChanged += h,
+            h => AppServices.Tts.StateChanged -= h,
+            OnPlayerState);
     }
 
     public IReadOnlyList<OptionItem> Engines { get; } = new List<OptionItem>
@@ -33,7 +39,6 @@ public sealed partial class TtsSettingsPageViewModel : WorkspaceChildViewModel, 
         new("edge", "Edge-TTS（微软在线，免费）"),
         new("openai", "OpenAI 兼容端点（本地/云端）"),
         new("mimo", "小米 MiMo TTS"),
-        new("web-speech", "系统原生语音（离线）"),
     };
 
     public ObservableCollection<TTSVoice> Voices { get; } = new();
@@ -154,7 +159,6 @@ public sealed partial class TtsSettingsPageViewModel : WorkspaceChildViewModel, 
         TestError = null;
         Notice = null;
         Playing = true;
-        AppServices.Tts.StateChanged += OnPlayerState;
         try
         {
             await AppServices.Tts.ToggleAsync(BuildRequest("你好！很高兴能与你一同开启这段旅程。")).ConfigureAwait(true);
@@ -182,6 +186,13 @@ public sealed partial class TtsSettingsPageViewModel : WorkspaceChildViewModel, 
     };
 
     private void OnPlayerState(object? sender, EventArgs e) => Playing = AppServices.Tts.IsPlaying;
+
+    public override void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _ttsSub.Dispose();
+    }
 
     private void Persist() { if (_loaded) SettingsPersistence.SaveTts(_s); }
 

@@ -66,33 +66,39 @@ public sealed partial class WorkspaceViewModel : ViewModelBase
     public CommandPaletteViewModel Palette { get; }
 
     // ---- layout geometry (animated via transitions in the view) ----
+    // Mirrors DesignTokens: RailLeftWidth / RailRightWidth / RailCollapsedWidth.
+
+    private const double RailLeftWidthPx = 224;
+    private const double RailRightWidthPx = 304;
+    private const double RailCollapsedWidthPx = 52;
 
     public bool IsReadingMode => _ui.ViewMode == ViewportMode.Reading;
 
     public bool IsStudioMode => !IsReadingMode;
 
+    /// <summary>Effective collapse = user preference OR window-width auto-collapse.</summary>
+    public bool IsLeftCollapsed => _ui.LeftCollapsed || _ui.AutoLeftCollapsed;
+
+    public bool IsRightCollapsed => _ui.RightCollapsed || _ui.AutoRightCollapsed;
+
     /// <summary>Width of the persistent left column (224 expanded / 52 icon dock / 0 in reading).</summary>
-    public double LeftRailWidth => IsStudioMode ? (_ui.LeftCollapsed ? 52 : 224) : 0;
+    public double LeftRailWidth => IsStudioMode ? (IsLeftCollapsed ? RailCollapsedWidthPx : RailLeftWidthPx) : 0;
 
     /// <summary>Width of the inline right column (304 expanded / 0 collapsed or reading).</summary>
-    public double RightRailWidth => IsStudioMode && !_ui.RightCollapsed ? 304 : 0;
+    public double RightRailWidth => IsStudioMode && !IsRightCollapsed ? RailRightWidthPx : 0;
 
     public bool ShowLeftRail => IsStudioMode;
 
     /// <summary>Inline right rail column visibility (parallels <see cref="RightRailWidth"/>).</summary>
-    public bool ShowRightRail => IsStudioMode && !_ui.RightCollapsed;
+    public bool ShowRightRail => IsStudioMode && !IsRightCollapsed;
 
-    public bool ShowRightRailRecall => !IsReadingMode && _ui.RightCollapsed;
+    public bool ShowRightRailRecall => !IsReadingMode && IsRightCollapsed;
 
     /// <summary>Left panel expanded into the persistent column (web: full rail view).</summary>
-    public bool ShowLeftPanel => IsStudioMode && !_ui.LeftCollapsed;
+    public bool ShowLeftPanel => IsStudioMode && !IsLeftCollapsed;
 
     /// <summary>Collapsed icon dock (web: rail-collapsed-view).</summary>
-    public bool ShowIconDock => IsStudioMode && _ui.LeftCollapsed;
-
-    public bool IsLeftCollapsed => _ui.LeftCollapsed;
-
-    public bool IsRightCollapsed => _ui.RightCollapsed;
+    public bool ShowIconDock => IsStudioMode && IsLeftCollapsed;
 
     public LeftSubtab LeftTab => _ui.LeftTab;
     public bool LeftTabTree => IsStudioMode && _ui.LeftTab == LeftSubtab.Tree;

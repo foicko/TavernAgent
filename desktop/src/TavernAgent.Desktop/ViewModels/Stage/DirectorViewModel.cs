@@ -201,7 +201,7 @@ public sealed partial class DirectorViewModel : WorkspaceChildViewModel, IDispos
         void Apply()
         {
             OnPropertyChanged(nameof(IsOpen));
-            if (IsOpen) _ = OpenAsync();
+            if (IsOpen) OpenAsync().SafeFireAndForget();
         }
         if (dispatch.CheckAccess()) Apply();
         else dispatch.Post(Apply);
@@ -216,7 +216,7 @@ public sealed partial class DirectorViewModel : WorkspaceChildViewModel, IDispos
     [RelayCommand]
     private void Close()
     {
-        _ = SaveNowAsync();
+        SaveNowAsync().SafeFireAndForget();
         Workspace.Ui.SetDirectorOpen(false);
     }
 
@@ -336,7 +336,7 @@ public sealed partial class DirectorViewModel : WorkspaceChildViewModel, IDispos
         OnPropertyChanged(nameof(CanActivate));
         _debounce?.Dispose();
         _debounce = new System.Threading.Timer(
-            _ => Dispatcher.UIThread.Post(() => _ = SaveNowAsync()),
+            _ => Dispatcher.UIThread.Post(() => SaveNowAsync().SafeFireAndForget()),
             null, 700, Timeout.Infinite);
     }
 

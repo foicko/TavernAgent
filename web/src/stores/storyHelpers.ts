@@ -31,16 +31,17 @@ export function isTurnBusy(phase: TurnPhase): boolean {
 // ---- 只读与忙碌判定：全前端只此一处 ----
 // 此前每个组件各写一遍（11 处），加一个新状态（例如导演命令中）就得逐处改，
 // 漏一处就会出现"这个按钮能点、那个不能点"的不一致。组件请消费这些选择器。
-type BusyState = Pick<StoryState, "phase" | "viewNodeId" | "directorCommanding">;
+type BusyState = Pick<StoryState, "phase" | "viewNodeId" | "directorCommanding"> & { branchBusy?: boolean };
 
 // 正在看历史节点：输入与大多数写操作都不可用（可从此处分叉）。
 export function historyReadOnly(state: BusyState): boolean {
   return !!state.viewNodeId;
 }
 
-// 故事层面的"不能动"：回合在途（生成/待续写/待确认/已提交待刷新）或导演命令在途。
+// 故事层面的"不能动"：回合在途（生成/待续写/待确认/已提交待刷新）、导演命令在途，
+// 或分支写操作（分叉/编辑候选）在途。
 export function storyBusy(state: BusyState): boolean {
-  return isTurnBusy(state.phase) || state.directorCommanding;
+  return isTurnBusy(state.phase) || state.directorCommanding || !!state.branchBusy;
 }
 
 // 输入台：历史视图或故事忙碌时不可输入。
@@ -183,7 +184,7 @@ export function emptyStory(): Partial<StoryState> {
     ...emptyDirectorState,
     view: null, messages: [], draftBlocks: [], draftOptions: [], phase: "idle", thinkingText: "", turnThinking: {}, turnThinkingSeconds: {}, lastTurnId: null,
     error: null, hud: null, memories: [], memoryUsage: null, memoryError: null, memoryLoading: false, activeCharacterId: null, pendingInput: null, pendingAction: null, lastInput: null,
-    memoryPaging: emptyMemoryPaging(), activeBranchId: null, viewNodeId: null, packError: null, hasMoreHistory: false, oldestTurnId: null, loadingOlder: false, sessionLoading: false, pendingSessionId: null,
+    memoryPaging: emptyMemoryPaging(), activeBranchId: null, viewNodeId: null, branchBusy: false, packError: null, hasMoreHistory: false, oldestTurnId: null, loadingOlder: false, sessionLoading: false, pendingSessionId: null,
   };
 }
 
@@ -215,6 +216,7 @@ export function createInitialStoryState(): Partial<StoryState> {
     lastInput: null,
     activeBranchId: null,
     viewNodeId: null,
+    branchBusy: false,
     packError: null,
     hasMoreHistory: false,
     oldestTurnId: null,

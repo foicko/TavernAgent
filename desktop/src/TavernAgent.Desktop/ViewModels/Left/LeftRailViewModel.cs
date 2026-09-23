@@ -81,15 +81,15 @@ public sealed partial class LeftRailViewModel : WorkspaceChildViewModel
         switch (tab)
         {
             case LeftSubtab.Tree: Tree.Rebuild(); break;
-            case LeftSubtab.Characters: _ = Characters.ReloadAsync(); break;
-            case LeftSubtab.Lore: _ = Lore.SearchAsync(); break;
+            case LeftSubtab.Characters: Characters.ReloadAsync().SafeFireAndForget(); break;
+            case LeftSubtab.Lore: Lore.SearchAsync().SafeFireAndForget(); break;
             case LeftSubtab.Sessions: Sessions.Rebuild(); break;
         }
     }
 
     private void OnUiChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(UiStore.LeftCollapsed) or nameof(UiStore.LeftTab) or nameof(UiStore.FlyoutOpen)
+        if (e.PropertyName is nameof(UiStore.LeftCollapsed) or nameof(UiStore.AutoLeftCollapsed) or nameof(UiStore.LeftTab) or nameof(UiStore.FlyoutOpen)
             or nameof(UiStore.DirectorOpen) or nameof(UiStore.Theme))
         {
             var dispatch = Avalonia.Threading.Dispatcher.UIThread;

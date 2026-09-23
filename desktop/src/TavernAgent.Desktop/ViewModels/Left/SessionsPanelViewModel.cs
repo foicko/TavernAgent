@@ -166,7 +166,7 @@ public sealed partial class SessionRowViewModel : ObservableObject
         IsLoading = panel.Story.PendingSessionId == summary.SessionId && panel.Story.SessionLoading;
         StatusText = IsLoading ? "载入中" : IsActive ? "当前" : "存档";
         RoleTag = "存档";
-        _ = LoadAvatarAsync(summary);
+        LoadAvatarAsync(summary).SafeFireAndForget();
     }
 
     public string SessionId { get; }

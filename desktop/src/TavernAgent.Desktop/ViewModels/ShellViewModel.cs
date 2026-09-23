@@ -89,6 +89,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
             StatusText = "就绪";
             SidecarPort = _supervisor.Port;
             AppServices.Connect(_supervisor.BaseAddress);
+            AppServices.Story.StateChanged -= OnStoryChanged;
             AppServices.Story.StateChanged += OnStoryChanged;
 
             try
@@ -110,6 +111,13 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
             try
             {
                 await AppServices.LoadInitialAsync(_bootCts.Token).ConfigureAwait(true);
+                if (!string.IsNullOrEmpty(_settings.LastSessionId) &&
+                    AppServices.Story.Sessions.Any(s => s.SessionId == _settings.LastSessionId) &&
+                    AppServices.Story.View?.SessionId != _settings.LastSessionId)
+                {
+                    try { await AppServices.Story.OpenSessionAsync(_settings.LastSessionId).ConfigureAwait(true); }
+                    catch { /* non-fatal */ }
+                }
                 Workspace.NotifyStoryChanged();
             }
             catch (Exception ex)
@@ -135,6 +143,14 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
         ErrorText = null;
         StatusText = "正在重试…";
         LogTail = "";
+
+        // Tear down everything the previous attempt built, otherwise each retry
+        // leaks a workspace + store subscriptions on the process-lifetime stores.
+        try { AppServices.Story.StateChanged -= OnStoryChanged; } catch { /* ignore */ }
+        Workspace?.Dispose();
+        Workspace = null;
+
+        _supervisor.StateChanged -= OnSidecarStateChanged;
         try { await _supervisor.DisposeAsync().ConfigureAwait(true); }
         catch { /* ignore */ }
 
@@ -159,6 +175,7 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
         try { _bootCts?.Cancel(); } catch { /* ignore */ }
         try { await _supervisor.DisposeAsync().ConfigureAwait(false); }
         catch { /* ignore */ }
+        try { AppServices.Tts.Dispose(); } catch { /* ignore */ }
         AppServices.Story.StateChanged -= OnStoryChanged;
         AppServices.Ui.PropertyChanged -= OnUiChanged;
         Workspace?.Dispose();
@@ -196,7 +213,16 @@ public sealed partial class ShellViewModel : ViewModelBase, IAsyncDisposable
         ApplyTheme();
     }
 
-    private void OnStoryChanged(object? sender, EventArgs e) => Workspace?.NotifyStoryChanged();
+    private void OnStoryChanged(object? sender, EventArgs e)
+    {
+        Workspace?.NotifyStoryChanged();
+        var current = AppServices.Story.View?.SessionId;
+        if (!string.IsNullOrEmpty(current) && current != _settings.LastSessionId)
+        {
+            _settings.LastSessionId = current;
+            _settings.Save();
+        }
+    }
 
     private void RefreshDiagnostics()
     {

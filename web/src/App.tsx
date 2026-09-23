@@ -12,6 +12,7 @@ import { LeftRail } from "./components/LeftRail";
 import { RightRail } from "./components/RightRail";
 import { NarrativeStream } from "./components/NarrativeStream";
 import { ComposerShelf } from "./components/ComposerShelf";
+import { FirstRunBanner } from "./components/FirstRunBanner";
 
 import { LorePopover } from "./components/LorePopover";
 import { InventoryActionBubble } from "./components/InventoryActionBubble";
@@ -157,6 +158,7 @@ export default function App() {
 
         {/* 中轴剧场主舞台 (故事流 + 底部输入中枢) */}
         <main className="stage-main">
+          {viewMode === "studio" && <FirstRunBanner />}
           <NarrativeStream />
           {viewMode === "studio" && <ComposerShelf />}
         </main>
