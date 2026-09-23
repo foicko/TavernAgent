@@ -22,6 +22,12 @@ import { WorldbookModal } from "./components/WorldbookModal";
 import { CharacterImportModal } from "./components/CharacterImportModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { AuthPairingModal } from "./components/AuthPairingModal";
+import type { LeftSubtab } from "./stores/uiStore";
+
+// 用 KeyboardEvent.code 而不是 key：Alt+数字在部分键盘布局下 key 会变成符号。
+const LEFT_TAB_KEYS: Record<string, LeftSubtab> = {
+  Digit1: "tree", Digit2: "characters", Digit3: "lore", Digit4: "sessions",
+};
 
 export default function App() {
   const loadSessions = useStory((s) => s.loadSessions);
@@ -97,19 +103,31 @@ export default function App() {
     else document.body.classList.remove("mode-reading");
   }, [isLeftRailCollapsed, isRightRailCollapsed, viewMode]);
 
-  // 全局快捷键支持: Ctrl+K (命令面板), Ctrl+[ (左栏), Ctrl+] (右栏), Esc (自上层向下关闭)
+  // 全局快捷键（与桌面端 MainWindow.axaml 保持同一张表）：
+  // Ctrl+K 命令面板 · Ctrl+[ / Ctrl+] 左右栏 · Ctrl+, 设置 · Ctrl+Shift+L 主题
+  // Alt+1..4 左栏标签（不用 Ctrl+数字：浏览器用它切换标签页）· Esc 自上层向下关闭
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === "k") {
         // 浏览器里 Ctrl+K 是"跳到地址栏"，必须拦下来才轮得到我们。
         e.preventDefault();
         setPaletteOpen(!useUi.getState().paletteOpen);
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "[") {
+      } else if (mod && e.key === "[") {
         e.preventDefault();
         toggleLeftRail();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "]") {
+      } else if (mod && e.key === "]") {
         e.preventDefault();
         toggleRightRail();
+      } else if (mod && e.key === ",") {
+        e.preventDefault();
+        useSettings.getState().openSettings();
+      } else if (mod && e.shiftKey && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        useUi.getState().toggleTheme();
+      } else if (e.altKey && !mod && LEFT_TAB_KEYS[e.code]) {
+        e.preventDefault();
+        useUi.getState().openLeftTabAndExpand(LEFT_TAB_KEYS[e.code]);
       } else if (e.key === "Escape") {
         if (paletteOpen) {
           setPaletteOpen(false);

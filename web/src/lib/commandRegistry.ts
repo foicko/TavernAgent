@@ -18,6 +18,11 @@ const LEFT_TABS: { tab: LeftSubtab; label: string; keywords: string[] }[] = [
   { tab: "sessions", label: "故事列表", keywords: ["sessions", "gushi", "存档"] },
 ];
 
+// 与 App.tsx 的 Alt+数字 快捷键一一对应。
+const LEFT_TAB_HINTS: Record<LeftSubtab, string> = {
+  tree: "Alt+1", characters: "Alt+2", lore: "Alt+3", sessions: "Alt+4",
+};
+
 export function buildCommands(): Command[] {
   const ui = useUi.getState();
   const story = useStory.getState();
@@ -85,6 +90,7 @@ export function buildCommands(): Command[] {
       title: `左栏：${label}`,
       group: "navigation",
       keywords: ["tab", "zuolan", ...keywords],
+      hint: LEFT_TAB_HINTS[tab],
       enabled: ui.leftTab !== tab || ui.isLeftRailCollapsed,
       run: () => useUi.getState().openLeftTabAndExpand(tab),
     });
@@ -185,6 +191,7 @@ export function buildCommands(): Command[] {
       title: ui.theme === "dark" ? "切换到乳白纸墨主题" : "切换到墨黑幽夜主题",
       group: "view",
       keywords: ["theme", "dark", "light", "zhuti", "shense", "qianse"],
+      hint: "Ctrl+Shift+L",
       run: () => useUi.getState().toggleTheme(),
     },
     {
@@ -218,7 +225,7 @@ export function buildCommands(): Command[] {
   });
 
   commands.push(
-    panel("panel:settings", "打开模型与偏好设置", ["settings", "shezhi", "peizhi", "moxing"], () => useSettings.getState().openSettings()),
+    { ...panel("panel:settings", "打开模型与偏好设置", ["settings", "shezhi", "peizhi", "moxing"], () => useSettings.getState().openSettings()), hint: "Ctrl+," },
     panel("panel:worldbook", "打开世界书", ["worldbook", "lore", "shijieshu", "shezhi"], () => useUi.getState().setWorldbookModalOpen(true)),
     panel("panel:memory", "打开记忆银行", ["memory", "jiyiyinhang", "jiyi"], () => useUi.getState().setMemoryModalOpen(true), !!view),
     panel("panel:dossier", "打开人物档案", ["dossier", "renwudangan", "renshe"], () => useUi.getState().setDossierModalOpen(true)),

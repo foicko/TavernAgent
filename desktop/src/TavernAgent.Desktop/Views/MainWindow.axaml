@@ -13,10 +13,17 @@
         WindowDecorations="BorderOnly"
         Background="{DynamicResource WindowBackgroundBrush}">
 
+  <!-- 与 web/src/App.tsx 的全局快捷键保持同一张表 -->
   <Window.KeyBindings>
     <KeyBinding Gesture="Ctrl+K" Command="{Binding Workspace.TogglePaletteCommand}" />
     <KeyBinding Gesture="Ctrl+OemOpenBrackets" Command="{Binding Workspace.ToggleLeftRailCommand}" />
     <KeyBinding Gesture="Ctrl+OemCloseBrackets" Command="{Binding Workspace.ToggleRightRailCommand}" />
+    <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding Workspace.OpenSettingsCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+L" Command="{Binding Workspace.ToggleThemeCommand}" />
+    <KeyBinding Gesture="Alt+D1" Command="{Binding Workspace.ShowTreeTabCommand}" />
+    <KeyBinding Gesture="Alt+D2" Command="{Binding Workspace.ShowCharactersTabCommand}" />
+    <KeyBinding Gesture="Alt+D3" Command="{Binding Workspace.ShowLoreTabCommand}" />
+    <KeyBinding Gesture="Alt+D4" Command="{Binding Workspace.ShowSessionsTabCommand}" />
   </Window.KeyBindings>
 
   <Panel>

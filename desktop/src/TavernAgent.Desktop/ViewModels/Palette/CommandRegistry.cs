@@ -67,7 +67,7 @@ public static class CommandRegistry
             () => { ui.SwitchViewMode(ViewportMode.Reading); return Task.CompletedTask; },
             () => ui.ViewMode != ViewportMode.Reading, keywords: "reading 纯净 编年 阅读");
         Add("view", "view:theme", ui.Theme == ThemeMode.Dark ? "切换到浅色主题" : "切换到深色主题",
-            () => { ui.ToggleTheme(); return Task.CompletedTask; }, keywords: "theme dark light 主题 深浅 明暗");
+            () => { ui.ToggleTheme(); return Task.CompletedTask; }, hint: "Ctrl+Shift+L", keywords: "theme dark light 主题 深浅 明暗");
         Add("view", "view:showcase", "打开独立组件展厅 (beautifului, beui, rareui, transitions, shadcn)",
             () =>
             {
@@ -80,7 +80,7 @@ public static class CommandRegistry
 
         // ---- panel ----
         Add("panel", "panel:settings", "打开模型与偏好设置",
-            () => { ui.SetSettingsOpen(true); return Task.CompletedTask; }, keywords: "settings 设置 模型 连接");
+            () => { ui.SetSettingsOpen(true); return Task.CompletedTask; }, hint: "Ctrl+,", keywords: "settings 设置 模型 连接");
         Add("panel", "panel:worldbook", "打开世界书示例",
             () => { ui.SetWorldbookModalOpen(true); return Task.CompletedTask; }, keywords: "worldbook 世界书 示例");
         Add("panel", "panel:director", "打开导演模式",
