@@ -429,7 +429,8 @@ func (c *Compiler) loadSessionContext(sessionID string) sessionContext {
 		return sc
 	}
 	var rc struct {
-		OpeningText string `json:"openingText"`
+		OpeningText string      `json:"openingText"`
+		CardUI      *cardUIInfo `json:"cardUI"`
 		Templates   map[string]struct {
 			TemplateVersionID string `json:"templateVersionId"`
 			Content           struct {
@@ -442,6 +443,7 @@ func (c *Compiler) loadSessionContext(sessionID string) sessionContext {
 		return sc
 	}
 	sc.OpeningText = rc.OpeningText
+	sc.CardUI = rc.CardUI
 	if ref := rc.Templates["rules"]; ref.TemplateVersionID != "" {
 		if tv, err := c.store.GetTemplateVersion(ref.TemplateVersionID); err == nil {
 			if err := json.Unmarshal([]byte(tv.Content), &sc.Rules); err != nil {

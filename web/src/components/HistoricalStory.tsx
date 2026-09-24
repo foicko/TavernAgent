@@ -1,7 +1,8 @@
 import React, { memo, useState } from "react";
 import type { OptionView, StoryMessage, TurnPhase } from "../stores/storyTypes";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
-import { renderWithCardImages } from "../lib/risuImages";
+import { renderCardMarkers } from "../lib/cardMarkers";
+import { CardHUDStack } from "./CardHUD";
 import { useCardAssetMap } from "../stores/cardAssetStore";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { formatActionCheckBadge } from "../lib/ruleCheck";
@@ -106,7 +107,7 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                   <div className="dialogue-content-text">
                     {msg.blocks.map((b, bi) => (
                       <p key={bi} className="block-narration">
-                        {b.text && renderWithCardImages(expand(b.text), cardAssets)}
+                        {b.text && renderCardMarkers(expand(b.text), cardAssets)}
                       </p>
                     ))}
                   </div>
@@ -177,12 +178,13 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                       <span className="turn-time-stamp">回合 #{msg.turnNumber ?? idx}</span>
                     </div>
                     {msg.thinking && <CommittedThinkingSection thinking={msg.thinking} seconds={msg.thinkingSeconds} />}
+                    <CardHUDStack hints={msg.uiHints} />
                     <div className="dialogue-content-text">
                       {msg.blocks.map((b, bi) => {
                         if (b.kind === "dialogue") {
                           return (
                             <p key={bi} className="block-dialogue">
-                              「{renderWithCardImages(expand(b.text.replace(/^[「"']|[」"']$/g, "")), cardAssets)}」
+                              「{renderCardMarkers(expand(b.text.replace(/^[「"']|[」"']$/g, "")), cardAssets)}」
                             </p>
                           );
                         }
@@ -192,13 +194,13 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                               key={bi}
                               className="block-monologue"
                             >
-                              （{renderWithCardImages(expand(b.text.replace(/^[（(]|[）)]$/g, "")), cardAssets)}）
+                              （{renderCardMarkers(expand(b.text.replace(/^[（(]|[）)]$/g, "")), cardAssets)}）
                             </p>
                           );
                         }
                         return (
                           <p key={bi} className="block-narration">
-                            {renderWithCardImages(expand(b.text), cardAssets)}
+                            {renderCardMarkers(expand(b.text), cardAssets)}
                           </p>
                         );
                       })}

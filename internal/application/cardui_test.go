@@ -1,0 +1,140 @@
+package application
+
+import (
+	"encoding/json"
+	"testing"
+)
+
+const uiProfileCardJSON = `{
+  "spec": "chara_card_v3",
+  "spec_version": "3.0",
+  "data": {
+    "name": "Ceres Test",
+    "description": "A knight.",
+    "personality": "calm",
+    "scenario": "Academy",
+    "first_mes": "Hello <img cmd=\"smile\">",
+    "post_history_instructions": "Append [CeresStatus:date=1214-01-01|marks=none] at the end.",
+    "assets": [
+      {"type": "icon", "uri": "data:image/png;base64,AAAA", "name": "main", "ext": "png"},
+      {"type": "x-risu-asset", "uri": "embeded://assets/other/image/a.webp", "name": "smile", "ext": "webp"},
+      {"type": "x-risu-asset", "uri": "embeded://assets/other/audio/b.mp3", "name": "bgm", "ext": "mp3"}
+    ],
+    "character_book": {
+      "entries": [
+        {"keys": ["knight"], "content": "The [VITALS] block is required.", "enabled": true}
+      ]
+    },
+    "extensions": {
+      "risuai": {
+        "backgroundHTML": "<style>.x{}</style>",
+        "defaultVariables": "{\"aff\":\"0\",\"lang\":\"KO\"}",
+        "viewScreen": "emotion",
+        "sdData": [["solo"]],
+        "lowLevelAccess": false,
+        "additionalText": ["extra"]
+      },
+      "depth_prompt": {"depth": 0, "prompt": "stay in character"}
+    }
+  }
+}`
+
+func TestDetectCardUIProfile(t *testing.T) {
+	rep, err := ImportCardJSON(uiProfileCardJSON)
+	if err != nil {
+		t.Fatalf("ImportCardJSON: %v", err)
+	}
+	if rep.Card.UIProfile == nil {
+		t.Fatal("UIProfile is nil")
+	}
+	caps := rep.Card.UIProfile.Capabilities
+	if !caps.HasBackgroundHTML {
+		t.Error("HasBackgroundHTML = false, want true")
+	}
+	if !caps.HasDefaultVariables {
+		t.Error("HasDefaultVariables = false, want true")
+	}
+	if !caps.HasDepthPrompt {
+		t.Error("HasDepthPrompt = false, want true")
+	}
+	if caps.ViewScreen != "emotion" {
+		t.Errorf("ViewScreen = %q, want emotion", caps.ViewScreen)
+	}
+	if !caps.ImgCmd {
+		t.Error("ImgCmd = false, want true")
+	}
+	if caps.ImageAssetCount != 2 {
+		t.Errorf("ImageAssetCount = %d, want 2", caps.ImageAssetCount)
+	}
+	if caps.AudioAssetCount != 1 {
+		t.Errorf("AudioAssetCount = %d, want 1", caps.AudioAssetCount)
+	}
+	if caps.LorebookEntries != 1 {
+		t.Errorf("LorebookEntries = %d, want 1", caps.LorebookEntries)
+	}
+	want := map[string]bool{"CeresStatus": true, "VITALS": true}
+	for _, f := range caps.MarkerFamilies {
+		delete(want, f)
+	}
+	if len(want) != 0 {
+		t.Errorf("missing marker families: %v (got %v)", want, caps.MarkerFamilies)
+	}
+	if rep.Card.UIProfile.VarDefaults["lang"] != "KO" {
+		t.Errorf("VarDefaults[lang] = %q, want KO", rep.Card.UIProfile.VarDefaults["lang"])
+	}
+}
+
+// TestUIProfileSurvivesRoundTrip 保证归一化卡 JSON 重新解析后能力不丢：
+// 归一化会丢掉 extensions，若合并逻辑写错就会清空已冻结的能力。
+func TestUIProfileSurvivesRoundTrip(t *testing.T) {
+	rep, err := ImportCardJSON(uiProfileCardJSON)
+	if err != nil {
+		t.Fatalf("ImportCardJSON: %v", err)
+	}
+	normalized := rep.CardJSON()
+	re, err := ImportCardJSON(normalized)
+	if err != nil {
+		t.Fatalf("re-import: %v", err)
+	}
+	if re.Card.UIProfile == nil {
+		t.Fatal("UIProfile lost after round-trip")
+	}
+	if !re.Card.UIProfile.Capabilities.HasBackgroundHTML {
+		t.Error("HasBackgroundHTML lost after round-trip")
+	}
+	if re.Card.UIProfile.VarDefaults["aff"] != "0" {
+		t.Errorf("VarDefaults lost after round-trip: %v", re.Card.UIProfile.VarDefaults)
+	}
+}
+
+func TestParseDefaultVariablesRejectsNonObject(t *testing.T) {
+	if got := parseDefaultVariables("not json"); got != nil {
+		t.Errorf("expected nil, got %v", got)
+	}
+	if got := parseDefaultVariables(""); got != nil {
+		t.Errorf("expected nil for empty, got %v", got)
+	}
+}
+
+func TestDetectMarkerFamiliesIgnoresLowercaseTags(t *testing.T) {
+	got := detectMarkerFamilies("see [lowercase] and [STATUS:ok] and [1BAD:x]")
+	want := []string{"STATUS"}
+	if len(got) != len(want) || (len(got) == 1 && got[0] != want[0]) {
+		t.Errorf("detectMarkerFamilies = %v, want %v", got, want)
+	}
+}
+
+func TestCapabilitiesMarshalStable(t *testing.T) {
+	caps := CardCapabilities{HasModule: true, MarkerFamilies: []string{"A", "B"}}
+	b, err := json.Marshal(caps)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var back CardCapabilities
+	if err := json.Unmarshal(b, &back); err != nil {
+		t.Fatal(err)
+	}
+	if !back.HasModule || len(back.MarkerFamilies) != 2 {
+		t.Errorf("round-trip mismatch: %+v", back)
+	}
+}

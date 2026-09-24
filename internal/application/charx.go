@@ -267,6 +267,8 @@ func (r *ImportReport) warnCharx(zr *zip.Reader) {
 	if r.Card != nil && hasRisuExtension(r.RawJSON) {
 		r.Warnings = append(r.Warnings, "卡片 extensions 含 risuai/depth_prompt 扩展：保留于原卡，不参与上下文注入")
 	}
+	// 抽取卡片 UI 档案（能力清单/变量初值），供导入兼容报告与标记契约使用。
+	attachUIProfile(r, hasModule)
 }
 
 // hasImgCmd 检测开场/描述里是否含 RisuAI 图像指令。

@@ -5,12 +5,12 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Stage.StageView"
              x:DataType="vm:StageViewModel">
-  <Grid RowDefinitions="*,Auto">
+  <Grid>
 
     <ScrollViewer Grid.Row="0" Name="Stream"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-      <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
+      <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,200">
 
         <!-- Reading mode banner -->
         <Border IsVisible="{Binding ShowReadingBanner}" Classes="surface-inset" Padding="20"
@@ -196,6 +196,9 @@
                               <Image Source="{Binding Image}" Stretch="Uniform" MaxWidth="380" MaxHeight="520" />
                             </Border>
                           </DataTemplate>
+                          <DataTemplate DataType="vm:NarrativeHudSegment">
+                            <c:CardHudView Margin="0,4" />
+                          </DataTemplate>
                         </ItemsControl.DataTemplates>
                       </ItemsControl>
                     </DataTemplate>
@@ -272,7 +275,9 @@
       </StackPanel>
     </ScrollViewer>
 
-    <ContentControl Grid.Row="1" IsVisible="{Binding IsStudioMode}">
+    <ContentControl Grid.Row="0"
+                    VerticalAlignment="Bottom"
+                    IsVisible="{Binding IsStudioMode}">
       <stage:ComposerView DataContext="{Binding Composer}" />
     </ContentControl>
   </Grid>

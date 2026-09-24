@@ -107,7 +107,7 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 	psJSON, _ := json.Marshal(ps)
 	templateSnapshot, tpls := buildTemplateSnapshot(card, tpl, psJSON)
 
-	rootContent, _ := json.Marshal(map[string]any{
+	rootFields := map[string]any{
 		"setupRequestHash": requestHash,
 		"stateVersion":     "v1",
 		"initialState":     json.RawMessage(stateJSON),
@@ -115,7 +115,13 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 		"openingVariantId": resolved.VariantID,
 		"cardRef":          tplID,
 		"templates":        templateSnapshot,
-	})
+	}
+	// 卡片 UI 档案随根节点冻结：编译层据此生成「卡片界面标记」契约。
+	// 原生卡的档案不在卡 JSON 里（为保持字节稳定），这里从原始串现推一次。
+	if cardUI := resolveCardUIProfile(card, req.CharacterJSON); cardUI != nil {
+		rootFields["cardUI"] = cardUI
+	}
+	rootContent, _ := json.Marshal(rootFields)
 	root := &domain.PlotNode{
 		NodeID: rootID, SessionID: sessionID, Kind: domain.NodeKindRoot,
 		SchemaVersion: 1, ContentJSON: string(rootContent),
@@ -150,6 +156,19 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 		_ = s.store.TouchCard(req.CardID, time.Now())
 	}
 	return &SetupResult{Session: sess, Branch: branch, RootNode: root, State: state, OpeningText: resolved.Text}, nil
+}
+
+// resolveCardUIProfile 取卡的 UI 档案：卡 JSON 已带（charx/JSON 导入会写入）则直接用，
+// 否则从原始串现推（原生卡把 extensions 保留在原始串里，但档案不写回以保持字节稳定）。
+func resolveCardUIProfile(card *CharacterCard, raw string) *CardUIProfile {
+	if card != nil && card.UIProfile != nil {
+		return card.UIProfile
+	}
+	rep, err := ImportCardJSON(raw)
+	if err != nil || rep == nil || rep.Card == nil {
+		return nil
+	}
+	return rep.Card.UIProfile
 }
 
 // resolveSetupCard 把 cardId 解析成 characterJson。未提供 cardId（或已提供

@@ -1,0 +1,60 @@
+/* CardHUD：卡片状态面板与场景标签。克制、扁平，随主题变量走。 */
+.card-hud-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.card-hud {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--bg-subtle, transparent);
+  padding: 10px 14px;
+}
+
+.card-hud-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.card-hud-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.card-hud-grid dt {
+  color: var(--text-muted);
+}
+
+.card-hud-grid dd {
+  margin: 0;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-scene-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 4px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full, 999px);
+  background: var(--bg-subtle, transparent);
+  font-size: 12px;
+}
+
+.card-scene-label {
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+.card-scene-title {
+  color: var(--text-main);
+}

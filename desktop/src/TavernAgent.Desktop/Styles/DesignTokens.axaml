@@ -55,6 +55,13 @@
       <!-- v2: no native material anymore — keep opaque for key compatibility. -->
       <Color x:Key="C.WindowBgMaterial">#FAFAFB</Color>
 
+      <!-- Floating composer: narrative fades into the window background behind the island. -->
+      <LinearGradientBrush x:Key="ComposerScrimBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Offset="0" Color="#00FAFAFB" />
+        <GradientStop Offset="0.25" Color="#FAFAFB" />
+        <GradientStop Offset="1" Color="#FAFAFB" />
+      </LinearGradientBrush>
+
       <!-- v2: semantic surfaces -->
       <Color x:Key="C.SurfaceOverlay">#FFFFFF</Color>
       <Color x:Key="C.SurfaceSunken">#F7F8F9</Color>
@@ -120,6 +127,13 @@
       <Color x:Key="C.WindowBg">#17181A</Color>
 
       <Color x:Key="C.WindowBgMaterial">#17181A</Color>
+
+      <!-- Floating composer: narrative fades into the window background behind the island. -->
+      <LinearGradientBrush x:Key="ComposerScrimBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Offset="0" Color="#0017181A" />
+        <GradientStop Offset="0.25" Color="#17181A" />
+        <GradientStop Offset="1" Color="#17181A" />
+      </LinearGradientBrush>
 
       <Color x:Key="C.SurfaceOverlay">#232427</Color>
       <Color x:Key="C.SurfaceSunken">#17181A</Color>

@@ -296,6 +296,7 @@ public sealed partial class StoryStore : ObservableStore
                 Changes = tc.Changes,
                 InjectedMemories = tc.InjectedMemories,
                 SuppressedOptions = tc.SuppressedOptions,
+                UiHints = tc.UiHints,
                 TurnNumber = n.TurnNumber,
                 Thinking = thinking,
             });

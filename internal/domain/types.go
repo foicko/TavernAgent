@@ -142,6 +142,17 @@ type TurnContent struct {
 	// 两者对“我现在该做什么”的含义完全不同。
 	SuppressedOptions int             `json:"suppressedOptions,omitempty"`
 	Provenance        *TurnProvidence `json:"provenance,omitempty"`
+	// UIHints 是本轮从正文里归一化出的卡片 UI 标记（HUD/SCENE/VAR）。
+	// 状态类标记在提交时从正文剥离并落到这里，随回合冻结，供各端渲染原生组件；
+	// 表现类标记（图片）仍留在 Blocks 文本里由渲染层就地展示。
+	UIHints []UIHint `json:"uiHints,omitempty"`
+}
+
+// UIHint 是一条已归一化的卡片 UI 标记。
+type UIHint struct {
+	Kind   string            `json:"kind"` // hud | scene | var
+	Values map[string]string `json:"values,omitempty"`
+	Text   string            `json:"text,omitempty"`
 }
 
 // TextBlock 是已提交正文的有类型块。

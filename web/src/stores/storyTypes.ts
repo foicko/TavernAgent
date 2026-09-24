@@ -8,6 +8,7 @@ import type {
   SessionView,
   StateChange,
   TextBlock,
+  UIHint,
   WorldState,
 } from "../app/types";
 import type { api } from "../app/api";
@@ -38,6 +39,8 @@ export interface StoryMessage {
   injectedMemories?: MemoryRef[];
   /** 模型给出但按"只在关键节点"规则未呈现的选项条数。 */
   suppressedOptions?: number;
+  /** 本轮从正文归一化出的卡片 UI 标记（HUD/SCENE/VAR）。 */
+  uiHints?: UIHint[];
   turnNumber?: number;
   thinking?: string;
   /** 思考耗时（秒）：settle 后显示「思考了 N 秒」。 */

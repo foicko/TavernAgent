@@ -67,6 +67,16 @@ public sealed class TurnContent
     public List<TextBlock> Blocks { get; set; } = new();
     public List<Option> Options { get; set; } = new();
     public MoodRef? Mood { get; set; }
+    /// <summary>本轮从正文归一化出的卡片 UI 标记（hud/scene/var）。</summary>
+    public List<UIHint>? UiHints { get; set; }
+}
+
+/// <summary>一条已归一化的卡片 UI 标记（web: TurnContent.uiHints）。</summary>
+public sealed class UIHint
+{
+    public string Kind { get; set; } = "";
+    public Dictionary<string, string>? Values { get; set; }
+    public string? Text { get; set; }
 }
 
 public sealed class Provenance

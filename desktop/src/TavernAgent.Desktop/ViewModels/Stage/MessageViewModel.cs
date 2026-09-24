@@ -47,6 +47,12 @@ public sealed partial class MessageViewModel : ObservableObject
             .ToList();
         Changes = (msg.Changes ?? new List<StateChange>()).Select(c => new ChangeEvidenceViewModel(c)).ToList();
         Memories = (msg.InjectedMemories ?? new List<MemoryRef>()).Select(m => new MemoryEvidenceViewModel(m)).ToList();
+        UiHints = (msg.UiHints ?? new List<UIHint>())
+            .Select(ToHudSegment)
+            .Where(s => s is not null)
+            .Cast<NarrativeHudSegment>()
+            .ToList();
+        HasUiHints = UiHints.Count > 0;
 
         HasInputText = InputText is not null;
         HasThinking = Thinking is not null;
@@ -64,6 +70,17 @@ public sealed partial class MessageViewModel : ObservableObject
         Illustration = new TurnIllustrationViewModel(stage, Id, PlainText);
         Tts = new TtsButtonViewModel(stage, PlainText, ExtractDialogue());
     }
+
+    /// <summary>本轮从正文归一化出的卡片 UI 标记（场景/状态面板）。</summary>
+    public IReadOnlyList<NarrativeHudSegment> UiHints { get; }
+    public bool HasUiHints { get; }
+
+    private static NarrativeHudSegment? ToHudSegment(UIHint hint) => hint.Kind switch
+    {
+        "scene" when !string.IsNullOrWhiteSpace(hint.Text) => new NarrativeHudSegment(true, hint.Text!, null),
+        "hud" when hint.Values is { Count: > 0 } => new NarrativeHudSegment(false, "", hint.Values),
+        _ => null,
+    };
 
     public string Id { get; }
     public string? ParentId { get; }

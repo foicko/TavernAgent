@@ -4,9 +4,13 @@
              xmlns:dto="using:TavernAgent.Core.Dtos"
              x:Class="TavernAgent.Desktop.Views.Stage.ComposerView"
              x:DataType="vm:ComposerViewModel">
-  <Grid Margin="20,0,20,16" MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" ClipToBounds="True">
+  <Grid MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center">
+    <!-- Fade scrim: narrative dissolves into the background as it passes behind the floating island. -->
+    <Border IsHitTestVisible="False"
+            Background="{DynamicResource ComposerScrimBrush}" />
     <Border Classes="surface-elevated composer-island anim-rise-in-bottom"
             CornerRadius="{DynamicResource RadiusLg}"
+            Margin="20,48,20,16"
             Padding="14,10">
       <StackPanel Spacing="8">
 

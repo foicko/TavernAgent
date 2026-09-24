@@ -1,7 +1,7 @@
-using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using TavernAgent.Core.CardMarkers;
 using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
 
@@ -53,11 +53,30 @@ public sealed class NarrativeImageSegment : NarrativeSegment, System.ComponentMo
     }
 }
 
+/// <summary>状态面板的一行。</summary>
+public sealed record HudRow(string Label, string Value);
+
+/// <summary>A card state panel or scene chip parsed from a UI marker.</summary>
+public sealed class NarrativeHudSegment : NarrativeSegment
+{
+    public NarrativeHudSegment(bool isScene, string title, IReadOnlyDictionary<string, string>? values)
+    {
+        IsScene = isScene;
+        Title = title;
+        Values = (values ?? new Dictionary<string, string>())
+            .Select(kv => new HudRow(kv.Key, kv.Value))
+            .ToList();
+    }
+
+    public bool IsScene { get; }
+    public string Title { get; }
+    public IReadOnlyList<HudRow> Values { get; }
+    public bool HasValues => Values.Count > 0;
+}
+
 /// <summary>A single rendered narrative frame (web: block kinds narration/dialogue/inner_monologue).</summary>
 public sealed class BlockViewModel
 {
-    private static readonly Regex ImgCmd = new("<img\\s+cmd\\s*=\\s*\"([^\"]*)\"\\s*/?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
     public BlockViewModel(TextBlock block, string charName, string userName, IReadOnlyDictionary<string, string>? assets = null)
     {
         var expanded = NarrativeText.ReplaceMacros(block.Text, charName, userName);
@@ -91,25 +110,29 @@ public sealed class BlockViewModel
     private IReadOnlyList<NarrativeSegment> BuildSegments(string text, IReadOnlyDictionary<string, string>? assets)
     {
         NarrativeTextSegment TextSegment(string markdown) => new(markdown, IsDialogue, IsMonologue, IsNarration);
-        if (assets is null || assets.Count == 0) return new NarrativeSegment[] { TextSegment(text) };
 
-        var matches = ImgCmd.Matches(text);
-        if (matches.Count == 0) return new NarrativeSegment[] { TextSegment(text) };
+        var parsed = CardMarkerParser.Parse(text, assets);
+        if (parsed.Count == 0) return new NarrativeSegment[] { TextSegment(text) };
 
         var segments = new List<NarrativeSegment>();
-        var last = 0;
-        foreach (Match match in matches)
+        foreach (var s in parsed)
         {
-            if (match.Index > last) segments.Add(TextSegment(text[last..match.Index]));
-            var cmd = match.Groups[1].Value.Trim();
-            var url = cmd.Length > 0 ? CardAssetCache.Resolve(assets, cmd) : null;
-            if (!string.IsNullOrEmpty(url))
-                segments.Add(new NarrativeImageSegment(url, cmd));
-            else
-                segments.Add(TextSegment(match.Value));
-            last = match.Index + match.Length;
+            switch (s.Kind)
+            {
+                case CardMarkerKind.Text:
+                    if (s.Text.Length > 0) segments.Add(TextSegment(s.Text));
+                    break;
+                case CardMarkerKind.Image:
+                    segments.Add(new NarrativeImageSegment(s.Url, s.Alt));
+                    break;
+                case CardMarkerKind.Hud:
+                    segments.Add(new NarrativeHudSegment(false, "", s.Values));
+                    break;
+                case CardMarkerKind.Scene:
+                    segments.Add(new NarrativeHudSegment(true, s.Title, null));
+                    break;
+            }
         }
-        if (last < text.Length) segments.Add(TextSegment(text[last..]));
         return segments.Count > 0 ? segments : new NarrativeSegment[] { TextSegment(text) };
     }
 }

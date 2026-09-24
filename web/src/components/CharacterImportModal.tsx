@@ -7,6 +7,7 @@ import type { CardPreview } from "../app/types";
 import { useStory } from "../stores/storyStore";
 import { api } from "../app/api";
 import { DEFAULT_PLAYER_NAME } from "../lib/characterMacros";
+import { describeCapabilities } from "../lib/cardCapabilities";
 import { Avatar } from "../ui/Avatar";
 import { Banner } from "../ui/Banner";
 import { Button } from "../ui/Button";
@@ -266,6 +267,9 @@ export const CharacterImportModal: React.FC = () => {
             <Field label="这张卡没有开场，请填写故事的第一幕" className="char-import-preview__opening">
               <TextArea rows={4} value={customOpening} disabled={creating} onChange={event => setCustomOpening(event.target.value)} />
             </Field>
+          )}
+          {describeCapabilities(importedPreview.capabilities) && (
+            <Banner tone="info">{describeCapabilities(importedPreview.capabilities)}</Banner>
           )}
           {importedPreview.warnings && importedPreview.warnings.length > 0 && (
             <Banner tone="warn">兼容提示：{importedPreview.warnings.join("；")}</Banner>

@@ -20,6 +20,16 @@ export interface CheckResult {
   permanentEffect?: string;
 }
 
+/**
+ * 一条已归一化的卡片 UI 标记（HUD/SCENE/VAR）。
+ * 服务端在提交时把状态类标记从正文剥离并落到这里，随回合冻结，供渲染为原生组件。
+ */
+export interface UIHint {
+  kind: "hud" | "scene" | "var";
+  values?: Record<string, string>;
+  text?: string;
+}
+
 export interface TurnContent {
   inputKind: string;
   inputText: string;
@@ -39,6 +49,8 @@ export interface TurnContent {
   blocks: TextBlock[];
   options: Option[];
   mood?: { characterId: string; moodCode: string; text: string } | null;
+  /** 本轮从正文归一化出的卡片 UI 标记（HUD/SCENE/VAR）。 */
+  uiHints?: UIHint[];
 }
 
 /**
@@ -425,6 +437,30 @@ export interface CardPreview {
   openings: { variantId: string; title: string; text: string }[];
   /** 卡内嵌资源清单（charx）；用于把正文 <img cmd> 渲染为图片。 */
   assets?: CardAssetView[];
+  /** 卡声明的 RisuAI/charx 特性（导入兼容报告）。 */
+  capabilities?: CardCapabilities;
+  /** 卡预置的会话变量初值。 */
+  varDefaults?: Record<string, string>;
+}
+
+/** 卡片声明的 RisuAI/charx 特性（镜像后端 application.CardCapabilities）。 */
+export interface CardCapabilities {
+  source?: string;
+  hasModule?: boolean;
+  hasBackgroundHTML?: boolean;
+  hasDefaultVariables?: boolean;
+  hasSDData?: boolean;
+  hasDepthPrompt?: boolean;
+  hasVits?: boolean;
+  hasAdditionalText?: boolean;
+  viewScreen?: string;
+  lowLevelAccess?: boolean;
+  assetCount?: number;
+  imageAssetCount?: number;
+  audioAssetCount?: number;
+  lorebookEntries?: number;
+  imgCmd?: boolean;
+  markerFamilies?: string[];
 }
 
 /** 卡库摘要（列表接口返回，不含兆级 characterJson）。 */

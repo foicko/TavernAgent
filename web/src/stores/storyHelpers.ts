@@ -316,6 +316,7 @@ export function messagesFromNodes(
       changes: tc.changes,
       injectedMemories: tc.injectedMemories,
       suppressedOptions: tc.suppressedOptions,
+      uiHints: tc.uiHints,
       turnNumber: n.turnNumber,
       thinking,
       thinkingSeconds,

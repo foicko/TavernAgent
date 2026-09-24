@@ -229,6 +229,7 @@ func (c *Compiler) systemPrompt(state *domain.WorldState, lore []lorebookHit, me
 	// 边界声明必须出现在任何资料之前：它解释的是随后那些 <external_content> 的语义，
 	// 写在资料之后就等于让模型先读数据再读规则。
 	b.WriteString(ExternalBoundaryInstruction)
+	b.WriteString(cardUIContractBlock(sc))
 	if ledger != "" {
 		b.WriteString(ledger + "\n\n")
 	}
@@ -284,6 +285,7 @@ func (c *Compiler) staticSystemPrompt(state *domain.WorldState, sc sessionContex
 	b.WriteString(c.roleInstruction())
 	b.WriteString(renderActionRefs(sc.Rules))
 	b.WriteString(ExternalBoundaryInstruction)
+	b.WriteString(cardUIContractBlock(sc))
 	b.WriteString(renderCharacterProfiles(state, false, true))
 
 	if sc.PlayerName != "" {

@@ -27,6 +27,8 @@ public sealed class StoryMessage
     public List<StateChange>? Changes { get; set; }
     public List<MemoryRef>? InjectedMemories { get; set; }
     public int? SuppressedOptions { get; set; }
+    /// <summary>本轮从正文归一化出的卡片 UI 标记（hud/scene/var）。</summary>
+    public List<UIHint>? UiHints { get; set; }
     public int? TurnNumber { get; set; }
     public string? Thinking { get; set; }
 }

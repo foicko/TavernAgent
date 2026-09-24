@@ -4,7 +4,7 @@ import { useSettings } from "../stores/settingsStore";
 import { isTurnBusy, useStory } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
-import { renderWithCardImages } from "../lib/risuImages";
+import { renderCardMarkers } from "../lib/cardMarkers";
 import { useCardAssetMap } from "../stores/cardAssetStore";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
@@ -276,7 +276,7 @@ export const NarrativeStream: React.FC = () => {
               </div>
 
               <div className="dialogue-content-text">
-                {renderWithCardImages(expand(char.prologue), cardAssets)}
+                {renderCardMarkers(expand(char.prologue), cardAssets)}
               </div>
 
               <div className="prologue-guide-box">
@@ -381,20 +381,20 @@ export const NarrativeStream: React.FC = () => {
                     if (b.kind === "dialogue") {
                       return (
                         <p key={bi} className="block-dialogue">
-                          「{renderWithCardImages(expand(b.text.replace(/^[「"']|[」"']$/g, "")), cardAssets)}」
+                          「{renderCardMarkers(expand(b.text.replace(/^[「"']|[」"']$/g, "")), cardAssets)}」
                         </p>
                       );
                     }
                     if (b.kind === "inner_monologue") {
                       return (
                         <p key={bi} className="block-monologue">
-                          （{renderWithCardImages(expand(b.text.replace(/^[（(]|[）)]$/g, "")), cardAssets)}）
+                          （{renderCardMarkers(expand(b.text.replace(/^[（(]|[）)]$/g, "")), cardAssets)}）
                         </p>
                       );
                     }
                     return (
                       <p key={bi} className="block-narration">
-                        {renderWithCardImages(expand(b.text), cardAssets)}
+                        {renderCardMarkers(expand(b.text), cardAssets)}
                       </p>
                     );
                   })

@@ -130,6 +130,8 @@ func (r *ImportReport) CardJSON() string {
 		}
 		return string(b)
 	}
+	// 原生卡保留原始串以携带未知扩展（字节稳定是既有保证，测试据此断言）。
+	// UI 档案不写回原生串：原生串里 extensions 仍在，可在需要时重新推断。
 	if r.Card.Avatar == "" {
 		return r.RawJSON
 	}
@@ -188,6 +190,7 @@ func decodeCardJSON(payload string, source string) (*ImportReport, error) {
 	}
 	normalizeCard(rep.Card)
 	rep.warn()
+	attachUIProfile(rep, false)
 	return rep, nil
 }
 

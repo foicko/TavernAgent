@@ -35,7 +35,9 @@ const (
 	//   v3 -> v4：角色卡 personality / scenario 进入上下文；新增尾部【角色锚点】
 	//             （性格摘录 + post_history 移到历史之后）；扮演准则新增戏内化解出戏请求
 	//             与人设不褪色两条；强化对白示例的权威性说明。
-	PromptVersion = 4
+	//   v4 -> v5：新增「卡片界面标记」契约（CardUIContract）：把 charx/RisuAI 卡的自定义
+	//             标记归一到 [SCENE]/[HUD]/[VAR] 标准标记，仅在会话卡片带 UI 档案时注入。
+	PromptVersion = 5
 )
 
 // promptTemplate 是被纳入指纹的提示词模板。Name 只用于组装哈希输入与排障展示。
@@ -63,6 +65,7 @@ var promptTemplates = []promptTemplate{
 	{"options_always", OptionsAlwaysDirective},
 	{"options_never", OptionsNeverDirective},
 	{"character_anchor", CharacterAnchorHeader},
+	{"card_ui_contract", CardUIContract},
 }
 
 // PromptFingerprint 返回提示词模板集合的短指纹（12 位十六进制）。

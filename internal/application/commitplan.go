@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"tavernagent/internal/cardmarkers"
 	"tavernagent/internal/domain"
 	"tavernagent/internal/protocol"
 )
@@ -16,6 +17,7 @@ type planData struct {
 	NewState    *domain.WorldState
 	Blocks      []domain.TextBlock
 	Options     []domain.Option
+	UIHints     []domain.UIHint
 	Mood        *domain.Mood
 	ContentJSON string
 }
@@ -58,10 +60,17 @@ type charField struct {
 }
 
 // preparePlanBlocksAndOptions 处理正文块转换以及选项的授权与节流（Never/Auto）。
-func preparePlanBlocksAndOptions(draft protocol.TurnDraft, input domain.TurnInput, ruleset domain.Ruleset, prevHadOptions bool) ([]domain.TextBlock, []domain.Option, string, int) {
+func preparePlanBlocksAndOptions(draft protocol.TurnDraft, input domain.TurnInput, ruleset domain.Ruleset, prevHadOptions bool) ([]domain.TextBlock, []domain.Option, []domain.UIHint, string, int) {
 	blocks := make([]domain.TextBlock, 0, len(draft.Blocks))
+	var uiHints []domain.UIHint
 	for _, b := range draft.Blocks {
-		blocks = append(blocks, domain.TextBlock{Kind: string(b.Kind), SpeakerID: derefStr(b.SpeakerID), Text: b.Text})
+		// 状态类标记（HUD/SCENE/VAR）从正文剥离并归一化为结构化提示；
+		// 表现类标记（图片）原样保留，由渲染层就地展示。
+		text, hints := cardmarkers.Extract(b.Text)
+		blocks = append(blocks, domain.TextBlock{Kind: string(b.Kind), SpeakerID: derefStr(b.SpeakerID), Text: text})
+		for _, h := range hints {
+			uiHints = append(uiHints, domain.UIHint{Kind: string(h.Kind), Values: h.Values, Text: h.Text})
+		}
 	}
 	options := make([]domain.Option, 0, len(draft.Options))
 	for _, o := range draft.Options {
@@ -87,7 +96,7 @@ func preparePlanBlocksAndOptions(draft protocol.TurnDraft, input domain.TurnInpu
 		suppressed = len(options)
 		options = nil
 	}
-	return blocks, options, optionsMode, suppressed
+	return blocks, options, uiHints, optionsMode, suppressed
 }
 
 // processMemoryProposal 处理来源化认知记录提议（M3）：实体消歧、证据校验、生命周期与覆盖链。
@@ -322,6 +331,7 @@ func assembleTurnContentJSON(input domain.TurnInput, pd *planData, pc planContex
 		// 收起台阶也要留痕：读者分得出“本轮本无抉择”与“系统没有摆出选项”。
 		SuppressedOptions: suppressed,
 		Provenance:        &domain.TurnProvidence{Mode: normalizeMode(mode)},
+		UIHints:           pd.UIHints,
 	}
 	cb, err := json.Marshal(tc)
 	if err != nil {
@@ -338,7 +348,7 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 
 	var optionsMode string
 	var suppressed int
-	pd.Blocks, pd.Options, optionsMode, suppressed = preparePlanBlocksAndOptions(draft, input, ruleset, pc.PreviousTurnHadOptions)
+	pd.Blocks, pd.Options, pd.UIHints, optionsMode, suppressed = preparePlanBlocksAndOptions(draft, input, ruleset, pc.PreviousTurnHadOptions)
 
 	probe := pd.NewState.Clone()
 	ruleEvents, err := validatedRuleEvents(base, pc.Checks, rulesetVersion)

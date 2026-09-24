@@ -25,6 +25,9 @@ type sessionContext struct {
 	// Secrets 是会话的**全部**秘密定义（来自卡片模板）。
 	// 是否注入由 WorldState.UnlockedSecrets 决定——未揭示的内容绝不进入上下文（T25）。
 	Secrets []secretEntry
+	// CardUI 是会话冻结的卡片 UI 档案（来自根节点 cardUI 字段）。
+	// 非空时注入「卡片界面标记」契约；nil 表示这张卡没有 RisuAI 特性。
+	CardUI *cardUIInfo
 }
 
 // secretEntry 是一条秘密定义（编译层只需要这三项；揭示条件不在编译期求值）。

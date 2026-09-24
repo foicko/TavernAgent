@@ -76,7 +76,10 @@ type CharacterCard struct {
 	LorebookRefs    []LorebookRef          `json:"lorebookRefs,omitempty"`
 	Assets          []CardAsset            `json:"assets,omitempty"`
 	Rules           *domain.Ruleset        `json:"rules,omitempty"`
-	RawOriginal     string                 `json:"-"` // 原始导入内容（资源保留，不回传）
+	// UIProfile 是导入时抽取的卡片 UI 档案（能力清单/变量初值），随卡冻结，
+	// 供编译层生成标记契约。派生字段，不参与内容哈希。
+	UIProfile   *CardUIProfile `json:"uiProfile,omitempty"`
+	RawOriginal string         `json:"-"` // 原始导入内容（资源保留，不回传）
 }
 
 // ParseCharacterCard 解析原生角色卡 JSON；未知字段不丢失（原样保留于 RawOriginal）。

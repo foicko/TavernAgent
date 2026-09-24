@@ -287,6 +287,10 @@ func cardPreviewBody(rep *application.ImportReport, entry *domain.CharacterCardE
 		"card":                    rep.Card,
 		"openings":                openings,
 	}
+	if rep.Card.UIProfile != nil {
+		body["capabilities"] = rep.Card.UIProfile.Capabilities
+		body["varDefaults"] = rep.Card.UIProfile.VarDefaults
+	}
 	if entry != nil {
 		body["cardId"] = entry.CardID
 		body["shortName"] = entry.ShortName

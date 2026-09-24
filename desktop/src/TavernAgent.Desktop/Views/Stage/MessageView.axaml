@@ -143,6 +143,18 @@
           </StackPanel>
         </Border>
 
+        <!-- Card UI hints (scene / status panel), normalized by the backend -->
+        <ItemsControl ItemsSource="{Binding UiHints}" IsVisible="{Binding HasUiHints}" Margin="0,0,0,10">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:NarrativeHudSegment">
+              <c:CardHudView />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
         <!-- Narrative blocks -->
         <ItemsControl ItemsSource="{Binding Blocks}">
           <ItemsControl.ItemTemplate>
@@ -161,6 +173,9 @@
                             HorizontalAlignment="Center" Margin="0,4">
                       <Image Source="{Binding Image}" Stretch="Uniform" MaxWidth="380" MaxHeight="520" />
                     </Border>
+                  </DataTemplate>
+                  <DataTemplate DataType="vm:NarrativeHudSegment">
+                    <c:CardHudView Margin="0,4" />
                   </DataTemplate>
                 </ItemsControl.DataTemplates>
               </ItemsControl>

@@ -115,7 +115,7 @@
     <!-- Quiet toast (raised above the composer island so it never covers the input) -->
     <Border HorizontalAlignment="Center"
             VerticalAlignment="Bottom"
-            Margin="0,0,0,168"
+            Margin="0,0,0,204"
             MaxWidth="560"
             CornerRadius="{DynamicResource RadiusFull}"
             Padding="16,8"
