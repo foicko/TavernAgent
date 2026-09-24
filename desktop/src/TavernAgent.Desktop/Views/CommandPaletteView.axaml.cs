@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -21,6 +22,16 @@ public partial class CommandPaletteView : UserControl
         if (_vm is not null) _vm.PropertyChanged -= OnVmChanged;
         _vm = DataContext as CommandPaletteViewModel;
         if (_vm is not null) _vm.PropertyChanged += OnVmChanged;
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_vm is not null)
+        {
+            _vm.PropertyChanged -= OnVmChanged;
+            _vm = null;
+        }
+        base.OnDetachedFromVisualTree(e);
     }
 
     private void OnVmChanged(object? sender, PropertyChangedEventArgs e)

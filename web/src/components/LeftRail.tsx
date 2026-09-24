@@ -1,5 +1,5 @@
 // LeftRail: 左侧多维导航栏 (52px 图标停靠轨 / 224px 完整内容，见 tokens.css 的 --rail-left-*)
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useUi, type LeftSubtab } from "../stores/uiStore";
 import { useStory } from "../stores/storyStore";
@@ -86,8 +86,11 @@ export const LeftRail: React.FC = () => {
     : undefined;
 
   const hasBackendNodes = !!(currentView && currentView.nodes && currentView.nodes.length > 0);
-  const displayTreeNodes: DisplayTreeNode[] = hasBackendNodes
-    ? currentView.nodes!.map((n, idx) => {
+  // Parsing every node's contentJson is O(n); memoize so unrelated re-renders
+  // (e.g. typing in the composer) don't repeat it.
+  const displayTreeNodes: DisplayTreeNode[] = useMemo(() => {
+    if (hasBackendNodes && currentView?.nodes) {
+      return currentView.nodes.map((n, idx) => {
         let desc = "剧情节点";
         const isOpening = n.kind === "root";
         try {
@@ -123,19 +126,21 @@ export const LeftRail: React.FC = () => {
           alert: nodeAlert,
           canRegenerate: n.kind === "turn",
         };
-      })
-    : (currentView ? [] : char.treeNodes).map((n) => ({
-        id: String(n.id),
-        tag: n.tag,
-        desc: n.desc,
-        isActive: !!n.isActive,
-        isViewing: false,
-        isFork: !!n.isFork,
-        aff: n.aff,
-        trust: n.trust,
-        alert: n.alert,
-        canRegenerate: !n.tag.includes("起点"),
-      }));
+      });
+    }
+    return (currentView ? [] : char.treeNodes).map((n) => ({
+      id: String(n.id),
+      tag: n.tag,
+      desc: n.desc,
+      isActive: !!n.isActive,
+      isViewing: false,
+      isFork: !!n.isFork,
+      aff: n.aff,
+      trust: n.trust,
+      alert: n.alert,
+      canRegenerate: !n.tag.includes("起点"),
+    }));
+  }, [hasBackendNodes, currentView, liveRel, char.treeNodes]);
 
   const activateOnKey = (run: () => void) => (event: React.KeyboardEvent) => {
     if (event.key === "Enter" || event.key === " ") {

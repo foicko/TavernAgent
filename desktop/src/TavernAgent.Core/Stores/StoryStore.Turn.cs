@@ -25,7 +25,14 @@ public sealed partial class StoryStore
     internal void RecoverActiveTurn(SessionView view)
     {
         var id = view.Branch.ActiveTurnId;
-        if (string.IsNullOrEmpty(id)) return;
+        if (string.IsNullOrEmpty(id))
+        {
+            // No in-flight turn on the authoritative view: make sure a stale cache
+            // entry cannot leave us stuck in Generating with a phantom stream.
+            DetachTurnStream();
+            if (Phase is TurnPhase.Generating) Phase = TurnPhase.Idle;
+            return;
+        }
         _turnCursorId = null;
         _turnCursorTurnId = null;
         Phase = TurnPhase.Generating;
@@ -117,6 +124,13 @@ public sealed partial class StoryStore
             {
                 if (Current()) Error = "回复进度暂时无法同步，正在重试：" + ToErr(error);
             }
+            finally
+            {
+                // Keep the fallback poll alive: SSE can silently stop delivering without
+                // raising an error, and the one-shot timer would otherwise never renew.
+                if (Current() && !committed && (Phase is TurnPhase.Generating or TurnPhase.Committed))
+                    Schedule(TurnStatusIntervalMs);
+            }
         }
 
         void Schedule(int delayMs)
@@ -133,16 +147,6 @@ public sealed partial class StoryStore
 
         if (committed) RequestTurnSync(true);
         else Schedule(snapshotFirst ? 0 : TurnStatusIntervalMs);
-
-        // keep poll loop alive for generating phases
-        if (!committed)
-        {
-            _turnPollTimer ??= new System.Threading.Timer(_ =>
-            {
-                if (Current() && Phase is TurnPhase.Generating or TurnPhase.Committed)
-                    _ = SynchronizeTurnAsync(false);
-            }, null, TurnStatusIntervalMs, TurnStatusIntervalMs);
-        }
     }
 
     private void MergeInFlightDraft(TurnDraftSnapshot? draft)

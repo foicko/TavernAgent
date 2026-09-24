@@ -127,7 +127,8 @@ public sealed partial class StoryStore
                 Input = new TurnSubmitInput { Kind = "text", Text = text.Trim() },
                 IdempotencyKey = $"ed_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{++_sendSeq}",
             }, ct).ConfigureAwait(false);
-            var res = System.Text.Json.JsonSerializer.Deserialize<DeriveResult>(resJson, JsonDefaults.Options)!;
+            var res = System.Text.Json.JsonSerializer.Deserialize<DeriveResult>(resJson, JsonDefaults.Options);
+            if (res is null) throw new InvalidOperationException("服务端未返回有效的分支派生结果");
             if (!Owns(owner)) return;
             await OpenDerivedBranchAsync(view.SessionId, res.BranchId, res.TurnId, ct).ConfigureAwait(false);
         }
@@ -156,7 +157,8 @@ public sealed partial class StoryStore
                 Blocks = blocks,
                 IdempotencyKey = $"ea_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{++_sendSeq}",
             }, ct).ConfigureAwait(false);
-            var res = System.Text.Json.JsonSerializer.Deserialize<AssistantEditResult>(resJson, JsonDefaults.Options)!;
+            var res = System.Text.Json.JsonSerializer.Deserialize<AssistantEditResult>(resJson, JsonDefaults.Options);
+            if (res is null) throw new InvalidOperationException("服务端未返回有效的正文编辑结果");
             if (!Owns(owner)) return;
             await OpenDerivedBranchAsync(view.SessionId, res.BranchId, null, ct).ConfigureAwait(false);
         }
@@ -206,10 +208,13 @@ public sealed partial class StoryStore
             OldestTurnId = older.OldestTurnId;
             LoadingOlder = false;
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            if (Owns(owner)) LoadingOlder = false;
-            throw;
+            if (Owns(owner))
+            {
+                LoadingOlder = false;
+                Error = "加载历史消息失败：" + ToErr(e);
+            }
         }
     }
 

@@ -40,6 +40,7 @@ public sealed class SseClient
     {
         var eventName = "message";
         var id = prevId;
+        var hasId = false;
         var dataLines = new List<string>();
         var lines = raw.Split('\n');
         foreach (var line0 in lines)
@@ -49,7 +50,10 @@ public sealed class SseClient
             if (line.StartsWith("event:", StringComparison.Ordinal))
                 eventName = line[6..].Trim();
             else if (line.StartsWith("id:", StringComparison.Ordinal))
+            {
                 id = line[3..].Trim();
+                hasId = true;
+            }
             else if (line.StartsWith("data:", StringComparison.Ordinal))
             {
                 var v = line[5..];
@@ -71,7 +75,7 @@ public sealed class SseClient
             using var stringDoc = JsonDocument.Parse(JsonSerializer.Serialize(data));
             parsed = stringDoc.RootElement.Clone();
         }
-        return new SseEventBlock { Id = id, Event = eventName, Data = parsed, HasIdLine = raw.Contains("id:") };
+        return new SseEventBlock { Id = id, Event = eventName, Data = parsed, HasIdLine = hasId };
     }
 
     /// <summary>

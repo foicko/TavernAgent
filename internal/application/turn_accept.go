@@ -228,6 +228,10 @@ func authorizeActionRef(ref string, rs domain.Ruleset) string {
 	return ""
 }
 
+// maxOptionAncestorWalk 是选项来源节点向上回溯维护节点的步数上限。
+// 正常父链远小于此值；它只用于阻断损坏数据造成的死循环。
+const maxOptionAncestorWalk = 4096
+
 // validateTurnInput 校验并归一化回合输入（T19）。
 //
 // 选项输入的三条规则：
@@ -269,7 +273,12 @@ func (s *TurnService) validateTurnInput(headID string, in domain.TurnInput) (dom
 		// Background cognition and user memory edits add non-dialogue nodes.
 		// Options remain tied to the last actual dialogue, not the maintenance node.
 		cursor := headID
-		for cursor != ref.NodeID {
+		for depth := 0; cursor != ref.NodeID; depth++ {
+			// Defensive bound: a corrupt/cyclic parent chain must not spin forever
+			// holding the accept lock.
+			if depth > maxOptionAncestorWalk {
+				return domain.TurnInput{}, nil, Err("STALE_OPTION", "选项来源链异常，请基于当前回合重新选择", 409)
+			}
 			node, err := s.store.GetNode(cursor)
 			if err != nil || (node.Kind != domain.NodeKindMemoryChange && node.Kind != domain.NodeKindDirectorEvent) || node.ParentID == "" {
 				return domain.TurnInput{}, nil, Err("STALE_OPTION", "该选项已过期，请基于当前回合重新选择", 409)

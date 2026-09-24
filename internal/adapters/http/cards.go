@@ -174,6 +174,13 @@ func (s *Server) readCardUpload(w http.ResponseWriter, r *http.Request) (string,
 	closeErr := tmp.Close()
 	if err != nil {
 		_ = os.Remove(tmp.Name())
+		// Raw (non-multipart) bodies are bounded by MaxBytesReader above; report the
+		// same 413 the multipart path produces instead of a misleading 400.
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			writeError(w, 413, "REQUEST_TOO_LARGE", "角色卡文件超过允许的上限", false, "")
+			return "", false
+		}
 		writeError(w, 400, "BAD_REQUEST", "读取卡片文件失败，请重试", false, "")
 		return "", false
 	}

@@ -47,6 +47,18 @@ public class ParseSseBlockTests
     }
 
     [Fact]
+    public void Data_Containing_Id_Substring_Is_Not_Treated_As_Having_An_Id_Line()
+    {
+        // "valid:" contains the substring "id:"; a naive raw.Contains("id:") would
+        // mark this unnumbered delta as durable and dedupe it away.
+        var raw = "event: block.delta\ndata: {\"delta\":\"valid: true, id: 7\"}";
+        var evt = SseClient.ParseSseBlock(raw, "turn_1:4");
+        Assert.NotNull(evt);
+        Assert.False(evt!.HasIdLine);
+        Assert.Equal("turn_1:4", evt.Id);
+    }
+
+    [Fact]
     public void Supports_Crlf_Separators_In_Block_Lines()
     {
         var raw = "event: message\r\nid: a:1\r\ndata: {\"k\":1}";

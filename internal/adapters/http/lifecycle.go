@@ -33,6 +33,9 @@ type requestDrain struct {
 	cond   *sync.Cond
 	active int
 	closed bool
+	// giveUp 在 wait 超时后置位，用于唤醒等待协程使其退出，避免其永久阻塞在
+	// cond.Wait() 上造成泄漏。
+	giveUp bool
 }
 
 func newRequestDrain() *requestDrain {
@@ -86,7 +89,7 @@ func (d *requestDrain) wait(timeout time.Duration) error {
 	done := make(chan struct{})
 	go func() {
 		d.mu.Lock()
-		for d.active > 0 {
+		for d.active > 0 && !d.giveUp {
 			d.cond.Wait()
 		}
 		d.mu.Unlock()
@@ -96,6 +99,11 @@ func (d *requestDrain) wait(timeout time.Duration) error {
 	case <-done:
 		return nil
 	case <-time.After(timeout):
+		// Wake the waiter so it can observe giveUp and exit instead of leaking.
+		d.mu.Lock()
+		d.giveUp = true
+		d.cond.Broadcast()
+		d.mu.Unlock()
 		return errors.New("关停：仍有在途请求未在 " + timeout.String() + " 内收尾")
 	}
 }

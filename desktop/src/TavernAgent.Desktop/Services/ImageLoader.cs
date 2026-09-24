@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Avalonia.Media.Imaging;
 
 namespace TavernAgent.Desktop.Services;
@@ -12,8 +11,14 @@ public static class ImageLoader
     private const int MaxEntries = 160;
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
-    private static readonly ConcurrentDictionary<string, Task<Bitmap?>> Cache = new();
-    private static readonly ConcurrentQueue<string> InsertionOrder = new();
+    private static readonly object Gate = new();
+    private static readonly Dictionary<string, Entry> Cache = new();
+
+    private sealed class Entry
+    {
+        public required Task<Bitmap?> Task { get; init; }
+        public long LastAccess { get; set; }
+    }
 
     public static Task<Bitmap?> LoadAsync(string? source, int? decodeWidth = null)
     {
@@ -25,12 +30,19 @@ public static class ImageLoader
             return LoadCoreAsync(source, decodeWidth);
 
         var key = decodeWidth is null ? source : $"{decodeWidth}|{source}";
-        if (Cache.TryGetValue(key, out var existing)) return existing;
+        lock (Gate)
+        {
+            if (Cache.TryGetValue(key, out var existing))
+            {
+                existing.LastAccess = Environment.TickCount64;
+                return existing.Task;
+            }
 
-        var task = Cache.GetOrAdd(key, _ => LoadAndTrackAsync(key, source, decodeWidth));
-        InsertionOrder.Enqueue(key);
-        Trim();
-        return task;
+            var entry = new Entry { Task = LoadAndTrackAsync(key, source, decodeWidth), LastAccess = Environment.TickCount64 };
+            Cache[key] = entry;
+            TrimLocked();
+            return entry.Task;
+        }
     }
 
     private static async Task<Bitmap?> LoadAndTrackAsync(string key, string source, int? decodeWidth)
@@ -40,15 +52,31 @@ public static class ImageLoader
         {
             // Never cache a failure permanently — a transient network error would
             // otherwise stick for the whole session.
-            Cache.TryRemove(key, out _);
+            lock (Gate) Cache.Remove(key);
         }
         return bitmap;
     }
 
-    private static void Trim()
+    // Evict least-recently-used entries. Kept in sync with the cache so a failed
+    // decode (removed above) cannot leave a dangling key that later evicts a live
+    // entry, and the bookkeeping cannot grow without bound.
+    private static void TrimLocked()
     {
-        while (Cache.Count > MaxEntries && InsertionOrder.TryDequeue(out var oldest))
-            Cache.TryRemove(oldest, out _);
+        while (Cache.Count > MaxEntries)
+        {
+            string? oldestKey = null;
+            var oldest = long.MaxValue;
+            foreach (var kv in Cache)
+            {
+                if (kv.Value.LastAccess < oldest)
+                {
+                    oldest = kv.Value.LastAccess;
+                    oldestKey = kv.Key;
+                }
+            }
+            if (oldestKey is null) return;
+            Cache.Remove(oldestKey);
+        }
     }
 
     private static async Task<Bitmap?> LoadCoreAsync(string source, int? decodeWidth)

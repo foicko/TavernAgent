@@ -7,6 +7,36 @@ namespace TavernAgent.Core.Stores;
 // Memory slice
 public sealed partial class StoryStore
 {
+    internal readonly record struct MemoryPagePlan(bool Ok, int Index, List<string> Cursors, bool ReusePreviousNode);
+
+    /// <summary>
+    /// Computes the target page index and the cursor chain for a memory query.
+    /// Extracted so the paging arithmetic (including the "next page" padding that
+    /// List&lt;T&gt; requires, unlike JS arrays) is unit-testable.
+    /// </summary>
+    internal static MemoryPagePlan PlanMemoryPage(MemoryPaging previous, string? page, string effectiveSearch, string effectiveKind)
+    {
+        var sameQuery = effectiveSearch == previous.Search && effectiveKind == previous.Kind;
+        var moving = sameQuery && (page is "next" or "previous");
+        var anchored = sameQuery && page is null && previous.Index > 0;
+        if (moving && page == "next" && string.IsNullOrEmpty(previous.NextCursor))
+            return new MemoryPagePlan(false, 0, new List<string>(), false);
+
+        var index = moving
+            ? Math.Max(0, previous.Index + (page == "next" ? 1 : -1))
+            : anchored ? previous.Index : 0;
+        var cursors = moving || anchored ? previous.Cursors.Take(index + 1).ToList() : new List<string> { "" };
+        if (moving && page == "next")
+        {
+            // Cursors holds one entry per visited page; the target page index is one
+            // past the current end, so pad before assigning (List<T> has no JS-style
+            // auto-extension).
+            while (cursors.Count <= index) cursors.Add("");
+            cursors[index] = previous.NextCursor!;
+        }
+        return new MemoryPagePlan(true, index, cursors, moving || anchored);
+    }
+
     public async Task LoadMemoriesAsync(
         string? search = null,
         string? kind = null,
@@ -28,16 +58,11 @@ public sealed partial class StoryStore
         var previous = MemoryPaging;
         var effectiveSearch = search ?? previous.Search;
         var effectiveKind = kind ?? previous.Kind;
-        var sameQuery = effectiveSearch == previous.Search && effectiveKind == previous.Kind;
-        var moving = sameQuery && (page is "next" or "previous");
-        var anchored = sameQuery && page is null && previous.Index > 0;
-        if (moving && page == "next" && string.IsNullOrEmpty(previous.NextCursor)) return;
-        var index = moving
-            ? Math.Max(0, previous.Index + (page == "next" ? 1 : -1))
-            : anchored ? previous.Index : 0;
-        var cursors = moving || anchored ? previous.Cursors.Take(index + 1).ToList() : new List<string> { "" };
-        if (moving && page == "next") cursors[index] = previous.NextCursor!;
-        var nodeId = moving || anchored ? previous.NodeId : ViewNodeId;
+        var plan = PlanMemoryPage(previous, page, effectiveSearch, effectiveKind);
+        if (!plan.Ok) return;
+        var index = plan.Index;
+        var cursors = plan.Cursors;
+        var nodeId = plan.ReusePreviousNode ? previous.NodeId : ViewNodeId;
         MemoryLoading = true;
         MemoryError = null;
         try

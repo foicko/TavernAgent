@@ -473,7 +473,12 @@ function subscribeEvents(aggregateId: string, path: string, handlers: TurnStream
         } finally {
           clearTimeout(timer);
           connection.abort();
-          if (reader) { void reader.cancel().catch(() => undefined); reader.releaseLock(); }
+          if (reader) {
+            void reader.cancel().catch(() => undefined);
+            // Some engines throw if a read() is still in flight; never let that
+            // abort the reconnect loop.
+            try { reader.releaseLock(); } catch { /* ignore */ }
+          }
           lifetime.signal.removeEventListener("abort", abortConnection);
         }
         if (lifetime.signal.aborted) return;

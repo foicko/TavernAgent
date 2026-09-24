@@ -8,7 +8,9 @@ namespace TavernAgent.Desktop;
 
 internal static class Program
 {
+    private const int UiErrorWindowMs = 10_000;
     private static int _uiErrorBurst;
+    private static long _uiErrorWindowStart;
 
     // Avalonia configuration, don't remove; also used by visual designer.
     [STAThread]
@@ -56,7 +58,14 @@ internal static class Program
         CrashLog.Write(e.Exception, "UIThread");
         e.Handled = true;
 
-        // Rate-limit the toast so a repeated render-loop failure cannot spam it.
+        // Rate-limit the toast so a repeated render-loop failure cannot spam it,
+        // while still re-enabling notices after the window elapses.
+        var now = Environment.TickCount64;
+        if (now - Interlocked.Read(ref _uiErrorWindowStart) > UiErrorWindowMs)
+        {
+            Interlocked.Exchange(ref _uiErrorWindowStart, now);
+            Interlocked.Exchange(ref _uiErrorBurst, 0);
+        }
         if (Interlocked.Increment(ref _uiErrorBurst) > 5) return;
         try { AppServices.Ui.NotifyQuiet("发生了一个内部错误，已记录到日志。"); }
         catch { /* never throw from the handler */ }

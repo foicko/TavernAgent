@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using TavernAgent.Desktop.Services;
@@ -34,6 +35,18 @@ public partial class StageView : UserControl
             CardThemeSync.SetTokens(_vm.CardThemeTokens);
             ScheduleScrollToEnd();
         }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_vm is not null)
+        {
+            _vm.Messages.CollectionChanged -= OnCollectionChanged;
+            _vm.DraftBlocks.CollectionChanged -= OnCollectionChanged;
+            _vm.PropertyChanged -= OnVmPropertyChanged;
+            _vm = null;
+        }
+        base.OnDetachedFromVisualTree(e);
     }
 
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => ScheduleScrollToEnd();
