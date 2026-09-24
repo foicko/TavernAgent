@@ -15,14 +15,7 @@
   background: var(--border-light);
 }
 
-/* 移动端抽屉顶栏标题 */
-.mobile-drawer-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-}
+
 
 /* --- 四个可切换视图面板 -------------------------------------------------- */
 /* display 随 leftTab 变化，经 CSS 变量注入；其余布局固定 */

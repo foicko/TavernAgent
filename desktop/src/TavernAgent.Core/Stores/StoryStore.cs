@@ -112,9 +112,6 @@ public sealed partial class StoryStore : ObservableStore
     private string? _pendingInput;
     public string? PendingInput { get => _pendingInput; private set => SetProperty(ref _pendingInput, value); }
 
-    private string? _pendingAction;
-    public string? PendingAction { get => _pendingAction; private set => SetProperty(ref _pendingAction, value); }
-
     private TurnInput? _lastInput;
     public TurnInput? LastInput { get => _lastInput; private set => SetProperty(ref _lastInput, value); }
 
@@ -240,7 +237,6 @@ public sealed partial class StoryStore : ObservableStore
         MemoryLoading = false;
         ActiveCharacterId = null;
         PendingInput = null;
-        PendingAction = null;
         LastInput = null;
         MemoryPaging = MemoryPaging.Empty();
         ActiveBranchId = null;

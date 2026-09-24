@@ -328,9 +328,14 @@ export function getSessionAvatar(sessionId?: string): string | undefined {
 
 export function cleanShortName(fullName: string): string {
   if (!fullName) return "自定义";
-  // 按照常见连接符截取主名："强约™ APP - 世界第一强约交友平台" -> "强约™ APP"
-  const parts = fullName.split(/\s*[-—·–_]\s*/);
-  return parts[0]?.trim() || fullName;
+  // 按照常见连接符与括号截取主名："强约™ APP - 世界第一强约交友平台" -> "强约™ APP"
+  const first = fullName.split(/[\r\n]+/)[0]?.trim() || "";
+  const parts = first.split(/\s*[-—·–_:/|（(【[《]\s*/);
+  const pick = parts[0]?.trim() || first;
+  if (pick.length <= 24) return pick;
+  const spaceIdx = pick.lastIndexOf(" ", 24);
+  if (spaceIdx > 6) return pick.slice(0, spaceIdx).trim();
+  return pick.slice(0, 20).trim();
 }
 
 export function cleanShortRole(description?: string): string {

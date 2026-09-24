@@ -12,7 +12,7 @@
     <ScrollViewer Grid.Row="1" Name="Stream"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-      <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,200">
+      <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,270">
 
         <!-- Reading mode banner -->
         <Border IsVisible="{Binding ShowReadingBanner}" Classes="surface-inset" Padding="20"
@@ -39,20 +39,20 @@
         </Button>
 
         <!-- History read-only banner -->
-        <Border IsVisible="{Binding IsHistoryView}" Classes="surface-inset" Padding="14"
+        <Border IsVisible="{Binding IsHistoryView}" Classes="surface-inset" Padding="12,10"
                 CornerRadius="{DynamicResource RadiusMd}">
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
             <Grid Grid.Column="0" ColumnDefinitions="Auto,*" ColumnSpacing="6" VerticalAlignment="Center">
-              <Path Grid.Column="0" Classes="icon" Data="{StaticResource IconFlag}" Width="13" Height="13" VerticalAlignment="Center" />
+              <Path Grid.Column="0" Classes="icon sm" Data="{StaticResource IconFlag}" VerticalAlignment="Center" />
               <TextBlock Grid.Column="1" Text="正在浏览历史快照节点（只读模式）"
                          TextTrimming="CharacterEllipsis"
-                         VerticalAlignment="Center" FontSize="{DynamicResource FsSm}" />
+                         VerticalAlignment="Center" FontSize="{DynamicResource FsXs}" />
             </Grid>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
               <Button Classes="ui-btn sm quiet" Command="{Binding BackToHeadCommand}" Content="返回最新进度" />
               <Button Classes="ui-btn sm primary" Command="{Binding ForkViewCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                  <Path Classes="icon" Data="{StaticResource IconLeaf}" Width="12" Height="12" />
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Path Classes="icon sm" Data="{StaticResource IconLeaf}" />
                   <TextBlock Text="从此处开辟新分支" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -70,17 +70,17 @@
         </ItemsControl>
 
         <!-- Prologue card -->
-        <Border IsVisible="{Binding ShowPrologue}" Classes="surface-inset" Padding="16"
+        <Border IsVisible="{Binding ShowPrologue}" Classes="surface-inset" Padding="14,12"
                 CornerRadius="{DynamicResource RadiusLg}">
-          <StackPanel Spacing="12">
+          <StackPanel Spacing="10">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" Stroke="{DynamicResource AccentAmberBrush}" />
+                <Path Classes="icon sm" Data="{StaticResource IconSparkles}" Stroke="{DynamicResource AccentAmberBrush}" />
                 <TextBlock Text="命运序章 · 场景起步"
-                           FontSize="{DynamicResource FsSm}" FontWeight="SemiBold"
+                           FontSize="{DynamicResource FsXs}" FontWeight="Medium"
                            Foreground="{DynamicResource TextSecondaryBrush}" />
               </StackPanel>
-              <TextBlock Grid.Column="1" Text="开场白" FontSize="{DynamicResource FsXs}"
+              <TextBlock Grid.Column="1" Text="开场白" FontSize="{DynamicResource Fs2xs}"
                          Foreground="{DynamicResource TextDimBrush}" />
             </Grid>
             <TextBlock Text="暂无历史对话记录。在下方输入框键入第一句对白或动作描述，由大模型推演真实因果与角色心境；亦可点击输入框上方的快捷动作宏直接起手。"
@@ -229,21 +229,21 @@
                        TextWrapping="Wrap" FontSize="{DynamicResource FsSm}"
                        Foreground="{DynamicResource TextSecondaryBrush}" />
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Classes="ui-btn primary" Command="{Binding ContinueCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                  <Path Classes="icon" Data="{StaticResource IconPlay}" Width="11" Height="11" />
+              <Button Classes="ui-btn primary sm" Command="{Binding ContinueCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Path Classes="icon sm" Data="{StaticResource IconPlay}" />
                   <TextBlock Text="继续讲下去" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Classes="ui-btn quiet" Command="{Binding RetryCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                  <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="12" Height="12" />
+              <Button Classes="ui-btn quiet sm" Command="{Binding RetryCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Path Classes="icon sm" Data="{StaticResource IconRefresh}" />
                   <TextBlock Text="重新构思此轮" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Classes="ui-btn quiet" Command="{Binding CancelCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                  <Path Classes="icon" Data="{StaticResource IconClose}" Width="12" Height="12" />
+              <Button Classes="ui-btn quiet sm" Command="{Binding CancelCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Path Classes="icon sm" Data="{StaticResource IconClose}" />
                   <TextBlock Text="放弃" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
@@ -252,14 +252,14 @@
         </Border>
 
         <!-- Error card -->
-        <Border IsVisible="{Binding HasError}" Classes="surface-inset" Padding="16"
+        <Border IsVisible="{Binding HasError}" Classes="surface-inset" Padding="14,12"
                 CornerRadius="{DynamicResource RadiusLg}">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <Path Grid.Column="0" Classes="icon danger" Data="{StaticResource IconAlert}" Width="18" Height="18"
-                  Margin="0,0,12,0" />
+            <Path Grid.Column="0" Classes="icon danger" Data="{StaticResource IconAlert}" Width="16" Height="16"
+                  Margin="0,0,10,0" />
             <StackPanel Grid.Column="1" Spacing="2">
-              <TextBlock Text="生成受阻" FontWeight="SemiBold" FontSize="{DynamicResource FsSm}" />
-              <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="{DynamicResource FsSm}"
+              <TextBlock Text="生成受阻" FontWeight="Medium" FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource DangerBrush}" />
+              <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
                          Foreground="{DynamicResource TextSecondaryBrush}" />
             </StackPanel>
             <Button Grid.Column="2" Classes="ui-btn danger sm" Command="{Binding RetryCommand}" Content="重试" />

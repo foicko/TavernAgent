@@ -41,20 +41,6 @@ afterEach(async () => {
 });
 
 describe("story request ownership", () => {
-  it("prepares only registered inventory actions and preserves the action reference", async () => {
-    const current = view("A"); current.actions = [{ actionId: "drink", label: "饮茶", attribute: "wisdom", dc: 12, itemIds: ["tea"] }];
-    mocks.api.getSession.mockResolvedValue(current); await useStory.getState().openSession("A");
-    useStory.getState().prepareAction("饮茶", "invented");
-    expect(useStory.getState().pendingInput).toBeNull();
-    useStory.getState().prepareAction("饮茶", "drink");
-    expect(useStory.getState().pendingAction).toBe("drink");
-    expect(useStory.getState().pendingInput).toBe("饮茶");
-    useStory.getState().clearPending();
-    useStory.setState({ viewNodeId: "history" });
-    useStory.getState().prepareAction("饮茶", "drink");
-    expect(useStory.getState().pendingAction).toBeNull();
-  });
-
   it("a creation retry reuses its key and preserves the chosen identity and opening", async () => {
     const options = { characterJson: "{}", playerName: "林舟", playerRole: "游历者", openingVariantId: "harbor" };
     mocks.api.createSession.mockRejectedValueOnce(new Error("response lost")).mockResolvedValue({ sessionId: "new" });

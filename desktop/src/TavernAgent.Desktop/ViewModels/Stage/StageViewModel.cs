@@ -124,8 +124,6 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
 
     [ObservableProperty] private bool _hasLastInput;
     [ObservableProperty] private string _lastInputText = "";
-    [ObservableProperty] private string _lastInputActionLabel = "";
-    [ObservableProperty] private bool _hasLastInputAction;
     [ObservableProperty] private int _activeTurnNumber = 1;
 
     public string? Error => Story.Error;
@@ -508,12 +506,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         var input = Story.LastInput;
         HasLastInput = input is not null && !string.IsNullOrEmpty(input.Text);
         LastInputText = input is null ? "" : NarrativeText.ReplaceMacros(input.Text, CharShortName, PlayerName(), Variables);
-        var action = input?.ActionRef;
-        HasLastInputAction = !string.IsNullOrEmpty(action);
         var view = Story.View;
-        LastInputActionLabel = action is null
-            ? ""
-            : view?.Actions?.FirstOrDefault(a => a.ActionId == action)?.Label ?? action;
         ActiveTurnNumber = (view?.HeadNode.TurnNumber ?? Messages.Count) + 1;
         OnPropertyChanged(nameof(IsStreaming));
     }

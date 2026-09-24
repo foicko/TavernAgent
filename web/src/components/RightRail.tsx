@@ -86,9 +86,6 @@ export const RightRail: React.FC = () => {
         acts: [
           { key: "inspect", label: `仔细端详 ${item.name}`, text: `我将【${item.name}】握在手心仔细端详，思索其背后的渊源与线索...` },
           { key: "show", label: `向对方出示 ${item.name}`, text: `我将【${item.name}】轻轻置于桌面推向对方眼前，观察其神色变化。` },
-          ...(view.actions ?? []).filter(action => action.itemIds?.includes(item.instanceId)).map(action => ({
-            key: action.actionId, label: action.label || action.actionId, text: action.label || `我尝试使用【${item.name}】。`, actionRef: action.actionId,
-          })),
         ],
       }))
     : char.inventory;

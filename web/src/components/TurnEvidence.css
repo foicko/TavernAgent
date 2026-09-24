@@ -200,23 +200,22 @@
 }
 
 .evidence-check-card.outcome-crit-success {
-  border-color: color-mix(in srgb, var(--accent-amber) 40%, var(--border-light));
-  border-left: 3px solid var(--accent-amber);
-  background: color-mix(in srgb, var(--accent-amber) 4%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--accent-amber) 35%, var(--border-light));
+  background: color-mix(in srgb, var(--accent-amber) 5%, var(--bg-surface));
 }
 
 .evidence-check-card.outcome-success {
-  border-left: 3px solid var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--border-light));
+  background: color-mix(in srgb, var(--color-success) 4%, var(--bg-surface));
 }
 
 .evidence-check-card.outcome-failure {
-  border-left: 3px solid var(--border-mid);
+  border-color: var(--border-mid);
 }
 
 .evidence-check-card.outcome-crit-failure {
-  border-color: color-mix(in srgb, var(--color-danger-text) 40%, var(--border-light));
-  border-left: 3px solid var(--color-danger-text);
-  background: color-mix(in srgb, var(--color-danger-bg) 40%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--color-danger-text) 35%, var(--border-light));
+  background: color-mix(in srgb, var(--color-danger-bg) 50%, var(--bg-surface));
 }
 
 .check-card-header {

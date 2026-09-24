@@ -1,24 +1,37 @@
-/* SceneBar：常驻场景标签（卡片 [SCENE] 标记）。克制、扁平。 */
+/* SceneBar：常驻场景标签（卡片 [SCENE] 标记）。克制、扁平、通透。 */
 .scene-bar {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   max-width: var(--reading-w);
-  margin: 8px auto 0;
-  padding: 5px 14px;
+  margin: 10px auto 0;
+  padding: 4px 14px;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-full, 999px);
-  background: var(--card-bg, var(--bg-subtle, transparent));
+  background: var(--card-bg, var(--bg-surface));
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
   font-family: var(--card-font, inherit);
-  font-size: 12.5px;
+  font-size: 12px;
+  line-height: 1.4;
   flex-shrink: 0;
+  transition: border-color var(--duration-quick) var(--ease-smooth-out),
+              box-shadow var(--duration-quick) var(--ease-smooth-out);
+}
+
+.scene-bar:hover {
+  border-color: var(--border-mid);
 }
 
 .scene-bar-label {
   color: var(--text-dim);
-  letter-spacing: 0.1em;
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .scene-bar-title {
   color: var(--card-ink, var(--text-main));
+  font-weight: var(--fw-medium);
 }

@@ -221,7 +221,6 @@ public sealed partial class StoryStore
         LastTurnId = turnId;
         Phase = turnId is not null ? TurnPhase.Generating : TurnPhase.Idle;
         PendingInput = null;
-        PendingAction = null;
         Memories = new();
         MemoryUsage = null;
         MemoryError = null;

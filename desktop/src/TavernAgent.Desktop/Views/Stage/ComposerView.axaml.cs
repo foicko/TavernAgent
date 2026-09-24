@@ -2,6 +2,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using TavernAgent.Desktop.ViewModels.Stage;
 
 namespace TavernAgent.Desktop.Views.Stage;
@@ -26,7 +27,11 @@ public partial class ComposerView : UserControl
 
     private void OnActionItemClick(object? sender, RoutedEventArgs e)
     {
-        ActionDropdownButton?.Flyout?.Hide();
+        // Defer the hide until after this Click dispatch returns: hiding the flyout
+        // synchronously detaches its subtree, which clears the inherited DataContext
+        // before Button.OnClick runs the bound Command (so the command would never fire).
+        var flyout = ActionMenuButton?.Flyout;
+        if (flyout is not null) Dispatcher.UIThread.Post(() => flyout.Hide());
     }
 
     private void OnMacroClick(object? sender, RoutedEventArgs e)
@@ -34,6 +39,7 @@ public partial class ComposerView : UserControl
         if (sender is Button { DataContext: MacroPill macro })
         {
             ApplyMacroSmart(macro);
+            ActionMenuButton?.Flyout?.Hide();
             e.Handled = true;
         }
     }

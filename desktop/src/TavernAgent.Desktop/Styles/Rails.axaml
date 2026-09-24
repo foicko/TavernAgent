@@ -220,17 +220,19 @@
     </Style.Animations>
   </Style>
 
-  <!-- Row delete icon button: quiet in idle state, alert on pointerover -->
+  <!-- Row delete icon button: hidden in idle state to eliminate clutter and prevent accidental clicks, reveals on card hover -->
   <Style Selector="Button.row-del-btn">
-    <Setter Property="Opacity" Value="0.45" />
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="IsHitTestVisible" Value="False" />
     <Setter Property="Transitions">
       <Transitions>
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+        <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
       </Transitions>
     </Setter>
   </Style>
-  <Style Selector="Border.session-card:pointerover Button.row-del-btn, Border.char-card:pointerover Button.row-del-btn">
-    <Setter Property="Opacity" Value="0.8" />
+  <Style Selector="Border.session-card:pointerover Button.row-del-btn, Border.char-card:pointerover Button.row-del-btn, Border.session-card:focus-within Button.row-del-btn, Border.char-card:focus-within Button.row-del-btn">
+    <Setter Property="Opacity" Value="0.65" />
+    <Setter Property="IsHitTestVisible" Value="True" />
   </Style>
   <Style Selector="Button.row-del-btn:pointerover">
     <Setter Property="Opacity" Value="1.0" />

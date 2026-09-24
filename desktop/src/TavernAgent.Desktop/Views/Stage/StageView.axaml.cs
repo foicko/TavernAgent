@@ -48,7 +48,8 @@ public partial class StageView : UserControl
             or nameof(StageViewModel.HasDraftBlocks)
             or nameof(StageViewModel.ThinkingText)
             or nameof(StageViewModel.HasMessages)
-            or nameof(StageViewModel.ShowSkeleton))
+            or nameof(StageViewModel.ShowSkeleton)
+            or nameof(StageViewModel.IsIdle))
         {
             ScheduleScrollToEnd();
         }

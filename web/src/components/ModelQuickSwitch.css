@@ -2,10 +2,16 @@
 .model-quick-switch {
   position: relative;
   display: inline-flex;
+  align-items: center;
 }
 
-.model-quick-switch__trigger {
+.model-quick-switch__trigger.ui-btn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
   max-width: 200px;
+  box-sizing: border-box;
 }
 
 .model-quick-switch__name {

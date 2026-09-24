@@ -20,6 +20,24 @@
   <Style Selector="Button.ui-btn:pressed">
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>
+  <Style Selector="Button.action-plus-btn:pointerover">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.action-plus-btn:pressed">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.active-mode-pill:pointerover">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.active-mode-pill:pressed">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.send-circle-btn:pointerover">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
+  <Style Selector="Button.send-circle-btn:pressed">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
   <Style Selector="Button.decision-card:pointerover">
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>

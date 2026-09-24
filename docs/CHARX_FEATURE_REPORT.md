@@ -294,6 +294,11 @@ TavernAgent 的立身之本是**确定性因果记录**（CoW 因果树、`重�
 
 ## 8. 实现建议与优先级
 
+> 实施状态以 [CARD_UI_MARKERS.md](CARD_UI_MARKERS.md) 为准（该文按「卡片 UI 映射 M2–M4」跟踪）。
+> 截至目前：P0 的 `sdData` 生图基底、情绪立绘、CBS 只读子集 `{{getvar}}` 已实现；
+> P1 的 `defaultVariables`/`toggles`（并入会话变量）已实现，`backgroundHTML` 主题 token 与
+> 标记驱动的受控 UI 已实现；`depth_prompt`、CBS 写/随机子集、文本类正则与 Lua/v2 触发仍未做。
+
 **P0（低风险，性价比高）**
 1. `depth_prompt` 注入（编译层，一天级）。
 2. `sdData` → 生图默认模板（复用 `internal/adapters/image`）。

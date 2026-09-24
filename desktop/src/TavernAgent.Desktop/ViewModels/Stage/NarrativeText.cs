@@ -40,37 +40,66 @@ public static partial class NarrativeText
     public static string TrimQuote(string text, char lead, char trail)
     {
         if (string.IsNullOrEmpty(text)) return "";
-        var s = text;
-        if (s.Length > 0 && (s[0] == lead)) s = s[1..];
-        if (s.Length > 0 && (s[^1] == trail)) s = s[..^1];
+        var s = text.Trim();
+        if (s.Length > 0 && s[0] == lead) s = s[1..].Trim();
+        if (s.Length > 0 && s[^1] == trail) s = s[..^1].Trim();
         return s;
     }
 
     public static string TrimDialogue(string text)
     {
-        var s = TrimQuote(text, '「', '」');
-        s = TrimQuote(s, '"', '"');
-        s = TrimQuote(s, '\'', '\'');
+        if (string.IsNullOrWhiteSpace(text)) return "";
+        var s = text.Trim();
+        bool stripped;
+        do
+        {
+            stripped = false;
+            var before = s;
+            s = TrimQuote(s, '「', '」');
+            s = TrimQuote(s, '『', '』');
+            s = TrimQuote(s, '“', '”');
+            s = TrimQuote(s, '"', '"');
+            s = TrimQuote(s, '‘', '’');
+            s = TrimQuote(s, '\'', '\'');
+            if (s != before) stripped = true;
+        } while (stripped && s.Length > 0);
         return s;
     }
 
     public static string TrimMonologue(string text)
     {
-        var s = TrimQuote(text, '（', '）');
-        s = TrimQuote(s, '(', ')');
+        if (string.IsNullOrWhiteSpace(text)) return "";
+        var s = text.Trim();
+        bool stripped;
+        do
+        {
+            stripped = false;
+            var before = s;
+            s = TrimQuote(s, '（', '）');
+            s = TrimQuote(s, '(', ')');
+            if (s != before) stripped = true;
+        } while (stripped && s.Length > 0);
         return s;
     }
 
-    private static readonly char[] NameDelimiters = { '，', ',', '·', '-', '—', '–', '_', ':', '：', '/', '|' };
+    private static readonly char[] NameDelimiters = { '，', ',', '·', '-', '—', '–', '_', ':', '：', '/', '|', '（', '(', '【', '[', '《' };
 
-    /// <summary>Short display name: primary name token, trimmed, capped (web: cleanShortName).</summary>
+    /// <summary>Short display name: primary name token, trimmed, capped at word/character boundary (web: cleanShortName).</summary>
     public static string CleanShortName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "自定义";
         var first = name.Split('\n', '\r')[0].Trim();
         var parts = first.Split(NameDelimiters, StringSplitOptions.RemoveEmptyEntries);
         var pick = parts.Length > 0 ? parts[0].Trim() : first;
-        return pick.Length <= 10 ? pick : pick[..10];
+        if (pick.Length <= 24) return pick;
+
+        // For long names without delimiters, truncate at a clean word boundary
+        var spaceIdx = pick.LastIndexOf(' ', Math.Min(pick.Length - 1, 24));
+        if (spaceIdx > 6)
+        {
+            return pick[..spaceIdx].Trim();
+        }
+        return pick[..20].Trim();
     }
 
     /// <summary>First non-empty line, capped with ellipsis.</summary>

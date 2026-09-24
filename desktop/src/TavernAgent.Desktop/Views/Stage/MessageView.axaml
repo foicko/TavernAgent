@@ -58,37 +58,37 @@
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowToolbar}"
                       Classes="msg-actions">
             <Button Classes="ui-btn sm ghost" Click="OnCopyClick" ToolTip.Tip="复制文学正文">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconCopy}" Width="12" Height="12" />
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon sm" Data="{StaticResource IconCopy}" />
                 <TextBlock Text="复制" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding QuoteCommand}" ToolTip.Tip="引用此句">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconQuote}" Width="12" Height="12" />
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon sm" Data="{StaticResource IconQuote}" />
                 <TextBlock Text="引用" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding RegenerateCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="重新生成">
-              <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="13" Height="13" />
+                    ToolTip.Tip="重新生成" Padding="5,0">
+              <Path Classes="icon sm" Data="{StaticResource IconRefresh}" />
             </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding ToggleRegenCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="带要求重演">
-              <Path Classes="icon" Data="{StaticResource IconNote}" Width="13" Height="13" />
+                    ToolTip.Tip="带要求重演" Padding="5,0">
+              <Path Classes="icon sm" Data="{StaticResource IconNote}" />
             </Button>
             <Button Classes="ui-btn sm ghost" IsVisible="{Binding !IsOpening}"
                     Command="{Binding ForkCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="从此处分叉">
-              <Path Classes="icon" Data="{StaticResource IconLeaf}" Width="13" Height="13" />
+                    ToolTip.Tip="从此处分叉" Padding="5,0">
+              <Path Classes="icon sm" Data="{StaticResource IconLeaf}" />
             </Button>
             <Button Classes="ui-btn sm ghost"
                     Command="{Binding DrawIllustrationCommand}" IsEnabled="{Binding CanAct}"
-                    ToolTip.Tip="生成本幕插画">
-              <Path Classes="icon" Data="{StaticResource IconImage}" Width="13" Height="13" />
+                    ToolTip.Tip="生成本幕插画" Padding="5,0">
+              <Path Classes="icon sm" Data="{StaticResource IconImage}" />
             </Button>
             <Button Classes="ui-btn sm ghost"
                     Command="{Binding Tts.PlayCommand}"
@@ -99,15 +99,15 @@
         <!-- Committed thinking chain (ThinkingState inspired by beautifului.dev) -->
         <Border IsVisible="{Binding HasThinking}"
                 Classes="thinking-card"
-                Padding="12,10">
-          <StackPanel Spacing="8">
+                Padding="10,8">
+          <StackPanel Spacing="6">
             <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
                     Command="{Binding ToggleThinkingCommand}">
               <Grid ColumnDefinitions="Auto,*,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                  <Path Classes="icon" Data="{StaticResource IconDatabase}" Width="13" Height="13" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
+                  <Path Classes="icon sm" Data="{StaticResource IconDatabase}" />
                   <TextBlock Text="深度思维链 (Reasoning Flow)"
-                             FontWeight="SemiBold"
+                             FontWeight="Medium"
                              FontSize="{DynamicResource FsXs}"
                              VerticalAlignment="Center"
                              Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -171,7 +171,7 @@
                   <DataTemplate DataType="vm:NarrativeImageSegment">
                     <Border CornerRadius="{DynamicResource RadiusMd}" ClipToBounds="True"
                             HorizontalAlignment="Center" Margin="0,4">
-                      <Image Source="{Binding Image}" Stretch="Uniform" MaxWidth="380" MaxHeight="520" />
+                      <Image Source="{Binding Image}" Stretch="Uniform" MaxWidth="360" MaxHeight="320" />
                     </Border>
                   </DataTemplate>
                   <DataTemplate DataType="vm:NarrativeHudSegment">
@@ -223,13 +223,14 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="vm:ChangeEvidenceViewModel">
-                <Border Classes="chip" Margin="0,0,6,6">
-                  <StackPanel Orientation="Horizontal" Spacing="5">
-                    <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}"
-                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                    <TextBlock Text="{Binding Text}" FontSize="{DynamicResource FsXs}"
-                               Classes.up="{Binding IsUp}" Classes.down="{Binding IsDown}" />
-                  </StackPanel>
+                <Border Classes="chip" Margin="0,0,6,6" MaxWidth="560" ToolTip.Tip="{Binding FullTooltip}">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="{DynamicResource FsXs}"
+                               Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Text}" FontSize="{DynamicResource FsXs}"
+                               Classes.up="{Binding IsUp}" Classes.down="{Binding IsDown}"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  </Grid>
                 </Border>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -358,14 +359,14 @@
         </Border>
 
         <!-- Candidate / version switcher -->
-        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasCandidates}">
-          <Button Classes="ui-btn sm ghost" Command="{Binding PrevCandidateCommand}" ToolTip.Tip="查看上一个候选版本">
-            <Path Classes="icon" Data="{StaticResource IconChevronLeft}" Width="13" Height="13" />
+        <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding HasCandidates}">
+          <Button Classes="icon-btn-compact" Command="{Binding PrevCandidateCommand}" ToolTip.Tip="查看上一个候选版本">
+            <Path Classes="icon xs" Data="{StaticResource IconChevronLeft}" />
           </Button>
           <TextBlock Text="{Binding CandidateLabel}" VerticalAlignment="Center"
                      FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextSecondaryBrush}" />
-          <Button Classes="ui-btn sm ghost" Command="{Binding NextCandidateCommand}" ToolTip.Tip="查看下一个候选版本">
-            <Path Classes="icon" Data="{StaticResource IconChevronRight}" Width="13" Height="13" />
+          <Button Classes="icon-btn-compact" Command="{Binding NextCandidateCommand}" ToolTip.Tip="查看下一个候选版本">
+            <Path Classes="icon xs" Data="{StaticResource IconChevronRight}" />
           </Button>
         </StackPanel>
 
@@ -413,38 +414,38 @@
             <ItemsControl ItemsSource="{Binding Options}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <UniformGrid Columns="2" />
+                  <StackPanel Spacing="8" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:OptionViewModel">
-                  <Border Padding="5">
-                    <Button Classes="decision-card"
-                            Command="{Binding $parent[ItemsControl].((vm:MessageViewModel)DataContext).ChooseOptionCommand}"
-                            CommandParameter="{Binding}">
-                      <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0" Classes="decision-stripe" Background="{Binding AccentBrush}" />
-                        <StackPanel Grid.Column="1" Spacing="8" Margin="11,0,0,0">
-                          <Grid ColumnDefinitions="*,Auto">
-                            <Border Grid.Column="0" Classes="intent-pill">
-                              <StackPanel Orientation="Horizontal" Spacing="5">
-                                <Path Classes="icon" Data="{Binding IconGeometry}" Width="12" Height="12" Stroke="{Binding AccentBrush}" />
-                                <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                              </StackPanel>
-                            </Border>
-                            <StackPanel Grid.Column="1" Classes="decision-hint" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                              <TextBlock Text="选定" FontSize="10" VerticalAlignment="Center" />
-                              <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="10" Height="10" />
-                            </StackPanel>
-                          </Grid>
-                          <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
-                                     FontSize="{DynamicResource FsSm}" LineHeight="21"
-                                     Foreground="{DynamicResource TextPrimaryBrush}" />
+                  <Button Classes="decision-card"
+                          Command="{Binding $parent[ItemsControl].((vm:MessageViewModel)DataContext).ChooseOptionCommand}"
+                          CommandParameter="{Binding}">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                      <!-- 意图色竖条 -->
+                      <Border Grid.Column="0" Classes="decision-stripe" Background="{Binding AccentBrush}" />
+                      <!-- 意图标签药丸 -->
+                      <Border Grid.Column="1" Classes="intent-pill" Margin="10,0,12,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                          <Path Classes="icon" Data="{Binding IconGeometry}" Width="12" Height="12" Stroke="{Binding AccentBrush}" />
+                          <TextBlock Text="{Binding Label}" FontSize="11" FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                         </StackPanel>
-                      </Grid>
-                    </Button>
-                  </Border>
+                      </Border>
+                      <!-- 抉择行动/对白正文 -->
+                      <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap"
+                                 FontSize="{DynamicResource FsSm}" LineHeight="21"
+                                 VerticalAlignment="Center"
+                                 Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,2" />
+                      <!-- 选定提示 -->
+                      <StackPanel Grid.Column="3" Classes="decision-hint" Orientation="Horizontal" Spacing="4"
+                                  VerticalAlignment="Center" Margin="14,0,2,0">
+                        <TextBlock Text="选定" FontSize="11" VerticalAlignment="Center" />
+                        <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="10" Height="10" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>

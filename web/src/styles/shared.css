@@ -78,12 +78,6 @@
 
 /* 空白状态下的角色头像占位（FullTachieModal 无立绘时） */
 
-/* 已选检定提示条里的说明文字 */
-.selected-action-info {
-  font-size: var(--fs-sm);
-  color: var(--text-main);
-}
-
 /* 导演大纲的节拍列表 */
 .director-beats {
   display: flex;

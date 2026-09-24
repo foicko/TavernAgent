@@ -11,8 +11,8 @@
       <Grid ColumnDefinitions="*,Auto">
         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
           <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
-          <TextBlock Text="角色档案 · 实时立绘" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
-                     Foreground="{DynamicResource TextSecondaryBrush}" />
+          <TextBlock Text="角色档案 · 实时立绘" FontSize="{DynamicResource FsXs}" FontWeight="Medium"
+                     Foreground="{DynamicResource TextDimBrush}" />
         </StackPanel>
         <Button Grid.Column="1" Classes="ui-btn sm quiet" Command="{Binding ToggleCollapseCommand}"
                 ToolTip.Tip="收起角色档案 (Ctrl+])" Content="收起 ›" />
@@ -20,7 +20,7 @@
     </Border>
 
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="14,12,14,40" Spacing="14">
+      <StackPanel Margin="14,10,14,64" Spacing="12">
 
         <!-- Tachie stage -->
         <Border CornerRadius="{DynamicResource RadiusLg}" Height="{DynamicResource TachieHeight}" ClipToBounds="True"
@@ -301,27 +301,27 @@
             <Button Classes="ui-btn sm ghost" HorizontalAlignment="Stretch"
                     Command="{Binding Checkpoint.ToggleCommand}">
               <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Left">
-                  <Path Classes="icon" Data="{StaticResource IconBook}" Width="13" Height="13" />
-                  <TextBlock Text="前情回顾与交接" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Left">
+                  <Path Classes="icon sm" Data="{StaticResource IconBook}" />
+                  <TextBlock Text="前情回顾与交接" FontWeight="Medium" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding Checkpoint.ToggleLabel}"
-                           Foreground="{DynamicResource TextDimBrush}" />
+                           FontSize="{DynamicResource FsXs}" Foreground="{DynamicResource TextDimBrush}" />
               </Grid>
             </Button>
             <StackPanel Spacing="10" IsVisible="{Binding Checkpoint.IsExpanded}">
               <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasNarrativeArc}">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                  <Path Classes="icon" Data="{StaticResource IconScroll}" Width="12" Height="12" />
-                  <TextBlock Text="剧情推进" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Path Classes="icon sm" Data="{StaticResource IconScroll}" />
+                  <TextBlock Text="剧情推进" FontSize="{DynamicResource FsXs}" FontWeight="Medium" VerticalAlignment="Center" />
                 </StackPanel>
                 <TextBlock Text="{Binding Checkpoint.NarrativeArc}" TextWrapping="Wrap" FontSize="{DynamicResource FsXs}"
                            Foreground="{DynamicResource TextSecondaryBrush}" />
               </StackPanel>
               <StackPanel Spacing="3" IsVisible="{Binding Checkpoint.HasMindsets}">
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                  <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="12" Height="12" />
-                  <TextBlock Text="角色心境与暗涌" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Path Classes="icon sm" Data="{StaticResource IconSparkles}" />
+                  <TextBlock Text="角色心境与暗涌" FontSize="{DynamicResource FsXs}" FontWeight="Medium" VerticalAlignment="Center" />
                 </StackPanel>
                 <ItemsControl ItemsSource="{Binding Checkpoint.Mindsets}">
                   <ItemsControl.ItemTemplate>

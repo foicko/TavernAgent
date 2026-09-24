@@ -24,6 +24,164 @@
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
   </Style>
 
+  <!-- [+] Action Menu button in bottom composer -->
+  <Style Selector="Button.action-plus-btn">
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Background" Value="{DynamicResource GlassPillBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" Easing="0.23,1,0.32,1" />
+        <BrushTransition Property="Background" Duration="0:0:0.15" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.action-plus-btn:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+    <Setter Property="RenderTransform" Value="scale(1.06)" />
+  </Style>
+  <Style Selector="Button.action-plus-btn:pressed">
+    <Setter Property="RenderTransform" Value="scale(0.94)" />
+  </Style>
+
+  <!-- Composer pill button (e.g. Context token donut button) -->
+  <Style Selector="Button.composer-pill-btn">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Background" Value="{DynamicResource GlassPillBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.15" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.composer-pill-btn:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+  </Style>
+
+  <!-- Active mode indicator pills (Director, Action, Note badges) -->
+  <Style Selector="Button.active-mode-pill">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Background" Value="{DynamicResource GlassPillBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="9,2" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+        <BrushTransition Property="Background" Duration="0:0:0.15" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.active-mode-pill:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+    <Setter Property="RenderTransform" Value="scale(1.02)" />
+  </Style>
+  <Style Selector="Button.active-mode-pill:pressed">
+    <Setter Property="RenderTransform" Value="scale(0.97)" />
+  </Style>
+
+  <!-- Flyout row button for [+] action menu -->
+  <Style Selector="Button.menu-action-item">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.menu-action-item:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+  </Style>
+  <Style Selector="Button.menu-action-item:pressed">
+    <Setter Property="RenderTransform" Value="scale(0.98)" />
+  </Style>
+
+  <!-- Circular Send / Stop button -->
+  <Style Selector="Button.send-circle-btn">
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" Easing="0.23,1,0.32,1" />
+        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.send-circle-btn.primary">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Button.send-circle-btn.primary:pointerover">
+    <Setter Property="Opacity" Value="0.9" />
+    <Setter Property="RenderTransform" Value="scale(1.06)" />
+  </Style>
+  <Style Selector="Button.send-circle-btn.danger">
+    <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Button.send-circle-btn.danger:pointerover">
+    <Setter Property="Opacity" Value="0.9" />
+    <Setter Property="RenderTransform" Value="scale(1.06)" />
+  </Style>
+  <Style Selector="Button.send-circle-btn.quiet">
+    <Setter Property="Background" Value="{DynamicResource GlassPillBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+  </Style>
+  <Style Selector="Button.send-circle-btn.quiet:pointerover">
+    <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
+    <Setter Property="RenderTransform" Value="scale(1.06)" />
+  </Style>
+  <Style Selector="Button.send-circle-btn:pressed">
+    <Setter Property="RenderTransform" Value="scale(0.94)" />
+  </Style>
+  <Style Selector="Button.send-circle-btn:disabled">
+    <Setter Property="Background" Value="{DynamicResource BgCanvasBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
   <!-- Narrative block typography (web: .block-narration / .block-dialogue / .block-monologue) -->
   <Style Selector="c|InlineMarkdownText.narration">
     <Setter Property="FontFamily" Value="{DynamicResource FontNarrative}" />
@@ -61,20 +219,20 @@
     <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
   </Style>
 
-  <!-- Decision card (ApprovalCard inspired by beautifului.dev) -->
+  <!-- Decision card: stacked interactive choice card -->
   <Style Selector="Button.decision-card">
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusLg}" />
-    <Setter Property="Padding" Value="12,12,14,12" />
-    <Setter Property="MinHeight" Value="84" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
+    <Setter Property="Padding" Value="12,10,14,10" />
+    <Setter Property="MinHeight" Value="46" />
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Top" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     <Setter Property="Transitions">
       <Transitions>
-        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="0.23,1,0.32,1" />
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="0.23,1,0.32,1" />
         <BrushTransition Property="Background" Duration="0:0:0.15" />
         <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
       </Transitions>
@@ -83,10 +241,10 @@
   <Style Selector="Button.decision-card:pointerover">
     <Setter Property="Background" Value="{DynamicResource ElevatedBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
-    <Setter Property="RenderTransform" Value="translateY(-1px)" />
+    <Setter Property="RenderTransform" Value="translateX(3px)" />
   </Style>
   <Style Selector="Button.decision-card:pressed">
-    <Setter Property="RenderTransform" Value="scale(0.99)" />
+    <Setter Property="RenderTransform" Value="scale(0.995)" />
   </Style>
   <Style Selector="Button.decision-card:focus-visible">
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
@@ -97,6 +255,7 @@
     <Setter Property="Width" Value="3" />
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="20" />
     <Setter Property="Margin" Value="0,1" />
   </Style>
 
@@ -235,11 +394,13 @@
 
   <!-- Composer island: flat surface card; focus paints a refined hairline + soft elevation -->
   <Style Selector="Border.composer-island">
-    <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ComposerIslandBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource ComposerIslandBorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BoxShadow" Value="{DynamicResource ShadowMd}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource ShadowFloat}" />
     <Setter Property="Transitions">
       <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.18" />
         <BrushTransition Property="BorderBrush" Duration="0:0:0.18" />
         <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" />
       </Transitions>
@@ -247,7 +408,7 @@
   </Style>
   <Style Selector="Border.composer-island:focus-within">
     <Setter Property="BorderBrush" Value="{DynamicResource BorderMidBrush}" />
-    <Setter Property="BoxShadow" Value="{DynamicResource Elevation3}" />
+    <Setter Property="BoxShadow" Value="{DynamicResource Elevation4}" />
   </Style>
 
   <!-- Seamless composer input textbox (no nested gray box) -->
@@ -279,9 +440,12 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="MinHeight" Value="28" />
     <Setter Property="Height" Value="28" />
+    <Setter Property="MaxHeight" Value="28" />
     <Setter Property="Padding" Value="8,2,6,2" />
+    <Setter Property="Margin" Value="0" />
     <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="ComboBox.composer-pill:pointerover">
     <Setter Property="Background" Value="{DynamicResource GlassPillHoverBrush}" />

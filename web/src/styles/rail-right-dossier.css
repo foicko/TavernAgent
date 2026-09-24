@@ -64,11 +64,12 @@
 .dossier-blockquote {
   margin: 4px 0;
   padding: 6px 10px;
-  border-left: 3px solid var(--accent-solid);
+  border: 1px solid var(--border-light);
+  border-left: 2px solid var(--accent-solid);
   background: var(--bg-surface);
   color: var(--text-muted);
   font-style: italic;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius-sm);
 }
 
 .dossier-ul {

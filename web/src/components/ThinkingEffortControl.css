@@ -2,6 +2,15 @@
 .thinking-effort {
   position: relative;
   display: inline-flex;
+  align-items: center;
+}
+
+.thinking-effort__trigger.ui-btn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
+  box-sizing: border-box;
 }
 
 .thinking-effort__name {

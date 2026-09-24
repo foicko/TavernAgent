@@ -72,13 +72,6 @@
   color: var(--text-dim);
 }
 
-.ui-menu__empty {
-  padding: var(--space-4);
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-  text-align: center;
-}
-
 .ui-menu__item {
   display: flex;
   align-items: center;

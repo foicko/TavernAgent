@@ -7,8 +7,9 @@
   <StackPanel Spacing="12">
 
     <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="历史故事会话" FontSize="{DynamicResource FsSm}" FontWeight="SemiBold" VerticalAlignment="Center" />
-      <TextBlock Grid.Column="1" Text="{Binding TotalCount}" FontSize="{DynamicResource FsXs}"
+      <TextBlock Text="历史故事会话" FontSize="{DynamicResource FsXs}" FontWeight="Medium"
+                 Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
+      <TextBlock Grid.Column="1" Text="{Binding TotalCount}" FontSize="{DynamicResource Fs2xs}"
                  Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
     </Grid>
 
@@ -16,13 +17,13 @@
       <Grid ColumnDefinitions="*,*">
         <Button Grid.Column="0" Classes="seg" Classes.active="{Binding IsAllFilter}"
                 HorizontalAlignment="Stretch" Command="{Binding SetAllFilterCommand}">
-          <TextBlock Text="{Binding TotalCount, StringFormat=全部 ({0})}" FontSize="11"
+          <TextBlock Text="{Binding TotalCount, StringFormat=全部 ({0})}" FontSize="10.5"
                      TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Button>
         <Button Grid.Column="1" Classes="seg" Classes.active="{Binding IsCurrentFilter}"
                 HorizontalAlignment="Stretch" Command="{Binding SetCurrentFilterCommand}"
                 ToolTip.Tip="{Binding FilterCurrentLabel}">
-          <TextBlock Text="{Binding FilterCurrentLabel}" FontSize="11"
+          <TextBlock Text="{Binding FilterCurrentLabel}" FontSize="10.5"
                      TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Button>
       </Grid>
@@ -41,18 +42,18 @@
               <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsConfirmingDelete}">
                 <Button Grid.Column="0" Classes="card-open" Command="{Binding OpenCommand}">
                   <Grid ColumnDefinitions="Auto,*">
-                    <Panel Grid.Column="0" Width="34" Height="34">
+                    <Panel Grid.Column="0" Width="32" Height="32">
                       <Border CornerRadius="{DynamicResource RadiusMd}" Background="{DynamicResource SubtleBrush}">
                         <TextBlock Text="{Binding Monogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   IsVisible="{Binding !HasAvatar}" />
+                                   IsVisible="{Binding !HasAvatar}" FontSize="{DynamicResource FsXs}" />
                       </Border>
                       <Image Source="{Binding Avatar}" Stretch="UniformToFill" IsVisible="{Binding HasAvatar}" />
                     </Panel>
                     <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                      <TextBlock Text="{Binding Title}" FontSize="{DynamicResource FsSm}" FontWeight="Medium"
                                  TextTrimming="CharacterEllipsis" />
                       <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="{Binding TimeText}" FontSize="10.5"
+                        <TextBlock Text="{Binding TimeText}" FontSize="10"
                                    Foreground="{DynamicResource TextDimBrush}" />
                         <Border Classes="state-pill" Classes.active="{Binding IsActive}">
                           <TextBlock Text="{Binding StatusText}" FontSize="10" />
@@ -62,9 +63,9 @@
                   </Grid>
                 </Button>
 
-                <Button Grid.Column="1" Classes="ui-btn sm ghost row-del-btn" Padding="4,0" ToolTip.Tip="删除会话"
+                <Button Grid.Column="1" Classes="icon-btn-compact" ToolTip.Tip="删除会话"
                         Command="{Binding RequestDeleteCommand}" VerticalAlignment="Center">
-                  <Path Classes="icon" Stroke="{DynamicResource TextDimBrush}" Data="{StaticResource IconTrash}" Width="13" Height="13" />
+                  <Path Classes="icon xs" Data="{StaticResource IconTrash}" />
                 </Button>
               </Grid>
 
@@ -73,9 +74,9 @@
                 <TextBlock Grid.Column="0" Text="确认删除此会话？" FontSize="{DynamicResource FsXs}"
                            Foreground="{DynamicResource DangerBrush}" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
-                <Button Grid.Column="1" Classes="ui-btn sm danger" Padding="8,0" Height="26" MinWidth="0"
+                <Button Grid.Column="1" Classes="ui-btn sm danger" Padding="8,0" Height="24" MinWidth="0"
                         Content="删除" Command="{Binding ConfirmDeleteCommand}" />
-                <Button Grid.Column="2" Classes="ui-btn sm quiet" Padding="8,0" Height="26" MinWidth="0"
+                <Button Grid.Column="2" Classes="ui-btn sm quiet" Padding="8,0" Height="24" MinWidth="0"
                         Content="取消" Command="{Binding CancelDeleteCommand}" />
               </Grid>
             </Panel>
@@ -85,27 +86,27 @@
     </ItemsControl>
 
     <!-- Action shelf -->
-    <Button Classes="ui-btn primary sm" HorizontalAlignment="Stretch" Height="32"
+    <Button Classes="ui-btn primary sm" HorizontalAlignment="Stretch" Height="26"
             Command="{Binding NewStoryCommand}" ToolTip.Tip="{Binding NewStoryTooltip}">
-      <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
-        <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="13" Height="13" />
-        <TextBlock Text="{Binding NewStoryLabel}" FontSize="12" FontWeight="SemiBold"
-                   TextTrimming="CharacterEllipsis" MaxWidth="165" VerticalAlignment="Center" />
+      <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
+        <Path Classes="icon sm" Data="{StaticResource IconSparkles}" />
+        <TextBlock Text="{Binding NewStoryLabel}" FontSize="{DynamicResource FsXs}" FontWeight="Medium"
+                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
       </StackPanel>
     </Button>
 
     <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-      <Button Grid.Column="0" Classes="ui-btn quiet sm" HorizontalAlignment="Stretch" Height="30"
+      <Button Grid.Column="0" Classes="ui-btn quiet sm" HorizontalAlignment="Stretch" Height="25"
               Click="OnExportClick" IsEnabled="{Binding HasCurrentView}">
-        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
-          <Path Classes="icon" Data="{StaticResource IconDownload}" Width="12" Height="12" />
-          <TextBlock Text="导出剧本" FontSize="11.5" VerticalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+          <Path Classes="icon sm" Data="{StaticResource IconDownload}" />
+          <TextBlock Text="导出剧本" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
-      <Button Grid.Column="1" Classes="ui-btn quiet sm" HorizontalAlignment="Stretch" Height="30" Click="OnImportClick">
-        <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
-          <Path Classes="icon" Data="{StaticResource IconUpload}" Width="12" Height="12" />
-          <TextBlock Text="导入剧本" FontSize="11.5" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="ui-btn quiet sm" HorizontalAlignment="Stretch" Height="25" Click="OnImportClick">
+        <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+          <Path Classes="icon sm" Data="{StaticResource IconUpload}" />
+          <TextBlock Text="导入故事" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
         </StackPanel>
       </Button>
     </Grid>

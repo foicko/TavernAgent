@@ -513,7 +513,7 @@ export interface IconProps {
   title?: string;
 }
 
-export function Icon({ name, size = 16, strokeWidth = 1.8, className, style, title }: IconProps) {
+export function Icon({ name, size = 16, strokeWidth = size <= 14 ? 1.4 : 1.5, className, style, title }: IconProps) {
   return (
     <svg
       width={size}

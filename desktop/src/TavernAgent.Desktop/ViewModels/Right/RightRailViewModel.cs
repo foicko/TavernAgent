@@ -82,8 +82,7 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
     private void ActivateInventory(InventoryActViewModel? act)
     {
         if (act is null) return;
-        if (!string.IsNullOrEmpty(act.ActionRef)) Story.PrepareAction(act.Text, act.ActionRef);
-        else Ui.InjectComposerText(act.Text);
+        Ui.InjectComposerText(act.Text);
         Ui.NotifyQuiet($"已填入「{act.Label}」，发送后推进剧情。");
     }
 
@@ -201,14 +200,9 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
             {
                 var acts = new List<InventoryActViewModel>
                 {
-                    new("inspect", $"仔细端详 {item.Name}", $"我将【{item.Name}】握在手心仔细端详，思索其背后的渊源与线索...", null),
-                    new("show", $"向对方出示 {item.Name}", $"我将【{item.Name}】轻轻置于桌面推向对方眼前，观察其神色变化。", null),
+                    new("inspect", $"仔细端详 {item.Name}", $"我将【{item.Name}】握在手心仔细端详，思索其背后的渊源与线索..."),
+                    new("show", $"向对方出示 {item.Name}", $"我将【{item.Name}】轻轻置于桌面推向对方眼前，观察其神色变化。"),
                 };
-                foreach (var a in Story.View?.Actions ?? new List<ActionView>())
-                {
-                    if (a.ItemIds?.Contains(item.InstanceId) == true)
-                        acts.Add(new InventoryActViewModel(a.ActionId, a.Label, a.Label, a.ActionId));
-                }
                 var icon = item.Keepsake == true ? "⏱️" : "📦";
                 var status = item.Keepsake == true ? "核心信物" : $"数量: {item.Quantity}";
                 Inventory.Add(new InventoryItemViewModel(item.InstanceId, item.Name, status, icon, acts));

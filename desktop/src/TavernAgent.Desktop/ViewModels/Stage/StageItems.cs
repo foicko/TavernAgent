@@ -268,15 +268,32 @@ public sealed class ChangeEvidenceViewModel
 {
     public ChangeEvidenceViewModel(StateChange change)
     {
-        Label = change.Label;
-        Text = change.Text;
+        var rawLabel = change.Label ?? "";
+        if (rawLabel.Contains('·'))
+        {
+            var parts = rawLabel.Split('·', 2);
+            var charPart = NarrativeText.CleanShortName(parts[0].Trim());
+            Label = $"{charPart} · {parts[1].Trim()}";
+        }
+        else if (rawLabel.Length > 20)
+        {
+            Label = NarrativeText.CleanShortName(rawLabel);
+        }
+        else
+        {
+            Label = rawLabel;
+        }
+
+        Text = change.Text ?? "";
         Delta = change.Delta;
         IsUp = change.Delta > 0;
         IsDown = change.Delta < 0;
+        FullTooltip = $"{Label}：{Text}";
     }
 
     public string Label { get; }
     public string Text { get; }
+    public string FullTooltip { get; }
     public double? Delta { get; }
     public bool IsUp { get; }
     public bool IsDown { get; }

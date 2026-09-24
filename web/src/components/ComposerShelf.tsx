@@ -5,12 +5,9 @@ import { composerBusy, isTurnBusy, useStory } from "../stores/storyStore";
 import { CHARACTER_PRESETS } from "../lib/characterPresets";
 import { DirectorStatusBar, DirectorWorkspace } from "./DirectorWorkspace";
 import { getNavigationEpoch } from "../stores/storyHelpers";
-import { useDismiss } from "../lib/useDismiss";
-import { Menu, MenuItem } from "../ui/Menu";
 import { ContextMetricsPopover } from "./ContextMetricsPopover";
 import { ModelQuickSwitch } from "./ModelQuickSwitch";
 import { ThinkingEffortControl } from "./ThinkingEffortControl";
-import { getAttributeMeta, formatActionCheckBadge } from "../lib/ruleCheck";
 import { Icon } from "../ui/Icon";
 import "./ComposerShelf.css";
 
@@ -42,12 +39,9 @@ export const ComposerShelf: React.FC = () => {
     finally { setDirectorOpening(false); }
   };
   const historical = useStory((s) => !!s.viewNodeId);
-  const actions = view?.actions ?? [];
-  const [selectedAction, setSelectedAction] = useState<string | undefined>();
   const busy = useStory(composerBusy); // 历史视图 / 回合在途 / 导演命令中，判定只有一处
-  useEffect(() => { setSelectedAction(undefined); setInputText(""); }, [activeCharKey, view?.sessionId, view?.branch.branchId, historical]);
+  useEffect(() => { setInputText(""); }, [activeCharKey, view?.sessionId, view?.branch.branchId, historical]);
   const pendingInput = useStory((s) => s.pendingInput);
-  const pendingAction = useStory((s) => s.pendingAction);
   const clearPending = useStory((s) => s.clearPending);
 
   const char = CHARACTER_PRESETS[activeCharKey ?? "custom"] || CHARACTER_PRESETS.custom;
@@ -57,18 +51,12 @@ export const ComposerShelf: React.FC = () => {
   const [noteOpen, setNoteOpen] = useState(false);
   const [activeTag, setActiveTag] = useState<"dialogue" | "action" | "subtext" | null>(null);
   const [recentlyUsedTag, setRecentlyUsedTag] = useState<string | null>(null);
-  const [showCheckMenu, setShowCheckMenu] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const checkMenuRef = useRef<HTMLDivElement>(null);
-
-  // 点击外部或按 Esc 关闭检定菜单（与其它浮层共用同一实现）
-  useDismiss({ enabled: showCheckMenu, onDismiss: () => setShowCheckMenu(false), ignore: [checkMenuRef] });
 
   // 选项"填入编辑"模式响应
   useEffect(() => {
     if (pendingInput) {
       setInputText(pendingInput);
-      setSelectedAction(pendingAction ?? undefined);
       clearPending();
       setTimeout(() => {
         if (textareaRef.current) {
@@ -77,7 +65,7 @@ export const ComposerShelf: React.FC = () => {
         }
       }, 50);
     }
-  }, [pendingInput, pendingAction, clearPending]);
+  }, [pendingInput, clearPending]);
 
   // 外部注入文本响应 (如引用句子)
   useEffect(() => {
@@ -106,19 +94,16 @@ export const ComposerShelf: React.FC = () => {
     const text = inputText.trim();
     if (!text || busy) return;
     const sessionId = view?.sessionId;
-    const action = selectedAction;
-    // 立即清空输入框与已选检定，使玩家操作零延迟响应（文字已立即上屏挂载到对话流中）
+    // 立即清空输入框，使玩家操作零延迟响应（文字已立即上屏挂载到对话流中）
     setInputText("");
-    setSelectedAction(undefined);
     const attachedNote = note.trim();
     setNote("");
     try {
-      await sendStory(text, action, attachedNote);
+      await sendStory(text, undefined, attachedNote);
     } catch {
       // 若异常抛出，安全恢复输入内容
       if (!sessionId || useStory.getState().view?.sessionId === sessionId) {
         setInputText(text);
-        setSelectedAction(action);
         setNote(attachedNote);
       }
       return;
@@ -126,7 +111,6 @@ export const ComposerShelf: React.FC = () => {
     const current = useStory.getState();
     if (current.phase === "failed" && (!sessionId || current.view?.sessionId === sessionId)) {
       setInputText(text);
-      setSelectedAction(action);
     }
   };
 
@@ -189,18 +173,6 @@ export const ComposerShelf: React.FC = () => {
     textareaRef.current?.focus();
   };
 
-  const handleCheckSelect = (action: (typeof actions)[number]) => {
-    setShowCheckMenu(false);
-    if (selectedAction === action.actionId) {
-      setSelectedAction(undefined);
-      return;
-    }
-    setSelectedAction(action.actionId);
-    if (!inputText.trim()) setInputText(action.label || action.actionId);
-    textareaRef.current?.focus();
-  };
-
-  const selectedActionObj = selectedAction ? actions.find((a) => a.actionId === selectedAction) : undefined;
   const directorActive = view?.director?.status === "active";
   const noteAttached = note.trim().length > 0;
 
@@ -237,54 +209,6 @@ export const ComposerShelf: React.FC = () => {
               <Icon name="note" size={14} className="btn-icon" />
               <span>{noteAttached ? "已写注记" : "注记"}</span>
             </button>
-
-            <span className="composer-toolbar-divider" aria-hidden="true" />
-
-            <div className="composer-check-wrapper" ref={checkMenuRef}>
-              <button
-                type="button"
-                className={`composer-tag-btn check-trigger-btn ${showCheckMenu ? "active menu-open" : ""} ${selectedAction ? "has-selection" : ""}`}
-                onClick={() => setShowCheckMenu((v) => !v)}
-                title="发起 TRPG 规则技能检定"
-                aria-haspopup="true"
-                aria-expanded={showCheckMenu}
-              >
-                <Icon name="dice" size={14} className="btn-icon" />
-                <span>{selectedActionObj ? formatActionCheckBadge(selectedActionObj) : "规则检定"}</span>
-                <span className="composer-caret"><Icon name="chevronDown" size={12} /></span>
-              </button>
-              <Menu
-                open={showCheckMenu}
-                label="选择 TRPG 技能检定动作"
-                header="选择 TRPG 技能检定动作"
-                direction="up"
-                align="start"
-                onClose={() => setShowCheckMenu(false)}
-              >
-                {actions.length === 0 ? (
-                  <div className="ui-menu__empty">打开会话后可选择规则动作</div>
-                ) : null}
-                {actions.map((ci) => {
-                  const attr = getAttributeMeta(ci.attribute);
-                  return (
-                    <MenuItem
-                      key={ci.actionId}
-                      title={
-                        <span className="check-item-title-wrap">
-                          <Icon name="dice" size={12} className="check-item-icon" />
-                          <span className="check-item-label">{ci.label || ci.actionId}</span>
-                          <span className="check-item-attr-badge">{attr.name}</span>
-                        </span>
-                      }
-                      meta={<span className="check-item-dc">DC {ci.dc}</span>}
-                      radio
-                      selected={selectedAction === ci.actionId}
-                      onSelect={() => handleCheckSelect(ci)}
-                    />
-                  );
-                })}
-              </Menu>
-            </div>
 
             <span className="composer-toolbar-divider" aria-hidden="true" />
 
@@ -327,26 +251,6 @@ export const ComposerShelf: React.FC = () => {
             ))}
           </div>
         </div>
-
-        {selectedActionObj && (
-          <div className="composer-selected-action-banner" role="status" aria-live="polite">
-            <span className="selected-action-info">
-              <Icon name="dice" size={13} className="selected-action-dice" />
-              <span>已选择检定：<strong>{selectedActionObj.label || selectedActionObj.actionId}</strong></span>
-              <span className="selected-action-pill attr-pill">{getAttributeMeta(selectedActionObj.attribute).name}</span>
-              <span className="selected-action-pill dc-pill">DC {selectedActionObj.dc}</span>
-            </span>
-            <button
-              type="button"
-              className="btn-quiet btn-action-cancel"
-              onClick={() => setSelectedAction(undefined)}
-              title="取消当前检定，恢复为自由推演"
-              aria-label="取消检定"
-            >
-              <Icon name="close" size={12} /> 取消检定
-            </button>
-          </div>
-        )}
 
         {/* 本轮注记（非叙事）：与正文分开送，提示词里才能分别标注——
             混进正文会被当成角色说过的话，污染剧情。 */}
@@ -398,7 +302,7 @@ export const ComposerShelf: React.FC = () => {
             }}
           />
 
-          {/* 底部控制 Deck (对齐参考图 1) */}
+          {/* 底部控制 Deck (对齐参考图 1 & 图 2) */}
           <div className="composer-buttons composer-control-deck">
             <div className="composer-control-left">
               <button
@@ -411,16 +315,23 @@ export const ComposerShelf: React.FC = () => {
                   if (char.macros.length > 0) appendMacro(char.macros[0].text);
                 }}
               >
-                +
-              </button>
-              {selectedActionObj ? (
-                <div
-                  className="composer-mode-badge amber"
-                  title={`已挂载检定：${selectedActionObj.label || selectedActionObj.actionId}（${getAttributeMeta(selectedActionObj.attribute).name} · DC ${selectedActionObj.dc}）`}
+                <svg
+                  className="tool-plus-icon"
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <Icon name="dice" size={12} /> {formatActionCheckBadge(selectedActionObj)}
-                </div>
-              ) : directorActive ? (
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <ModelQuickSwitch />
+              {directorActive ? (
                 <div className="composer-mode-badge amber">
                   <Icon name="film" size={12} /> 导演大纲推进中
                 </div>
@@ -430,9 +341,8 @@ export const ComposerShelf: React.FC = () => {
             <div className="composer-control-right">
               <ContextMetricsPopover inputText={inputText} />
               <ThinkingEffortControl />
-              <ModelQuickSwitch />
               <button
-                className="btn-primary-send squircle"
+                className={`btn-primary-send squircle ${busy ? "is-busy" : ""}`}
                 onClick={handleSend}
                 disabled={!inputText.trim() || busy}
                 aria-label="推进剧情"

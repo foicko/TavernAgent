@@ -37,10 +37,10 @@
   <!-- UI button primitive: classes primary / quiet / ghost / danger × sm -->
   <Style Selector="Button.ui-btn">
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
-    <Setter Property="Padding" Value="14,0" />
-    <Setter Property="Height" Value="32" />
-    <Setter Property="MinWidth" Value="60" />
-    <Setter Property="FontSize" Value="{DynamicResource FsMd}" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="FontSize" Value="{DynamicResource FsSm}" />
     <Setter Property="FontFamily" Value="{DynamicResource FontBody}" />
     <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -76,7 +76,7 @@
     <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource AccentContrastBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Medium" />
   </Style>
   <Style Selector="Button.ui-btn.primary:pointerover">
     <Setter Property="Opacity" Value="0.9" />
@@ -148,17 +148,17 @@
   </Style>
 
   <Style Selector="Button.ui-btn.sm">
-    <Setter Property="Height" Value="26" />
-    <Setter Property="Padding" Value="9,0" />
-    <Setter Property="FontSize" Value="{DynamicResource FsSm}" />
+    <Setter Property="Height" Value="25" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
     <Setter Property="MinWidth" Value="0" />
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
   </Style>
 
   <Style Selector="Button.ui-btn.xs">
-    <Setter Property="Height" Value="22" />
-    <Setter Property="Padding" Value="7,0" />
-    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
+    <Setter Property="Height" Value="21" />
+    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="FontSize" Value="{DynamicResource Fs2xs}" />
     <Setter Property="MinWidth" Value="0" />
     <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}" />
   </Style>
@@ -322,10 +322,10 @@
   <!-- Segmented view-mode tab (web: .view-tab-btn) -->
   <Style Selector="Button.seg">
     <Setter Property="CornerRadius" Value="999" />
-    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="Padding" Value="10,4" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="FontSize" Value="{DynamicResource FsSm}" />
+    <Setter Property="FontSize" Value="{DynamicResource FsXs}" />
     <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     <Setter Property="Transitions">
       <Transitions>
@@ -341,7 +341,7 @@
   <Style Selector="Button.seg.active">
     <Setter Property="Background" Value="{DynamicResource GlassPillActiveBrush}" />
     <Setter Property="Foreground" Value="{DynamicResource GlassPillTextActiveBrush}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontWeight" Value="Medium" />
   </Style>
 
   <!-- Header action pill (quick command / palette button) -->

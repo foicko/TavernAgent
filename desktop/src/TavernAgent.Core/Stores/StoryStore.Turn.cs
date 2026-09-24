@@ -322,7 +322,6 @@ public sealed partial class StoryStore
         if (InteractionSettingsPersisted.OptionMode == OptionMode.FillEdit)
         {
             PendingInput = option.Text;
-            PendingAction = null;
             return;
         }
         Phase = TurnPhase.Generating;
@@ -504,20 +503,6 @@ public sealed partial class StoryStore
         {
             if (Owns(owner)) { Phase = TurnPhase.Failed; Error = ToErr(e); }
         }
-    }
-
-    public void ClearPending()
-    {
-        PendingInput = null;
-        PendingAction = null;
-    }
-
-    public void PrepareAction(string text, string actionRef)
-    {
-        if (View is null || BusyPredicates.IsTurnBusy(PhaseWire) || ViewNodeId is not null) return;
-        if (View.Actions is null || !View.Actions.Any(a => a.ActionId == actionRef)) return;
-        PendingInput = text;
-        PendingAction = actionRef;
     }
 
     public async Task ReloadViewAsync(CancellationToken ct = default)

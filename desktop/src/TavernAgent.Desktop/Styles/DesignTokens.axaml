@@ -21,22 +21,22 @@
       <Color x:Key="C.TextMain">#1F2124</Color>
       <Color x:Key="C.TextMuted">#62656B</Color>
       <Color x:Key="C.TextDim">#9A9DA3</Color>
-      <Color x:Key="C.AccentSolid">#0285FF</Color>
+      <Color x:Key="C.AccentSolid">#2563EB</Color>
       <Color x:Key="C.AccentContrast">#FFFFFF</Color>
-      <Color x:Key="C.AccentSubtle">#1A0285FF</Color>
+      <Color x:Key="C.AccentSubtle">#1A2563EB</Color>
       <Color x:Key="C.AccentAmber">#EF720D</Color>
       <Color x:Key="C.AccentGreen">#199A4D</Color>
-      <Color x:Key="C.Ring">#610285FF</Color>
+      <Color x:Key="C.Ring">#612563EB</Color>
       <Color x:Key="C.DangerText">#E3474C</Color>
       <Color x:Key="C.DangerBg">#14E3474C</Color>
       <Color x:Key="C.Success">#199A4D</Color>
       <Color x:Key="C.SuccessBg">#17199A4D</Color>
       <Color x:Key="C.Warning">#EF720D</Color>
-      <Color x:Key="C.Info">#0285FF</Color>
+      <Color x:Key="C.Info">#2563EB</Color>
       <Color x:Key="C.MeterTrack">#ECEDEF</Color>
-      <Color x:Key="C.MeterFill">#0285FF</Color>
+      <Color x:Key="C.MeterFill">#2563EB</Color>
       <Color x:Key="C.MeterAff">#E3474C</Color>
-      <Color x:Key="C.MeterTrust">#0285FF</Color>
+      <Color x:Key="C.MeterTrust">#2563EB</Color>
       <Color x:Key="C.MeterAlert">#EF720D</Color>
       <!-- Glass keys retained but flattened to opaque surfaces (no translucency). -->
       <Color x:Key="C.GlassBg">#FFFFFF</Color>
@@ -54,12 +54,15 @@
 
       <!-- v2: no native material anymore — keep opaque for key compatibility. -->
       <Color x:Key="C.WindowBgMaterial">#FAFAFB</Color>
+      <Color x:Key="C.ComposerIsland">#FFFFFF</Color>
+      <Color x:Key="C.ComposerIslandBorder">#E5E7EB</Color>
 
-      <!-- Floating composer: narrative fades into the window background behind the island. -->
+      <!-- Floating composer: narrative fades gently into the window background behind the island. -->
       <LinearGradientBrush x:Key="ComposerScrimBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Offset="0" Color="#00FAFAFB" />
-        <GradientStop Offset="0.25" Color="#FAFAFB" />
-        <GradientStop Offset="1" Color="#FAFAFB" />
+        <GradientStop Offset="0.4" Color="#4DFAFAFB" />
+        <GradientStop Offset="0.7" Color="#CCFAFAFB" />
+        <GradientStop Offset="1" Color="#F2FAFAFB" />
       </LinearGradientBrush>
 
       <!-- v2: semantic surfaces -->
@@ -84,61 +87,65 @@
     </ResourceDictionary>
 
     <ResourceDictionary x:Key="Dark">
-      <Color x:Key="C.BgBase">#17181A</Color>
-      <Color x:Key="C.BgCanvas">#1C1D1F</Color>
-      <Color x:Key="C.BgSurface">#232427</Color>
-      <Color x:Key="C.BgSubtle">#1F2022</Color>
-      <Color x:Key="C.BgElevated">#28292D</Color>
-      <Color x:Key="C.BorderLight">#2E3033</Color>
-      <Color x:Key="C.BorderMid">#3A3C40</Color>
-      <Color x:Key="C.BorderDark">#F2F3F4</Color>
-      <Color x:Key="C.BorderSubtle">#26272A</Color>
-      <Color x:Key="C.TextMain">#F2F3F4</Color>
-      <Color x:Key="C.TextMuted">#A5A8AD</Color>
-      <Color x:Key="C.TextDim">#85888F</Color>
-      <Color x:Key="C.AccentSolid">#3D9AFF</Color>
+      <Color x:Key="C.BgBase">#101114</Color>
+      <Color x:Key="C.BgCanvas">#141518</Color>
+      <Color x:Key="C.BgSurface">#1A1B1F</Color>
+      <Color x:Key="C.BgSubtle">#16171A</Color>
+      <Color x:Key="C.BgElevated">#212227</Color>
+      <Color x:Key="C.BorderLight">#2A2B30</Color>
+      <Color x:Key="C.BorderMid">#383940</Color>
+      <Color x:Key="C.BorderDark">#F4F4F6</Color>
+      <Color x:Key="C.BorderSubtle">#1F2024</Color>
+      <Color x:Key="C.TextMain">#F4F4F6</Color>
+      <Color x:Key="C.TextMuted">#A1A1AA</Color>
+      <Color x:Key="C.TextDim">#71717A</Color>
+      <Color x:Key="C.AccentSolid">#2563EB</Color>
       <Color x:Key="C.AccentContrast">#FFFFFF</Color>
-      <Color x:Key="C.AccentSubtle">#293D9AFF</Color>
-      <Color x:Key="C.AccentAmber">#F68F3C</Color>
-      <Color x:Key="C.AccentGreen">#3CBB72</Color>
-      <Color x:Key="C.Ring">#6B3D9AFF</Color>
-      <Color x:Key="C.DangerText">#EE5C61</Color>
-      <Color x:Key="C.DangerBg">#24EE5C61</Color>
-      <Color x:Key="C.Success">#3CBB72</Color>
-      <Color x:Key="C.SuccessBg">#243CBB72</Color>
-      <Color x:Key="C.Warning">#F68F3C</Color>
-      <Color x:Key="C.Info">#3D9AFF</Color>
-      <Color x:Key="C.MeterTrack">#2E3033</Color>
-      <Color x:Key="C.MeterFill">#3D9AFF</Color>
-      <Color x:Key="C.MeterAff">#EE5C61</Color>
-      <Color x:Key="C.MeterTrust">#3D9AFF</Color>
-      <Color x:Key="C.MeterAlert">#F68F3C</Color>
-      <Color x:Key="C.GlassBg">#232427</Color>
-      <Color x:Key="C.GlassBgSubtle">#1F2022</Color>
-      <Color x:Key="C.GlassBgElevated">#28292D</Color>
-      <Color x:Key="C.GlassBorder">#2E3033</Color>
-      <Color x:Key="C.GlassBorderLight">#1FFFFFFF</Color>
+      <Color x:Key="C.AccentSubtle">#262563EB</Color>
+      <Color x:Key="C.AccentAmber">#F59E0B</Color>
+      <Color x:Key="C.AccentGreen">#10B981</Color>
+      <Color x:Key="C.Ring">#662563EB</Color>
+      <Color x:Key="C.DangerText">#EF4444</Color>
+      <Color x:Key="C.DangerBg">#24EF4444</Color>
+      <Color x:Key="C.Success">#10B981</Color>
+      <Color x:Key="C.SuccessBg">#2410B981</Color>
+      <Color x:Key="C.Warning">#F59E0B</Color>
+      <Color x:Key="C.Info">#2563EB</Color>
+      <Color x:Key="C.MeterTrack">#2A2B30</Color>
+      <Color x:Key="C.MeterFill">#2563EB</Color>
+      <Color x:Key="C.MeterAff">#EF4444</Color>
+      <Color x:Key="C.MeterTrust">#2563EB</Color>
+      <Color x:Key="C.MeterAlert">#F59E0B</Color>
+      <Color x:Key="C.GlassBg">#1A1B1F</Color>
+      <Color x:Key="C.GlassBgSubtle">#16171A</Color>
+      <Color x:Key="C.GlassBgElevated">#212227</Color>
+      <Color x:Key="C.GlassBorder">#2A2B30</Color>
+      <Color x:Key="C.GlassBorderLight">#14FFFFFF</Color>
       <Color x:Key="C.GlassSpecularTop">#00FFFFFF</Color>
       <Color x:Key="C.GlassSpecularBottom">#00000000</Color>
-      <Color x:Key="C.GlassPillBg">#0FF2F3F4</Color>
-      <Color x:Key="C.GlassPillBgHover">#1FF2F3F4</Color>
-      <Color x:Key="C.GlassPillBgActive">#F2F3F4</Color>
-      <Color x:Key="C.GlassPillTextActive">#17181A</Color>
-      <Color x:Key="C.WindowBg">#17181A</Color>
+      <Color x:Key="C.GlassPillBg">#12FFFFFF</Color>
+      <Color x:Key="C.GlassPillBgHover">#20FFFFFF</Color>
+      <Color x:Key="C.GlassPillBgActive">#F4F4F6</Color>
+      <Color x:Key="C.GlassPillTextActive">#101114</Color>
+      <Color x:Key="C.WindowBg">#101114</Color>
 
-      <Color x:Key="C.WindowBgMaterial">#17181A</Color>
+      <Color x:Key="C.WindowBgMaterial">#101114</Color>
 
-      <!-- Floating composer: narrative fades into the window background behind the island. -->
+      <Color x:Key="C.ComposerIsland">#1A1B1F</Color>
+      <Color x:Key="C.ComposerIslandBorder">#2A2B30</Color>
+
+      <!-- Floating composer: narrative fades gently into the window background behind the island. -->
       <LinearGradientBrush x:Key="ComposerScrimBrush" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Offset="0" Color="#0017181A" />
-        <GradientStop Offset="0.25" Color="#17181A" />
-        <GradientStop Offset="1" Color="#17181A" />
+        <GradientStop Offset="0" Color="#00101113" />
+        <GradientStop Offset="0.4" Color="#4D101113" />
+        <GradientStop Offset="0.7" Color="#CC101113" />
+        <GradientStop Offset="1" Color="#F2101113" />
       </LinearGradientBrush>
 
-      <Color x:Key="C.SurfaceOverlay">#232427</Color>
-      <Color x:Key="C.SurfaceSunken">#17181A</Color>
-      <Color x:Key="C.ScrimStrong">#A6000000</Color>
-      <Color x:Key="C.Scrim">#800E0F12</Color>
+      <Color x:Key="C.SurfaceOverlay">#1B1C20</Color>
+      <Color x:Key="C.SurfaceSunken">#0C0D0F</Color>
+      <Color x:Key="C.ScrimStrong">#B3000000</Color>
+      <Color x:Key="C.Scrim">#800C0D0F</Color>
       <Color x:Key="C.Highlight">#14FFFFFF</Color>
 
       <Color x:Key="C.AmbientA">#003B82F6</Color>
@@ -159,6 +166,8 @@
   <SolidColorBrush x:Key="WindowBackgroundMaterialBrush" Color="{DynamicResource C.WindowBgMaterial}" />
   <!-- App base painted by the shell; material variant kept for compatibility. -->
   <SolidColorBrush x:Key="AppBaseBrush" Color="{DynamicResource C.WindowBg}" />
+  <SolidColorBrush x:Key="ComposerIslandBrush" Color="{DynamicResource C.ComposerIsland}" />
+  <SolidColorBrush x:Key="ComposerIslandBorderBrush" Color="{DynamicResource C.ComposerIslandBorder}" />
   <SolidColorBrush x:Key="BgBaseBrush" Color="{DynamicResource C.BgBase}" />
   <SolidColorBrush x:Key="SurfaceBrush" Color="{DynamicResource C.BgSurface}" />
   <SolidColorBrush x:Key="SubtleBrush" Color="{DynamicResource C.BgSubtle}" />
@@ -241,21 +250,23 @@
   <x:Double x:Key="RailLeftWidth">224</x:Double>
   <x:Double x:Key="RailRightWidth">304</x:Double>
   <x:Double x:Key="RailCollapsedWidth">52</x:Double>
-  <x:Double x:Key="StageReadingWidth">820</x:Double>
-  <x:Double x:Key="StageReadingModeWidth">820</x:Double>
-  <x:Double x:Key="TachieHeight">290</x:Double>
+  <x:Double x:Key="StageReadingWidth">880</x:Double>
+  <x:Double x:Key="StageReadingModeWidth">880</x:Double>
+  <x:Double x:Key="StageComposerWidth">1020</x:Double>
+  <x:Double x:Key="TachieHeight">260</x:Double>
   <x:Double x:Key="MeterTrackHeight">6</x:Double>
 
   <!-- Type scale -->
-  <x:Double x:Key="FsXs">11</x:Double>
-  <x:Double x:Key="FsSm">12</x:Double>
-  <x:Double x:Key="FsMd">13.5</x:Double>
-  <x:Double x:Key="FsLg">16</x:Double>
-  <x:Double x:Key="FsXl">20</x:Double>
-  <x:Double x:Key="Fs2xl">26</x:Double>
-  <x:Double x:Key="LhTight">18.0</x:Double>
-  <x:Double x:Key="LhNormal">22.0</x:Double>
-  <x:Double x:Key="LhNarrative">26.0</x:Double>
+  <x:Double x:Key="Fs2xs">9.5</x:Double>
+  <x:Double x:Key="FsXs">10.5</x:Double>
+  <x:Double x:Key="FsSm">11.5</x:Double>
+  <x:Double x:Key="FsMd">13.0</x:Double>
+  <x:Double x:Key="FsLg">15.0</x:Double>
+  <x:Double x:Key="FsXl">18.0</x:Double>
+  <x:Double x:Key="Fs2xl">22.0</x:Double>
+  <x:Double x:Key="LhTight">16.0</x:Double>
+  <x:Double x:Key="LhNormal">20.0</x:Double>
+  <x:Double x:Key="LhNarrative">24.0</x:Double>
 
   <!-- Motion (ms; easings as cubic-bezier control points) -->
   <x:Double x:Key="DurationMicroMs">80</x:Double>

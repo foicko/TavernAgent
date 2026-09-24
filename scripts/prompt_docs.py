@@ -56,6 +56,18 @@ def extract(rel_path: str, const_name: str) -> str:
     raise SystemExit(f"未找到提示词常量 {const_name}（{rel_path}）")
 
 
+def extract_template_names() -> list[str]:
+    """从 prompt_version.go 的 promptTemplates 抓取参与指纹的模板名。
+
+    手抄这份清单必然漂移（新增模板时最容易忘）：直接从源码读，文档就永远与契约一致。
+    """
+    text = (ROOT / "internal/context/prompt_version.go").read_text(encoding="utf-8")
+    block = re.search(r"var promptTemplates = \[\]promptTemplate\{(.*?)\n\}", text, re.S)
+    if not block:
+        raise SystemExit("未找到 promptTemplates（internal/context/prompt_version.go）")
+    return re.findall(r'\{"([^"]+)"', block.group(1))
+
+
 def fence(body: str) -> str:
     """放进 markdown 代码块；结尾统一补一个换行，避免代码块与正文粘连。"""
     body = body.rstrip("\n")
@@ -88,6 +100,9 @@ CONSTANTS = [
      "选项呈现模式 always 的显式指令；默认的 auto（只在关键节点给）由【输出协议】自身的规则表达，不需要额外指令。"),
     ("叙事核心", "internal/context/prompts.go", "OptionsNeverDirective",
      "选项呈现模式 never 的显式指令。never 另有一道服务端硬保证（提交时清空 options）。"),
+    ("卡片界面标记", "internal/context/cardui.go", "CardUIContract",
+     "卡片界面标记契约：把 charx/RisuAI 卡的自定义标记归一到 [SCENE]/[HUD]/[VAR] 标准标记，"
+     "仅在会话卡片带 UI 档案时注入（放静态前缀以保 KV Cache 稳定）。详见 docs/CARD_UI_MARKERS.md。"),
 ]
 
 # 动态拼装的连接语句（模板）。这些不是常量，是写死在渲染函数里的固定文案；
@@ -137,6 +152,10 @@ TEMPLATES = [
      "system=FrameProbeInstruction（格式探测）；user=「连通性测试：请只回复 OK。」或「请执行协议格式输出测试：严格只按系统提示要求输出两行 JSON…」"),
     ("本回合演绎指令", "internal/context/prompts.go:turnDirectiveBlock",
      "附在玩家输入之后（不进历史前缀）：<player_note>…</player_note> 玩家注记 + 选项要求（always/never）。"),
+    ("卡片界面标记 · 别名提示", "internal/context/cardui.go:cardUIContractBlock",
+     "本卡作者原本要求输出这些自定义标记：{families}。请把它们表达的状态改用上面的标准标记输出，不要再输出这些原始标记。"),
+    ("会话变量", "internal/context/prompts.go:renderSessionVariables",
+     "\\n【会话变量】这是本局卡片状态的当前取值（如语言、场景编号、开关）。叙述须与之一致，不要擅自改写这些值。\\n- {key} = {value}"),
 ]
 
 BOUNDARY_MARKERS = [
@@ -182,23 +201,27 @@ def render_doc() -> str:
     add("- **分离模式**：静态前缀单独一条 system（利于 KV 缓存前缀复用），易变状态")
     add("  以 `<system-reminder>` 落到上下文**最后一条**，且走 user 槽位。")
     add("")
-    add("静态前缀（`systemPrompt` / `staticSystemPrompt`）的拼装顺序：")
+    add("合并模式（`systemPrompt`）的拼装顺序；分离模式的静态前缀取第 1–4、6、11 项")
+    add("（账本移入尾部、`post_history` 也随尾部角色锚点走）：")
     add("")
     add("| # | 内容 | 来源 |")
     add("| --- | --- | --- |")
     add("| 1 | 扮演准则 + 输出协议（或导演协商指令） | `NarratorRoleInstruction` + `FrameProtocolInstruction` |")
     add("| 2 | 可引用的规则动作 | `renderActionRefs`（仅卡片自带规则包时） |")
     add("| 3 | 资料与指令的边界 | `ExternalBoundaryInstruction` |")
-    add("| 4 | 确定性状态账本 | `internal/context/ledger.go`（分离模式下移到尾部块） |")
-    add("| 5 | 角色设定 | `renderCharacterProfiles` |")
-    add("| 6 | 世界书命中 / 已知记忆 | `renderLoreSection` / `renderMemorySection` |")
-    add("| 7 | 检定结果 | `systemPrompt` 内联 |")
-    add("| 8 | 已揭示的世界观与秘密 | `renderSecretsSection` |")
-    add("| 9 | 相关摘要 | `renderSummarySection` |")
-    add("| 10 | 玩家身份 | `systemPrompt` 内联 |")
-    add("| 11 | 当前关系/情绪/目标 | `renderCharacterState` |")
+    add("| 4 | 卡片界面标记契约 | `cardUIContractBlock`（仅卡片带 UI 档案时） |")
+    add("| 5 | 确定性状态账本 | `internal/context/ledger.go`（分离模式下移到尾部块） |")
+    add("| 6 | 角色设定 | `renderCharacterProfiles` |")
+    add("| 7 | 世界书命中 / 已知记忆 | `renderLoreSection` / `renderMemorySection` |")
+    add("| 8 | 检定结果 | `systemPrompt` 内联 |")
+    add("| 9 | 已揭示的世界观与秘密 | `renderSecretsSection` |")
+    add("| 10 | 相关摘要 | `renderSummarySection` |")
+    add("| 11 | 玩家身份 | `systemPrompt` 内联 |")
+    add("| 12 | 当前关系/情绪/目标 | `renderCharacterState` |")
+    add("| 13 | 会话变量 | `renderSessionVariables`（动态块，随变量变化） |")
     add("")
-    add("尾部状态块（分离模式）按序包含：历史缺口 → 当前情境与状态 → 导演安排。")
+    add("尾部状态块（分离模式）按序包含：历史缺口 → 当前情境与状态（账本、世界书、记忆、")
+    add("检定、秘密、摘要、当前状态、会话变量）→ 角色锚点 → 导演安排。")
     add("")
 
     current_group = None
@@ -235,10 +258,9 @@ def render_doc() -> str:
 
     add("## 参与指纹的模板清单")
     add("")
-    add("见 `internal/context/prompt_version.go` 的 `promptTemplates`：")
-    add("`narrator_role`、`frame_protocol`、`frame_probe`、`external_boundary`、")
-    add("`director_head`、`director_mid`、`director_tail`、`summary_prompt`、")
-    add("`system_reminder`、`external_content`。")
+    add("见 `internal/context/prompt_version.go` 的 `promptTemplates`（下表由源码提取，勿手改）：")
+    add("")
+    add("`" + "`、`".join(extract_template_names()) + "`")
     add("")
 
     return "\n".join(lines).rstrip("\n") + "\n"

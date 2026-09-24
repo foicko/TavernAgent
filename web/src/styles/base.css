@@ -21,6 +21,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: var(--accent-subtle);
+  color: var(--accent-solid);
+}
+
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;

@@ -114,7 +114,6 @@ export interface StoryState extends DirectorSliceState {
   memoryPaging: MemoryPaging;
   activeCharacterId: string | null;
   pendingInput: string | null;
-  pendingAction: string | null;
   lastInput: TurnInput | null;
   activeBranchId: string | null;
   viewNodeId: string | null;
@@ -149,7 +148,6 @@ export interface StoryState extends DirectorSliceState {
   retry: () => Promise<void>;
   clearError: () => void;
   clearPending: () => void;
-  prepareAction: (text: string, actionRef: string) => void;
   refreshView: () => Promise<void>;
   reloadView: () => Promise<void>;
 

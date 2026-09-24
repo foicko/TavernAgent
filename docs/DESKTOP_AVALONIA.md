@@ -92,7 +92,7 @@ desktop/
 - **左侧**：常驻可折叠侧栏 `224px`（展开，`LeftRailView`）/ `52px`（收起，`IconRailView`），宽度走 `DoubleTransition` 240ms；同页签再次点击收拢为图标轨，收拢后用 `visited` 类保留「上次所在页签」的弱提示。
 - **中央**：全宽 + 居中阅读列（820px）；场景条为内嵌扁平表面卡（`Border.surface`）。
 - **输入岛**：底部扁平 surface 卡 + 发丝线（`Border.composer-island`），聚焦时以 `RingBrush` 描边；控制行统一 30px 高。
-- **右侧**：内嵌 `304px` 栏（`RightRailWidth`，收起为 0 并显示舞台右上角的扁平召回 pill），滚动条 `AllowAutoHide` 自动隐藏。
+- **右侧**：内嵌 `304px` 栏（`RightRailWidth`，收起为 0 并显示舞台右上角的扁平召回 pill），滚动条 `AllowAutoHide` 自动隐藏；含立绘/神态、名牌、三维心境、行囊、**会话变量**（卡片 `[VAR]`/`defaultVariables`，只读）、前情回顾。卡片自带情绪立绘（`assets[type=emotion]`）与主题 token 分别用于立绘换图与卡片表面配色（见 [CARD_UI_MARKERS](CARD_UI_MARKERS.md)）。
 - **弹窗**：`Modal` 使用扁平 scrim（`ScrimBrush`）+ `anim-pop` 弹簧入场；已无 `ExperimentalAcrylicBorder`。
 
 - **设计令牌**：`Styles/DesignTokens.axaml`（v4 全面对齐 beautifului.dev：page/canvas/surface/inset 中性面、ink 三级文字、单一蓝色强调、发丝线描边与低透明阴影，无毛玻璃/无装饰渐变；`HeaderHeightPx=56`、`ScrimBrush`、`RingThickness`；**仅系统字体栈**，不随包分发字体）。
@@ -106,7 +106,7 @@ desktop/
   与 Web 端 `web/src/ui/Icon.tsx` 一一对应；外壳/导航/工具条的装饰性 emoji 已统一替换为线性图标。
 - **舞台**：`Views/Stage/` 下 `StageView`（居中 820px 阅读列 + 吸附场景条 + 悬浮输入岛）、
   `MessageView`（正文/对白/独白、思考链、依据、悬停浮现的回合微操作、抉择卡、插画、朗读）、`ComposerView`
-  （注记/检定/宏、上下文甜甜圈、模型速切、思考强度）。
+  （导演模式/注记/宏、上下文甜甜圈、模型速切、思考强度）。检定由 LLM 在剧情节点给出的选项触发，输入台不再提供手动检定选择器。
 - **设置与弹窗**：`Views/Modals/Settings/` 四页签设置中心；角色导入 / 世界书 / 生图弹窗；
   命令面板（`Views/CommandPaletteView`，Ctrl+K）。
 - **导演模式**：`Views/Stage/DirectorWorkspaceView`（双栏工作台）+ 输入岛「🎬 导演」入口，
@@ -143,5 +143,6 @@ desktop/
 | M8 | ✅ | UI 重构对标 beautifului.dev：设计系统 v3 扁平发丝线（page/canvas/surface/inset + 单一蓝 accent）、移除毛玻璃/亚克力/氛围光、常驻折叠侧栏（224/52）与 68px 顶栏、阅读列 820、右栏 304；两端同步移除「心智星图」功能（Web 的 MindGraphModal 与桌面端遗留 `UiStore.MindGraphOpen` 死状态） |
 | M9 | ✅ | 两端对齐「三栏内嵌」范式：桌面端顶栏 56px 内嵌 + 左/右栏并排（右栏 304/0，240ms 过渡，删除悬浮 HUD/`HeaderMargin`）；`Glass.axaml` → `Surfaces.axaml` 并统一 `surface*` 类名、补齐 `Button.quiet`、删除旧按钮别名；`Modal` 去亚克力改扁平 `ScrimBrush`；`EmptyState` 改 `IconGeometry`；主题默认跟随系统并持久化；Web 顶栏去展厅入口、主题持久化/跟随系统、`--glass-*` 兼容层整体删除、六项 CSS 门禁收紧（`!important` 14→4、重复选择器 18→0、颜色字面值与玻璃残留归零） |
 | M10 | ✅ | 桌面端稳定性与布局对齐：修复 Avalonia 12 启动崩溃（去 `WindowDrawnDecorations`）、跨线程集合崩溃（`StoreDispatcher`/`UiEvents`/`SafeFireAndForget` + UI 异常兜底）、重试泄漏与资源泄漏；响应式轨道对称可再展开（1280/1024，auto 标志与手动偏好分离）；输入岛宽度对齐 820、控制行统一 30px；Modal 单一滚动 + 焦点 + 88% 上限 + 18 圆角；补 `SceneBarView` 接线、缺失画刷、`.fork` 样式与 token 化；补回归测试 |
+| charx UI | ✅ | 卡片 UI 映射（M2–M4）：`<img cmd>`/`[HUD]`/`[SCENE]`/`[VAR]` 标记原生渲染（含 HUD 进度条、常驻场景条）、右栏会话变量面板、卡片主题 token（仅 `CardHudView`/`SceneBarView`）、情绪立绘（`assets[type=emotion]` → 神态键）、`sdData` 生图基底、`{{getvar::键}}` 只读宏；见 [CARD_UI_MARKERS](CARD_UI_MARKERS.md) |
 
 > 旧 Wails 桌面壳已**移除**（见上）。

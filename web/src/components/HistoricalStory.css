@@ -10,11 +10,11 @@
 /* --------------------------------------------------------------------------
    1. 回合卡片
    -------------------------------------------------------------------------- */
-/* 开场序章：强调色左边框（.opening-turn 为 HistoricalStory 独有） */
+/* 开场序章：典雅微高亮（.opening-turn 为 HistoricalStory 独有） */
 .story-turn.opening-turn > .dialogue-turn-wrap {
-  border-color: var(--border-light);
-  border-left: 3px solid var(--accent-solid);
+  border-color: color-mix(in srgb, var(--accent-solid) 30%, var(--border-light));
   border-radius: var(--radius-lg);
+  background: var(--bg-surface);
   box-shadow: var(--shadow-sm);
 }
 

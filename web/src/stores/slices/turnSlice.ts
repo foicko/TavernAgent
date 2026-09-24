@@ -267,7 +267,7 @@ async function startTurn(view: SessionView, key: string, input: TurnInput, owner
 
 export async function openDerivedBranch(sessionId: string, branchId: string, turnId?: string) {
   setStoryState({ ...emptyDirectorState, activeBranchId: branchId, viewNodeId: null, lastTurnId: turnId ?? null,
-    phase: turnId ? "generating" : "idle", pendingInput: null, pendingAction: null,
+    phase: turnId ? "generating" : "idle", pendingInput: null,
     memories: [], memoryUsage: null, memoryError: null, memoryLoading: false, memoryPaging: emptyMemoryPaging(), error: null });
   const owner = scope();
   try { await getStoryState().reloadView(); }
@@ -323,7 +323,7 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     const view = get().view;
     if (!view || isTurnBusy(get().phase) || get().directorCommanding) return;
     if (useSettings.getState().optionMode === "fill-edit") {
-      set({ pendingInput: o.text, pendingAction: null });
+      set({ pendingInput: o.text });
       return;
     }
     set({ phase: "generating", error: null, lastInput: { kind: "option", text: o.text } });
@@ -419,17 +419,10 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     }
   },
 
-  clearPending: () => set({ pendingInput: null, pendingAction: null }),
+  clearPending: () => set({ pendingInput: null }),
 
   // 关闭错误卡：清掉错误；若正处于 failed 终态，一并回到可输入的 idle。
   clearError: () => set((s) => ({ error: null, ...(s.phase === "failed" ? { phase: "idle" as const } : {}) })),
-
-  prepareAction: (text: string, actionRef: string) => {
-    const current = get();
-    if (!current.view || isTurnBusy(current.phase) || current.viewNodeId) return;
-    if (!current.view.actions?.some(action => action.actionId === actionRef)) return;
-    set({ pendingInput: text, pendingAction: actionRef });
-  },
 
   reloadView: async () => {
     const owner = scope();

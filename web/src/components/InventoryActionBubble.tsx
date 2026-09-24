@@ -29,8 +29,7 @@ export const InventoryActionBubble: React.FC = () => {
       return;
     }
     if (act.text) {
-      if (act.actionRef) useStory.getState().prepareAction(act.text, act.actionRef);
-      else injectComposerText(act.text);
+      injectComposerText(act.text);
       notifyQuiet(`已填入「${act.label}」，发送后推进剧情。`);
     }
     hideInvBubble();

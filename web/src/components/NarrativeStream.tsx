@@ -9,7 +9,6 @@ import { SceneBar } from "./SceneBar";
 import { useAppliedCardTheme, useCardAssetMap } from "../stores/cardAssetStore";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
-import { formatActionCheckBadge } from "../lib/ruleCheck";
 import { Button } from "../ui/Button";
 import { TTSPlayButton } from "./TTSButton";
 import { Icon } from "../ui/Icon";
@@ -311,11 +310,6 @@ export const NarrativeStream: React.FC = () => {
                       {phase === "generating" && <span className="player-sending-tag">（实时推演中）</span>}
                     </span>
                   </div>
-                  {lastInput.actionRef && (
-                    <div className="dice-badge-quiet" title="本轮发起的规则检定">
-                      <Icon name="dice" size={12} /> 行动检定：{formatActionCheckBadge(view?.actions?.find((a) => a.actionId === lastInput.actionRef), { rawRef: lastInput.actionRef })}
-                    </div>
-                  )}
                   <div className="player-speech-text">{renderInlineMarkdown(expand(lastInput.text))}</div>
                 </div>
               </div>

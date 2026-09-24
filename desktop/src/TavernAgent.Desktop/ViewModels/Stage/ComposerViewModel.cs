@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
 
 namespace TavernAgent.Desktop.ViewModels.Stage;
@@ -43,7 +42,6 @@ public sealed partial class ComposerViewModel : ObservableObject
     [ObservableProperty] private string _text = "";
     [ObservableProperty] private string _note = "";
     [ObservableProperty] private bool _isNoteOpen;
-    [ObservableProperty] private ActionView? _selectedAction;
     [ObservableProperty] private ModelQuickItem? _selectedModel;
     [ObservableProperty] private EffortItem? _selectedEffortItem;
 
@@ -56,7 +54,6 @@ public sealed partial class ComposerViewModel : ObservableObject
     [RelayCommand]
     private void OpenDirector() => _stage.OpenDirector();
 
-    public ObservableCollection<ActionView> AvailableActions { get; } = new();
     public ObservableCollection<ModelQuickItem> Models { get; } = new();
     public IReadOnlyList<MacroPill> Macros { get; }
     public IReadOnlyList<EffortItem> Efforts { get; } = new[]
@@ -68,16 +65,10 @@ public sealed partial class ComposerViewModel : ObservableObject
     };
 
     public bool HasNote => !string.IsNullOrWhiteSpace(Note);
-    public bool HasAction => SelectedAction is not null;
-    public bool HasActions => AvailableActions.Count > 0;
     public bool HasModels => Models.Count > 0;
-    public string ActionLabel => SelectedAction?.Label ?? "";
-    public string ActionBadgeLabel => SelectedAction is not null ? $"DC {SelectedAction.Dc} {SelectedAction.Label}" : "";
-    public string ActionFullLabel => SelectedAction is not null ? $"{SelectedAction.Label} · DC {SelectedAction.Dc}" : "";
-    public string ActionTriggerLabel => SelectedAction is not null ? $"{SelectedAction.Label} · DC {SelectedAction.Dc}" : "规则检定";
 
-    public bool IsDirectorModeBadgeVisible => !HasAction && (_stage.Director?.IsActive == true);
-    public bool IsFreeformModeBadgeVisible => !HasAction && (_stage.Director?.IsActive != true);
+    public bool IsDirectorModeBadgeVisible => _stage.Director?.IsActive == true;
+    public bool IsFreeformModeBadgeVisible => _stage.Director?.IsActive != true;
 
     public string Placeholder => _stage.Story.View is null
         ? "导入角色卡或打开一段会话即可开始推演…"
@@ -99,17 +90,6 @@ public sealed partial class ComposerViewModel : ObservableObject
 
     partial void OnNoteChanged(string value) => OnPropertyChanged(nameof(HasNote));
 
-    partial void OnSelectedActionChanged(ActionView? value)
-    {
-        OnPropertyChanged(nameof(HasAction));
-        OnPropertyChanged(nameof(ActionLabel));
-        OnPropertyChanged(nameof(ActionBadgeLabel));
-        OnPropertyChanged(nameof(ActionFullLabel));
-        OnPropertyChanged(nameof(ActionTriggerLabel));
-        OnPropertyChanged(nameof(IsDirectorModeBadgeVisible));
-        OnPropertyChanged(nameof(IsFreeformModeBadgeVisible));
-    }
-
     partial void OnSelectedModelChanged(ModelQuickItem? value)
     {
         if (_suppressSelection || value is null) return;
@@ -128,15 +108,7 @@ public sealed partial class ComposerViewModel : ObservableObject
 
     public void Refresh()
     {
-        AvailableActions.Clear();
-        foreach (var action in _stage.Story.View?.Actions ?? new List<ActionView>())
-            AvailableActions.Add(action);
-        OnPropertyChanged(nameof(HasActions));
         OnPropertyChanged(nameof(Placeholder));
-        OnPropertyChanged(nameof(HasAction));
-        OnPropertyChanged(nameof(ActionBadgeLabel));
-        OnPropertyChanged(nameof(ActionFullLabel));
-        OnPropertyChanged(nameof(ActionTriggerLabel));
         OnPropertyChanged(nameof(IsDirectorModeBadgeVisible));
         OnPropertyChanged(nameof(IsFreeformModeBadgeVisible));
         RefreshModels();
@@ -175,12 +147,10 @@ public sealed partial class ComposerViewModel : ObservableObject
         if (!CanSend) return;
         var value = Text;
         var note = IsNoteOpen && HasNote ? Note : null;
-        var actionRef = SelectedAction?.ActionId;
         Text = "";
         Note = "";
         IsNoteOpen = false;
-        SelectedAction = null;
-        await _stage.SendAsync(value, actionRef, note).ConfigureAwait(true);
+        await _stage.SendAsync(value, null, note).ConfigureAwait(true);
     }
 
     [RelayCommand]
@@ -194,12 +164,6 @@ public sealed partial class ComposerViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleNote() => IsNoteOpen = !IsNoteOpen;
-
-    [RelayCommand]
-    private void SelectAction(ActionView? action) => SelectedAction = action;
-
-    [RelayCommand]
-    private void ClearAction() => SelectedAction = null;
 
     [RelayCommand]
     private void ApplyMacro(MacroPill? macro)

@@ -72,68 +72,68 @@
    -------------------------------------------------------------------------- */
 :root {
   /* 表面与底层 */
-  --bg-base: #fafafb;      /* page */
-  --bg-canvas: #f1f2f3;    /* canvas：下沉画布 */
+  --bg-base: #fafafc;      /* page */
+  --bg-canvas: #f3f4f6;    /* canvas：下沉画布 */
   --bg-surface: #ffffff;   /* surface：卡片 */
-  --bg-subtle: #f7f8f9;    /* inset：内嵌井 */
+  --bg-subtle: #f8f9fa;    /* inset：内嵌井 */
   --bg-elevated: #ffffff;
 
   /* 边框：发丝线 */
-  --border-light: #ecedef;   /* line */
-  --border-mid: #e0e2e5;     /* line-strong */
-  --border-dark: #1f2124;    /* ink */
-  --border-subtle: #f4f5f6;  /* hover */
+  --border-light: #e5e7eb;   /* line */
+  --border-mid: #d1d5db;     /* line-strong */
+  --border-dark: #111827;    /* ink */
+  --border-subtle: #f3f4f6;  /* hover */
 
   /* 文本梯度（墨黑深阶） */
-  --text-main: #1f2124;    /* ink */
-  --text-muted: #62656b;   /* ink-2 */
-  --text-dim: #9a9da3;     /* ink-3 */
+  --text-main: #111827;    /* ink */
+  --text-muted: #4b5563;   /* ink-2 */
+  --text-dim: #9ca3af;     /* ink-3 */
 
-  /* 强调色（beautifului 蓝） */
-  --accent-solid: #0285ff;
+  /* 强调色（高级墨蓝/钴蓝体系） */
+  --accent-solid: #2563eb;
   --accent-contrast: #ffffff;
-  --accent-subtle: #e9f3ff;
-  --accent-glow: #0070dd;
-  --accent-amber: #ef720d;
-  --accent-green: #199a4d;
+  --accent-subtle: #eff6ff;
+  --accent-glow: #1d4ed8;
+  --accent-amber: #d97706;
+  --accent-green: #059669;
 
   /* 焦点环 */
-  --ring: rgba(2, 133, 255, 0.38);
+  --ring: rgba(37, 99, 235, 0.35);
   --ring-offset: 2px;
-  --ring-glow: rgba(2, 133, 255, 0.22);
+  --ring-glow: rgba(37, 99, 235, 0.18);
   --shadow-ring: 0 0 0 2px var(--ring);
 
   /* 遮罩：扁平 scrim，不使用毛玻璃 */
-  --scrim: rgba(14, 15, 18, 0.5);
+  --scrim: rgba(15, 23, 42, 0.45);
 
   /* 刻度槽与填充 */
-  --meter-track: #ecedef;
-  --meter-fill: #0285ff;
+  --meter-track: #e5e7eb;
+  --meter-fill: #2563eb;
   /* 心境量表三色（aff 温情 / trust 信任 / alert 戒心） */
   --meter-aff: #e11d48;
-  --meter-trust: #0284c7;
+  --meter-trust: #2563eb;
   --meter-alert: #d97706;
 
   /* 记忆银行分类边线（亲历 / 推断 / 秘密） */
-  --memory-episodic: #2b3e58;
-  --memory-inference: #5c4728;
-  --memory-secret: #6e3232;
+  --memory-episodic: #2563eb;
+  --memory-inference: #d97706;
+  --memory-secret: #9333ea;
 
   /* 语义反馈色 */
-  --color-danger-text: #e3474c;
-  --color-danger-bg: rgba(227, 71, 76, 0.08);
-  --color-warn-border: #ef720d;
-  --color-warn-bg: rgba(239, 114, 13, 0.08);
-  --color-success-bg: rgba(25, 154, 77, 0.09);
-  --color-node-muted: #62656b;
+  --color-danger-text: #dc2626;
+  --color-danger-bg: rgba(220, 38, 38, 0.08);
+  --color-warn-border: #d97706;
+  --color-warn-bg: rgba(217, 119, 6, 0.08);
+  --color-success-bg: rgba(5, 150, 105, 0.09);
+  --color-node-muted: #4b5563;
 
   /* 状态三色 */
-  --color-success: #199a4d;
-  --color-warning: #ef720d;
-  --color-info: #0285ff;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
 
-  --bg-muted: #f2f2f3;     /* field */
-  --bg-panel: #fafafb;
+  --bg-muted: #f3f4f6;     /* field */
+  --bg-panel: #fafafc;
 
   /* 字体族：现代无衬线界面 + 保留叙事衬线正文 */
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -166,11 +166,11 @@
   --space-6: 32px;
 
   /* 字号与行高 */
-  --fs-xs: 11px;
-  --fs-sm: 12px;
-  --fs-md: 13.5px;
-  --fs-lg: 16px;
-  --fs-xl: 20px;
+  --fs-xs: 10.5px;
+  --fs-sm: 11.5px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
   --lh-tight: 1.35;
   --lh-normal: 1.6;
   --lh-narrative: 1.78;
@@ -179,9 +179,9 @@
   --fw-semibold: 600;
 
   /* 阴影：发丝环 + 柔和低透明层 (beautifului shadow-hairline/card/overlay) */
-  --shadow-sm: 0 0 0 1px var(--border-light), 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 0 0 1px var(--border-light), 0 2px 8px rgba(16, 24, 40, 0.08);
-  --shadow-float: 0 0 0 1px var(--border-light), 0 8px 28px rgba(16, 24, 40, 0.12);
+  --shadow-sm: 0 0 0 1px var(--border-light), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 0 0 1px var(--border-light), 0 3px 8px rgba(15, 23, 42, 0.07);
+  --shadow-float: 0 0 0 1px var(--border-light), 0 12px 32px rgba(15, 23, 42, 0.10);
 
   /* 层级 */
   --z-base: 1;
@@ -217,52 +217,52 @@
    2. 曜石墨黑（beautifului dark）
    -------------------------------------------------------------------------- */
 [data-theme="dark"] {
-  --bg-base: #17181a;      /* page */
-  --bg-canvas: #1c1d1f;    /* canvas */
-  --bg-surface: #232427;   /* surface */
-  --bg-subtle: #1f2022;    /* inset */
-  --bg-elevated: #28292d;
+  --bg-base: #101114;      /* page: deep obsidian */
+  --bg-canvas: #141518;    /* canvas */
+  --bg-surface: #1a1b1f;   /* surface */
+  --bg-subtle: #16171a;    /* inset */
+  --bg-elevated: #212227;
 
-  --border-light: #2e3033;
-  --border-mid: #3a3c40;
-  --border-dark: #f2f3f4;
-  --border-subtle: #26272a;
+  --border-light: #2a2b30;
+  --border-mid: #383940;
+  --border-dark: #f4f4f6;
+  --border-subtle: #1f2024;
 
-  --text-main: #f2f3f4;
-  --text-muted: #a5a8ad;
-  --text-dim: #6c6f75;
+  --text-main: #f4f4f6;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
 
-  --accent-solid: #3d9aff;
+  --accent-solid: #2563eb;
   --accent-contrast: #ffffff;
-  --accent-subtle: rgba(61, 154, 255, 0.16);
-  --accent-glow: #7ec0ff;
-  --accent-amber: #f68f3c;
-  --accent-green: #3cbb72;
+  --accent-subtle: rgba(37, 99, 235, 0.15);
+  --accent-glow: #3b82f6;
+  --accent-amber: #f59e0b;
+  --accent-green: #10b981;
 
   /* 焦点环 */
-  --ring: rgba(61, 154, 255, 0.42);
+  --ring: rgba(37, 99, 235, 0.40);
   --ring-offset: 2px;
-  --ring-glow: rgba(61, 154, 255, 0.24);
+  --ring-glow: rgba(37, 99, 235, 0.22);
 
-  --meter-track: #2e3033;
-  --meter-fill: #3d9aff;
+  --meter-track: #2a2b30;
+  --meter-fill: #2563eb;
 
-  --color-danger-text: #ee5c61;
-  --color-danger-bg: rgba(238, 92, 97, 0.14);
-  --color-warn-border: #f68f3c;
-  --color-warn-bg: rgba(246, 143, 60, 0.14);
-  --color-success-bg: rgba(60, 187, 114, 0.14);
-  --color-node-muted: #6c6f75;
+  --color-danger-text: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.14);
+  --color-warn-border: #f59e0b;
+  --color-warn-bg: rgba(245, 158, 11, 0.14);
+  --color-success-bg: rgba(16, 185, 129, 0.14);
+  --color-node-muted: #71717a;
 
-  --color-success: #3cbb72;
-  --color-warning: #f68f3c;
-  --color-info: #3d9aff;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-info: #2563eb;
 
-  --bg-muted: #2b2c2f;
-  --bg-panel: #1c1d1f;
+  --bg-muted: #212227;
+  --bg-panel: #141518;
 
   /* 深色阴影：白色发丝环 + 黑色柔和层 */
-  --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 1px 2px rgba(0, 0, 0, 0.30);
-  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.11), 0 2px 10px rgba(0, 0, 0, 0.24);
-  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 28px rgba(0, 0, 0, 0.34);
+  --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.09), 0 3px 10px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 16px 36px rgba(0, 0, 0, 0.45);
 }

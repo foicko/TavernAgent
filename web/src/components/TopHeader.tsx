@@ -60,7 +60,13 @@ export const TopHeader: React.FC = () => {
             </span>
           </div>
         ) : (
-          <div className="scene-breadcrumb" dangerouslySetInnerHTML={{ __html: char.breadcrumb }} />
+          <div className="scene-breadcrumb">
+            <Icon name="compass" size={14} className="breadcrumb-icon" />
+            <span className="breadcrumb-title">{char.name || "等待开启冒险"}</span>
+            <span className="quiet-state-pill breadcrumb-branch">
+              <Icon name="sparkles" size={12} /> {char.stagePill || "初始起手"}
+            </span>
+          </div>
         )}
       </div>
 

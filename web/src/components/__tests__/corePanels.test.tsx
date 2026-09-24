@@ -45,7 +45,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("inventory, character state and memory panels", () => {
-  it("shows only carried items and sends the registered inventory action through the composer", async () => {
+  it("shows only carried items and fills an inventory action into the composer", async () => {
     const send = vi.fn().mockResolvedValue(undefined);
     useStory.setState({ send });
     const user = userEvent.setup();
@@ -54,11 +54,12 @@ describe("inventory, character state and memory panels", () => {
     expect(screen.queryByText("已喝完的茶")).toBeNull();
     expect(screen.queryByText("向导的地图")).toBeNull();
     await user.click(screen.getByText("旅行茶", { selector: ".slot-name-label" }));
-    await user.click(screen.getByRole("button", { name: "饮用两份旅行茶" }));
-    expect((document.getElementById("story-input") as HTMLTextAreaElement).value).toBe("饮用两份旅行茶");
+    await user.click(screen.getByRole("button", { name: "仔细端详 旅行茶" }));
+    expect((document.getElementById("story-input") as HTMLTextAreaElement).value).toBe("我将【旅行茶】握在手心仔细端详，思索其背后的渊源与线索...");
     await user.click(screen.getByRole("button", { name: "推进剧情" }));
-    // 第三个参数是本轮注记（非叙事要求）：本次没有写，所以是空串。
-    expect(send).toHaveBeenCalledExactlyOnceWith("饮用两份旅行茶", "drink.tea", "");
+    // 检定改由 LLM 选项触发：物品动作只填入正文，不再挂载 actionRef。
+    // 第三参数是本轮注记（非叙事要求）：本次没有写，所以是空串。
+    expect(send).toHaveBeenCalledExactlyOnceWith("我将【旅行茶】握在手心仔细端详，思索其背后的渊源与线索...", undefined, "");
   });
 
   it("本轮注记与正文分开送，且发完即清空", async () => {
@@ -143,9 +144,9 @@ describe("inventory, character state and memory panels", () => {
     const user = userEvent.setup();
     render(<><RightRail /><InventoryActionBubble /><ComposerShelf /></>);
     await user.click(screen.getByText("旅行茶", { selector: ".slot-name-label" }));
-    expect(screen.getByRole("button", { name: "饮用两份旅行茶" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "仔细端详 旅行茶" })).toBeTruthy();
     await act(async () => { useStory.setState({ viewNodeId: "root" }); });
-    expect(screen.queryByRole("button", { name: "饮用两份旅行茶" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "仔细端详 旅行茶" })).toBeNull();
     expect((screen.getByRole("button", { name: "纠正" }) as HTMLButtonElement).disabled).toBe(true);
     expect((document.getElementById("story-input") as HTMLTextAreaElement).disabled).toBe(true);
   });

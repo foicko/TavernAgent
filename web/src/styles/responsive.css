@@ -24,9 +24,7 @@
   flex-shrink: 0;
 }
 
-.mobile-drawer-header {
-  display: none;
-}
+
 
 /* --------------------------------------------------------------------------
    Tablet Mode (769px ~ 1024px: iPad portrait & landscape)
@@ -176,30 +174,9 @@
   }
 
   .scene-bar {
-    padding: 6px 10px;
+    padding: 4px 10px;
     gap: 6px;
-  }
-
-  .scene-sub-telemetry {
-    display: none; /* 节省手机纵向高度 */
-  }
-
-  .scene-bar-actions .btn-quiet {
-    padding: 2px 8px;
-    font-size: 11px;
-  }
-
-  .scene-bar-actions .btn-quiet:last-child {
-    display: none; /* 手机端隐藏冗余的重新讲述按钮 */
-  }
-
-  .char-avatar-frame {
-    width: 32px;
-    height: 32px;
-  }
-
-  .char-main-name {
-    font-size: 13.5px;
+    font-size: 11.5px;
   }
 
   .stage-scroll-area {
@@ -287,10 +264,6 @@
     max-height: 100px;
   }
 
-  .composer-shortcut-hint {
-    display: none;
-  }
-
   .composer-shelf .btn-primary-send.squircle {
     width: 38px;
     height: 38px;
@@ -329,15 +302,7 @@
     height: 100%;
   }
 
-  .mobile-drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border-light);
-    background: var(--bg-subtle);
-    flex-shrink: 0;
-  }
+
 
   .rail-tab-header {
     padding: 6px 10px;

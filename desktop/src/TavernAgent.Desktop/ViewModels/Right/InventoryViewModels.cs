@@ -1,6 +1,6 @@
 namespace TavernAgent.Desktop.ViewModels.Right;
 
-public sealed record InventoryActViewModel(string Key, string Label, string Text, string? ActionRef);
+public sealed record InventoryActViewModel(string Key, string Label, string Text);
 
 /// <summary>Player-owned inventory item (web: .item-slot + InventoryActionBubble).</summary>
 public sealed class InventoryItemViewModel

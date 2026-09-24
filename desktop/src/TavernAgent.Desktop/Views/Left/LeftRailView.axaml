@@ -7,13 +7,13 @@
   <Grid RowDefinitions="Auto,Auto,*" Classes="anim-slide-in-left">
 
     <!-- Header -->
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,14,10,10">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="14,10,10,8">
       <TextBlock Grid.Column="0" Text="{Binding PanelTitle}"
-                 FontSize="{DynamicResource FsLg}" FontWeight="SemiBold"
+                 FontSize="{DynamicResource FsMd}" FontWeight="SemiBold"
                  VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
-      <Button Grid.Column="1" Classes="icon soft-brush"
+      <Button Grid.Column="1" Classes="icon-btn-compact"
               Command="{Binding CollapseCommand}" ToolTip.Tip="收起面板 (Ctrl+[)">
-        <Path Classes="icon" Data="{StaticResource IconClose}" Width="14" Height="14" />
+        <Path Classes="icon xs" Data="{StaticResource IconClose}" />
       </Button>
     </Grid>
 
