@@ -146,6 +146,8 @@ export interface WorldState {
   moods: Record<string, { moodCode: string; text: string }>;
   characters: Record<string, CharacterInfo>;
   scene?: { sceneId: string; title?: string } | null;
+  /** 会话级键值状态（卡片 [VAR] 标记写入）。 */
+  variables?: Record<string, string>;
 }
 
 export interface SessionView {
@@ -441,6 +443,10 @@ export interface CardPreview {
   capabilities?: CardCapabilities;
   /** 卡预置的会话变量初值。 */
   varDefaults?: Record<string, string>;
+  /** 从 backgroundHTML 白名单抽取的配色/字体（归一化键 accent/bg/ink/font）。 */
+  themeTokens?: Record<string, string>;
+  /** 卡片自带的生图提示词模板（Stable Diffusion），作为插画 prompt 基底。 */
+  sdData?: string[];
 }
 
 /** 卡片声明的 RisuAI/charx 特性（镜像后端 application.CardCapabilities）。 */

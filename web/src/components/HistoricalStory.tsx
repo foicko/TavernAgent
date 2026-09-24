@@ -64,7 +64,8 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
   // 与实时流共用同一套宏替换：历史回合里同样不该出现 {{char}}/{{user}}。
   const playerName = useStory((s) => s.view?.state?.characters?.["player"]?.name) || DEFAULT_PLAYER_NAME;
   const actions = useStory((s) => s.view?.actions);
-  const expand = (text?: string) => replaceMacros(text ?? "", { charName: characterName, userName: playerName });
+  const variables = useStory((s) => s.view?.state?.variables);
+  const expand = (text?: string) => replaceMacros(text ?? "", { charName: characterName, userName: playerName, variables });
   // 卡内嵌资源（charx 立绘）：把历史正文里的 <img cmd="..."> 渲染为图片。
   const cardAssets = useCardAssetMap(useStory((s) => s.view?.characterId));
 

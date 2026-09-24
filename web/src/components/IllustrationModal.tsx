@@ -2,6 +2,8 @@ import { useState } from "react";
 import { generateImage, type GeneratedImageResult } from "../app/api";
 import type { TextBlock } from "../app/types";
 import { extractImagePrompt } from "../lib/imagePromptExtractor";
+import { useCardSdData } from "../stores/cardAssetStore";
+import { useStory } from "../stores/storyStore";
 import {
   useImageSettings,
   type ImageAspectSize,
@@ -39,6 +41,9 @@ export function IllustrationModal({
   const customApiKey = useImageSettings((s) => s.customApiKey);
   const customModel = useImageSettings((s) => s.customModel);
   const attachIllustration = useImageSettings((s) => s.attachIllustration);
+  // 卡片自带的生图模板（sdData）：作为 prompt 基底前置，缺省时不影响现有行为。
+  const sdData = useCardSdData(useStory((s) => s.view?.characterId));
+  const withCardBase = (prompt: string) => (sdData.length > 0 ? `${sdData.join(", ")}, ${prompt}` : prompt);
 
   const [stylePreset, setStylePreset] = useState<ImageStylePreset>(globalStyle);
   const [size, setSize] = useState<ImageAspectSize>(globalSize);
@@ -48,7 +53,7 @@ export function IllustrationModal({
     stylePreset
   );
 
-  const [prompt, setPrompt] = useState(initialExtracted.prompt);
+  const [prompt, setPrompt] = useState(() => withCardBase(initialExtracted.prompt));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<GeneratedImageResult | null>(null);
@@ -82,7 +87,7 @@ export function IllustrationModal({
       { blocks, text: fallbackText, characterName },
       nextStyle
     );
-    setPrompt(updated.prompt);
+    setPrompt(withCardBase(updated.prompt));
   };
 
   if (!open) {

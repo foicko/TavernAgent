@@ -19,6 +19,12 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
     private string? _assetsCardId;
     private bool _disposed;
 
+    /// <summary>会话变量（卡片 [VAR]/defaultVariables）：供 {{getvar::键}} 只读取值。</summary>
+    private IReadOnlyDictionary<string, string>? Variables => Story.Hud?.Variables;
+
+    /// <summary>当前卡片的主题 token（accent/bg/ink/font）；StageView 据此覆盖舞台配色。</summary>
+    [ObservableProperty] private IReadOnlyDictionary<string, string>? _cardThemeTokens;
+
     public StageViewModel(WorkspaceViewModel workspace) : base(workspace)
     {
         Context = new ContextMetricsViewModel();
@@ -131,6 +137,21 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
     public bool ShowSkeleton => IsSessionLoading && Messages.Count == 0;
     public bool ShowPrologue => HasStory && Messages.Count == 0 && !ShowSkeleton;
     public bool HasMessages => Messages.Count > 0;
+
+    // 最近一次 [SCENE] 标记（服务端已归一化进 UIHints）。只做展示，不改世界状态。
+    private string _activeSceneTitle = "";
+    public string ActiveSceneTitle
+    {
+        get => _activeSceneTitle;
+        private set
+        {
+            if (_activeSceneTitle == value) return;
+            _activeSceneTitle = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasActiveScene));
+        }
+    }
+    public bool HasActiveScene => _activeSceneTitle.Length > 0;
 
     public int WordCount => Story.Messages.Sum(m => m.Blocks.Sum(b => b.Text.Length));
     public string WordCountText => WordCount.ToString("N0");
@@ -380,6 +401,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         if (string.Equals(cardId, _assetsCardId, StringComparison.Ordinal)) return;
         _assetsCardId = cardId;
         _cardAssets = CardAssetCache.Get(cardId);
+        CardThemeTokens = CardAssetCache.GetTheme(cardId);
         _ = LoadCardAssetsAsync(cardId);
     }
 
@@ -388,6 +410,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         var changed = await CardAssetCache.EnsureAsync(Story.Api, cardId).ConfigureAwait(true);
         if (!changed || !string.Equals(cardId, _assetsCardId, StringComparison.Ordinal)) return;
         _cardAssets = CardAssetCache.Get(cardId);
+        CardThemeTokens = CardAssetCache.GetTheme(cardId);
         RebuildMessages();
         RebuildDraft();
     }
@@ -417,7 +440,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         OnPropertyChanged(nameof(HasAvatar));
         OnPropertyChanged(nameof(CharMonogram));
 
-        PrologueText = NarrativeText.ReplaceMacros(preset.Prologue, CharShortName, PlayerName());
+        PrologueText = NarrativeText.ReplaceMacros(preset.Prologue, CharShortName, PlayerName(), Variables);
         OnPropertyChanged(nameof(PrologueText));
         OnPropertyChanged(nameof(HasPrologue));
     }
@@ -438,15 +461,34 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         var list = view is null ? new List<StoryMessage>() : StoryStore.MessagesFromNodes(view, Story.TurnThinking);
         for (var i = 0; i < list.Count; i++)
         {
-            var vm = new MessageViewModel(list[i], i, i == list.Count - 1, this, charName, userName, actionLabels, _cardAssets);
+            var vm = new MessageViewModel(list[i], i, i == list.Count - 1, this, charName, userName, actionLabels, _cardAssets, Variables);
             _messages.Add(vm);
             Messages.Add(vm);
         }
+        ActiveSceneTitle = LatestSceneTitle(list);
         OnPropertyChanged(nameof(HasMessages));
         OnPropertyChanged(nameof(ShowPrologue));
         OnPropertyChanged(nameof(WordCount));
         OnPropertyChanged(nameof(WordCountText));
         OnPropertyChanged(nameof(ReadingMinutes));
+    }
+
+    /// <summary>取最近一条 scene 提示的标题；无则返回空串。与 web latestSceneTitle 一致。</summary>
+    private static string LatestSceneTitle(List<StoryMessage> messages)
+    {
+        for (var i = messages.Count - 1; i >= 0; i--)
+        {
+            var hints = messages[i].UiHints;
+            if (hints is null) continue;
+            for (var j = hints.Count - 1; j >= 0; j--)
+            {
+                if (hints[j].Kind == "scene" && !string.IsNullOrWhiteSpace(hints[j].Text))
+                {
+                    return hints[j].Text!;
+                }
+            }
+        }
+        return "";
     }
 
     private void RebuildDraft()
@@ -455,7 +497,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         var charName = CharShortName;
         var userName = PlayerName();
         foreach (var block in Story.DraftBlocks)
-            DraftBlocks.Add(new BlockViewModel(block, charName, userName, _cardAssets));
+            DraftBlocks.Add(new BlockViewModel(block, charName, userName, _cardAssets, Variables));
         OnPropertyChanged(nameof(HasDraftBlocks));
         OnPropertyChanged(nameof(IsStreaming));
         OnPropertyChanged(nameof(ThinkingTitle));
@@ -465,7 +507,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
     {
         var input = Story.LastInput;
         HasLastInput = input is not null && !string.IsNullOrEmpty(input.Text);
-        LastInputText = input is null ? "" : NarrativeText.ReplaceMacros(input.Text, CharShortName, PlayerName());
+        LastInputText = input is null ? "" : NarrativeText.ReplaceMacros(input.Text, CharShortName, PlayerName(), Variables);
         var action = input?.ActionRef;
         HasLastInputAction = !string.IsNullOrEmpty(action);
         var view = Story.View;

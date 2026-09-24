@@ -119,6 +119,10 @@ type WorldState struct {
 	Milestones      map[string]string        `json:"milestones"` // key: milestoneId -> 描述
 	UnlockedSecrets []string                 `json:"unlockedSecrets,omitempty"`
 	Characters      map[string]CharacterInfo `json:"characters"` // key: characterId
+	// Variables 是会话级键值状态（卡片 UI 变量，如语言/场景编号）。
+	// 与物品/社交/导演事件分离：不参与规则判定，只承载卡片的会话状态。
+	// omitempty + 不预置空表：未使用变量的会话哈希与旧快照保持一致。
+	Variables map[string]string `json:"variables,omitempty"`
 }
 
 // CharacterInfo 是角色的静态信息（初版最小集）。
@@ -212,6 +216,12 @@ func (s *WorldState) Clone() *WorldState {
 	}
 	for k, v := range s.Milestones {
 		c.Milestones[k] = v
+	}
+	if len(s.Variables) > 0 {
+		c.Variables = make(map[string]string, len(s.Variables))
+		for k, v := range s.Variables {
+			c.Variables[k] = v
+		}
 	}
 	c.UnlockedSecrets = append(c.UnlockedSecrets, s.UnlockedSecrets...)
 	for k, v := range s.Characters {
@@ -563,6 +573,12 @@ type MilestonePayload struct {
 	Description string `json:"description"`
 }
 
+// VarPayload 是 variable_set 事件负载；Value 为空表示删除该键。
+type VarPayload struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // MemoryAddPayload 是 memory_add 事件负载。
 type MemoryAddPayload struct {
 	Memory MemoryRecord `json:"memory"`
@@ -581,6 +597,8 @@ func ApplyEvent(s *WorldState, ev *DomainEvent) (string, error) {
 		return applySocialEvent(s, ev)
 	case isDirectorEvent(ev.Type):
 		return applyDirectorEvent(s, ev)
+	case isVarEvent(ev.Type):
+		return applyVarEvent(s, ev)
 	}
 	return "", fmt.Errorf("event %q has no applier", ev.Type)
 }

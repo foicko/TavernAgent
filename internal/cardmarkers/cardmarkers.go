@@ -83,8 +83,13 @@ func Extract(text string) (string, []Hint) {
 		// 无法解析的标记原样保留：宁可让玩家看到原文，也不静默吞掉内容。
 		return m
 	})
+	// 只有在真的剥离了标记时才收拾残留空白：没有标记的文本（可能含普通方括号）
+	// 必须原样保留，避免把模型有意写的多空格/制表符悄悄改掉。
+	if len(hints) > 0 {
+		clean = tidy(clean)
+	}
 	clean = strings.ReplaceAll(clean, escapeSentinel, "[")
-	return tidy(clean), hints
+	return clean, hints
 }
 
 // ExtractBlocks 对多个文本块逐一提取，返回清理后的文本与合并后的提示。

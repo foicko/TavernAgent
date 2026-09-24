@@ -219,3 +219,38 @@
   margin-left: 1px;
   transition: transform var(--duration-quick) var(--ease-smooth-out);
 }
+
+/* 会话变量列表（卡片 [VAR]/defaultVariables） */
+.var-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.var-slot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 5px 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+}
+
+.var-slot-key {
+  color: var(--text-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.var-slot-value {
+  color: var(--text-main);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

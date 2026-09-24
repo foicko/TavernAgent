@@ -31,9 +31,13 @@
             <DataTemplate x:DataType="vm:HudRow">
               <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14" Margin="0,1">
                 <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="{DynamicResource FsSm}"
-                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="{DynamicResource FsSm}"
-                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Value}" FontSize="{DynamicResource FsSm}"
+                             Foreground="{DynamicResource TextPrimaryBrush}" />
+                  <ProgressBar IsVisible="{Binding HasMeter}" Value="{Binding FractionPercent}"
+                               Minimum="0" Maximum="100" Height="4" />
+                </StackPanel>
               </Grid>
             </DataTemplate>
           </ItemsControl.ItemTemplate>

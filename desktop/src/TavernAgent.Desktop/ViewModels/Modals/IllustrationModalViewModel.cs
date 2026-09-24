@@ -117,7 +117,8 @@ public sealed partial class IllustrationModalViewModel : WorkspaceChildViewModel
             var message = Workspace.Stage.Messages.FirstOrDefault(m => m.Id == TurnId);
             text = message?.PlainText;
         }
-        var extracted = ImagePromptExtractor.Extract(null, text, SelectedStyle.Value, _characterName);
+        var sdData = CardAssetCache.GetSdData(Workspace.Story.View?.CharacterId);
+        var extracted = ImagePromptExtractor.Extract(null, text, SelectedStyle.Value, _characterName, sdData);
         Prompt = extracted.Prompt;
     }
 

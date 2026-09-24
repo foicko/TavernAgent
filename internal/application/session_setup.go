@@ -97,6 +97,10 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 	if err != nil {
 		return nil, Err("CARD_INVALID", "初始世界状态非法: "+err.Error(), 422)
 	}
+	// 卡片 UI 档案：原生卡的档案不在卡 JSON 里（为保持字节稳定），这里从原始串现推。
+	// 同一份档案用于预置变量与根节点冻结，避免推导两次。
+	cardUI := resolveCardUIProfile(card, req.CharacterJSON)
+	seedVariables(state, cardUI)
 	stateJSON, _ := state.Marshal()
 
 	tplID := id.New()
@@ -117,8 +121,7 @@ func (s *SessionService) Setup(ctx context.Context, req *SessionSetupRequest) (*
 		"templates":        templateSnapshot,
 	}
 	// 卡片 UI 档案随根节点冻结：编译层据此生成「卡片界面标记」契约。
-	// 原生卡的档案不在卡 JSON 里（为保持字节稳定），这里从原始串现推一次。
-	if cardUI := resolveCardUIProfile(card, req.CharacterJSON); cardUI != nil {
+	if cardUI != nil {
 		rootFields["cardUI"] = cardUI
 	}
 	rootContent, _ := json.Marshal(rootFields)
@@ -169,6 +172,21 @@ func resolveCardUIProfile(card *CharacterCard, raw string) *CardUIProfile {
 		return nil
 	}
 	return rep.Card.UIProfile
+}
+
+// seedVariables 用卡片预置变量初始化会话变量（不覆盖已有值）。
+func seedVariables(state *domain.WorldState, ui *CardUIProfile) {
+	if state == nil || ui == nil || len(ui.VarDefaults) == 0 {
+		return
+	}
+	if state.Variables == nil {
+		state.Variables = make(map[string]string, len(ui.VarDefaults))
+	}
+	for k, v := range ui.VarDefaults {
+		if _, exists := state.Variables[k]; !exists {
+			state.Variables[k] = v
+		}
+	}
 }
 
 // resolveSetupCard 把 cardId 解析成 characterJson。未提供 cardId（或已提供

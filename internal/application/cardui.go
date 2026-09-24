@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +26,8 @@ type CardCapabilities struct {
 	HasAdditionalText   bool     `json:"hasAdditionalText,omitempty"`
 	ViewScreen          string   `json:"viewScreen,omitempty"`
 	LowLevelAccess      bool     `json:"lowLevelAccess,omitempty"`
+	HasToggles          bool     `json:"hasToggles,omitempty"`
+	ToggleCount         int      `json:"toggleCount,omitempty"`
 	AssetCount          int      `json:"assetCount,omitempty"`
 	ImageAssetCount     int      `json:"imageAssetCount,omitempty"`
 	AudioAssetCount     int      `json:"audioAssetCount,omitempty"`
@@ -34,11 +37,15 @@ type CardCapabilities struct {
 }
 
 // CardUIProfile 是「卡片 UI 映射」的静态档案：导入时从卡里抽取一次，随卡 JSON 冻结，
-// 供编译层生成标记契约、供前端渲染状态面板。当前承载能力清单与变量初值；
-// 场景/语言/HUD 字段等留待对应阶段填充。
+// 供编译层生成标记契约、供前端渲染状态面板。
 type CardUIProfile struct {
 	Capabilities CardCapabilities  `json:"capabilities"`
 	VarDefaults  map[string]string `json:"varDefaults,omitempty"`
+	// ThemeTokens 是从 backgroundHTML 里白名单抽取的配色/字体（归一化键 accent/bg/ink/font）。
+	// 只取安全值，不执行卡内 CSS。
+	ThemeTokens map[string]string `json:"themeTokens,omitempty"`
+	// SdData 是卡片自带的生图提示词模板（Stable Diffusion），作为插画 prompt 的基底。
+	SdData []string `json:"sdData,omitempty"`
 }
 
 // markerFamilyColonRe 匹配 [Name:...] 形态的卡内标记（如 [CeresStatus:date=…]）。
@@ -55,6 +62,7 @@ type risuExtensions struct {
 	LowLevelAccess   bool            `json:"lowLevelAccess"`
 	Vits             json.RawMessage `json:"vits"`
 	AdditionalText   json.RawMessage `json:"additionalText"`
+	Toggles          json.RawMessage `json:"toggles"`
 }
 
 // DetectCardUIProfile 从导入报告抽取卡片 UI 档案。
@@ -85,6 +93,10 @@ func DetectCardUIProfile(rep *ImportReport, hasModule bool) *CardUIProfile {
 	}
 	caps.HasDepthPrompt = hasDepthPrompt(rep.RawJSON)
 
+	toggles := parseToggles(ext.Toggles)
+	caps.ToggleCount = len(toggles)
+	caps.HasToggles = len(toggles) > 0
+
 	text := cardUIText(rep.Card)
 	caps.ImgCmd = strings.Contains(text, "<img")
 	caps.MarkerFamilies = detectMarkerFamilies(text)
@@ -110,17 +122,110 @@ func DetectCardUIProfile(rep *ImportReport, hasModule bool) *CardUIProfile {
 		return nil
 	}
 	profile := &CardUIProfile{Capabilities: caps}
-	if vars := parseDefaultVariables(ext.DefaultVariables); len(vars) > 0 {
-		profile.VarDefaults = vars
+	// toggles 在 RisuAI 里就是会话变量初值：先铺 toggles，再让 defaultVariables 覆盖。
+	// 这样卡片声明的开关会出现在会话变量里（可被提示词与变量面板看到）。
+	vars := parseDefaultVariables(ext.DefaultVariables)
+	merged := make(map[string]string, len(toggles)+len(vars))
+	for k, v := range toggles {
+		merged[k] = v
+	}
+	for k, v := range vars {
+		merged[k] = v
+	}
+	if len(merged) > 0 {
+		profile.VarDefaults = merged
+	}
+	if tokens := extractThemeTokens(ext.BackgroundHTML); len(tokens) > 0 {
+		profile.ThemeTokens = tokens
+	}
+	if sd := parseSdData(ext.SDData); len(sd) > 0 {
+		profile.SdData = sd
 	}
 	return profile
+}
+
+// cssVarRe 匹配 CSS 自定义属性声明 --name: value。
+var cssVarRe = regexp.MustCompile(`--([A-Za-z0-9_-]{1,48})\s*:\s*([^;{}]{1,120})`)
+
+// themeColorRe 只接受 #hex / rgb()/rgba()/hsl()/hsla() 形式，拒绝 url()/var()/表达式等。
+var themeColorRe = regexp.MustCompile(`(?i)^#(?:[0-9a-f]{3,8})$|^(?:rgb|rgba|hsl|hsla)\([0-9.,%\s/]+\)$`)
+
+// extractThemeTokens 从 backgroundHTML 里白名单抽取配色/字体，归一化为 accent/bg/ink/font。
+// 只取安全值：颜色必须匹配固定格式，字体名只允许字母数字与常见分隔符；不执行卡内 CSS。
+func extractThemeTokens(html string) map[string]string {
+	if strings.TrimSpace(html) == "" {
+		return nil
+	}
+	out := map[string]string{}
+	for _, m := range cssVarRe.FindAllStringSubmatch(html, -1) {
+		key := normalizeThemeKey(strings.ToLower(m[1]))
+		if key == "" {
+			continue
+		}
+		val := strings.TrimSpace(m[2])
+		if val == "" {
+			continue
+		}
+		if key == "font" {
+			if !isFontValue(val) {
+				continue
+			}
+		} else if !themeColorRe.MatchString(val) {
+			continue
+		}
+		// 先到先得，保证同一份 HTML 的抽取结果确定。
+		if _, exists := out[key]; !exists {
+			out[key] = val
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// normalizeThemeKey 把卡内变量名映射到归一化键；无法归类返回空串。
+func normalizeThemeKey(name string) string {
+	switch {
+	case strings.Contains(name, "accent"):
+		return "accent"
+	case strings.Contains(name, "font"):
+		return "font"
+	case strings.Contains(name, "ink"), strings.Contains(name, "text"), strings.Contains(name, "fg"):
+		return "ink"
+	case strings.Contains(name, "bg"), strings.Contains(name, "background"),
+		strings.Contains(name, "surface"), strings.Contains(name, "paper"), strings.Contains(name, "panel"):
+		return "bg"
+	}
+	return ""
+}
+
+// isFontValue 校验字体值：只允许字母数字与空格、逗号、引号、连字符、下划线。
+func isFontValue(v string) bool {
+	if len(v) > 100 {
+		return false
+	}
+	low := strings.ToLower(v)
+	if strings.Contains(low, "url(") || strings.Contains(low, "expression") ||
+		strings.Contains(low, "javascript") || strings.Contains(low, "@") || strings.Contains(low, "\\") {
+		return false
+	}
+	for _, r := range v {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9',
+			r == ' ', r == ',', r == '\'', r == '"', r == '-', r == '_':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // hasAny 判断能力清单是否包含任何实质内容（Source 恒有值，故不计入）。
 func (c CardCapabilities) hasAny() bool {
 	return c.HasModule || c.HasBackgroundHTML || c.HasDefaultVariables ||
 		c.HasSDData || c.HasDepthPrompt || c.HasVits || c.HasAdditionalText ||
-		c.ViewScreen != "" || c.LowLevelAccess || c.AssetCount > 0 ||
+		c.ViewScreen != "" || c.LowLevelAccess || c.HasToggles || c.AssetCount > 0 ||
 		c.LorebookEntries > 0 || c.ImgCmd || len(c.MarkerFamilies) > 0
 }
 
@@ -146,6 +251,12 @@ func attachUIProfile(rep *ImportReport, hasModule bool) {
 	if len(existing.VarDefaults) == 0 {
 		existing.VarDefaults = detected.VarDefaults
 	}
+	if len(existing.ThemeTokens) == 0 {
+		existing.ThemeTokens = detected.ThemeTokens
+	}
+	if len(existing.SdData) == 0 {
+		existing.SdData = detected.SdData
+	}
 	rep.Card.UIProfile = existing
 }
 
@@ -159,6 +270,7 @@ func mergeCapabilities(dst *CardCapabilities, src CardCapabilities) {
 	dst.HasVits = dst.HasVits || src.HasVits
 	dst.HasAdditionalText = dst.HasAdditionalText || src.HasAdditionalText
 	dst.LowLevelAccess = dst.LowLevelAccess || src.LowLevelAccess
+	dst.HasToggles = dst.HasToggles || src.HasToggles
 	dst.ImgCmd = dst.ImgCmd || src.ImgCmd
 	if dst.ViewScreen == "" {
 		dst.ViewScreen = src.ViewScreen
@@ -166,6 +278,7 @@ func mergeCapabilities(dst *CardCapabilities, src CardCapabilities) {
 	if dst.Source == "" {
 		dst.Source = src.Source
 	}
+	dst.ToggleCount = maxInt(dst.ToggleCount, src.ToggleCount)
 	dst.AssetCount = maxInt(dst.AssetCount, src.AssetCount)
 	dst.ImageAssetCount = maxInt(dst.ImageAssetCount, src.ImageAssetCount)
 	dst.AudioAssetCount = maxInt(dst.AudioAssetCount, src.AudioAssetCount)
@@ -240,6 +353,9 @@ func parseRisuExtensions(raw string) risuExtensions {
 				if len(bytesTrimmed(e.AdditionalText)) > 0 {
 					out.AdditionalText = e.AdditionalText
 				}
+				if len(bytesTrimmed(e.Toggles)) > 0 {
+					out.Toggles = e.Toggles
+				}
 				out.LowLevelAccess = out.LowLevelAccess || e.LowLevelAccess
 			}
 		}
@@ -303,6 +419,110 @@ func parseDefaultVariables(raw string) map[string]string {
 	return out
 }
 
+// parseToggles 解析 extensions.risuai.toggles（RisuAI 模块开关的初值）。
+//
+// 形态不定：可能是 {name: "值"}、{name: {value: …}} 或 {name: 数字/布尔}。这里只保留
+// 能安全字符串化的标量，非标量（对象/数组）跳过——开关的语义由模块逻辑决定，而模块
+// 逻辑（module.risum）本就不解析，故只取其初值作为会话变量。
+func parseToggles(raw json.RawMessage) map[string]string {
+	raw = bytesTrimmed(raw)
+	if len(raw) == 0 || raw[0] != '{' {
+		return nil
+	}
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		return nil
+	}
+	out := make(map[string]string, len(obj))
+	for k, v := range obj {
+		if s, ok := scalarToString(v); ok {
+			out[strings.TrimSpace(k)] = s
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// scalarToString 把 JSON 标量转为字符串；对象/数组/空值返回 false。
+func scalarToString(raw json.RawMessage) (string, bool) {
+	var v any
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return "", false
+	}
+	switch t := v.(type) {
+	case string:
+		return t, true
+	case bool:
+		if t {
+			return "true", true
+		}
+		return "false", true
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64), true
+	}
+	return "", false
+}
+
+// parseSdData 解析 extensions.risuai.sdData（生图提示词模板），兼容 string[] 与 string[][]。
+// 结果去空、去重、排序无关（保留原始顺序），并限制条目数与单条长度，避免异常输入撑爆上下文。
+func parseSdData(raw json.RawMessage) []string {
+	raw = bytesTrimmed(raw)
+	if len(raw) == 0 || raw[0] != '[' {
+		return nil
+	}
+	var out []string
+	var nested [][]string
+	if json.Unmarshal(raw, &nested) == nil {
+		for _, row := range nested {
+			out = append(out, row...)
+		}
+	} else {
+		var flat []string
+		if json.Unmarshal(raw, &flat) == nil {
+			out = flat
+		} else {
+			var anyv []any
+			if json.Unmarshal(raw, &anyv) != nil {
+				return nil
+			}
+			for _, v := range anyv {
+				switch t := v.(type) {
+				case string:
+					out = append(out, t)
+				case []any:
+					for _, s := range t {
+						if str, ok := s.(string); ok {
+							out = append(out, str)
+						}
+					}
+				}
+			}
+		}
+	}
+	const maxSdEntries = 64
+	const maxSdRunes = 300
+	clean := make([]string, 0, len(out))
+	for _, s := range out {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		if r := []rune(s); len(r) > maxSdRunes {
+			s = string(r[:maxSdRunes])
+		}
+		clean = append(clean, s)
+		if len(clean) >= maxSdEntries {
+			break
+		}
+	}
+	if len(clean) == 0 {
+		return nil
+	}
+	return clean
+}
+
 // cardUIText 汇总卡内可能出现标记的文本字段，供标记族与 <img cmd> 检测。
 func cardUIText(card *CharacterCard) string {
 	var b strings.Builder
@@ -328,13 +548,17 @@ func cardUIText(card *CharacterCard) string {
 	return b.String()
 }
 
+// reservedMarkerFamilies 是本应用的标准标记名：它们不是「卡作者自定义标记」，
+// 若把它们列进别名提示，会得到「请把 [HUD] 改成 [HUD]」这种废话。
+var reservedMarkerFamilies = map[string]bool{"HUD": true, "SCENE": true, "VAR": true, "IMG": true}
+
 // detectMarkerFamilies 收集卡内出现的 [Name:…] / [Name] 标记族名（去重、排序）。
 // 这些是卡作者要求模型输出的自定义标记（如 [CeresStatus:…]），用于生成别名提示。
 // 只收含大写字母的名字：纯小写方括号在正文里多为普通引用（如 [lowercase]），误报率高。
 func detectMarkerFamilies(text string) []string {
 	set := map[string]bool{}
 	consider := func(name string) {
-		if hasUpper(name) {
+		if hasUpper(name) && !reservedMarkerFamilies[strings.ToUpper(name)] {
 			set[name] = true
 		}
 	}

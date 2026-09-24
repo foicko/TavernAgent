@@ -1,6 +1,7 @@
 using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using TavernAgent.Desktop.Services;
 using TavernAgent.Desktop.ViewModels.Stage;
 
 namespace TavernAgent.Desktop.Views.Stage;
@@ -30,6 +31,7 @@ public partial class StageView : UserControl
             _vm.Messages.CollectionChanged += OnCollectionChanged;
             _vm.DraftBlocks.CollectionChanged += OnCollectionChanged;
             _vm.PropertyChanged += OnVmPropertyChanged;
+            CardThemeSync.SetTokens(_vm.CardThemeTokens);
             ScheduleScrollToEnd();
         }
     }
@@ -38,6 +40,10 @@ public partial class StageView : UserControl
 
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(StageViewModel.CardThemeTokens))
+        {
+            CardThemeSync.SetTokens(_vm?.CardThemeTokens);
+        }
         if (e.PropertyName is nameof(StageViewModel.IsStreaming)
             or nameof(StageViewModel.HasDraftBlocks)
             or nameof(StageViewModel.ThinkingText)

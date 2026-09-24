@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -53,8 +54,11 @@ public sealed class NarrativeImageSegment : NarrativeSegment, System.ComponentMo
     }
 }
 
-/// <summary>状态面板的一行。</summary>
-public sealed record HudRow(string Label, string Value);
+/// <summary>状态面板的一行；值为 n/m 或 n% 时附带进度。</summary>
+public sealed record HudRow(string Label, string Value, bool HasMeter = false, double Fraction = 0)
+{
+    public double FractionPercent => Fraction * 100.0;
+}
 
 /// <summary>A card state panel or scene chip parsed from a UI marker.</summary>
 public sealed class NarrativeHudSegment : NarrativeSegment
@@ -64,7 +68,7 @@ public sealed class NarrativeHudSegment : NarrativeSegment
         IsScene = isScene;
         Title = title;
         Values = (values ?? new Dictionary<string, string>())
-            .Select(kv => new HudRow(kv.Key, kv.Value))
+            .Select(kv => BuildRow(kv.Key, kv.Value))
             .ToList();
     }
 
@@ -72,22 +76,49 @@ public sealed class NarrativeHudSegment : NarrativeSegment
     public string Title { get; }
     public IReadOnlyList<HudRow> Values { get; }
     public bool HasValues => Values.Count > 0;
+
+    private static HudRow BuildRow(string label, string value)
+    {
+        var (text, fraction) = ParseMeter(value);
+        return new HudRow(label, text, fraction.HasValue, fraction ?? 0);
+    }
+
+    /// <summary>把 "n/m" 或 "n%" 解析为 0–1 的进度；否则只返回文本。与 web parseMeter 一致。</summary>
+    internal static (string Text, double? Fraction) ParseMeter(string? raw)
+    {
+        var s = (raw ?? "").Trim();
+        var slash = s.IndexOf('/');
+        if (slash > 0
+            && double.TryParse(s[..slash].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var n)
+            && double.TryParse(s[(slash + 1)..].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d)
+            && d > 0)
+        {
+            return (s, Math.Clamp(n / d, 0, 1));
+        }
+        if (s.EndsWith('%')
+            && double.TryParse(s[..^1].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var p))
+        {
+            return (s, Math.Clamp(p / 100.0, 0, 1));
+        }
+        return (s, null);
+    }
 }
 
 /// <summary>A single rendered narrative frame (web: block kinds narration/dialogue/inner_monologue).</summary>
 public sealed class BlockViewModel
 {
-    public BlockViewModel(TextBlock block, string charName, string userName, IReadOnlyDictionary<string, string>? assets = null)
+    public BlockViewModel(TextBlock block, string charName, string userName, IReadOnlyDictionary<string, string>? assets = null,
+        IReadOnlyDictionary<string, string>? variables = null)
     {
-        var expanded = NarrativeText.ReplaceMacros(block.Text, charName, userName);
+        var expanded = NarrativeText.ReplaceMacros(block.Text, charName, userName, variables);
         if (block.Kind == "dialogue")
         {
-            Text = "「" + NarrativeText.ReplaceMacros(NarrativeText.TrimDialogue(block.Text), charName, userName) + "」";
+            Text = "「" + NarrativeText.ReplaceMacros(NarrativeText.TrimDialogue(block.Text), charName, userName, variables) + "」";
             IsDialogue = true;
         }
         else if (block.Kind == "inner_monologue")
         {
-            Text = "（" + NarrativeText.ReplaceMacros(NarrativeText.TrimMonologue(block.Text), charName, userName) + "）";
+            Text = "（" + NarrativeText.ReplaceMacros(NarrativeText.TrimMonologue(block.Text), charName, userName, variables) + "）";
             IsMonologue = true;
         }
         else

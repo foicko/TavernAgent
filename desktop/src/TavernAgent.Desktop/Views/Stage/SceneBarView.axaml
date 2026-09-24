@@ -3,41 +3,19 @@
              xmlns:vm="using:TavernAgent.Desktop.ViewModels.Stage"
              x:Class="TavernAgent.Desktop.Views.Stage.SceneBarView"
              x:DataType="vm:StageViewModel">
+  <!-- 常驻场景标签：展示最近一次 [SCENE] 标记（服务端已归一化进 UIHints）。
+       只做展示，不改世界状态。 -->
   <Border Classes="surface-inset" CornerRadius="{DynamicResource RadiusMd}" Margin="20,8,20,4" Padding="12,6"
           MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center"
-          BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1">
-    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-      <Grid Grid.Column="0" ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalAlignment="Center">
-        <Panel Grid.Column="0" Width="30" Height="30">
-          <Border CornerRadius="999" Background="{DynamicResource AccentSubtleBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1" />
-          <TextBlock Text="{Binding CharMonogram}"
-                     FontSize="13" FontWeight="SemiBold"
-                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                     Foreground="{DynamicResource AccentBrush}" />
-        </Panel>
-        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-          <WrapPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding CharShortName}" FontWeight="SemiBold"
-                       FontSize="{DynamicResource FsSm}" Margin="0,0,6,0"
-                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-            <Border Classes="chip" Margin="0,0,5,0" Padding="4,1"><TextBlock Text="{Binding CharStateBadge}" FontSize="10.5" /></Border>
-            <Border Classes="chip" Margin="0,0,5,0" Padding="4,1"><TextBlock Text="{Binding CharVoiceBadge}" FontSize="10.5" /></Border>
-          </WrapPanel>
-          <TextBlock Text="{Binding CharRole}" TextTrimming="CharacterEllipsis"
-                     FontSize="{DynamicResource FsXs}"
-                     Foreground="{DynamicResource TextDimBrush}" />
-        </StackPanel>
-      </Grid>
-
-      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-        <Button Classes="ui-btn sm quiet" Command="{Binding RegenerateLatestCommand}"
-                IsEnabled="{Binding !Busy}" ToolTip.Tip="重新演绎当前最新一轮剧情">
-          <StackPanel Orientation="Horizontal" Spacing="5">
-            <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="11" Height="11" />
-            <TextBlock Text="重述此轮" VerticalAlignment="Center" FontSize="{DynamicResource FsXs}" />
-          </StackPanel>
-        </Button>
-      </StackPanel>
-    </Grid>
+          BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1"
+          IsVisible="{Binding HasActiveScene}">
+    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+      <Path Classes="icon" Data="{StaticResource IconCompass}" Width="13" Height="13"
+            Stroke="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
+      <TextBlock Text="场景" FontSize="{DynamicResource FsXs}"
+                 Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
+      <TextBlock Text="{Binding ActiveSceneTitle}" FontSize="{DynamicResource FsSm}"
+                 Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+    </StackPanel>
   </Border>
 </UserControl>

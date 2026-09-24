@@ -195,6 +195,8 @@ public sealed class WorldState
     public Dictionary<string, MoodEntry> Moods { get; set; } = new();
     public Dictionary<string, CharacterInfo> Characters { get; set; } = new();
     public SceneRef? Scene { get; set; }
+    /// <summary>会话级键值状态（卡片 [VAR] 标记写入）。</summary>
+    public Dictionary<string, string>? Variables { get; set; }
 }
 
 public sealed class SessionView
@@ -651,6 +653,10 @@ public sealed class CardPreview
     public List<CardOpening> Openings { get; set; } = new();
     /// <summary>charx 内嵌资源（name → url）：正文 &lt;img cmd="..."&gt; 的渲染依据。</summary>
     public List<CardAsset>? Assets { get; set; }
+    /// <summary>从 backgroundHTML 白名单抽取的配色/字体（归一化键 accent/bg/ink/font）。</summary>
+    public Dictionary<string, string>? ThemeTokens { get; set; }
+    /// <summary>卡片自带的生图提示词模板（Stable Diffusion），作为插画 prompt 基底。</summary>
+    public List<string>? SdData { get; set; }
 }
 
 public sealed class CardLibrarySummary

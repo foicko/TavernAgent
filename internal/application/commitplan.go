@@ -3,6 +3,7 @@ package application
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"tavernagent/internal/cardmarkers"
@@ -74,8 +75,11 @@ func preparePlanBlocksAndOptions(draft protocol.TurnDraft, input domain.TurnInpu
 	}
 	options := make([]domain.Option, 0, len(draft.Options))
 	for _, o := range draft.Options {
+		// 选项是玩家可见的展示文本，模型也可能把状态标记误塞进来：同样剥离，
+		// 但不生成提示——选项只是提案，不是已生效的状态，不该驱动 HUD/变量。
+		text, _ := cardmarkers.Extract(o.Text)
 		options = append(options, domain.Option{
-			OptionID: o.OptionID, Intent: o.Intent, Text: o.Text,
+			OptionID: o.OptionID, Intent: o.Intent, Text: text,
 			// 未授权的动作引用不写入选项（技术契约 §4）：模型自造的 actionRef
 			// 不能进入授权面，否则 M4 引入动作执行后会被误执行。
 			ActionRef: authorizeActionRef(o.ActionRef, ruleset),
@@ -349,6 +353,8 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 	var optionsMode string
 	var suppressed int
 	pd.Blocks, pd.Options, pd.UIHints, optionsMode, suppressed = preparePlanBlocksAndOptions(draft, input, ruleset, pc.PreviousTurnHadOptions)
+	// [VAR:…] 标记落为 variable_set 事件：与其它事件同走 ApplyEvents，可重放、可哈希。
+	pd.Events = append(pd.Events, varEventsFromHints(pd.UIHints)...)
 
 	probe := pd.NewState.Clone()
 	ruleEvents, err := validatedRuleEvents(base, pc.Checks, rulesetVersion)
@@ -392,6 +398,27 @@ func buildPlan(base *domain.WorldState, draft protocol.TurnDraft, input domain.T
 		return nil, err
 	}
 	return pd, nil
+}
+
+// varEventsFromHints 把 [VAR:…] 提示转为 variable_set 事件。
+// 按 key 排序保证事件顺序确定：map 迭代无序会让提交出的状态哈希漂移。
+func varEventsFromHints(hints []domain.UIHint) []*domain.DomainEvent {
+	var out []*domain.DomainEvent
+	for _, h := range hints {
+		if h.Kind != "var" || len(h.Values) == 0 {
+			continue
+		}
+		keys := make([]string, 0, len(h.Values))
+		for k := range h.Values {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			payload, _ := json.Marshal(domain.VarPayload{Key: k, Value: h.Values[k]})
+			out = append(out, &domain.DomainEvent{Type: domain.EventVarSet, PayloadJSON: string(payload)})
+		}
+	}
+	return out
 }
 
 // normalizeMode 归一化解析模式：只有明确的 narrative 才记为 narrative，

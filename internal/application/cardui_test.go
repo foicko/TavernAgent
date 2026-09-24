@@ -107,6 +107,36 @@ func TestUIProfileSurvivesRoundTrip(t *testing.T) {
 	}
 }
 
+func TestExtractThemeTokensWhitelist(t *testing.T) {
+	html := `<style>
+	  :root{--fm-bg:#1b1c20; --fm-accent:#c98a5a; --fm-ink:#e9e6df;
+	        --evil:url(javascript:alert(1)); --bad-font:expression(x);
+	        --ui-font:'Noto Serif KR', serif; --size:12px;}
+	</style>`
+	tokens := extractThemeTokens(html)
+	if tokens["bg"] != "#1b1c20" || tokens["accent"] != "#c98a5a" || tokens["ink"] != "#e9e6df" {
+		t.Fatalf("tokens = %+v", tokens)
+	}
+	if tokens["font"] != "'Noto Serif KR', serif" {
+		t.Fatalf("font = %q", tokens["font"])
+	}
+	// 非白名单键与危险值不得进入。
+	for _, k := range []string{"size", "evil", "bad-font", "bad_font"} {
+		if _, ok := tokens[k]; ok {
+			t.Errorf("unexpected token %q", k)
+		}
+	}
+}
+
+func TestExtractThemeTokensRejectsUnsafe(t *testing.T) {
+	if got := extractThemeTokens("--accent:url(evil)"); got != nil {
+		t.Errorf("unsafe value accepted: %+v", got)
+	}
+	if got := extractThemeTokens("--font:javascript:x"); got != nil {
+		t.Errorf("unsafe font accepted: %+v", got)
+	}
+}
+
 func TestParseDefaultVariablesRejectsNonObject(t *testing.T) {
 	if got := parseDefaultVariables("not json"); got != nil {
 		t.Errorf("expected nil, got %v", got)
@@ -121,6 +151,39 @@ func TestDetectMarkerFamiliesIgnoresLowercaseTags(t *testing.T) {
 	want := []string{"STATUS"}
 	if len(got) != len(want) || (len(got) == 1 && got[0] != want[0]) {
 		t.Errorf("detectMarkerFamilies = %v, want %v", got, want)
+	}
+}
+
+func TestDetectMarkerFamiliesExcludesStandardMarkers(t *testing.T) {
+	// 标准标记（HUD/SCENE/VAR/IMG）不是「卡作者自定义标记」，不应进别名提示。
+	got := detectMarkerFamilies("[HUD:hp=1] [SCENE:x] [VAR:k=v] [IMG:pic] [CeresStatus:date=x]")
+	want := []string{"CeresStatus"}
+	if len(got) != len(want) || (len(got) == 1 && got[0] != want[0]) {
+		t.Errorf("detectMarkerFamilies = %v, want %v", got, want)
+	}
+}
+
+func TestParseTogglesScalarOnly(t *testing.T) {
+	got := parseToggles(json.RawMessage(`{"nudity":"off","gore":false,"level":3,"obj":{"x":1},"arr":[1]}`))
+	if len(got) != 3 || got["nudity"] != "off" || got["gore"] != "false" || got["level"] != "3" {
+		t.Errorf("parseToggles = %+v", got)
+	}
+	if parseToggles(json.RawMessage(`["not","object"]`)) != nil {
+		t.Error("array input must be rejected")
+	}
+}
+
+func TestParseSdDataFlattens(t *testing.T) {
+	nested := parseSdData(json.RawMessage(`[["solo","1girl"],["masterpiece"]]`))
+	if len(nested) != 3 || nested[0] != "solo" || nested[2] != "masterpiece" {
+		t.Errorf("nested sdData = %v", nested)
+	}
+	flat := parseSdData(json.RawMessage(`["a","b",""]`))
+	if len(flat) != 2 {
+		t.Errorf("flat sdData = %v", flat)
+	}
+	if parseSdData(json.RawMessage(`{}`)) != nil {
+		t.Error("object sdData must be rejected")
 	}
 }
 

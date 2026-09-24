@@ -23,6 +23,19 @@ public class IllustrationAndTtsTests
     }
 
     [Fact]
+    public void Prompt_Extractor_Prepends_Card_SdData_Base()
+    {
+        var extracted = ImagePromptExtractor.Extract(
+            new[] { "她站在雪原上。" }, null, "anime", "阿雾",
+            new[] { "solo", "1girl", "winter" });
+
+        Assert.Contains("solo, 1girl, winter, ", extracted.Prompt);
+        // 卡片基底要排在剧情摘录与风格词之前。
+        Assert.True(extracted.Prompt.IndexOf("solo", System.StringComparison.Ordinal)
+            < extracted.Prompt.IndexOf("她站在雪原上", System.StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Prompt_Extractor_Truncates_Excerpt()
     {
         var longText = string.Concat(Enumerable.Repeat("夜色低垂灯火摇曳。", 40));

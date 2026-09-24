@@ -4,9 +4,11 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TavernAgent.Core.CardMarkers;
 using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
 using TavernAgent.Desktop.Services;
+using TavernAgent.Desktop.ViewModels.Stage;
 
 namespace TavernAgent.Desktop.ViewModels.Right;
 
@@ -47,6 +49,10 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
     public ObservableCollection<InventoryItemViewModel> Inventory { get; } = new();
     public bool HasInventory => Inventory.Count > 0;
     public int InventoryCount => Inventory.Count;
+
+    /// <summary>会话变量（卡片 [VAR]/defaultVariables）：按 key 排序展示。</summary>
+    public ObservableCollection<VariableSlotViewModel> Variables { get; } = new();
+    public bool HasVariables => Variables.Count > 0;
 
     public StoryCheckpointViewModel Checkpoint { get; }
 
@@ -91,6 +97,8 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
             if (e.PropertyName is nameof(UiStore.TachieExpression))
             {
                 UpdateExpression();
+                // 有情绪立绘的卡：切换神态需换图，而不只是叠一层滤镜。
+                LoadTachieAsync(ResolveTachieSource()).SafeFireAndForget();
                 OnPropertyChanged(nameof(IsAlertExpr));
                 OnPropertyChanged(nameof(IsCalmExpr));
                 OnPropertyChanged(nameof(IsSmileExpr));
@@ -141,9 +149,10 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
         OnPropertyChanged(nameof(HasTags));
         OnPropertyChanged(nameof(Tags));
         OnPropertyChanged(nameof(TachieMonogram));
-        LoadTachieAsync(Character.AvatarSource).SafeFireAndForget();
+        LoadTachieAsync(ResolveTachieSource()).SafeFireAndForget();
         RebuildMeters();
         RebuildInventory();
+        RebuildVariables();
         RebuildCheckpoint();
         UpdateCounts();
         UpdateExpression();
@@ -209,6 +218,33 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
         OnPropertyChanged(nameof(InventoryCount));
     }
 
+    private void RebuildVariables()
+    {
+        Variables.Clear();
+        var vars = Story.Hud?.Variables;
+        if (vars is not null)
+        {
+            foreach (var pair in vars.OrderBy(p => p.Key, StringComparer.Ordinal))
+                Variables.Add(new VariableSlotViewModel(pair.Key, pair.Value));
+        }
+        OnPropertyChanged(nameof(HasVariables));
+    }
+
+    /// <summary>立绘来源：优先卡内情绪立绘（type=emotion），否则回退角色头像。</summary>
+    private string? ResolveTachieSource()
+    {
+        var url = EmotionAssets.Resolve(CardAssetCache.GetTyped(Story.View?.CharacterId), ExpressionKey());
+        return !string.IsNullOrEmpty(url) ? TurnIllustrationViewModel.AbsoluteUrl(url) : Character?.AvatarSource;
+    }
+
+    private string ExpressionKey() => Ui.TachieExpression switch
+    {
+        TachieExpression.Calm => "calm",
+        TachieExpression.Smile => "smile",
+        TachieExpression.Whisper => "whisper",
+        _ => "alert",
+    };
+
     private void RebuildCheckpoint() => Checkpoint.Load(Story.View?.ActiveSummary?.Text);
 
     private void UpdateCounts()
@@ -272,4 +308,10 @@ public sealed partial class RightRailViewModel : WorkspaceChildViewModel
         Story.PropertyChanged -= OnStoryChanged;
         Workspace.Ui.PropertyChanged -= OnUiChanged;
     }
+}
+
+/// <summary>单条会话变量（key / value）。</summary>
+public sealed record VariableSlotViewModel(string Key, string Value)
+{
+    public string DisplayValue => string.IsNullOrEmpty(Value) ? "—" : Value;
 }

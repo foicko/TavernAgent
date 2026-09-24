@@ -223,6 +223,7 @@ const (
 	EventMilestonePropose  EventType = "milestone_propose"
 	EventSecretUnlock      EventType = "secret_unlock"
 	EventConfiguration     EventType = "configuration_change"
+	EventVarSet            EventType = "variable_set"
 )
 
 // DomainEvent 保存已接受的实际变化，不保存原始提议充当事件（C06）。

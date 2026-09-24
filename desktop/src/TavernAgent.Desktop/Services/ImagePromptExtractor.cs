@@ -24,7 +24,8 @@ public static partial class ImagePromptExtractor
                 "drawing, painting, illustration, cartoon, anime, worst quality, low quality, deformed, blurry"),
         };
 
-    public static ExtractedImagePrompt Extract(IEnumerable<string>? blocks, string? fallbackText, string stylePreset, string? characterName)
+    public static ExtractedImagePrompt Extract(IEnumerable<string>? blocks, string? fallbackText, string stylePreset, string? characterName,
+        IReadOnlyList<string>? basePrompts = null)
     {
         var content = "";
         var list = blocks?.Where(b => !string.IsNullOrWhiteSpace(b)).ToList();
@@ -39,6 +40,11 @@ public static partial class ImagePromptExtractor
 
         var style = StylePrompts.TryGetValue(stylePreset, out var s) ? s : StylePrompts["anime"];
         var prompt = excerpt.Length > 0 ? $"{excerpt}, {style.Positive}" : style.Positive;
+        // 卡片自带的 sdData 作为 prompt 基底前置（缺失时不影响现有行为）。
+        var baseText = basePrompts is { Count: > 0 }
+            ? string.Join(", ", basePrompts.Where(p => !string.IsNullOrWhiteSpace(p)))
+            : "";
+        if (baseText.Length > 0) prompt = $"{baseText}, {prompt}";
         if (!string.IsNullOrWhiteSpace(characterName)) prompt = $"Character: {characterName}, {prompt}";
 
         return new ExtractedImagePrompt(prompt, style.Negative, excerpt);

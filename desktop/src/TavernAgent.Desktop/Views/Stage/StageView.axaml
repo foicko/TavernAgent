@@ -5,9 +5,11 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Stage.StageView"
              x:DataType="vm:StageViewModel">
-  <Grid>
+  <Grid RowDefinitions="Auto,*">
 
-    <ScrollViewer Grid.Row="0" Name="Stream"
+    <stage:SceneBarView Grid.Row="0" />
+
+    <ScrollViewer Grid.Row="1" Name="Stream"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
       <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,200">
@@ -275,7 +277,7 @@
       </StackPanel>
     </ScrollViewer>
 
-    <ContentControl Grid.Row="0"
+    <ContentControl Grid.Row="1"
                     VerticalAlignment="Bottom"
                     IsVisible="{Binding IsStudioMode}">
       <stage:ComposerView DataContext="{Binding Composer}" />

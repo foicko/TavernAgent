@@ -21,7 +21,8 @@ public sealed partial class MessageViewModel : ObservableObject
         string charName,
         string userName,
         IReadOnlyDictionary<string, string> actionLabels,
-        IReadOnlyDictionary<string, string>? cardAssets = null)
+        IReadOnlyDictionary<string, string>? cardAssets = null,
+        IReadOnlyDictionary<string, string>? variables = null)
     {
         _stage = stage;
         Id = msg.Id;
@@ -35,9 +36,9 @@ public sealed partial class MessageViewModel : ObservableObject
         Draft = msg.Draft;
         TurnLabel = $"回合 #{msg.TurnNumber ?? index}";
 
-        Blocks = msg.Blocks.Select(b => new BlockViewModel(b, charName, userName, cardAssets)).ToList();
+        Blocks = msg.Blocks.Select(b => new BlockViewModel(b, charName, userName, cardAssets, variables)).ToList();
         Options = msg.Options.Select(o => new OptionViewModel(o)).ToList();
-        InputText = string.IsNullOrEmpty(msg.InputText) ? null : NarrativeText.ReplaceMacros(msg.InputText, charName, userName);
+        InputText = string.IsNullOrEmpty(msg.InputText) ? null : NarrativeText.ReplaceMacros(msg.InputText, charName, userName, variables);
         InputNote = string.IsNullOrWhiteSpace(msg.InputNote) ? null : msg.InputNote;
         Thinking = string.IsNullOrEmpty(msg.Thinking) ? null : msg.Thinking;
         SuppressedOptions = msg.SuppressedOptions ?? 0;

@@ -37,7 +37,9 @@ const (
 	//             与人设不褪色两条；强化对白示例的权威性说明。
 	//   v4 -> v5：新增「卡片界面标记」契约（CardUIContract）：把 charx/RisuAI 卡的自定义
 	//             标记归一到 [SCENE]/[HUD]/[VAR] 标准标记，仅在会话卡片带 UI 档案时注入。
-	PromptVersion = 5
+	//   v5 -> v6：动态块新增【会话变量】小节（renderSessionVariables）：把当前会话变量
+	//             的取值告知模型，使其演绎与状态一致。属动态内容，不改黄金指纹。
+	PromptVersion = 6
 )
 
 // promptTemplate 是被纳入指纹的提示词模板。Name 只用于组装哈希输入与排障展示。

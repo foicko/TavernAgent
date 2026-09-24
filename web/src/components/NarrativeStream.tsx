@@ -5,7 +5,8 @@ import { isTurnBusy, useStory } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
 import { renderCardMarkers } from "../lib/cardMarkers";
-import { useCardAssetMap } from "../stores/cardAssetStore";
+import { SceneBar } from "./SceneBar";
+import { useAppliedCardTheme, useCardAssetMap } from "../stores/cardAssetStore";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
 import { formatActionCheckBadge } from "../lib/ruleCheck";
@@ -54,9 +55,10 @@ export const NarrativeStream: React.FC = () => {
   const char = characterPresentation(activeCharKey, view);
   // 导入卡的开场与正文普遍写 {{char}}/{{user}}：原样显示会把宏直接摊在故事里。
   const playerName = view?.state?.characters?.["player"]?.name || DEFAULT_PLAYER_NAME;
-  const expand = (text?: string) => replaceMacros(text ?? "", { charName: char.shortName || char.name, userName: playerName });
+  const expand = (text?: string) => replaceMacros(text ?? "", { charName: char.shortName || char.name, userName: playerName, variables: view?.state?.variables });
   // 卡内嵌资源（charx 立绘）：把正文 <img cmd="..."> 渲染为图片。
   const cardAssets = useCardAssetMap(view?.characterId);
+  useAppliedCardTheme(view?.characterId);
   const scrollRef = useRef<HTMLDivElement>(null);
   // 只有读者本来就在底部附近时才自动跟随；否则用户上滑回看会被不断拽回去。
   const stickToBottomRef = useRef(true);
@@ -169,6 +171,9 @@ export const NarrativeStream: React.FC = () => {
           {char.shortName} 档案
         </span>
       </button>
+
+      {/* Persistent scene label from card [SCENE] markers */}
+      <SceneBar />
 
       {/* Narrative Flow (纯净小说流) */}
       <div className="stage-scroll-area" id="narrative-stream" ref={scrollRef} onScroll={handleScroll}>

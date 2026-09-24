@@ -9,6 +9,7 @@ import { DossierModal } from "./DossierModal";
 import { PromisesModal } from "./PromisesModal";
 import { MemoryBankModal } from "./MemoryBankModal";
 import { Icon, type IconName } from "../ui/Icon";
+import { useCardEmotionMap } from "../stores/cardAssetStore";
 import "./RightRail.css";
 
 export const RightRail: React.FC = () => {
@@ -52,6 +53,10 @@ export const RightRail: React.FC = () => {
         width3: `${Math.min(100, Math.max(0, liveRel.alertness))}%`,
       }
     : view ? CHARACTER_PRESETS.custom.meters : characterOverrides[activeCharKey ?? ""]?.meters || char.meters;
+
+  // 卡内情绪立绘（type=emotion）：有对应表情资源时优先使用，否则回退默认头像。
+  const emotionMap = useCardEmotionMap(view?.characterId);
+  const tachieSrc = emotionMap[tachieExpression] || char.avatar;
 
   // 实时模型情绪与立绘神情差分联动
   const liveMood = hud && characterId ? hud.moods[characterId] : undefined;
@@ -106,6 +111,9 @@ export const RightRail: React.FC = () => {
   const deltas2 = meterDeltas.filter((d) => d.meterIndex === 2);
   const deltas3 = meterDeltas.filter((d) => d.meterIndex === 3);
 
+  // 会话变量（卡片 [VAR]/defaultVariables）：按 key 排序展示，值可能为空串。
+  const liveVariables = view && hud?.variables ? Object.entries(hud.variables).sort(([a], [b]) => a.localeCompare(b)) : [];
+
   const livePromises = hud?.promises ? Object.values(hud.promises) : [];
   const activePromiseCount = view ? livePromises.filter(p => p.state === "active").length : 1;
   const memoryCount = view ? (memoryPaging.total || memoryUsage?.used || backendMemories.length) : char.memories.length;
@@ -129,7 +137,7 @@ export const RightRail: React.FC = () => {
         <div className="tachie-viewport">
           <img
             id="tachie-img"
-            src={char.avatar}
+            src={tachieSrc}
             alt={char.name}
             className="tachie-image tachie-image-live"
             style={{ "--rr-tachie-filter": exprFilters[tachieExpression] } as React.CSSProperties}
@@ -369,6 +377,24 @@ export const RightRail: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* 4.5 会话变量 (卡片 [VAR] / defaultVariables) */}
+      {liveVariables.length > 0 && (
+        <div className="hud-block">
+          <div className="hud-block-title">
+            <span>会话变量</span>
+            <span>{liveVariables.length} 项</span>
+          </div>
+          <div className="var-slot-list">
+            {liveVariables.map(([key, value]) => (
+              <div key={key} className="var-slot">
+                <span className="var-slot-key" title={key}>{key}</span>
+                <span className="var-slot-value" title={value || "（空）"}>{value || "—"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 5. 演义交接快照与前情回顾 (LiveAgent Context Compaction Handoff) */}
       <StoryCheckpointSection />

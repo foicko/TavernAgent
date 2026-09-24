@@ -6,6 +6,19 @@ import { Fragment } from "react";
 import type { UIHint } from "../app/types";
 import "./CardHUD.css";
 
+/** 把 "n/m" 或 "n%" 解析为 0–1 的进度；否则只返回文本。 */
+export function parseMeter(raw: string): { text: string; fraction?: number } {
+  const s = raw.trim();
+  const slash = /^(-?\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/.exec(s);
+  if (slash) {
+    const d = Number(slash[2]);
+    if (d > 0) return { text: s, fraction: Math.min(1, Math.max(0, Number(slash[1]) / d)) };
+  }
+  const pct = /^(-?\d+(?:\.\d+)?)\s*%$/.exec(s);
+  if (pct) return { text: s, fraction: Math.min(1, Math.max(0, Number(pct[1]) / 100)) };
+  return { text: s };
+}
+
 export function CardHUD({ hint }: { hint: UIHint }) {
   if (hint.kind === "scene") {
     if (!hint.text) return null;
@@ -23,12 +36,25 @@ export function CardHUD({ hint }: { hint: UIHint }) {
       <div className="card-hud">
         <div className="card-hud-title">状态</div>
         <dl className="card-hud-grid">
-          {entries.map(([k, v]) => (
-            <Fragment key={k}>
-              <dt>{k}</dt>
-              <dd>{v}</dd>
-            </Fragment>
-          ))}
+          {entries.map(([k, v]) => {
+            const meter = parseMeter(v);
+            return (
+              <Fragment key={k}>
+                <dt>{k}</dt>
+                <dd>
+                  <span className="card-hud-value">{meter.text}</span>
+                  {meter.fraction !== undefined && (
+                    <span className="card-hud-meter">
+                      <span
+                        className="card-hud-meter-fill"
+                        style={{ width: `${Math.round(meter.fraction * 100)}%` }}
+                      />
+                    </span>
+                  )}
+                </dd>
+              </Fragment>
+            );
+          })}
         </dl>
       </div>
     );

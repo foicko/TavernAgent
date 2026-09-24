@@ -54,6 +54,7 @@ desktop/src/
 | 导演模式 | 三阶段大纲、AI 讨论协商、事件驱动进度推进、暂停/恢复/跳过/回退，随分支与剧情包保存 |
 | 分支与历史 | 分叉、重生成（候选版本）、带要求重演、编辑输入/正文、只读历史、图谱与剧情/记忆图 |
 | 玩家提示 | 回合依据层（检定算式 / 状态变化摘要 / 参考到的记忆快照）；玩家注记（非叙事要求，与正文分开存）；选项节流（auto 隔轮、always 每轮、never 强制清空）；全部由服务端已提交数据推导，前端不做推断 |
+| charx 卡片 UI 映射 | `.charx` 导入与内嵌资源落地；`<img cmd>`/`[HUD]`/`[SCENE]`/`[VAR]` 标记归一化为原生组件（不执行卡内 HTML/CSS/JS/Lua）；HUD 进度条、常驻场景标签、会话变量（面板 + 提示词注入 + `{{getvar}}` 只读子集）、`backgroundHTML` 主题 token（web + 桌面卡片表面）、情绪立绘、`sdData` 生图模板。详见 [CARD_UI_MARKERS](CARD_UI_MARKERS.md) |
 | 剧情包 | 导出/导入往返、引用重映射、损坏与路径穿越拒绝、导入后续写 |
 | 模型配置 | 模型实例 CRUD + primary/assist/reflection 三槽位；服务商预设；密钥脱敏；探测；用量台账 |
 | 协议适配 | Chat Completions、Responses、Anthropic Messages；思考链增量；截断归类；超时/取消区分 |

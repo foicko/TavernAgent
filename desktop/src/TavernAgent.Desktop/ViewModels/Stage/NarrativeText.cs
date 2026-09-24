@@ -13,11 +13,20 @@ public static partial class NarrativeText
         "夜色低垂，灯火在潮湿的木桌上轻轻摇曳。远处传来酒杯碰撞与低语，而你与这个世界的因果，才刚刚开始交织。";
 
     public static string ReplaceMacros(string? text, string charName, string? userName)
+        => ReplaceMacros(text, charName, userName, null);
+
+    /// <summary>
+    /// 带会话变量的宏展开。variables 供 CBS 只读子集 {{getvar::键}} 取值（缺失则留空）；
+    /// 写变量（{{setvar}}）与随机（{{roll}}）需要按回合播种的确定性，不在此实现。
+    /// </summary>
+    public static string ReplaceMacros(string? text, string charName, string? userName, IReadOnlyDictionary<string, string>? variables)
     {
         if (string.IsNullOrEmpty(text)) return "";
         var c = string.IsNullOrEmpty(charName) ? DefaultCharacterName : charName;
         var u = string.IsNullOrEmpty(userName) ? DefaultPlayerName : userName;
         var result = text!;
+        result = RxGetVar().Replace(result, m =>
+            variables is not null && variables.TryGetValue(m.Groups[1].Value.Trim(), out var v) ? v : "");
         result = RxChar().Replace(result, c);
         result = RxUser().Replace(result, u);
         result = RxSub().Replace(result, "他/她");
@@ -72,6 +81,9 @@ public static partial class NarrativeText
         if (string.IsNullOrEmpty(line)) return null;
         return line.Length <= max ? line : line[..max] + "…";
     }
+
+    [GeneratedRegex(@"\{\{\s*getvar\s*::\s*([^}]+?)\s*\}\}", RegexOptions.IgnoreCase)]
+    private static partial Regex RxGetVar();
 
     [GeneratedRegex(@"\{\{\s*char\s*\}\}", RegexOptions.IgnoreCase)]
     private static partial Regex RxChar();

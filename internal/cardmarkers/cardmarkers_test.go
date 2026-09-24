@@ -82,6 +82,15 @@ func TestExtractBlocks(t *testing.T) {
 	}
 }
 
+func TestExtractPreservesWhitespaceWithoutMarkers(t *testing.T) {
+	// 含普通方括号但没有可解析标记：不得折叠空白或改动文本。
+	text := "引用 [1]  留空  \t间隙"
+	clean, hints := Extract(text)
+	if clean != text || hints != nil {
+		t.Errorf("clean=%q hints=%+v", clean, hints)
+	}
+}
+
 func TestExtractNoMarkersFastPath(t *testing.T) {
 	text := "没有任何标记的普通正文。"
 	clean, hints := Extract(text)

@@ -277,6 +277,7 @@ func (c *Compiler) systemPrompt(state *domain.WorldState, lore []lorebookHit, me
 		}
 	}
 	b.WriteString(renderCharacterState(state))
+	b.WriteString(renderSessionVariables(state))
 	return b.String()
 }
 
@@ -326,7 +327,35 @@ func (c *Compiler) dynamicContextPrompt(state *domain.WorldState, lore []loreboo
 	b.WriteString(renderSummarySection(summaries))
 
 	b.WriteString(renderCharacterState(state))
+	// 会话变量放在动态块：它随回合变化，不能进静态前缀（否则每轮都击穿 KV Cache）。
+	b.WriteString(renderSessionVariables(state))
 	return strings.TrimSpace(b.String())
+}
+
+// renderSessionVariables 渲染会话变量的当前取值（卡片 [VAR] 标记写入 / defaultVariables 预置）。
+//
+// 这些值由模型通过标准标记维护、由系统落库，是**权威状态**而非叙事：模型应据此演绎，
+// 但不能自行改写。键排序保证确定性；空表返回空串，使未使用变量的会话上下文与旧版逐字节一致。
+func renderSessionVariables(state *domain.WorldState) string {
+	if state == nil || len(state.Variables) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(state.Variables))
+	for k := range state.Variables {
+		if strings.TrimSpace(k) != "" {
+			keys = append(keys, k)
+		}
+	}
+	if len(keys) == 0 {
+		return ""
+	}
+	sort.Strings(keys)
+	var b strings.Builder
+	b.WriteString("\n【会话变量】这是本局卡片状态的当前取值（如语言、场景编号、开关）。叙述须与之一致，不要擅自改写这些值。\n")
+	for _, k := range keys {
+		b.WriteString("- " + oneLine(k) + " = " + oneLine(state.Variables[k]) + "\n")
+	}
+	return b.String()
 }
 
 // renderSummarySection 渲染相关摘要段落。

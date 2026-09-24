@@ -290,6 +290,8 @@ func cardPreviewBody(rep *application.ImportReport, entry *domain.CharacterCardE
 	if rep.Card.UIProfile != nil {
 		body["capabilities"] = rep.Card.UIProfile.Capabilities
 		body["varDefaults"] = rep.Card.UIProfile.VarDefaults
+		body["themeTokens"] = rep.Card.UIProfile.ThemeTokens
+		body["sdData"] = rep.Card.UIProfile.SdData
 	}
 	if entry != nil {
 		body["cardId"] = entry.CardID

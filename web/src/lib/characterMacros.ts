@@ -5,6 +5,8 @@
 //     世界书与导出包；这里是第二道保险，覆盖旧会话与旧剧情包里遗留的原文。
 //   - 语言宏 {{sub}} / {{obj}} / {{poss}} / <START> 只在本层展开：它们是中文措辞，
 //     不该被写进数据层（否则存档就带上了语言）。
+//   - 会话变量宏 {{getvar::键}} 只做**只读**替换（取会话变量当前值）：这是 CBS 安全子集的
+//     一半。写变量（{{setvar}}）与随机（{{roll}}）需要按回合播种的确定性，不在此实现。
 //   代价：模型侧仍会看到 {{sub}} 这类字面量，这是有意接受的取舍。
 
 /** 玩家未命名时的统一称呼。不要再在各组件里各写一份。 */
@@ -15,6 +17,8 @@ export const DEFAULT_CHARACTER_NAME = "角色";
 export interface MacroContext {
   charName: string;
   userName?: string;
+  /** 会话变量（卡片 [VAR]/defaultVariables）；供 {{getvar::键}} 只读取值。 */
+  variables?: Record<string, string>;
 }
 
 export function replaceMacros(text: string, context: MacroContext): string {
@@ -23,6 +27,8 @@ export function replaceMacros(text: string, context: MacroContext): string {
   const user = context.userName || DEFAULT_PLAYER_NAME;
 
   return text
+    // CBS 只读子集：{{getvar::键}} 取会话变量当前值，缺失则留空。
+    .replace(/\{\{\s*getvar\s*::\s*([^}]+?)\s*\}\}/gi, (_, key: string) => context.variables?.[key.trim()] ?? "")
     // /gi 已经覆盖 {{Char}}/{{User}} 等大小写变体，不必再各写一条。
     .replace(/\{\{\s*char\s*\}\}/gi, char)
     .replace(/\{\{\s*user\s*\}\}/gi, user)
