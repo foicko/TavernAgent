@@ -26,7 +26,7 @@
 **TavernAgent** 是一个专为 AI 角色扮演、交互跑团与非线性剧情推演设计的现代化桌面/Web 应用。采用 **Go 高性能无头服务 + SQLite 嵌入式存储 + React 19 现代化单页应用** 架构，并配有 **Avalonia 12 原生跨平台桌面端**（以 sidecar 方式拉起同一个后端），将数据完全保留在你的本地设备上。
 
 - **Liquid Glass 设计系统**：现代玻璃毛玻璃微光材质（Backdrop Blur / Specular Highlight / Fluid Responsive），沉浸而不喧宾夺主。
-- **纯净卡片生态**：完整兼容 **SillyTavern V2 / V3 角色卡**（PNG 及 JSON 格式），支持动态立绘、宏变量替换（`{{char}}`/`{{user}}`）、世界书联动与物品规则。
+- **纯净卡片生态**：完整兼容 **SillyTavern V2 / V3 角色卡**（PNG 及 JSON 格式）与 **charx 归档**（RisuAI ZIP，含内嵌立绘/图标，正文 `<img cmd>` 自动渲染），支持动态立绘、宏变量替换（`{{char}}`/`{{user}}`）、世界书联动与物品规则。
 - **CoW 认知记忆银行 (Cognitive Memory Bank)**：基于 Copy-on-Write 因果树的结构化记忆系统，具备五层递进引文溯源校验、实体消歧与置信度治理，支持手动锁定、修订与屏蔽。
 - **导演模式 (Story Director)**：跳脱单次回合的一问一答，与 AI 宏观讨论剧情走向，编排多阶段大纲（Beats），由 AI 自动根据正文推演完成进度。
 - **因果树分支拓扑 (Causal Branching Graph)**：时光回溯无需重新开局，在可视化的叙事树上随时回溯历史节点、开辟平行时间线分叉。
@@ -95,7 +95,7 @@ go run ./cmd/tavernagent -data ./data -addr 127.0.0.1:8890
 1. 打开浏览器进入系统界面，点击左侧栏底部的 **设置** 按钮。
 2. 在「连接管理」中点击「添加连接」，选择预设服务商（如 DeepSeek、OpenAI、Anthropic、Ollama、OneAPI 等），填入模型名称与 API Key。
 3. 将新建的连接分别指派给 **主线生成 (Primary)**、**导演模式 (Assist)**、**记忆反思 (Reflection)**。
-4. 在左侧栏「角色库」点击 **「+ 导入 / 创建角色卡」**，拖入你的 PNG / JSON 角色卡，填写你的玩家身份，即可开启专属于你的冒险推演！
+4. 在左侧栏「角色库」点击 **「+ 导入 / 创建角色卡」**，拖入你的 PNG / JSON / CHARX 角色卡，填写你的玩家身份，即可开启专属于你的冒险推演！
 
 ---
 
@@ -118,7 +118,7 @@ TavernAgent/
 │   ├── src/
 │   │   ├── components/    # 灵动流光 UI 组件 (Composer, LeftRail, RightRail, Modals)
 │   │   ├── stores/        # Zustand 分片状态机 (Story, Turn, Session, UI)
-│   │   ├── lib/           # 角色卡解析 (SillyTavern PNG tEXt/ccv3)、宏渲染与数据层
+│   │   ├── lib/           # 角色卡解析 (SillyTavern PNG tEXt/ccv3、charx 归档)、宏渲染与数据层
 │   │   └── ui/            # 基础无状态视觉基元 (Button, Modal, Pill, Field)
 │   └── public/            # 几何矢量 SVG 资产
 ├── desktop/               # Avalonia 12 (.NET 10) 原生跨平台桌面端

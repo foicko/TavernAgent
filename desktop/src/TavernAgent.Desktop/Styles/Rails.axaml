@@ -219,4 +219,23 @@
       </Animation>
     </Style.Animations>
   </Style>
+
+  <!-- Row delete icon button: quiet in idle state, alert on pointerover -->
+  <Style Selector="Button.row-del-btn">
+    <Setter Property="Opacity" Value="0.45" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Border.session-card:pointerover Button.row-del-btn, Border.char-card:pointerover Button.row-del-btn">
+    <Setter Property="Opacity" Value="0.8" />
+  </Style>
+  <Style Selector="Button.row-del-btn:pointerover">
+    <Setter Property="Opacity" Value="1.0" />
+  </Style>
+  <Style Selector="Button.row-del-btn:pointerover Path.icon">
+    <Setter Property="Stroke" Value="{DynamicResource DangerBrush}" />
+  </Style>
 </Styles>

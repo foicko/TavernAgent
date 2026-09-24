@@ -147,12 +147,23 @@
         <ItemsControl ItemsSource="{Binding Blocks}">
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="vm:BlockViewModel">
-              <c:InlineMarkdownText Markdown="{Binding Text}"
-                                    TextWrapping="Wrap"
-                                    Margin="0,0,0,10"
-                                    Classes.narration="{Binding IsNarration}"
-                                    Classes.dialogue="{Binding IsDialogue}"
-                                    Classes.monologue="{Binding IsMonologue}" />
+              <ItemsControl ItemsSource="{Binding Segments}" Margin="0,0,0,10">
+                <ItemsControl.DataTemplates>
+                  <DataTemplate DataType="vm:NarrativeTextSegment">
+                    <c:InlineMarkdownText Markdown="{Binding Markdown}"
+                                          TextWrapping="Wrap"
+                                          Classes.narration="{Binding IsNarration}"
+                                          Classes.dialogue="{Binding IsDialogue}"
+                                          Classes.monologue="{Binding IsMonologue}" />
+                  </DataTemplate>
+                  <DataTemplate DataType="vm:NarrativeImageSegment">
+                    <Border CornerRadius="{DynamicResource RadiusMd}" ClipToBounds="True"
+                            HorizontalAlignment="Center" Margin="0,4">
+                      <Image Source="{Binding Image}" Stretch="Uniform" MaxWidth="380" MaxHeight="520" />
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.DataTemplates>
+              </ItemsControl>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
@@ -381,39 +392,44 @@
                            FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextSecondaryBrush}" />
               </StackPanel>
-              <TextBlock Grid.Column="1" Text="多意图分支" FontSize="{DynamicResource FsXs}"
+              <TextBlock Grid.Column="1" Text="{Binding OptionsSummary}" FontSize="{DynamicResource FsXs}"
                          Foreground="{DynamicResource TextDimBrush}" />
             </Grid>
             <ItemsControl ItemsSource="{Binding Options}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <WrapPanel Orientation="Horizontal" />
+                  <UniformGrid Columns="2" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:OptionViewModel">
-                  <Button Classes="decision-card" Margin="0,0,10,10"
-                          Command="{Binding $parent[ItemsControl].((vm:MessageViewModel)DataContext).ChooseOptionCommand}"
-                          CommandParameter="{Binding}">
-                    <StackPanel Spacing="6" MaxWidth="240">
-                      <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                          <Path Classes="icon" Data="{Binding IconGeometry}" Width="13" Height="13" />
-                          <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold"
-                                     Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                  <Border Padding="5">
+                    <Button Classes="decision-card"
+                            Command="{Binding $parent[ItemsControl].((vm:MessageViewModel)DataContext).ChooseOptionCommand}"
+                            CommandParameter="{Binding}">
+                      <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0" Classes="decision-stripe" Background="{Binding AccentBrush}" />
+                        <StackPanel Grid.Column="1" Spacing="8" Margin="11,0,0,0">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <Border Grid.Column="0" Classes="intent-pill">
+                              <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Path Classes="icon" Data="{Binding IconGeometry}" Width="12" Height="12" Stroke="{Binding AccentBrush}" />
+                                <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                              </StackPanel>
+                            </Border>
+                            <StackPanel Grid.Column="1" Classes="decision-hint" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                              <TextBlock Text="选定" FontSize="10" VerticalAlignment="Center" />
+                              <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="10" Height="10" />
+                            </StackPanel>
+                          </Grid>
+                          <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
+                                     FontSize="{DynamicResource FsSm}" LineHeight="21"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" />
                         </StackPanel>
-                        <Border Grid.Column="1" Classes="chip" Padding="5,1">
-                          <StackPanel Orientation="Horizontal" Spacing="3">
-                            <TextBlock Text="选定" FontSize="9" Foreground="{DynamicResource TextDimBrush}" />
-                            <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="9" Height="9" Stroke="{DynamicResource TextDimBrush}" />
-                          </StackPanel>
-                        </Border>
                       </Grid>
-                      <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
-                                 FontSize="{DynamicResource FsSm}"
-                                 Foreground="{DynamicResource TextPrimaryBrush}" />
-                    </StackPanel>
-                  </Button>
+                    </Button>
+                  </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>

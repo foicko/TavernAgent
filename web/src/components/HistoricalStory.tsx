@@ -1,6 +1,8 @@
 import React, { memo, useState } from "react";
 import type { OptionView, StoryMessage, TurnPhase } from "../stores/storyTypes";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
+import { renderWithCardImages } from "../lib/risuImages";
+import { useCardAssetMap } from "../stores/cardAssetStore";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { formatActionCheckBadge } from "../lib/ruleCheck";
 import { useStory } from "../stores/storyStore";
@@ -62,6 +64,8 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
   const playerName = useStory((s) => s.view?.state?.characters?.["player"]?.name) || DEFAULT_PLAYER_NAME;
   const actions = useStory((s) => s.view?.actions);
   const expand = (text?: string) => replaceMacros(text ?? "", { charName: characterName, userName: playerName });
+  // 卡内嵌资源（charx 立绘）：把历史正文里的 <img cmd="..."> 渲染为图片。
+  const cardAssets = useCardAssetMap(useStory((s) => s.view?.characterId));
 
   const [illustrationTarget, setIllustrationTarget] = useState<{
     turnId: string;
@@ -102,7 +106,7 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                   <div className="dialogue-content-text">
                     {msg.blocks.map((b, bi) => (
                       <p key={bi} className="block-narration">
-                        {b.text && renderInlineMarkdown(expand(b.text))}
+                        {b.text && renderWithCardImages(expand(b.text), cardAssets)}
                       </p>
                     ))}
                   </div>
@@ -178,7 +182,7 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                         if (b.kind === "dialogue") {
                           return (
                             <p key={bi} className="block-dialogue">
-                              「{renderInlineMarkdown(expand(b.text.replace(/^[「"']|[」"']$/g, "")))}」
+                              「{renderWithCardImages(expand(b.text.replace(/^[「"']|[」"']$/g, "")), cardAssets)}」
                             </p>
                           );
                         }
@@ -188,13 +192,13 @@ export const HistoricalStory = memo(function HistoricalStory({ storyMessages, ch
                               key={bi}
                               className="block-monologue"
                             >
-                              （{renderInlineMarkdown(expand(b.text.replace(/^[（(]|[）)]$/g, "")))}）
+                              （{renderWithCardImages(expand(b.text.replace(/^[（(]|[）)]$/g, "")), cardAssets)}）
                             </p>
                           );
                         }
                         return (
                           <p key={bi} className="block-narration">
-                            {renderInlineMarkdown(expand(b.text))}
+                            {renderWithCardImages(expand(b.text), cardAssets)}
                           </p>
                         );
                       })}

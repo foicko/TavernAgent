@@ -15,6 +15,8 @@ namespace TavernAgent.Desktop.ViewModels.Stage;
 public sealed partial class StageViewModel : WorkspaceChildViewModel
 {
     private readonly List<MessageViewModel> _messages = new();
+    private IReadOnlyDictionary<string, string> _cardAssets = new Dictionary<string, string>();
+    private string? _assetsCardId;
     private bool _disposed;
 
     public StageViewModel(WorkspaceViewModel workspace) : base(workspace)
@@ -360,6 +362,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
     private void OnViewChanged()
     {
         RebuildCharacter();
+        RefreshCardAssets();
         OnPropertyChanged(nameof(HasStory));
         OnPropertyChanged(nameof(SceneTitle));
         OnPropertyChanged(nameof(ShowPrologue));
@@ -370,9 +373,27 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         OnComposerTextChanged(Composer.Text);
     }
 
-    private void RebuildCharacter()
+    /// <summary>切换到新角色时按需拉取该卡的内嵌资源（charx 立绘），到货后重建正文。</summary>
+    private void RefreshCardAssets()
     {
-        var view = Story.View;
+        var cardId = Story.View?.CharacterId;
+        if (string.Equals(cardId, _assetsCardId, StringComparison.Ordinal)) return;
+        _assetsCardId = cardId;
+        _cardAssets = CardAssetCache.Get(cardId);
+        _ = LoadCardAssetsAsync(cardId);
+    }
+
+    private async Task LoadCardAssetsAsync(string? cardId)
+    {
+        var changed = await CardAssetCache.EnsureAsync(Story.Api, cardId).ConfigureAwait(true);
+        if (!changed || !string.Equals(cardId, _assetsCardId, StringComparison.Ordinal)) return;
+        _cardAssets = CardAssetCache.Get(cardId);
+        RebuildMessages();
+        RebuildDraft();
+    }
+
+    private void RebuildCharacter()
+    {        var view = Story.View;
         CharacterInfo? character = null;
         if (view?.State?.Characters is { Count: > 0 } chars)
             character = chars.Values.FirstOrDefault(c => c.Participant == true) ?? chars.Values.FirstOrDefault(c => c.CharacterId != "player");
@@ -417,7 +438,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         var list = view is null ? new List<StoryMessage>() : StoryStore.MessagesFromNodes(view, Story.TurnThinking);
         for (var i = 0; i < list.Count; i++)
         {
-            var vm = new MessageViewModel(list[i], i, i == list.Count - 1, this, charName, userName, actionLabels);
+            var vm = new MessageViewModel(list[i], i, i == list.Count - 1, this, charName, userName, actionLabels, _cardAssets);
             _messages.Add(vm);
             Messages.Add(vm);
         }
@@ -434,7 +455,7 @@ public sealed partial class StageViewModel : WorkspaceChildViewModel
         var charName = CharShortName;
         var userName = PlayerName();
         foreach (var block in Story.DraftBlocks)
-            DraftBlocks.Add(new BlockViewModel(block, charName, userName));
+            DraftBlocks.Add(new BlockViewModel(block, charName, userName, _cardAssets));
         OnPropertyChanged(nameof(HasDraftBlocks));
         OnPropertyChanged(nameof(IsStreaming));
         OnPropertyChanged(nameof(ThinkingTitle));

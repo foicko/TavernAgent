@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"tavernagent/internal/adapters/cardassets"
 	"tavernagent/internal/adapters/config"
 	httpadapter "tavernagent/internal/adapters/http"
 	"tavernagent/internal/adapters/image"
@@ -155,8 +156,14 @@ func Bootstrap(cfg Config) (*App, error) {
 
 	branchSvc := application.NewBranchService(store, turnSvc)
 	memorySvc := application.NewMemoryService(store)
-	archiveSvc := application.NewArchiveService(store, cfg.AppVersion)
-	cardSvc := application.NewCardService(store)
+	var cardAssets ports.CardAssetStore
+	if assetStore, err := cardassets.New(filepath.Join(cfg.DataDir, "cards")); err != nil {
+		log.Printf("卡资源存储初始化失败（charx 立绘将不可用）: %v", err)
+	} else {
+		cardAssets = assetStore
+	}
+	archiveSvc := application.NewArchiveServiceWithAssets(store, cardAssets, cfg.AppVersion)
+	cardSvc := application.NewCardService(store, cardAssets)
 
 	// http 层不再直接持有 Store：读取视图由 application 组装，
 	// 适配器只做协议转换（I2）。
@@ -187,6 +194,7 @@ func Bootstrap(cfg Config) (*App, error) {
 		Sessions:     sessionSvc, Turns: turnSvc, Branches: branchSvc,
 		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: cfg.Addr,
 		Cards:          cardSvc,
+		CardAssets:     cardAssets,
 		StaticFS:       staticFS,
 		AuthPIN:        cfg.PIN,
 		SetNativeTheme: cfg.SetNativeTheme,

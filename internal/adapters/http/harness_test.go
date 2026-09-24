@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"tavernagent/internal/adapters/cardassets"
 	"tavernagent/internal/adapters/providers/mock"
 	"tavernagent/internal/adapters/sqlite"
 	"tavernagent/internal/application"
@@ -47,13 +48,18 @@ func newTestServerWithProvider(t *testing.T, provider ports.ModelProvider) (*htt
 	turnSvc := application.NewTurnService(st, provider, compiler, bus)
 	// 关闭顺序必须是"服务先排空 worker，存储后关"：LIFO 下这里先注册 store 再注册服务。
 	t.Cleanup(turnSvc.Close)
+	assetStore, err := cardassets.New(t.TempDir())
+	if err != nil {
+		t.Fatalf("cardassets: %v", err)
+	}
 	srv := mustNew(t, Deps{
 		Sessions: sessSvc, Turns: turnSvc,
-		Branches: application.NewBranchService(st, turnSvc),
-		Memories: application.NewMemoryService(st),
-		Cards:    application.NewCardService(st),
-		Archive:  application.NewArchiveService(st, "test"),
-		Bus:      bus, Addr: "127.0.0.1:8890",
+		Branches:   application.NewBranchService(st, turnSvc),
+		Memories:   application.NewMemoryService(st),
+		Cards:      application.NewCardService(st, assetStore),
+		CardAssets: assetStore,
+		Archive:    application.NewArchiveService(st, "test"),
+		Bus:        bus, Addr: "127.0.0.1:8890",
 	})
 	ts := httptest.NewServer(srv.Handler())
 	t.Cleanup(ts.Close)

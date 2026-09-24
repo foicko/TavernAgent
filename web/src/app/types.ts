@@ -386,6 +386,14 @@ export interface MemoryUsage {
 
 // ---- M1-2：导入预览 ----
 
+/** 卡内嵌资源（charx 立绘/图标）：name 是正文 <img cmd="..."> 的键。 */
+export interface CardAssetView {
+  name: string;
+  type?: string;
+  /** 服务端资源 URL；为空表示未落地（如 data:/http 原始引用或非 charx 卡）。 */
+  url: string;
+}
+
 export interface CardPreview {
   /** 服务端卡库中的稳定 ID（导入成功时返回）。有它就可以只传 cardId 建会话。 */
   cardId?: string;
@@ -394,7 +402,7 @@ export interface CardPreview {
   format: string;
   /** 卡片 spec_version（原生卡为空）。 */
   specVersion?: string;
-  /** 来源：png | json。 */
+  /** 来源：png | json | charx。 */
   source?: string;
   name: string;
   avatar?: string;
@@ -415,6 +423,8 @@ export interface CardPreview {
   warnings: string[];
   characterJson: string;
   openings: { variantId: string; title: string; text: string }[];
+  /** 卡内嵌资源清单（charx）；用于把正文 <img cmd> 渲染为图片。 */
+  assets?: CardAssetView[];
 }
 
 /** 卡库摘要（列表接口返回，不含兆级 characterJson）。 */

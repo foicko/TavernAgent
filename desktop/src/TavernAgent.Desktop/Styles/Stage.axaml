@@ -63,12 +63,14 @@
 
   <!-- Decision card (ApprovalCard inspired by beautifului.dev) -->
   <Style Selector="Button.decision-card">
-    <Setter Property="CornerRadius" Value="{DynamicResource RadiusMd}" />
-    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusLg}" />
+    <Setter Property="Padding" Value="12,12,14,12" />
+    <Setter Property="MinHeight" Value="84" />
     <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Top" />
     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     <Setter Property="Transitions">
       <Transitions>
@@ -85,6 +87,51 @@
   </Style>
   <Style Selector="Button.decision-card:pressed">
     <Setter Property="RenderTransform" Value="scale(0.99)" />
+  </Style>
+  <Style Selector="Button.decision-card:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
+
+  <!-- 意图色竖条：贴在卡片左缘，两端圆头 -->
+  <Style Selector="Border.decision-stripe">
+    <Setter Property="Width" Value="3" />
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="Margin" Value="0,1" />
+  </Style>
+
+  <!-- 意图标签药丸：中性底 + 强调色图标 -->
+  <Style Selector="Border.intent-pill">
+    <Setter Property="CornerRadius" Value="{DynamicResource RadiusFull}" />
+    <Setter Property="Padding" Value="7,2" />
+    <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+
+  <!-- 「选定 ⏎」提示：hover 时点亮并轻微右移 -->
+  <Style Selector="Button.decision-card StackPanel.decision-hint TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}" />
+  </Style>
+  <Style Selector="Button.decision-card StackPanel.decision-hint Path.icon">
+    <Setter Property="Stroke" Value="{DynamicResource TextDimBrush}" />
+  </Style>
+  <Style Selector="StackPanel.decision-hint">
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="0.23,1,0.32,1" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.decision-card:pointerover StackPanel.decision-hint">
+    <Setter Property="RenderTransform" Value="translateX(2px)" />
+  </Style>
+  <Style Selector="Button.decision-card:pointerover StackPanel.decision-hint TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+  </Style>
+  <Style Selector="Button.decision-card:pointerover StackPanel.decision-hint Path.icon">
+    <Setter Property="Stroke" Value="{DynamicResource AccentBrush}" />
   </Style>
 
   <!-- Thinking card (ThinkingState inspired by beautifului.dev) -->

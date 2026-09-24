@@ -5,6 +5,7 @@ package ports
 import (
 	"context"
 	"errors"
+	"io"
 	"math/rand"
 	"time"
 
@@ -135,6 +136,21 @@ type CardStore interface {
 	DeleteCard(cardID string) error
 	// TouchCard 记录最近一次用于创建会话的时间；不存在时返回 ErrNotFound。
 	TouchCard(cardID string, at time.Time) error
+}
+
+// CardAssetStore 是角色卡内嵌资源（charx 归档中的立绘/图标）的落地存储。
+//
+// 与卡库分表同理：资源按 cardID 归档在数据目录下，删卡时可选择清理，
+// 但不写入 SQLite（二进制体量太大，且卡 JSON 里只保存引用名）。
+type CardAssetStore interface {
+	// SaveAsset 把单个资源写入 cardID 的资源目录，file 为清洗后的文件名。
+	SaveAsset(cardID, file string, r io.Reader) error
+	// OpenAsset 读取单个资源，返回内容与 MIME 类型；不存在时返回 ErrNotFound。
+	OpenAsset(cardID, file string) (io.ReadCloser, string, error)
+	// ListAssets 返回某张卡已落地资源的安全文件名；无资源时返回空切片。
+	ListAssets(cardID string) ([]string, error)
+	// DeleteCardAssets 移除某张卡的全部资源目录；不存在时视为成功。
+	DeleteCardAssets(cardID string) error
 }
 
 // StoryStore 是剧情树、分支指针与状态投影的读取。

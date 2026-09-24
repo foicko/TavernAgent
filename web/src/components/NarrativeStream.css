@@ -292,3 +292,15 @@
   flex: none;
   align-self: center;
 }
+
+/* 卡内嵌资源（charx 立绘）：正文 <img cmd> 渲染出的图片 */
+.story-inline-image {
+  display: block;
+  max-width: min(100%, 380px);
+  max-height: 520px;
+  width: auto;
+  height: auto;
+  margin: var(--space-3) auto;
+  border-radius: var(--radius-md, 10px);
+  object-fit: contain;
+}

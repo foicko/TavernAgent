@@ -14,8 +14,13 @@ import (
 // 卡片 JSON 必须能原样交给建会话接口，否则会出现「预览成功、开启冒险 413」。
 // 这两个接口衡量的是同一份载荷，因此共用同一份额度。
 const (
-	// maxCardUploadBytes 是角色卡文件（PNG / JSON）的上传上限。
-	maxCardUploadBytes = 32 << 20
+	// maxCardUploadBytes 是角色卡上传体的硬上限。charx 归档可达数百 MB，
+	// 上传走流式落盘（常量内存），这里只作为防滥用的宽松护栏。
+	maxCardUploadBytes = 2 << 30
+	// maxCardUploadMemory 是 multipart 解析时保留在内存的阈值，超出即落盘。
+	maxCardUploadMemory = 8 << 20
+	// maxInlineCardBytes 是需要在内存中解析的 PNG / JSON 卡的上限。
+	maxInlineCardBytes = 64 << 20
 	// maxCardJSONBytes 是转换后卡片 JSON 的允许上限（导入响应与建会话请求共用）。
 	maxCardJSONBytes = 8 << 20
 	// maxRequestBytes 是其余普通 JSON 接口的默认上限。

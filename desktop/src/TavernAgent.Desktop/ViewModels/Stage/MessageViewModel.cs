@@ -20,7 +20,8 @@ public sealed partial class MessageViewModel : ObservableObject
         StageViewModel stage,
         string charName,
         string userName,
-        IReadOnlyDictionary<string, string> actionLabels)
+        IReadOnlyDictionary<string, string> actionLabels,
+        IReadOnlyDictionary<string, string>? cardAssets = null)
     {
         _stage = stage;
         Id = msg.Id;
@@ -34,7 +35,7 @@ public sealed partial class MessageViewModel : ObservableObject
         Draft = msg.Draft;
         TurnLabel = $"回合 #{msg.TurnNumber ?? index}";
 
-        Blocks = msg.Blocks.Select(b => new BlockViewModel(b, charName, userName)).ToList();
+        Blocks = msg.Blocks.Select(b => new BlockViewModel(b, charName, userName, cardAssets)).ToList();
         Options = msg.Options.Select(o => new OptionViewModel(o)).ToList();
         InputText = string.IsNullOrEmpty(msg.InputText) ? null : NarrativeText.ReplaceMacros(msg.InputText, charName, userName);
         InputNote = string.IsNullOrWhiteSpace(msg.InputNote) ? null : msg.InputNote;
@@ -99,6 +100,7 @@ public sealed partial class MessageViewModel : ObservableObject
     public bool HasMemories => Memories.Count > 0;
     public bool HasSuppressed => SuppressedOptions > 0;
     public bool HasOptions => Options.Count > 0;
+    public string OptionsSummary => Options.Count == 0 ? "" : $"{Options.Count} 个抉择";
 
     public string PlainText => string.Join("\n", Blocks.Select(b => b.Text));
 

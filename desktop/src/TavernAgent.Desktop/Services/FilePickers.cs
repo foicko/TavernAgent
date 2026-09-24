@@ -14,7 +14,7 @@ public static class FilePickers
 
     private static readonly FilePickerFileType CardType = new("角色卡")
     {
-        Patterns = new[] { "*.png", "*.json" },
+        Patterns = new[] { "*.png", "*.json", "*.charx" },
     };
 
     public static async Task<byte[]?> PickPackAsync(Visual owner)

@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 
 	"tavernagent/internal/application"
@@ -26,17 +28,21 @@ func (s *Server) registerCardRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/cards/import", s.security(s.importCard))
 	mux.HandleFunc("GET /api/v1/cards", s.security(s.listCards))
 	mux.HandleFunc("GET /api/v1/cards/{cardId}", s.security(s.getCard))
+	// 资源 GET 不加 security：浏览器 <img> 无法携带 Bearer Token，
+	// 与 /api/v1/images 保持一致的只读公开策略。
+	mux.HandleFunc("GET /api/v1/cards/{cardId}/assets/{name}", s.serveCardAsset)
 	mux.HandleFunc("DELETE /api/v1/cards/{cardId}", s.security(s.deleteCard))
 }
 
 // importCard 解析角色卡并写入卡库，返回标准化预览与 cardId。
 // 支持 multipart/form-data 文件上传，也支持原始二进制或 JSON 请求体。
 func (s *Server) importCard(w http.ResponseWriter, r *http.Request) {
-	data, ok := readCardUpload(w, r)
+	tmpPath, ok := s.readCardUpload(w, r)
 	if !ok {
 		return
 	}
-	rep, err := parseCardData(data)
+	defer os.Remove(tmpPath)
+	rep, err := parseCardFile(tmpPath)
 	if err != nil {
 		writeError(w, 422, "CARD_INVALID", "角色卡解析失败: "+err.Error(), false, "")
 		return
@@ -130,47 +136,58 @@ func (s *Server) deleteCard(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"ok": true})
 }
 
-// readCardUpload 读取卡片上传体（multipart 或原始字节），空内容按 400 处理。
+// readCardUpload 把卡片上传体（multipart 或原始字节）流式写入临时文件。
+//
+// charx 归档可达数百 MB，因此不在内存里整体读取：常量内存 + 落盘，
+// 由调用方负责在解析/入库完成后删除返回的临时文件。
 // 返回的 bool 表示是否可以继续处理。
-func readCardUpload(w http.ResponseWriter, r *http.Request) ([]byte, bool) {
+func (s *Server) readCardUpload(w http.ResponseWriter, r *http.Request) (string, bool) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxCardUploadBytes)
-	var data []byte
+	var src io.Reader
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
-		if err := r.ParseMultipartForm(maxCardUploadBytes); err != nil {
-			// 体积超限与普通解析错误分开：前者是 413，且不应把英文内部信息摊给用户。
+		if err := r.ParseMultipartForm(maxCardUploadMemory); err != nil {
 			var tooLarge *http.MaxBytesError
 			if errors.As(err, &tooLarge) {
-				writeError(w, 413, "REQUEST_TOO_LARGE", "角色卡文件超过 32MB 上限，请压缩图片或改用 JSON 卡", false, "")
-				return nil, false
+				writeError(w, 413, "REQUEST_TOO_LARGE", "角色卡文件超过允许的上限", false, "")
+				return "", false
 			}
 			writeError(w, 400, "BAD_REQUEST", "解析上传表单失败，请重试", false, "")
-			return nil, false
+			return "", false
 		}
 		file, ok := cardFormFile(r)
 		if !ok {
 			writeError(w, 400, "BAD_REQUEST", "表单未包含 file 或 card 文件字段", false, "")
-			return nil, false
+			return "", false
 		}
 		defer file.Close()
-		var err error
-		data, err = io.ReadAll(file)
-		if err != nil {
-			writeError(w, 400, "BAD_REQUEST", "读取卡片文件失败，请重试", false, "")
-			return nil, false
-		}
+		src = file
 	} else {
-		var err error
-		data, err = io.ReadAll(r.Body)
-		if err != nil {
-			writeError(w, 400, "BAD_REQUEST", "读取请求体失败，请重试", false, "")
-			return nil, false
-		}
+		src = r.Body
 	}
-	if len(bytes.TrimSpace(data)) == 0 {
+
+	tmp, err := os.CreateTemp("", "tavern-card-*")
+	if err != nil {
+		writeError(w, 500, "STORAGE_UNAVAILABLE", "无法创建上传临时文件", true, "")
+		return "", false
+	}
+	n, err := io.Copy(tmp, src)
+	closeErr := tmp.Close()
+	if err != nil {
+		_ = os.Remove(tmp.Name())
+		writeError(w, 400, "BAD_REQUEST", "读取卡片文件失败，请重试", false, "")
+		return "", false
+	}
+	if closeErr != nil {
+		_ = os.Remove(tmp.Name())
+		writeError(w, 500, "STORAGE_UNAVAILABLE", "写入上传临时文件失败", true, "")
+		return "", false
+	}
+	if n == 0 {
+		_ = os.Remove(tmp.Name())
 		writeError(w, 400, "BAD_REQUEST", "角色卡内容为空", false, "")
-		return nil, false
+		return "", false
 	}
-	return data, true
+	return tmp.Name(), true
 }
 
 // cardFormFile 依次尝试 file / card 两个字段名。
@@ -184,12 +201,50 @@ func cardFormFile(r *http.Request) (io.ReadCloser, bool) {
 	return nil, false
 }
 
-// parseCardData 按 PNG 魔数选择解析器。
-func parseCardData(data []byte) (*application.ImportReport, error) {
-	if bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")) {
-		return application.ImportCardPNG(data)
+// parseCardFile 按文件魔数选择解析器：PNG / charx(ZIP) / JSON。
+func parseCardFile(path string) (*application.ImportReport, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
 	}
-	return application.ImportCardJSON(string(data))
+	head := make([]byte, 8)
+	n, _ := io.ReadFull(f, head)
+	f.Close()
+	switch {
+	case n >= 8 && bytes.HasPrefix(head, []byte("\x89PNG\r\n\x1a\n")):
+		if err := enforceInlineCardLimit(path); err != nil {
+			return nil, err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		return application.ImportCardPNG(data)
+	case n >= 4 && bytes.HasPrefix(head, []byte("PK\x03\x04")):
+		return application.ImportCardCharx(path)
+	default:
+		if err := enforceInlineCardLimit(path); err != nil {
+			return nil, err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		return application.ImportCardJSON(string(data))
+	}
+}
+
+// enforceInlineCardLimit 对需要在内存中解析的 PNG/JSON 卡设上限：
+// charx 走流式路径不受此限，但把上百 MB 的 PNG/JSON 整体读进内存并不安全。
+func enforceInlineCardLimit(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if info.Size() > maxInlineCardBytes {
+		return fmt.Errorf("卡片文件超过 %d MB，请改用 charx 归档或精简内容", maxInlineCardBytes>>20)
+	}
+	return nil
 }
 
 // cardPreviewBody 组装前端 CardPreview（键名必须与 web/src/app/types.ts 对齐）。
@@ -237,5 +292,49 @@ func cardPreviewBody(rep *application.ImportReport, entry *domain.CharacterCardE
 		body["shortName"] = entry.ShortName
 		body["role"] = entry.Role
 	}
+	body["assets"] = cardAssetsBody(rep, entry)
 	return body
+}
+
+// cardAssetsBody 组装前端渲染 <img cmd> 所需的 name→url 清单。
+// 只回传引用名与 URL，绝不回传资源字节（体量留在服务端）。
+func cardAssetsBody(rep *application.ImportReport, entry *domain.CharacterCardEntry) []map[string]string {
+	if rep == nil || rep.Card == nil || len(rep.Card.Assets) == 0 {
+		return []map[string]string{}
+	}
+	cardID := ""
+	if entry != nil {
+		cardID = entry.CardID
+	}
+	out := make([]map[string]string, 0, len(rep.Card.Assets))
+	for _, a := range rep.Card.Assets {
+		assetURL := strings.TrimSpace(a.URI)
+		if a.Ref != "" && cardID != "" {
+			assetURL = "/api/v1/cards/" + url.PathEscape(cardID) + "/assets/" + url.PathEscape(a.Ref)
+		}
+		out = append(out, map[string]string{
+			"name": a.Name,
+			"type": a.Type,
+			"url":  assetURL,
+		})
+	}
+	return out
+}
+
+// serveCardAsset 提供卡内嵌资源（charx 立绘/图标）的读取。
+func (s *Server) serveCardAsset(w http.ResponseWriter, r *http.Request) {
+	if s.cardAssets == nil {
+		http.NotFound(w, r)
+		return
+	}
+	rc, mime, err := s.cardAssets.OpenAsset(r.PathValue("cardId"), r.PathValue("name"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer rc.Close()
+	w.Header().Set("Content-Type", mime)
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.Copy(w, rc)
 }

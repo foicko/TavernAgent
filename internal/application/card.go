@@ -39,6 +39,16 @@ type SecretItem struct {
 // 条目内容自 M3 起参与上下文注入（关键词命中）。
 type LorebookRef = domain.Lorebook
 
+// CardAsset 是卡片声明的内嵌资源（V3 assets / charx 归档）。
+// Ref 是落地后的文件名（charx 导入时回填）；URI 是卡内原始引用（诊断用）。
+type CardAsset struct {
+	Name string `json:"name,omitempty"`
+	Type string `json:"type,omitempty"`
+	Ref  string `json:"ref,omitempty"`
+	URI  string `json:"uri,omitempty"`
+	Ext  string `json:"ext,omitempty"`
+}
+
 // CharacterCard 是首版原生角色卡 schema（schemaVersion=2）。
 // 兼容导入（V2/V3 PNG）会映射到本结构，并生成兼容报告（ImportReport）。
 type CharacterCard struct {
@@ -64,6 +74,7 @@ type CharacterCard struct {
 	Secrets         []SecretItem           `json:"secrets,omitempty"`
 	OpeningVariants []OpeningVariant       `json:"openingVariants,omitempty"`
 	LorebookRefs    []LorebookRef          `json:"lorebookRefs,omitempty"`
+	Assets          []CardAsset            `json:"assets,omitempty"`
 	Rules           *domain.Ruleset        `json:"rules,omitempty"`
 	RawOriginal     string                 `json:"-"` // 原始导入内容（资源保留，不回传）
 }

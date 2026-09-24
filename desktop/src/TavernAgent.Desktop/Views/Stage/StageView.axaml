@@ -5,12 +5,9 @@
              xmlns:c="using:TavernAgent.Desktop.Controls"
              x:Class="TavernAgent.Desktop.Views.Stage.StageView"
              x:DataType="vm:StageViewModel">
-  <Grid RowDefinitions="Auto,*,Auto">
+  <Grid RowDefinitions="*,Auto">
 
-    <!-- Sticky scene bar (studio mode): character + regenerate. -->
-    <stage:SceneBarView Grid.Row="0" IsVisible="{Binding IsStudioMode}" />
-
-    <ScrollViewer Grid.Row="1" Name="Stream"
+    <ScrollViewer Grid.Row="0" Name="Stream"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
       <StackPanel MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" Spacing="24" Margin="24,20,24,64">
@@ -185,10 +182,22 @@
                 <ItemsControl ItemsSource="{Binding DraftBlocks}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="vm:BlockViewModel">
-                      <c:InlineMarkdownText Markdown="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,10"
-                                            Classes.narration="{Binding IsNarration}"
-                                            Classes.dialogue="{Binding IsDialogue}"
-                                            Classes.monologue="{Binding IsMonologue}" />
+                      <ItemsControl ItemsSource="{Binding Segments}" Margin="0,0,0,10">
+                        <ItemsControl.DataTemplates>
+                          <DataTemplate DataType="vm:NarrativeTextSegment">
+                            <c:InlineMarkdownText Markdown="{Binding Markdown}" TextWrapping="Wrap"
+                                                  Classes.narration="{Binding IsNarration}"
+                                                  Classes.dialogue="{Binding IsDialogue}"
+                                                  Classes.monologue="{Binding IsMonologue}" />
+                          </DataTemplate>
+                          <DataTemplate DataType="vm:NarrativeImageSegment">
+                            <Border CornerRadius="{DynamicResource RadiusMd}" ClipToBounds="True"
+                                    HorizontalAlignment="Center" Margin="0,4">
+                              <Image Source="{Binding Image}" Stretch="Uniform" MaxWidth="380" MaxHeight="520" />
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                      </ItemsControl>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -263,7 +272,7 @@
       </StackPanel>
     </ScrollViewer>
 
-    <ContentControl Grid.Row="2" IsVisible="{Binding IsStudioMode}">
+    <ContentControl Grid.Row="1" IsVisible="{Binding IsStudioMode}">
       <stage:ComposerView DataContext="{Binding Composer}" />
     </ContentControl>
   </Grid>

@@ -1,7 +1,10 @@
 package application
 
 import (
+	"archive/zip"
 	"errors"
+	"fmt"
+	"io"
 	"strings"
 	"time"
 	"unicode"
@@ -15,10 +18,21 @@ import (
 // 它只依赖窄接口 ports.CardStore，不碰会话与模板——卡库与故事在这里是
 // 明确分离的两件事：删卡不删故事，建会话才把卡内容冻结进模板。
 type CardService struct {
-	store ports.CardStore
+	store  ports.Store
+	assets ports.CardAssetStore
 }
 
-func NewCardService(store ports.Store) *CardService { return &CardService{store: store} }
+// sessionReferencer 是可选能力：统计引用某角色的会话数。
+// 删卡时据此决定是否清理内嵌资源，兑现「删卡不删故事」——
+// 仍有故事引用时保留资源，否则一并回收。
+type sessionReferencer interface {
+	CountSessionsForCharacter(characterID string) (int, error)
+}
+
+// NewCardService 构造卡库服务；assets 可为 nil（禁用 charx 资源落地）。
+func NewCardService(store ports.Store, assets ports.CardAssetStore) *CardService {
+	return &CardService{store: store, assets: assets}
+}
 
 // SaveReport 把一次导入的归一化卡片写入卡库，返回卡库条目。
 //
@@ -55,7 +69,54 @@ func (s *CardService) SaveReport(rep *ImportReport) (*domain.CharacterCardEntry,
 		}
 		return nil, Err("STORAGE_UNAVAILABLE", "保存角色卡失败: "+err.Error(), 503)
 	}
+	s.persistCharxAssets(rep, entry.CardID)
 	return entry, nil
+}
+
+// persistCharxAssets 把 charx 归档中的资源流式写入卡资源存储。
+// 资源落地失败只告警、不回滚卡片：卡内容本身已可用，缺图属于降级。
+func (s *CardService) persistCharxAssets(rep *ImportReport, cardID string) {
+	if s.assets == nil || rep == nil || rep.CharxArchivePath == "" || len(rep.CharxAssets) == 0 {
+		return
+	}
+	zr, err := zip.OpenReader(rep.CharxArchivePath)
+	if err != nil {
+		rep.Warnings = append(rep.Warnings, "charx 资源落地失败（归档无法打开）："+err.Error())
+		return
+	}
+	defer zr.Close()
+	byPath := make(map[string]*zip.File, len(zr.File))
+	for _, f := range zr.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		byPath[strings.TrimPrefix(strings.ReplaceAll(f.Name, "\\", "/"), "./")] = f
+	}
+	var saved int
+	for _, a := range rep.CharxAssets {
+		f, ok := byPath[a.ZipPath]
+		if !ok {
+			continue
+		}
+		if err := s.saveOneAsset(cardID, a, f); err != nil {
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源「%s」落地失败：%v", a.Name, err))
+			continue
+		}
+		saved++
+	}
+	if saved < len(rep.CharxAssets) {
+		rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 共 %d 项资源，成功落地 %d 项", len(rep.CharxAssets), saved))
+	}
+}
+
+// saveOneAsset 打开单个归档条目并交给资源存储落盘，带解压上限。
+func (s *CardService) saveOneAsset(cardID string, a CharxAsset, f *zip.File) error {
+	rc, err := f.Open()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+	return s.assets.SaveAsset(cardID, a.Ref, io.LimitReader(rc, maxCharxEntryBytes))
 }
 
 // List 返回卡库摘要（CharacterJSON 为空，避免下发兆级内容）。
@@ -85,6 +146,14 @@ func (s *CardService) Delete(cardID string) error {
 	err := s.store.DeleteCard(cardID)
 	if err != nil && !errors.Is(err, ports.ErrNotFound) {
 		return Err("STORAGE_UNAVAILABLE", "移除角色卡失败: "+err.Error(), 503)
+	}
+	// 仍有故事引用该角色时保留资源（删卡不删故事）；否则回收，避免磁盘膨胀。
+	if s.assets != nil {
+		if ref, ok := s.store.(sessionReferencer); ok {
+			if n, cerr := ref.CountSessionsForCharacter(cardID); cerr == nil && n == 0 {
+				_ = s.assets.DeleteCardAssets(cardID)
+			}
+		}
 	}
 	return nil
 }

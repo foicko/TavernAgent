@@ -62,9 +62,9 @@
                   </Grid>
                 </Button>
 
-                <Button Grid.Column="1" Classes="ui-btn sm ghost" Padding="4,0" ToolTip.Tip="删除会话"
+                <Button Grid.Column="1" Classes="ui-btn sm ghost row-del-btn" Padding="4,0" ToolTip.Tip="删除会话"
                         Command="{Binding RequestDeleteCommand}" VerticalAlignment="Center">
-                  <Path Classes="icon danger" Data="{StaticResource IconTrash}" Width="13" Height="13" />
+                  <Path Classes="icon" Stroke="{DynamicResource TextDimBrush}" Data="{StaticResource IconTrash}" Width="13" Height="13" />
                 </Button>
               </Grid>
 

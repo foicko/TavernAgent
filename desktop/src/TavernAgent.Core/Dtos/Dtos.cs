@@ -605,6 +605,13 @@ public sealed class CardOpening
     public string Text { get; set; } = "";
 }
 
+public sealed class CardAsset
+{
+    public string Name { get; set; } = "";
+    public string? Type { get; set; }
+    public string Url { get; set; } = "";
+}
+
 public sealed class CardPreview
 {
     public string? CardId { get; set; }
@@ -632,6 +639,8 @@ public sealed class CardPreview
     public List<string> Warnings { get; set; } = new();
     public string CharacterJson { get; set; } = "";
     public List<CardOpening> Openings { get; set; } = new();
+    /// <summary>charx 内嵌资源（name → url）：正文 &lt;img cmd="..."&gt; 的渲染依据。</summary>
+    public List<CardAsset>? Assets { get; set; }
 }
 
 public sealed class CardLibrarySummary

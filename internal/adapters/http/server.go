@@ -35,6 +35,7 @@ type Deps struct {
 	Branches       *application.BranchService
 	Memories       *application.MemoryService
 	Cards          *application.CardService
+	CardAssets     ports.CardAssetStore
 	Archive        *application.ArchiveService
 	Manager        *application.ProviderManager
 	Bus            *application.EventBus
@@ -70,6 +71,7 @@ type Server struct {
 	branches       *application.BranchService
 	memories       *application.MemoryService
 	cards          *application.CardService
+	cardAssets     ports.CardAssetStore
 	archive        *application.ArchiveService
 	manager        *application.ProviderManager
 	bus            *application.EventBus
@@ -119,8 +121,9 @@ func New(deps Deps) (*Server, error) {
 		director: deps.Director,
 		sessions: deps.Sessions, turns: deps.Turns,
 		branches: deps.Branches, memories: deps.Memories, archive: deps.Archive,
-		cards:   deps.Cards,
-		manager: deps.Manager, bus: deps.Bus,
+		cards:      deps.Cards,
+		cardAssets: deps.CardAssets,
+		manager:    deps.Manager, bus: deps.Bus,
 		addr: deps.Addr, origin: "http://" + deps.Addr,
 		allowedOrigins: append([]string(nil), deps.AllowedOrigins...),
 		setNativeTheme: deps.SetNativeTheme,

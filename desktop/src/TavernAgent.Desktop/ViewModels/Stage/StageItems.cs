@@ -1,14 +1,64 @@
+using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using TavernAgent.Core.Dtos;
 using TavernAgent.Core.Stores;
 
 namespace TavernAgent.Desktop.ViewModels.Stage;
 
+/// <summary>A rendered piece of a narrative block: either markdown text or an embedded image.</summary>
+public abstract class NarrativeSegment
+{
+}
+
+/// <summary>Text run rendered through the minimal inline markdown control.</summary>
+public sealed class NarrativeTextSegment(string markdown, bool isDialogue, bool isMonologue, bool isNarration) : NarrativeSegment
+{
+    public string Markdown { get; } = markdown;
+    public bool IsDialogue { get; } = isDialogue;
+    public bool IsMonologue { get; } = isMonologue;
+    public bool IsNarration { get; } = isNarration;
+}
+
+/// <summary>An embedded card asset (charx &lt;img cmd="..."&gt;) decoded into a bitmap.</summary>
+public sealed class NarrativeImageSegment : NarrativeSegment, System.ComponentModel.INotifyPropertyChanged
+{
+    public NarrativeImageSegment(string url, string alt)
+    {
+        Url = url;
+        Alt = alt;
+        _ = LoadAsync();
+    }
+
+    public string Url { get; }
+    public string Alt { get; }
+
+    private Bitmap? _image;
+    public Bitmap? Image
+    {
+        get => _image;
+        private set
+        {
+            _image = value;
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Image)));
+        }
+    }
+
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+    private async Task LoadAsync()
+    {
+        Image = await ImageLoader.LoadAsync(TurnIllustrationViewModel.AbsoluteUrl(Url), 480).ConfigureAwait(true);
+    }
+}
+
 /// <summary>A single rendered narrative frame (web: block kinds narration/dialogue/inner_monologue).</summary>
 public sealed class BlockViewModel
 {
-    public BlockViewModel(TextBlock block, string charName, string userName)
+    private static readonly Regex ImgCmd = new("<img\\s+cmd\\s*=\\s*\"([^\"]*)\"\\s*/?>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    public BlockViewModel(TextBlock block, string charName, string userName, IReadOnlyDictionary<string, string>? assets = null)
     {
         var expanded = NarrativeText.ReplaceMacros(block.Text, charName, userName);
         if (block.Kind == "dialogue")
@@ -26,6 +76,7 @@ public sealed class BlockViewModel
             Text = expanded;
             IsNarration = true;
         }
+        Segments = BuildSegments(Text, assets);
     }
 
     public string Text { get; }
@@ -33,6 +84,34 @@ public sealed class BlockViewModel
     public bool IsMonologue { get; }
     public bool IsNarration { get; }
     public bool IsEmpty => string.IsNullOrEmpty(Text);
+
+    /// <summary>Text and embedded images in order; falls back to a single text run.</summary>
+    public IReadOnlyList<NarrativeSegment> Segments { get; }
+
+    private IReadOnlyList<NarrativeSegment> BuildSegments(string text, IReadOnlyDictionary<string, string>? assets)
+    {
+        NarrativeTextSegment TextSegment(string markdown) => new(markdown, IsDialogue, IsMonologue, IsNarration);
+        if (assets is null || assets.Count == 0) return new NarrativeSegment[] { TextSegment(text) };
+
+        var matches = ImgCmd.Matches(text);
+        if (matches.Count == 0) return new NarrativeSegment[] { TextSegment(text) };
+
+        var segments = new List<NarrativeSegment>();
+        var last = 0;
+        foreach (Match match in matches)
+        {
+            if (match.Index > last) segments.Add(TextSegment(text[last..match.Index]));
+            var cmd = match.Groups[1].Value.Trim();
+            var url = cmd.Length > 0 ? CardAssetCache.Resolve(assets, cmd) : null;
+            if (!string.IsNullOrEmpty(url))
+                segments.Add(new NarrativeImageSegment(url, cmd));
+            else
+                segments.Add(TextSegment(match.Value));
+            last = match.Index + match.Length;
+        }
+        if (last < text.Length) segments.Add(TextSegment(text[last..]));
+        return segments.Count > 0 ? segments : new NarrativeSegment[] { TextSegment(text) };
+    }
 }
 
 public sealed class OptionViewModel
@@ -50,6 +129,7 @@ public sealed class OptionViewModel
             _ => ("出其不意", "IconDice", "AccentAmberBrush"),
         };
         IconGeometry = Resolve<Geometry>(IconResourceKey);
+        AccentBrush = Resolve<IBrush>(Accent) ?? Resolve<IBrush>("TextSecondaryBrush");
     }
 
     public string OptionId { get; }
@@ -62,6 +142,9 @@ public sealed class OptionViewModel
 
     /// <summary>Accent brush resource key (token-driven, no literal color).</summary>
     public string Accent { get; }
+
+    /// <summary>Resolved accent brush for the intent stripe/icon.</summary>
+    public IBrush? AccentBrush { get; }
 
     private string IconResourceKey { get; }
 

@@ -26,6 +26,9 @@
   <Style Selector="Button.decision-card:pressed">
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>
+  <Style Selector="Button.decision-card:pointerover StackPanel.decision-hint">
+    <Setter Property="RenderTransform" Value="{x:Null}" />
+  </Style>
   <Style Selector="Button.node-item:pointerover">
     <Setter Property="RenderTransform" Value="{x:Null}" />
   </Style>

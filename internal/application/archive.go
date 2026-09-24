@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"tavernagent/internal/domain"
@@ -18,12 +19,19 @@ import (
 // 安全/完整性校验（外部输入不可信），存储层负责在单个事务内写入与 ID 重映射。
 type ArchiveService struct {
 	store      ports.ArchiveStore
+	assets     ports.CardAssetStore
 	appVersion string
 }
 
 // NewArchiveService 创建剧情包服务。
 func NewArchiveService(store ports.Store, appVersion string) *ArchiveService {
 	return &ArchiveService{store: store, appVersion: appVersion}
+}
+
+// NewArchiveServiceWithAssets 创建带卡资源读写的剧情包服务：
+// 导出时把会话角色的 charx 立绘一并打包，导入时落地到卡资源存储。
+func NewArchiveServiceWithAssets(store ports.Store, assets ports.CardAssetStore, appVersion string) *ArchiveService {
+	return &ArchiveService{store: store, assets: assets, appVersion: appVersion}
 }
 
 // ExportResult 是导出结果。
@@ -42,11 +50,39 @@ func (s *ArchiveService) Export(ctx context.Context, sessionID, branchID string)
 		return nil, Err("STORAGE_UNAVAILABLE", "读取会话失败: "+err.Error(), 503)
 	}
 	var buf bytes.Buffer
-	manifest, err := pack.Write(&buf, bundle, s.appVersion, time.Now())
+	manifest, err := pack.WriteWithAssets(&buf, bundle, s.collectAssets(bundle), s.appVersion, time.Now())
 	if err != nil {
 		return nil, Err("EXPORT_FAILED", "生成剧情包失败: "+err.Error(), 500)
 	}
 	return &ExportResult{Data: buf.Bytes(), Manifest: manifest}, nil
+}
+
+// collectAssets 读取会话角色的内嵌资源，供导出打包。缺失资源只跳过，不阻断导出。
+func (s *ArchiveService) collectAssets(bundle *domain.SessionBundle) map[string][]byte {
+	if s.assets == nil || bundle == nil || bundle.Session == nil || bundle.Session.CharacterID == "" {
+		return nil
+	}
+	names, err := s.assets.ListAssets(bundle.Session.CharacterID)
+	if err != nil || len(names) == 0 {
+		return nil
+	}
+	out := make(map[string][]byte, len(names))
+	for _, name := range names {
+		rc, _, err := s.assets.OpenAsset(bundle.Session.CharacterID, name)
+		if err != nil {
+			continue
+		}
+		data, rerr := io.ReadAll(io.LimitReader(rc, maxCharxEntryBytes))
+		rc.Close()
+		if rerr != nil {
+			continue
+		}
+		out[name] = data
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // ImportResult 是导入结果。
@@ -80,7 +116,18 @@ func (s *ArchiveService) Import(ctx context.Context, data []byte) (*ImportResult
 	if err != nil {
 		return nil, Err("STORAGE_UNAVAILABLE", "写入失败: "+err.Error(), 503)
 	}
+	s.persistImportedAssets(sess.CharacterID, rr.Assets)
 	return &ImportResult{Session: sess, Manifest: rr.Manifest, Assets: len(rr.Assets)}, nil
+}
+
+// persistImportedAssets 把剧情包内的卡资源落地到会话角色名下（best-effort）。
+func (s *ArchiveService) persistImportedAssets(characterID string, assets map[string][]byte) {
+	if s.assets == nil || characterID == "" || len(assets) == 0 {
+		return
+	}
+	for name, data := range assets {
+		_ = s.assets.SaveAsset(characterID, name, bytes.NewReader(data))
+	}
 }
 
 // validateBundle 做导入前的结构与兼容性校验（技术契约 §12.2 + T22）。

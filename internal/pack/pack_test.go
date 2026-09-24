@@ -317,3 +317,28 @@ func TestEmptyListsStayEmpty(t *testing.T) {
 		t.Fatalf("空记忆应读回空切片，实际 %#v", res.Bundle.Memories)
 	}
 }
+
+// 卡资源应随包往返，且文件名经过路径清洗。
+func TestWriteWithAssets_RoundTrip(t *testing.T) {
+	var buf bytes.Buffer
+	assets := map[string][]byte{
+		"smile.webp":          []byte("RIFF....WEBPVP8 "),
+		"../escape.png":       []byte("png-bytes"),
+		"assets/icon/one.png": []byte("icon-bytes"),
+	}
+	if _, err := WriteWithAssets(&buf, sampleBundle(), assets, "test", time.Unix(1700000000, 0)); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	res := readPack(t, buf.Bytes())
+	if len(res.Assets) != 3 {
+		t.Fatalf("assets = %d，期望 3 (%v)", len(res.Assets), res.Assets)
+	}
+	for name := range res.Assets {
+		if strings.ContainsAny(name, "/\\") || strings.HasPrefix(name, ".") {
+			t.Fatalf("资源名未清洗: %q", name)
+		}
+	}
+	if string(res.Assets["smile.webp"]) != "RIFF....WEBPVP8 " {
+		t.Fatalf("资源内容不匹配: %q", res.Assets["smile.webp"])
+	}
+}

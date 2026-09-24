@@ -31,11 +31,13 @@
                        HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding !HasTachie}" />
             <Image Source="{Binding Tachie}" Stretch="UniformToFill" VerticalAlignment="Top" IsVisible="{Binding HasTachie}" />
             <Border Background="#000000" Opacity="{Binding ExpressionOverlay}" IsHitTestVisible="False" />
-            <Border VerticalAlignment="Bottom" Height="110" IsHitTestVisible="False">
+            <Border VerticalAlignment="Bottom" Height="130" IsHitTestVisible="False">
               <Border.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-                  <GradientStop Offset="0" Color="#00000000" />
-                  <GradientStop Offset="1" Color="{DynamicResource C.BgSurface}" />
+                  <GradientStop Offset="0.0" Color="#00000000" />
+                  <GradientStop Offset="0.4" Color="#30000000" />
+                  <GradientStop Offset="0.8" Color="{DynamicResource C.BgSurface}" />
+                  <GradientStop Offset="1.0" Color="{DynamicResource C.BgSurface}" />
                 </LinearGradientBrush>
               </Border.Background>
             </Border>
@@ -52,8 +54,9 @@
               </Button>
             </Grid>
 
-            <StackPanel VerticalAlignment="Bottom" Margin="10" Spacing="6">
-              <Border Classes="surface-inset" CornerRadius="999" Padding="3" HorizontalAlignment="Center">
+            <StackPanel VerticalAlignment="Bottom" Margin="10,0,10,12" Spacing="6">
+              <Border Classes="surface-inset" CornerRadius="999" Padding="3" HorizontalAlignment="Center"
+                      BoxShadow="{DynamicResource Elevation1}" Opacity="0.95">
                 <StackPanel Orientation="Horizontal" Spacing="3">
                   <Button Classes="seg" Classes.active="{Binding IsAlertExpr}" Command="{Binding SetAlertCommand}" Content="警觉" />
                   <Button Classes="seg" Classes.active="{Binding IsCalmExpr}" Command="{Binding SetCalmCommand}" Content="冷静" />

@@ -424,15 +424,10 @@ export const ComposerShelf: React.FC = () => {
                 <div className="composer-mode-badge amber">
                   <Icon name="film" size={12} /> 导演大纲推进中
                 </div>
-              ) : (
-                <div className="composer-mode-badge subtle">
-                  <Icon name="sparkles" size={12} /> 自由推演
-                </div>
-              )}
+              ) : null}
             </div>
 
             <div className="composer-control-right">
-              <span className="composer-shortcut-hint">↵ 发送 · ⇧↵ 换行</span>
               <ContextMetricsPopover inputText={inputText} />
               <ThinkingEffortControl />
               <ModelQuickSwitch />

@@ -39,10 +39,11 @@ import (
 )
 
 // 读取上限：剧情包来自外部，必须假设它可能恶意或损坏。
+// 上限按 charx 卡资源规模放宽（一张卡可达数百个立绘），但仍设有硬边界。
 const (
-	MaxPackBytes         = 64 << 20
-	MaxEntries           = 512
-	MaxUncompressedTotal = 256 << 20
+	MaxPackBytes         = 256 << 20
+	MaxEntries           = 4096
+	MaxUncompressedTotal = 1 << 30
 	MaxEntryBytes        = 64 << 20
 )
 
@@ -119,6 +120,16 @@ type ReadResult struct {
 // Write 把会话快照编码为剧情包，并返回写入清单。
 // now 由调用方注入以便测试确定性；为空时取当前时间。
 func Write(w io.Writer, bundle *domain.SessionBundle, appVersion string, now time.Time) (*Manifest, error) {
+	return writePack(w, bundle, nil, appVersion, now)
+}
+
+// WriteWithAssets 在剧情包中一并写入卡资源（charx 立绘/图标）。
+// assets 的键是相对文件名（不含 assets/ 前缀），写入前会做路径清洗。
+func WriteWithAssets(w io.Writer, bundle *domain.SessionBundle, assets map[string][]byte, appVersion string, now time.Time) (*Manifest, error) {
+	return writePack(w, bundle, assets, appVersion, now)
+}
+
+func writePack(w io.Writer, bundle *domain.SessionBundle, assets map[string][]byte, appVersion string, now time.Time) (*Manifest, error) {
 	if bundle == nil || bundle.Session == nil {
 		return nil, fmt.Errorf("pack: empty bundle")
 	}
@@ -211,14 +222,45 @@ func Write(w io.Writer, bundle *domain.SessionBundle, appVersion string, now tim
 			return nil, err
 		}
 	}
-	// 资源目录：当前无内容，保留目录结构以便后续扩展。
+	// 资源目录：写入卡资源（charx 立绘/图标）。键经清洗，绝不接受路径穿越。
 	if _, err := zw.Create(dirAssets); err != nil {
 		return nil, err
+	}
+	for name, data := range assets {
+		safe := safeAssetName(name)
+		if safe == "" {
+			continue
+		}
+		if err := writeZipEntry(zw, dirAssets+safe, data); err != nil {
+			return nil, err
+		}
 	}
 	if err := zw.Close(); err != nil {
 		return nil, err
 	}
 	return manifest, nil
+}
+
+// safeAssetName 把资源文件名清洗为单一安全路径段。
+func safeAssetName(raw string) string {
+	base := path.Base(strings.ReplaceAll(raw, "\\", "/"))
+	if base == "." || base == ".." || base == "/" {
+		return ""
+	}
+	var b strings.Builder
+	for _, r := range base {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '_', r == '-':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('_')
+		}
+	}
+	out := strings.Trim(b.String(), ".")
+	if out == "" {
+		return ""
+	}
+	return out
 }
 
 // Read 解包并校验剧情包。校验顺序是"先廉价后昂贵"：

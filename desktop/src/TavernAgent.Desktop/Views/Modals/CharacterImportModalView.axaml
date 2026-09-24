@@ -25,8 +25,8 @@
             <TextBlock Text="拖入或选择角色卡" HorizontalAlignment="Center"
                        FontSize="{DynamicResource FsSm}" IsVisible="{Binding !Parsing}" />
             <Button Classes="ui-btn quiet" Margin="0,4,0,0" HorizontalAlignment="Center"
-                    Click="OnPickClick" Content="选择文件 (.png / .json)" IsEnabled="{Binding !Creating}" />
-            <TextBlock Text="支持 Tavern V2 / V3 与原生 JSON；解析在服务端完成"
+                    Click="OnPickClick" Content="选择文件 (.png / .json / .charx)" IsEnabled="{Binding !Creating}" />
+            <TextBlock Text="支持 Tavern V2 / V3、原生 JSON 与 charx 归档（含内嵌立绘）；解析在服务端完成"
                        HorizontalAlignment="Center" FontSize="{DynamicResource FsXs}"
                        Foreground="{DynamicResource TextDimBrush}" />
           </StackPanel>

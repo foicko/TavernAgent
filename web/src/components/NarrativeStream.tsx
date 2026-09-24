@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useUi } from "../stores/uiStore";
 import { useSettings } from "../stores/settingsStore";
-import { isTurnBusy, storyBusy, useStory } from "../stores/storyStore";
+import { isTurnBusy, useStory } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
 import { renderInlineMarkdown } from "../lib/inlineMarkdown";
+import { renderWithCardImages } from "../lib/risuImages";
+import { useCardAssetMap } from "../stores/cardAssetStore";
 import { DEFAULT_PLAYER_NAME, replaceMacros } from "../lib/characterMacros";
 import { HistoricalStory } from "./HistoricalStory";
 import { formatActionCheckBadge } from "../lib/ruleCheck";
@@ -19,12 +21,11 @@ export const NarrativeStream: React.FC = () => {
     switchViewMode,
     activeCharKey,
     toggleRightRail,
-    openLeftTabAndExpand,
     injectComposerText,
     showLorePop,
     hideLorePop,
     notifyQuiet,
-  } = useUi(useShallow(s => ({ viewMode: s.viewMode, switchViewMode: s.switchViewMode, activeCharKey: s.activeCharKey, toggleRightRail: s.toggleRightRail, openLeftTabAndExpand: s.openLeftTabAndExpand, injectComposerText: s.injectComposerText, showLorePop: s.showLorePop, hideLorePop: s.hideLorePop, notifyQuiet: s.notifyQuiet })));
+  } = useUi(useShallow(s => ({ viewMode: s.viewMode, switchViewMode: s.switchViewMode, activeCharKey: s.activeCharKey, toggleRightRail: s.toggleRightRail, injectComposerText: s.injectComposerText, showLorePop: s.showLorePop, hideLorePop: s.hideLorePop, notifyQuiet: s.notifyQuiet })));
 
   const {
     view,
@@ -37,7 +38,6 @@ export const NarrativeStream: React.FC = () => {
     chooseOption,
     continueTurn,
     retry,
-    regenerate,
     cancel,
     viewNodeId,
     backToHead,
@@ -48,13 +48,15 @@ export const NarrativeStream: React.FC = () => {
     sessionLoading,
     pendingSessionId,
     clearError,
-  } = useStory(useShallow(s => ({ view: s.view, messages: s.messages, phase: s.phase, error: s.error, draftBlocks: s.draftBlocks, thinkingText: s.thinkingText, lastInput: s.lastInput, chooseOption: s.chooseOption, continueTurn: s.continueTurn, retry: s.retry, regenerate: s.regenerate, cancel: s.cancel, viewNodeId: s.viewNodeId, backToHead: s.backToHead, forkFrom: s.forkFrom, hasMoreHistory: s.hasMoreHistory, loadOlder: s.loadOlder, loadingOlder: s.loadingOlder, sessionLoading: s.sessionLoading, pendingSessionId: s.pendingSessionId, clearError: s.clearError })));
+  } = useStory(useShallow(s => ({ view: s.view, messages: s.messages, phase: s.phase, error: s.error, draftBlocks: s.draftBlocks, thinkingText: s.thinkingText, lastInput: s.lastInput, chooseOption: s.chooseOption, continueTurn: s.continueTurn, retry: s.retry, cancel: s.cancel, viewNodeId: s.viewNodeId, backToHead: s.backToHead, forkFrom: s.forkFrom, hasMoreHistory: s.hasMoreHistory, loadOlder: s.loadOlder, loadingOlder: s.loadingOlder, sessionLoading: s.sessionLoading, pendingSessionId: s.pendingSessionId, clearError: s.clearError })));
   const openSettings = useSettings((s) => s.openSettings);
 
   const char = characterPresentation(activeCharKey, view);
   // 导入卡的开场与正文普遍写 {{char}}/{{user}}：原样显示会把宏直接摊在故事里。
   const playerName = view?.state?.characters?.["player"]?.name || DEFAULT_PLAYER_NAME;
   const expand = (text?: string) => replaceMacros(text ?? "", { charName: char.shortName || char.name, userName: playerName });
+  // 卡内嵌资源（charx 立绘）：把正文 <img cmd="..."> 渲染为图片。
+  const cardAssets = useCardAssetMap(view?.characterId);
   const scrollRef = useRef<HTMLDivElement>(null);
   // 只有读者本来就在底部附近时才自动跟随；否则用户上滑回看会被不断拽回去。
   const stickToBottomRef = useRef(true);
@@ -72,9 +74,7 @@ export const NarrativeStream: React.FC = () => {
       setThinkingOpen(false);
     }
   }, [phase]);
-  const latestTurn = useMemo(() => [...storyMessages].reverse().find(m => m.role === "assistant"), [storyMessages]);
   const wordCount = useMemo(() => storyMessages.reduce((count, m) => count + [...m.blocks.map(b => b.text).join("")].length, 0), [storyMessages]);
-  const busy = useStory(storyBusy);
   const activeTurnNumber = (view?.headNode?.turnNumber ?? storyMessages.length) + 1;
   const currentSessionId = view?.sessionId;
   const isWaitingColdSession = sessionLoading && (!view || (pendingSessionId && view.sessionId !== pendingSessionId));
@@ -169,53 +169,6 @@ export const NarrativeStream: React.FC = () => {
           {char.shortName} 档案
         </span>
       </button>
-
-      {/* Quiet Scene Telemetry Bar */}
-      <div className="scene-bar">
-        <div className="character-presence-deck">
-          <img
-            id="stage-avatar"
-            src={char.avatar}
-            alt={char.name}
-            className="char-avatar-frame"
-            onClick={() => openLeftTabAndExpand("characters")}
-            title="点击切换对话角色或查看卡片"
-          />
-          <div className="char-presence-info">
-            <div className="char-name-line">
-              <span
-                className="char-main-name"
-                id="stage-char-name"
-                onClick={() => openLeftTabAndExpand("characters")}
-              >
-                {char.shortName}
-              </span>
-              <span className="quiet-state-pill">{char.stateBadge}</span>
-              <span className="quiet-state-pill">{char.voiceBadge}</span>
-            </div>
-            <div
-              className="scene-sub-telemetry"
-              id="stage-scene-telemetry"
-              dangerouslySetInnerHTML={{ __html: char.telemetryHtml }}
-              onClick={(e) => {
-                // 事件委托：telemetryHtml 中的 data-open-tab 链接（静态可信预设，
-                // 无用户内容注入面），打开对应左栏子页签。
-                const tab = (e.target as HTMLElement).closest<HTMLElement>("[data-open-tab]")?.dataset.openTab;
-                if (tab) openLeftTabAndExpand(tab as Parameters<typeof openLeftTabAndExpand>[0]);
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="scene-bar-actions">
-          <button className="btn-quiet" onClick={() => openLeftTabAndExpand("characters")}>
-            <span>切换角色</span>
-          </button>
-          <button className="btn-quiet" disabled={!latestTurn || busy} onClick={() => latestTurn && void regenerate(latestTurn.id)}>
-            <span>重新讲述此轮</span>
-          </button>
-        </div>
-      </div>
 
       {/* Narrative Flow (纯净小说流) */}
       <div className="stage-scroll-area" id="narrative-stream" ref={scrollRef} onScroll={handleScroll}>
@@ -323,7 +276,7 @@ export const NarrativeStream: React.FC = () => {
               </div>
 
               <div className="dialogue-content-text">
-                {renderInlineMarkdown(expand(char.prologue))}
+                {renderWithCardImages(expand(char.prologue), cardAssets)}
               </div>
 
               <div className="prologue-guide-box">
@@ -428,20 +381,20 @@ export const NarrativeStream: React.FC = () => {
                     if (b.kind === "dialogue") {
                       return (
                         <p key={bi} className="block-dialogue">
-                          「{renderInlineMarkdown(expand(b.text.replace(/^[「"']|[」"']$/g, "")))}」
+                          「{renderWithCardImages(expand(b.text.replace(/^[「"']|[」"']$/g, "")), cardAssets)}」
                         </p>
                       );
                     }
                     if (b.kind === "inner_monologue") {
                       return (
                         <p key={bi} className="block-monologue">
-                          （{renderInlineMarkdown(expand(b.text.replace(/^[（(]|[）)]$/g, "")))}）
+                          （{renderWithCardImages(expand(b.text.replace(/^[（(]|[）)]$/g, "")), cardAssets)}）
                         </p>
                       );
                     }
                     return (
                       <p key={bi} className="block-narration">
-                        {renderInlineMarkdown(expand(b.text))}
+                        {renderWithCardImages(expand(b.text), cardAssets)}
                       </p>
                     );
                   })

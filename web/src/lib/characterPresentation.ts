@@ -111,7 +111,7 @@ export function characterPresentation(
     systemPrompt: character?.system_prompt || stored?.systemPrompt || "",
     postHistoryInstructions: character?.post_history_instructions || "",
     creatorNotes: character?.creator_notes || stored?.creatorNotes || "",
-    tags: character?.tags || stored?.tags || [],
+    tags: sanitizeDisplayTags(character?.tags || stored?.tags || []),
     creator: character?.creator || stored?.creator || "",
     version: character?.character_version || stored?.characterVersion || "",
     nickname: character?.nickname || stored?.nickname || "",
@@ -130,6 +130,27 @@ export function characterPresentation(
   };
 }
 
+const IGNORED_META_TAGS = new Set([
+  "nsfw", "sfw", "english", "chinese", "female", "male", "human",
+  "anime", "fictional character", "multiple greetings", "feet", "original character", "oc"
+]);
+
+export function sanitizeDisplayTags(rawTags: string[] | undefined | null, maxCount = 4): string[] {
+  if (!rawTags) return [];
+  const result: string[] = [];
+  for (const raw of rawTags) {
+    if (!raw) continue;
+    let trimmed = raw.trim();
+    if (trimmed.startsWith("#")) trimmed = trimmed.slice(1).trim();
+    if (!trimmed) continue;
+    if (trimmed.length > 18) continue;
+    if (IGNORED_META_TAGS.has(trimmed.toLowerCase())) continue;
+    result.push(trimmed);
+    if (result.length >= maxCount) break;
+  }
+  return result;
+}
+
 /**
  * storedCardTag 是本地角色库里一张卡的展示标签（身份标语）。
  * 角色库列表不经过会话视图，因此拿不到 playerName——由调用方传入当前会话的玩家名，
@@ -141,3 +162,4 @@ export function storedCardTag(card: { name: string; shortName?: string; role?: s
     userName: playerName || DEFAULT_PLAYER_NAME,
   });
 }
+

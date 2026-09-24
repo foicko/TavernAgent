@@ -26,6 +26,11 @@ type ImportReport struct {
 	Warnings    []string       `json:"warnings"`    // 兼容提示 / 秘密泄漏 / 危险标记
 	RawJSON     string         `json:"rawJson"`     // 卡内嵌原始 JSON（诊断用，不回传敏感值）
 	Card        *CharacterCard `json:"-"`
+	// CharxArchivePath 是 charx 归档的临时文件路径；非 charx 导入为空。
+	// 资源落地由 CardService 在建卡成功后据此流式完成。
+	CharxArchivePath string `json:"-"`
+	// CharxAssets 是待落地的内嵌资源清单；非 charx 导入为空。
+	CharxAssets []CharxAsset `json:"-"`
 }
 
 // 卡片元数据关键字（SillyTavern 兼容；tEXt/iTXt/zTXt 统一提取）。
@@ -265,6 +270,26 @@ type v3Asset struct {
 	Type string `json:"type"`
 	URI  string `json:"uri"`
 	Name string `json:"name"`
+	Ext  string `json:"ext"`
+}
+
+// mapV3Assets 把 V3 assets 规范化为卡级资源清单（保留名称/类型/URI/扩展名）。
+// Ref 由 charx 导入阶段回填；非 charx 卡（data:/http 资源）Ref 为空。
+func mapV3Assets(assets []v3Asset) []CardAsset {
+	if len(assets) == 0 {
+		return nil
+	}
+	out := make([]CardAsset, 0, len(assets))
+	for _, a := range assets {
+		if strings.TrimSpace(a.URI) == "" {
+			continue
+		}
+		out = append(out, CardAsset{Name: a.Name, Type: a.Type, URI: a.URI, Ext: a.Ext})
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // v2CharacterBook 是 chara_card_v2/v3 的世界书结构。
@@ -443,6 +468,7 @@ func mapSpecData(d v2Data, raw []byte, rep *ImportReport) error {
 		Nickname:      d.Nickname,
 		RawOriginal:   string(raw),
 	}
+	card.Assets = mapV3Assets(d.Assets)
 
 	desc := strings.TrimSpace(strings.Join([]string{d.Description, d.Personality, d.Scenario}, "\n\n"))
 	card.Description = desc

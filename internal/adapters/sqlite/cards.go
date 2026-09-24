@@ -141,6 +141,17 @@ func (s *Store) TouchCard(cardID string, at time.Time) error {
 	return nil
 }
 
+// CountSessionsForCharacter 返回引用某角色的会话数（含历史会话）。
+// 供删卡时判断是否可回收卡资源：仍有故事引用则保留。
+func (s *Store) CountSessionsForCharacter(characterID string) (int, error) {
+	if characterID == "" {
+		return 0, nil
+	}
+	var n int
+	err := s.rdb().QueryRow(`SELECT COUNT(*) FROM sessions WHERE character_id=?`, characterID).Scan(&n)
+	return n, err
+}
+
 func (s *Store) scanCard(row *sql.Row) (*domain.CharacterCardEntry, error) {
 	var c domain.CharacterCardEntry
 	var created, updated, used string

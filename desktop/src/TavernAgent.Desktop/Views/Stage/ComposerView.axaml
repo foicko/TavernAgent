@@ -6,46 +6,99 @@
              x:DataType="vm:ComposerViewModel">
   <Grid Margin="20,0,20,16" MaxWidth="{DynamicResource StageReadingWidth}" HorizontalAlignment="Center" ClipToBounds="True">
     <Border Classes="surface-elevated composer-island anim-rise-in-bottom"
-            CornerRadius="{DynamicResource RadiusXl}"
-            Padding="16,12">
-      <StackPanel Spacing="10">
+            CornerRadius="{DynamicResource RadiusLg}"
+            Padding="14,10">
+      <StackPanel Spacing="8">
 
-        <!-- Toolbar -->
-        <Grid ColumnDefinitions="*,Auto">
-          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <!-- Selected action banner (仅在挂起检定时展开) -->
+        <Border IsVisible="{Binding HasAction}"
+                Classes="surface-inset"
+                CornerRadius="{DynamicResource RadiusMd}"
+                Padding="10,6">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <Path Classes="icon" Data="{StaticResource IconDice}" Width="13" Height="13"
+                    Stroke="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
+              <TextBlock Text="已挂起规则检定：" FontSize="{DynamicResource FsXs}"
+                         Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding ActionFullLabel}" FontSize="{DynamicResource FsXs}"
+                         FontWeight="SemiBold"
+                         Foreground="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Button Grid.Column="2" Classes="ui-btn sm ghost" Command="{Binding ClearActionCommand}"
+                    Height="24" ToolTip.Tip="取消检定">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconClose}" Width="10" Height="10" />
+                <TextBlock Text="取消" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </Grid>
+        </Border>
+
+        <!-- Note row (仅在展开注记时显示) -->
+        <Border IsVisible="{Binding IsNoteOpen}"
+                Classes="surface-inset"
+                CornerRadius="{DynamicResource RadiusMd}"
+                Padding="8,4">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5" Margin="4,0,8,0" VerticalAlignment="Center">
+              <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12"
+                    Stroke="{DynamicResource TextDimBrush}" />
+              <TextBlock Text="本轮注记" FontSize="{DynamicResource FsXs}"
+                         Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBox Grid.Column="1" Text="{Binding Note}"
+                     Background="Transparent" BorderThickness="0"
+                     FontSize="{DynamicResource FsSm}"
+                     PlaceholderText="对本轮演绎的要求（非台词，不污染正文）：放慢节奏、多写环境…" />
+            <Button Grid.Column="2" Classes="ui-btn sm ghost" Command="{Binding ToggleNoteCommand}"
+                    Padding="4,2" ToolTip.Tip="收起注记">
+              <Path Classes="icon" Data="{StaticResource IconClose}" Width="11" Height="11" />
+            </Button>
+          </Grid>
+        </Border>
+
+        <!-- Main text input area -->
+        <TextBox Name="InputBox"
+                 Classes="composer-input"
+                 Text="{Binding Text, Mode=TwoWay}"
+                 KeyDown="OnInputKeyDown"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 MinHeight="50"
+                 MaxHeight="180"
+                 PlaceholderText="输入你的行动或对白… (Enter 发送 · Shift+Enter 换行)" />
+
+        <!-- Streamlined control deck (一体化操作栏) -->
+        <Grid ColumnDefinitions="*,Auto" Height="30">
+          <!-- Left side: Director, Note, Check and Macros -->
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
             <!-- 1. Director mode entry -->
             <Button Classes="ui-btn sm quiet" Command="{Binding OpenDirectorCommand}"
                     Classes.active="{Binding Director.IsActive}"
-                    ToolTip.Tip="讨论大纲并安排后续剧情">
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <Path Classes="icon" Data="{StaticResource IconFilm}" Width="13" Height="13" />
-                <TextBlock Text="导演模式" VerticalAlignment="Center" />
-                <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                    ToolTip.Tip="讨论大纲并安排后续剧情（导演模式）">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Path Classes="icon" Data="{StaticResource IconFilm}" Width="12" Height="12" />
+                <TextBlock Text="导演模式" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+                <Ellipse Width="5" Height="5" VerticalAlignment="Center"
                          Fill="{DynamicResource SuccessBrush}"
                          IsVisible="{Binding Director.IsActive}" />
               </StackPanel>
             </Button>
 
-            <Border Width="1" Height="16" VerticalAlignment="Center"
-                    Background="{DynamicResource BorderBrush}" />
-
             <!-- 2. Note entry -->
             <Button Classes="ui-btn sm quiet" Command="{Binding ToggleNoteCommand}"
                     Classes.active="{Binding IsNoteOpen}"
                     Classes.has-note="{Binding HasNote}"
-                    ToolTip.Tip="写一条本轮注记（不污染正文）">
+                    ToolTip.Tip="写一条本轮注记（非正文台词）">
               <StackPanel Orientation="Horizontal" Spacing="5">
                 <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12" />
-                <TextBlock Text="注记" VerticalAlignment="Center" />
-                <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                <TextBlock Text="注记" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+                <Ellipse Width="5" Height="5" VerticalAlignment="Center"
                          Fill="{DynamicResource AccentBrush}"
                          IsVisible="{Binding HasNote}" />
               </StackPanel>
             </Button>
-
-            <Border Width="1" Height="16" VerticalAlignment="Center"
-                    Background="{DynamicResource BorderBrush}"
-                    IsVisible="{Binding HasActions}" />
 
             <!-- 3. Skill check dropdown -->
             <Button Name="ActionDropdownButton"
@@ -95,141 +148,50 @@
                   </Border>
                 </Flyout>
               </Button.Flyout>
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconDice}" Width="13" Height="13" />
-                <TextBlock Text="{Binding ActionTriggerLabel}" VerticalAlignment="Center" />
-                <Path Classes="icon" Data="{StaticResource IconChevronDown}" Width="10" Height="10" Opacity="0.7" />
-              </StackPanel>
-            </Button>
-          </StackPanel>
-
-          <!-- Right side: Syntax macro helpers -->
-          <ItemsControl Grid.Column="1" ItemsSource="{Binding Macros}" VerticalAlignment="Center">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:MacroPill">
-                <Button Classes="ui-btn sm quiet macro-pill" Content="{Binding Label}"
-                        Click="OnMacroClick" />
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </Grid>
-
-        <!-- Selected action banner -->
-        <Border IsVisible="{Binding HasAction}"
-                Classes="surface-inset"
-                CornerRadius="{DynamicResource RadiusMd}"
-                Padding="10,6">
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-              <Path Classes="icon" Data="{StaticResource IconDice}" Width="13" Height="13"
-                    Stroke="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
-              <TextBlock Text="已选择规则检定：" FontSize="{DynamicResource FsXs}"
-                         Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding ActionFullLabel}" FontSize="{DynamicResource FsXs}"
-                         FontWeight="SemiBold"
-                         Foreground="{DynamicResource AccentAmberBrush}" VerticalAlignment="Center" />
-            </StackPanel>
-            <Button Grid.Column="2" Classes="ui-btn sm ghost" Command="{Binding ClearActionCommand}"
-                    Height="26" ToolTip.Tip="取消当前检定">
               <StackPanel Orientation="Horizontal" Spacing="4">
-                <Path Classes="icon" Data="{StaticResource IconClose}" Width="10" Height="10" />
-                <TextBlock Text="取消检定" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconDice}" Width="12" Height="12" />
+                <TextBlock Text="{Binding ActionTriggerLabel}" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconChevronDown}" Width="9" Height="9" Opacity="0.7" />
               </StackPanel>
             </Button>
-          </Grid>
-        </Border>
 
-        <!-- Note row -->
-        <Border IsVisible="{Binding IsNoteOpen}"
-                Classes="surface-inset"
-                CornerRadius="{DynamicResource RadiusMd}"
-                Padding="8,4">
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5" Margin="4,0,8,0" VerticalAlignment="Center">
-              <Path Classes="icon" Data="{StaticResource IconNote}" Width="12" Height="12"
-                    Stroke="{DynamicResource TextDimBrush}" />
-              <TextBlock Text="本轮注记" FontSize="{DynamicResource FsXs}"
-                         Foreground="{DynamicResource TextDimBrush}" VerticalAlignment="Center" />
-            </StackPanel>
-            <TextBox Grid.Column="1" Text="{Binding Note}"
-                     Background="Transparent" BorderThickness="0"
-                     FontSize="{DynamicResource FsSm}"
-                     PlaceholderText="对本轮演绎的要求（非台词，不污染正文）：放慢节奏、多写环境…" />
-            <Button Grid.Column="2" Classes="ui-btn sm ghost" Command="{Binding ToggleNoteCommand}"
-                    Padding="4,2" ToolTip.Tip="收起注记">
-              <Path Classes="icon" Data="{StaticResource IconClose}" Width="11" Height="11" />
-            </Button>
-          </Grid>
-        </Border>
-
-        <!-- Input -->
-        <TextBox Name="InputBox"
-                 Classes="composer-input"
-                 Text="{Binding Text, Mode=TwoWay}"
-                 KeyDown="OnInputKeyDown"
-                 AcceptsReturn="True"
-                 TextWrapping="Wrap"
-                 MinHeight="48"
-                 MaxHeight="160"
-                 PlaceholderText="{Binding Placeholder}" />
-
-        <!-- Control deck -->
-        <Grid ColumnDefinitions="*,Auto" Height="30">
-          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <!-- 1. Check badge -->
-            <Border Classes="state-pill" Background="{DynamicResource SubtleBrush}"
-                    BorderBrush="{DynamicResource AccentAmberBrush}"
-                    BorderThickness="1"
-                    Padding="8,3"
-                    IsVisible="{Binding HasAction}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconDice}" Width="11" Height="11"
-                      Stroke="{DynamicResource AccentAmberBrush}" />
-                <TextBlock Text="{Binding ActionBadgeLabel}" FontSize="11"
-                           Foreground="{DynamicResource AccentAmberBrush}" FontWeight="Medium" />
-              </StackPanel>
-            </Border>
-
-            <!-- 2. Director badge -->
+            <!-- Director badge: only show when active -->
             <Border Classes="state-pill" Background="{DynamicResource SubtleBrush}"
                     BorderBrush="{DynamicResource SuccessBrush}"
                     BorderThickness="1"
-                    Padding="8,3"
+                    Padding="6,2"
                     IsVisible="{Binding IsDirectorModeBadgeVisible}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconFilm}" Width="11" Height="11"
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconFilm}" Width="10" Height="10"
                       Stroke="{DynamicResource SuccessBrush}" />
-                <TextBlock Text="导演大纲推进中" FontSize="11"
-                           Foreground="{DynamicResource SuccessBrush}" FontWeight="Medium" />
+                <TextBlock Text="大纲推进中" FontSize="10"
+                           Foreground="{DynamicResource SuccessBrush}" />
               </StackPanel>
             </Border>
 
-            <!-- 3. Freeform badge -->
-            <Border Classes="state-pill" Background="{DynamicResource SubtleBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    Padding="8,3"
-                    IsVisible="{Binding IsFreeformModeBadgeVisible}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconSparkles}" Width="11" Height="11"
-                      Stroke="{DynamicResource TextDimBrush}" />
-                <TextBlock Text="自由推演" FontSize="11"
-                           Foreground="{DynamicResource TextDimBrush}" />
-              </StackPanel>
-            </Border>
-
-            <!-- Shortcut hint -->
-            <TextBlock Text="Enter 发送 · Shift+Enter 换行" FontSize="{DynamicResource FsXs}"
-                       VerticalAlignment="Center" Margin="4,0,0,0"
-                       Foreground="{DynamicResource TextDimBrush}" />
+            <!-- Compact macro pills -->
+            <ItemsControl ItemsSource="{Binding Macros}" VerticalAlignment="Center">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="3" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:MacroPill">
+                  <Button Classes="ui-btn sm ghost macro-pill"
+                          Padding="4,2"
+                          ToolTip.Tip="{Binding Label}"
+                          Click="OnMacroClick">
+                    <TextBlock Text="{Binding Text}" FontSize="10.5" Foreground="{DynamicResource TextDimBrush}" />
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
           </StackPanel>
 
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <!-- Right side: Context donut, Model, Effort, Send -->
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
             <!-- Context metrics donut -->
-            <Button Classes="ui-btn sm quiet" Height="30" ToolTip.Tip="上下文占用">
+            <Button Classes="ui-btn sm quiet" Height="28" Padding="5,0"
+                    ToolTip.Tip="上下文窗口占用比例（点击查看令牌预算与拆解）">
               <Button.Flyout>
                 <Flyout Placement="Top">
                   <Border DataContext="{Binding Context}" Width="272" Classes="surface-elevated" Padding="14">
@@ -261,75 +223,77 @@
                   </Border>
                 </Flyout>
               </Button.Flyout>
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <Panel Width="16" Height="16">
-                  <Ellipse Width="16" Height="16" Stroke="{DynamicResource MeterTrackBrush}" StrokeThickness="2.5" />
-                  <Arc Width="16" Height="16" StartAngle="-90"
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Panel Width="14" Height="14">
+                  <Ellipse Width="14" Height="14" Stroke="{DynamicResource MeterTrackBrush}" StrokeThickness="2" />
+                  <Arc Width="14" Height="14" StartAngle="-90"
                        SweepAngle="{Binding Context.SweepAngle}"
-                       Stroke="{DynamicResource SuccessBrush}" StrokeThickness="2.5" />
+                       Stroke="{DynamicResource SuccessBrush}" StrokeThickness="2" />
                 </Panel>
-                <TextBlock Text="{Binding Context.PercentageText}" FontSize="{DynamicResource FsXs}"
+                <TextBlock Text="{Binding Context.PercentageText}" FontSize="11"
                            VerticalAlignment="Center" />
               </StackPanel>
             </Button>
 
+            <!-- Model quick switch -->
             <ComboBox Classes="composer-pill"
                       IsVisible="{Binding HasModels}"
                       ItemsSource="{Binding Models}"
                       SelectedItem="{Binding SelectedModel}"
-                      Height="30"
-                      MinWidth="110"
+                      Height="28"
+                      MinWidth="100"
                       FontSize="{DynamicResource FsXs}"
                       VerticalContentAlignment="Center"
-                      ToolTip.Tip="主线模型">
+                      ToolTip.Tip="临时切换本轮所用的 AI 模型（全局配置请点击右上角）">
               <ComboBox.ItemTemplate>
                 <DataTemplate DataType="vm:ModelQuickItem">
-                  <TextBlock Text="{Binding Name}" />
+                  <TextBlock Text="{Binding Name}" FontSize="{DynamicResource FsXs}" />
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
 
+            <!-- Reasoning effort dropdown -->
             <ComboBox Classes="composer-pill"
                       ItemsSource="{Binding Efforts}"
                       SelectedItem="{Binding SelectedEffortItem}"
-                      Height="30"
-                      MinWidth="72"
+                      Height="28"
+                      MinWidth="64"
                       FontSize="{DynamicResource FsXs}"
                       VerticalContentAlignment="Center"
                       ToolTip.Tip="思考强度">
               <ComboBox.ItemTemplate>
                 <DataTemplate DataType="vm:EffortItem">
-                  <TextBlock Text="{Binding Label}" />
+                  <TextBlock Text="{Binding Label}" FontSize="{DynamicResource FsXs}" />
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <Button Classes="ui-btn danger" Height="30" IsVisible="{Binding CanCancel}"
+            <Button Classes="ui-btn danger" Height="28" Padding="8,0" IsVisible="{Binding CanCancel}"
                     Command="{Binding CancelCommand}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconStop}" Width="11" Height="11" />
-                <TextBlock Text="停止" VerticalAlignment="Center" />
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconStop}" Width="10" Height="10" />
+                <TextBlock Text="停止" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-            <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding CanContinue}"
+            <Button Classes="ui-btn primary" Height="28" Padding="8,0" IsVisible="{Binding CanContinue}"
                     Command="{Binding ContinueCommand}">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconPlay}" Width="11" Height="11" />
-                <TextBlock Text="继续" VerticalAlignment="Center" />
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconPlay}" Width="10" Height="10" />
+                <TextBlock Text="继续" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-            <Button Classes="ui-btn quiet" Height="30" IsVisible="{Binding CanRetry}"
+            <Button Classes="ui-btn quiet" Height="28" Padding="8,0" IsVisible="{Binding CanRetry}"
                     Command="{Binding RetryCommand}" ToolTip.Tip="重新尝试本轮生成">
-              <StackPanel Orientation="Horizontal" Spacing="5">
-                <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="11" Height="11" />
-                <TextBlock Text="重试" VerticalAlignment="Center" />
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Path Classes="icon" Data="{StaticResource IconRefresh}" Width="10" Height="10" />
+                <TextBlock Text="重试" FontSize="{DynamicResource FsXs}" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-            <Button Classes="ui-btn primary" Height="30" IsVisible="{Binding ShowSendButton}"
+            <Button Classes="ui-btn primary" Height="28" Padding="12,0" IsVisible="{Binding ShowSendButton}"
                     Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}">
               <StackPanel Orientation="Horizontal" Spacing="5">
-                <TextBlock Text="发送" VerticalAlignment="Center" />
-                <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="11" Height="11" Opacity="0.8" />
+                <TextBlock Text="发送" FontSize="{DynamicResource FsXs}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Path Classes="icon" Data="{StaticResource IconCornerDownLeft}" Width="10" Height="10" Opacity="0.85" />
               </StackPanel>
             </Button>
           </StackPanel>

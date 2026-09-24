@@ -37,6 +37,34 @@ public sealed class CharacterPresentation
     public bool IsActive => StagePill == "当前主角" || StagePill == "已载入";
     public bool ShowSubtitle => !string.IsNullOrWhiteSpace(Name) && !string.Equals(Name.Trim(), ShortName.Trim(), StringComparison.Ordinal);
 
+    private static readonly HashSet<string> IgnoredMetaTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "nsfw", "sfw", "english", "chinese", "female", "male", "human",
+        "anime", "fictional character", "multiple greetings", "feet", "original character", "oc"
+    };
+
+    public static IReadOnlyList<string> SanitizeDisplayTags(IEnumerable<string>? rawTags, int maxCount = 4)
+    {
+        if (rawTags is null) return Array.Empty<string>();
+
+        var result = new List<string>();
+        foreach (var tag in rawTags)
+        {
+            if (string.IsNullOrWhiteSpace(tag)) continue;
+            var trimmed = tag.Trim();
+            if (trimmed.StartsWith('#')) trimmed = trimmed[1..].Trim();
+            if (string.IsNullOrWhiteSpace(trimmed)) continue;
+
+            if (trimmed.Length > 18) continue;
+            if (IgnoredMetaTags.Contains(trimmed)) continue;
+
+            result.Add(trimmed);
+            if (result.Count >= maxCount) break;
+        }
+
+        return result;
+    }
+
     public static CharacterPresentation Resolve(string? charKey, SessionView? view)
     {
         var preset = CharacterPresets.Neutral;
@@ -78,7 +106,7 @@ public sealed class CharacterPresentation
             ModalDesc = string.IsNullOrWhiteSpace(character?.Description) ? preset.ModalDesc : character!.Description!,
             AvatarSource = avatarUsable ? avatar : null,
             PlayerName = player,
-            Tags = character?.Tags ?? new List<string>(),
+            Tags = SanitizeDisplayTags(character?.Tags),
             Description = character?.Description ?? "",
             Personality = character?.Personality ?? "",
             Scenario = character?.Scenario ?? "",

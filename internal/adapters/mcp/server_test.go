@@ -23,7 +23,7 @@ func setupTestMCP(t *testing.T) (*mcp.Server, ports.Store) {
 	t.Cleanup(func() { _ = store.Close() })
 
 	sessionSvc := application.NewSessionService(store)
-	cardSvc := application.NewCardService(store)
+	cardSvc := application.NewCardService(store, nil)
 
 	srv := mcp.New(mcp.Config{
 		Store:    store,
