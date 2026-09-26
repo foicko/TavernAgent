@@ -9,7 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -31,6 +33,18 @@ type ImportReport struct {
 	CharxArchivePath string `json:"-"`
 	// CharxAssets 是待落地的内嵌资源清单；非 charx 导入为空。
 	CharxAssets []CharxAsset `json:"-"`
+	// EmbeddedAssets 是内嵌在卡文件本体（非归档）里、需在入库时写入卡资源
+	// 存储的资源字节；目前用于 RisuAI PNG 的 chara-ext-asset_:N 扩展块。
+	EmbeddedAssets []EmbeddedAsset `json:"-"`
+}
+
+// EmbeddedAsset 是内嵌于卡文件（而非 ZIP 归档）的一项图片资源。
+// 与 CharxAsset 的区别是字节已在内存中，无需再打开归档。
+type EmbeddedAsset struct {
+	Name string // assets[].name：正文图像标记的键
+	Ref  string // 落地文件名（存于卡 JSON 的 assets[].ref）
+	Ext  string // 扩展名（不含点）
+	Data []byte // 解码后的图片字节
 }
 
 // 卡片元数据关键字（SillyTavern 兼容；tEXt/iTXt/zTXt 统一提取）。
@@ -72,7 +86,105 @@ func ImportCardPNG(pngData []byte) (*ImportReport, error) {
 		}
 	}
 	attachPNGAvatar(rep, pngData)
+	var missingExt int
+	rep.EmbeddedAssets, missingExt = collectPNGExtAssets(meta, rep.Card)
+	if len(rep.EmbeddedAssets) > 0 {
+		rep.Supported = append(rep.Supported, fmt.Sprintf("PNG 内嵌图片资源 %d 项（RisuAI chara-ext-asset）", len(rep.EmbeddedAssets)))
+	}
+	if missingExt > 0 {
+		rep.Warnings = append(rep.Warnings, fmt.Sprintf("PNG 声明了 %d 项 __asset 图片资源，但卡内缺少对应数据块，相关图片无法显示", missingExt))
+	}
 	return rep, nil
+}
+
+// pngAssetIndex 解析 RisuAI PNG 外置资源引用 `__asset:N`（N 为扩展块序号）。
+func pngAssetIndex(uri string) (int, bool) {
+	const prefix = "__asset:"
+	s := strings.TrimSpace(uri)
+	if !strings.HasPrefix(s, prefix) {
+		return 0, false
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(s, prefix)))
+	if err != nil || n < 0 {
+		return 0, false
+	}
+	return n, true
+}
+
+// collectPNGExtAssets 把 assets[].uri = "__asset:N" 的声明与 PNG 的
+// chara-ext-asset_:N 扩展块对齐：base64 解码后登记为待落地资源并回填 Ref。
+//
+// 找不到对应扩展块的声明会被清空 URI：它没有可服务的字节，留着会让前端渲染出
+// 断裂的 <img>；清空后前端视其为无资源，退回纯文本（与「宁可显示原文」一致）。
+// 返回 (资源清单, 缺失计数)。
+func collectPNGExtAssets(meta map[string]string, card *CharacterCard) ([]EmbeddedAsset, int) {
+	if card == nil || len(card.Assets) == 0 {
+		return nil, 0
+	}
+	used := map[string]bool{}
+	refByKey := map[string]string{}
+	var out []EmbeddedAsset
+	var total, missing int
+	for i := range card.Assets {
+		a := &card.Assets[i]
+		idx, ok := pngAssetIndex(a.URI)
+		if !ok {
+			continue
+		}
+		key := pngExtAssetPrefix + strconv.Itoa(idx)
+		raw, found := meta[key]
+		if !found {
+			a.URI = ""
+			missing++
+			continue
+		}
+		if ref, seen := refByKey[key]; seen {
+			a.Ref = ref
+			continue
+		}
+		decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(raw))
+		if err != nil || len(decoded) == 0 {
+			a.URI = ""
+			missing++
+			continue
+		}
+		if len(decoded) > maxMetaChunk || total+len(decoded) > maxEmbeddedTotalBytes {
+			a.URI = ""
+			missing++
+			continue
+		}
+		ext := strings.TrimPrefix(a.Ext, ".")
+		if ext == "" {
+			ext = strings.TrimPrefix(path.Ext(a.Name), ".")
+		}
+		if ext == "" {
+			ext = detectImageExt(decoded)
+		}
+		ref := uniqueAssetFile(a.Name, key, ext, used)
+		refByKey[key] = ref
+		total += len(decoded)
+		a.Ref = ref
+		a.Ext = ext
+		out = append(out, EmbeddedAsset{Name: a.Name, Ref: ref, Ext: ext, Data: decoded})
+	}
+	return out, missing
+}
+
+// detectImageExt 按魔数识别图片扩展名，用于资源名/声明都缺扩展名时。
+func detectImageExt(b []byte) string {
+	switch {
+	case len(b) >= 8 && bytes.Equal(b[:8], []byte{0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A}):
+		return "png"
+	case len(b) >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF:
+		return "jpg"
+	case len(b) >= 12 && string(b[0:4]) == "RIFF" && string(b[8:12]) == "WEBP":
+		return "webp"
+	case len(b) >= 6 && (string(b[0:6]) == "GIF87a" || string(b[0:6]) == "GIF89a"):
+		return "gif"
+	case len(b) >= 12 && string(b[4:12]) == "ftypavif":
+		return "avif"
+	}
+	return "bin"
 }
 
 // backfillChunkMetadata 用独立的 Creator / Notes / Comment 文本块补齐卡片元数据。
@@ -636,6 +748,15 @@ var (
 	}
 )
 
+// pngExtAssetPrefix 是 RisuAI PNG 内嵌图片资源的关键字前缀（形如
+// chara-ext-asset_:0）。这些块的值是 base64 编码的图片，V3 的 assets[] 用
+// uri="__asset:N" 引用它们。
+const pngExtAssetPrefix = "chara-ext-asset_:"
+
+// maxEmbeddedTotalBytes 是单张 PNG 内嵌扩展资源解码后的总量上限。
+// （PNG 本体已受 maxInlineCardBytes=64MB 约束，这里是独立于调用方的防御性上限。）
+const maxEmbeddedTotalBytes = 64 << 20
+
 func containsScriptLike(s string) bool {
 	return htmlTagRe.MatchString(s) || evtRe.MatchString(s)
 }
@@ -698,7 +819,8 @@ func readTextChunk(ctype string, body []byte, out map[string]string, inflateBudg
 	}
 	key := string(body[:nul])
 	// 先按关键字过滤再解压：不认识的关键字直接跳过，不为它付出任何解压代价。
-	if !knownMetaKeys[key] {
+	// chara-ext-asset_:N 是 RisuAI PNG 的外置图片资源块，按前缀放行。
+	if !knownMetaKeys[key] && !strings.HasPrefix(key, pngExtAssetPrefix) {
 		return nil
 	}
 	rest := body[nul+1:]

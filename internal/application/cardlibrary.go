@@ -2,6 +2,7 @@ package application
 
 import (
 	"archive/zip"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -70,7 +71,28 @@ func (s *CardService) SaveReport(rep *ImportReport) (*domain.CharacterCardEntry,
 		return nil, Err("STORAGE_UNAVAILABLE", "保存角色卡失败: "+err.Error(), 503)
 	}
 	s.persistCharxAssets(rep, entry.CardID)
+	s.persistEmbeddedAssets(rep, entry.CardID)
 	return entry, nil
+}
+
+// persistEmbeddedAssets 把已解码进内存的内嵌资源（RisuAI PNG 的
+// chara-ext-asset 块等）写入卡资源存储。与 charx 资源同样：落地失败只告警，
+// 不回滚卡片——卡内容本身已可用，缺图属于降级。
+func (s *CardService) persistEmbeddedAssets(rep *ImportReport, cardID string) {
+	if s.assets == nil || rep == nil || len(rep.EmbeddedAssets) == 0 {
+		return
+	}
+	var saved int
+	for _, a := range rep.EmbeddedAssets {
+		if err := s.assets.SaveAsset(cardID, a.Ref, bytes.NewReader(a.Data)); err != nil {
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("内嵌资源「%s」落地失败：%v", a.Name, err))
+			continue
+		}
+		saved++
+	}
+	if saved < len(rep.EmbeddedAssets) {
+		rep.Warnings = append(rep.Warnings, fmt.Sprintf("内嵌资源共 %d 项，成功落地 %d 项", len(rep.EmbeddedAssets), saved))
+	}
 }
 
 // persistCharxAssets 把 charx 归档中的资源流式写入卡资源存储。

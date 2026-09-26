@@ -4,19 +4,21 @@
 // 否则原样保留文本。因此没有任意 HTML 注入面。
 //
 // 支持的标记（与 internal/cardmarkers 保持一致）：
-//   <img cmd="key"> / [IMG:key]   图片（卡内资源）
-//   [HUD:label=value|…]           状态面板
-//   [SCENE:title]                 场景
-//   [VAR:key=value|…]             会话变量（正文里不展示）
+//   <img cmd="key"> / <img="key"> / <img_obj="key"> / <imgBG="key"> /
+//   <img src="key" …> / [IMG:key]  图片（卡内资源）
+//   [HUD:label=value|…]            状态面板
+//   [SCENE:title]                  场景
+//   [VAR:key=value|…]              会话变量（正文里不展示）
 //
 // 转义：`[[` 表示字面量 `[`。
 import { Fragment, type ReactNode } from "react";
 import { renderInlineMarkdown } from "./inlineMarkdown";
-import { resolveCardAsset } from "./risuImages";
+import { IMG_TAG_SOURCE, resolveCardAsset } from "./risuImages";
 import { CardHUD } from "../components/CardHUD";
 import type { UIHint } from "../app/types";
 
-const MARKER_RE = /<img\s+cmd\s*=\s*"([^"]*)"\s*\/?>|\[(IMG|HUD|SCENE|VAR):([^\[\]\r\n]*)\]/gi;
+const BRACKET_MARKER_SOURCE = "\\[(IMG|HUD|SCENE|VAR):([^\\[\\]\\r\\n]*)\\]";
+const MARKER_RE = new RegExp(`${IMG_TAG_SOURCE}|${BRACKET_MARKER_SOURCE}`, "gi");
 const ESCAPE_SENTINEL = "\u0000LBRACK\u0000";
 
 interface Segment {

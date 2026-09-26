@@ -27,6 +27,33 @@ describe("parseCardMarkers", () => {
     expect(segs.filter((s) => s.kind === "image")).toHaveLength(2);
   });
 
+  it("兼容 <img=、<img_obj=、<imgBG= 与 <img src=> 多种写法", () => {
+    const segs = parseCardMarkers(
+      `<img="smile"> <img_obj="smile"> <imgBG="smile"> <img src="smile" relation="Sister" favorability="20">`,
+      assets
+    );
+    expect(segs.filter((s) => s.kind === "image")).toHaveLength(4);
+    // 带附加属性的 src 写法必须整段吃掉，不能把 relation=… 残留为文本。
+    const leftovers = segs
+      .filter((s) => s.kind === "text")
+      .map((s) => s.text ?? "")
+      .join("");
+    expect(leftovers).not.toContain("relation");
+    expect(leftovers).not.toContain("favorability");
+  });
+
+  it("忽略大小写命中资源（neutral vs Neutral）", () => {
+    const mixed = { "has_Neutral": "/api/v1/cards/c/assets/has_Neutral.webp" };
+    const segs = parseCardMarkers(`<img src="has_neutral" relation="x">`, mixed);
+    expect(segs.filter((s) => s.kind === "image")).toHaveLength(1);
+  });
+
+  it("无扩展名的键回退到带扩展名的资源（robe.default → robe.default.avif）", () => {
+    const withExt = { "robe.default.avif": "/api/v1/cards/c/assets/robe.default.avif" };
+    const segs = parseCardMarkers(`<img_obj="Robe.default">`, withExt);
+    expect(segs.filter((s) => s.kind === "image")).toHaveLength(1);
+  });
+
   it("VAR 不在正文中展示", () => {
     const segs = parseCardMarkers("[VAR:lang=KO]正文");
     expect(segs.map((s) => s.kind)).toEqual(["text"]);

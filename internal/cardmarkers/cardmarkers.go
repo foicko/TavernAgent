@@ -6,7 +6,7 @@
 // 标记分两类：
 //   - 状态类（HUD/SCENE/VAR）：承载状态，需由服务端归一化进结构化字段，
 //     从正文中**剥离**，避免污染记忆引文与证据；
-//   - 表现类（IMG，以及既有 <img cmd="...">）：纯展示，保留在正文中由前端就地渲染。
+//   - 表现类（IMG，以及 <img cmd="..."> 等 RisuAI 图像指令）：纯展示，保留在正文中由前端就地渲染。
 //
 // 语法（v1，方括号，键值用 | 分隔、= 连接）：
 //
@@ -54,7 +54,7 @@ const removedSentinel = "\x00RM\x00"
 
 // Extract 从正文中剥离状态类标记，返回清理后的文本与解析出的提示。
 //
-// 表现类标记（[IMG:…] 与 <img cmd="…">）不在此处理：它们保留在文本里，由渲染层就地展示。
+// 表现类标记（[IMG:…] 与 <img …> 图像指令）不在此处理：它们保留在文本里，由渲染层就地展示。
 // 因此没有任意 HTML 注入面——本函数只识别这三种固定形态。
 //
 // 返回文本保留 `[[` 转义：它会落库，之后还要被 SplitImages 与前端解析器再解析一遍，
@@ -117,9 +117,18 @@ type Segment struct {
 	AssetKey string `json:"assetKey,omitempty"`
 }
 
-// imgRe 匹配表现类图片标记：`<img cmd="key">`（含自闭合）与 `[IMG:key]`。
-// 与 Extract 一样用 [^\[\]\r\n] 限制方括号形式，避免跨标记匹配。
-var imgRe = regexp.MustCompile(`(?i)<img\s+cmd\s*=\s*"([^"]{0,` + strconv.Itoa(maxMarkerBody) + `})"\s*/?>|\[IMG:([^\[\]\r\n]{0,` + strconv.Itoa(maxMarkerBody) + `})\]`)
+// imgRe 匹配表现类图片标记。为兼容真实 RisuAI / charx 角色卡，接受多种写法：
+//
+//	<img cmd="key">           经典写法
+//	<img="key">               RisuAI 旧式写法
+//	<img_obj="key">           物件/道具图
+//	<imgBG="key">             背景图
+//	<img src="key" attr="…">  带附加属性的写法（只取第一个双引号值）
+//	[IMG:key]                 方括号等价写法
+//
+// 属性名部分用 [-\w]* 限制，引号值有长度上限；与 Extract 一样用 [^\[\]\r\n]
+// 约束方括号形式，避免跨标记匹配。
+var imgRe = regexp.MustCompile(`(?i)<img\s*[-\w]*\s*=\s*"([^"]{0,` + strconv.Itoa(maxMarkerBody) + `})"[^>]*>|\[IMG:([^\[\]\r\n]{0,` + strconv.Itoa(maxMarkerBody) + `})\]`)
 
 // SplitImages 把正文切成文本段与图片段。
 //

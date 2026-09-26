@@ -36,6 +36,19 @@ func TestSplitImages(t *testing.T) {
 			},
 		},
 		{
+			name: "兼容 RisuAI 多种图像指令写法",
+			in:   `<img="a"> <img_obj="b"> <imgBG="c"> <img src="d" relation="Sister" favorability="20">`,
+			want: []Segment{
+				{Type: "image", AssetKey: "a"},
+				{Type: "text", Text: " "},
+				{Type: "image", AssetKey: "b"},
+				{Type: "text", Text: " "},
+				{Type: "image", AssetKey: "c"},
+				{Type: "text", Text: " "},
+				{Type: "image", AssetKey: "d"},
+			},
+		},
+		{
 			name: "空键不构成图片：原样留在文本里",
 			in:   "前[IMG:]后",
 			want: []Segment{{Type: "text", Text: "前[IMG:]后"}},
