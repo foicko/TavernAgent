@@ -73,7 +73,6 @@ Generated conservatively from all locked Go modules and the installed production
 | github.com/muesli/reflow | v0.3.0 | See included text | [LICENSE](LICENSES/github.com_muesli_reflow-1.txt) |
 | github.com/muesli/termenv | v0.15.3-0.20240618155329-98d742f6907a | See included text | [LICENSE](LICENSES/github.com_muesli_termenv-1.txt) |
 | github.com/ncruces/go-strftime | v1.0.0 | See included text | [LICENSE](LICENSES/github.com_ncruces_go-strftime-1.txt) |
-| github.com/nfnt/resize | v0.0.0-20180221191011-83c6a9932646 | See included text | [LICENSE](LICENSES/github.com_nfnt_resize-1.txt) |
 | github.com/niemeyer/pretty | v0.0.0-20200227124842-a10e7caefd8e | See included text | [License](LICENSES/github.com_niemeyer_pretty-1.txt) |
 | github.com/pjbgf/sha1cd | v0.6.0 | See included text | [LICENSE](LICENSES/github.com_pjbgf_sha1cd-1.txt) |
 | github.com/pkg/browser | v0.0.0-20240102092130-5ac0b6a4141c | See included text | [LICENSE](LICENSES/github.com_pkg_browser-1.txt) |
@@ -87,7 +86,6 @@ Generated conservatively from all locked Go modules and the installed production
 | github.com/sergi/go-diff | v1.3.2-0.20230802210424-5b0b94c5c0d3 | See included text | [LICENSE](LICENSES/github.com_sergi_go-diff-1.txt) |
 | github.com/skeema/knownhosts | v1.3.1 | See included text | [LICENSE](LICENSES/github.com_skeema_knownhosts-1.txt) · [NOTICE](LICENSES/github.com_skeema_knownhosts-2.txt) |
 | github.com/stretchr/testify | v1.11.1 | See included text | [LICENSE](LICENSES/github.com_stretchr_testify-1.txt) |
-| github.com/tc-hib/winres | v0.3.1 | See included text | [LICENSE](LICENSES/github.com_tc-hib_winres-1.txt) |
 | github.com/tidwall/gjson | v1.14.2 | See included text | [LICENSE](LICENSES/github.com_tidwall_gjson-1.txt) |
 | github.com/tidwall/match | v1.1.1 | See included text | [LICENSE](LICENSES/github.com_tidwall_match-1.txt) |
 | github.com/tidwall/pretty | v1.2.0 | See included text | [LICENSE](LICENSES/github.com_tidwall_pretty-1.txt) |

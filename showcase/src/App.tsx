@@ -167,8 +167,7 @@ export const App: React.FC = () => {
         </p>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", maxWidth: "600px", lineHeight: 1.6 }}>
           基于 beautifului.dev、beui.dev、rareui.com、transitions.dev 与 ui.shadcn.com。全部 382+
-          原件源码保存于项目根目录 <code>reference-components/</code> 中，可直接引入 Avalonia C#
-          桌面端与 React Web 端。
+          原件源码保存于项目根目录 <code>reference-components/</code> 中，可直接引入 React Web 端。
         </p>
       </footer>
 
@@ -226,8 +225,6 @@ export const App: React.FC = () => {
                 <strong style={{ color: "var(--text-main)" }}>💡 接入指南：</strong>
                 <br />
                 - 完整源码文件保存在 <code>{drawerData.path}</code>
-                <br />
-                - Avalonia 桌面端参考实现可映射至 <code>desktop/Styles/</code> 与 <code>desktop/Controls/</code>
                 <br />
                 - Web 端可直接从 <code>reference-components/</code> 复制到 <code>web/src/components/</code>
               </div>

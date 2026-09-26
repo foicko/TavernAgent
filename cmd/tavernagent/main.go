@@ -2,7 +2,8 @@
 // 默认回环绑定；模型供应商由 data/config 配置驱动（primary/assist/reflection 三槽位），
 // 可显式使用 -provider mock 运行离线演示。
 //
-// 装配逻辑在 internal/app（组合根）；桌面端（Avalonia，desktop/）以 sidecar 方式拉起本服务并共用同一后端。
+// 装配逻辑在 internal/app（组合根）；本进程既提供 REST/SSE，也通过 //go:embed
+// 把 Web 前端发出来，浏览器访问同一地址即可使用。
 package main
 
 import (

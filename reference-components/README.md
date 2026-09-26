@@ -1,6 +1,6 @@
 # UI 参考组件库 (Reference UI Components)
 
-本目录汇总了从 5 大流行现代设计与 AI 交互组件网站下载的完整源码与动效规范，专门供 **TavernAgent** 网页端（Web React）与桌面端（C# Avalonia）进行界面设计、组件重构与交互动效实现时参考借鉴。
+本目录汇总了从 5 大流行现代设计与 AI 交互组件网站下载的完整源码与动效规范，专门供 **TavernAgent** 网页端（Web React）进行界面设计、组件重构与交互动效实现时参考借鉴。
 
 ---
 
@@ -111,21 +111,14 @@ reference-components/
    - 快捷动作按钮：参考 `shadcn-ui/ui/button.tsx` 的 variant 架构，落在 [`web/src/ui/Button.tsx`](../web/src/ui/Button.tsx)。
    - 原语层：`Tabs` / `Tooltip` / `Popover` / `Toast` / `Skeleton` / `Kbd` / `Avatar` / `Card` 均落在 [`web/src/ui/`](../web/src/ui/)。
 
-### B. 桌面端 Avalonia ([`desktop/src/TavernAgent.Desktop/`](../desktop/src/TavernAgent.Desktop/)) 引用与移植
-1. **XAML 资源字典**: 在 [`desktop/src/TavernAgent.Desktop/Styles/DesignTokens.axaml`](../desktop/src/TavernAgent.Desktop/Styles/DesignTokens.axaml) 中已定义了对应色值与过渡时间。
-2. **控件映射**:
-   - `Pill` / `Modal` / 表面：对应 `beautifului` 与 `shadcn-ui` 的 Card/Dialog/Badge 原语；表面类在 [`desktop/.../Styles/Surfaces.axaml`](../desktop/src/TavernAgent.Desktop/Styles/Surfaces.axaml)（原 `Glass.axaml`）。
-   - 侧栏与右栏收放：参考 `transitions/transitions/panel-reveal`，在 Avalonia 中通过 `Transitions` 绑定 `Width`（`DoubleTransition` 240ms）。
-   - 物理阻尼曲线：将 `transitions.dev` 的 `0.16, 1, 0.3, 1` 对应至 Avalonia 的 `SplineEasing`（`EaseSpring`）或 `EaseSmoothOut`。
-
 ### 参考件 → 已落地原语对照
-| 参考件 | Web 落地 | 桌面端落地 |
-| --- | --- | --- |
-| `shadcn-ui/ui/button.tsx` | `web/src/ui/Button.tsx`（primary/secondary/outline/ghost/danger/link × xs/sm/md/lg + icon） | `Styles/Surfaces.axaml` 的 `Button.ui-btn.*` |
-| `shadcn-ui/ui/tabs.tsx` | `web/src/ui/Tabs.tsx` | `Button.seg` / `Button.subtab` |
-| `shadcn-ui/ui/tooltip.tsx` | `web/src/ui/Tooltip.tsx` | `ToolTip.Tip` + 主题化 `ToolTip` |
-| `beautifului/primitives/ThinkingState.tsx` | `web/src/components/NarrativeStream.tsx` 思考状态行 | `Views/Stage/MessageView.axaml` 思考卡 |
-| `beautifului/primitives/PromptBar.tsx` | `web/src/components/ComposerShelf.tsx` | `Views/Stage/ComposerView.axaml` |
-| `transitions-dev/06-modal.md` | `web/src/ui/Modal.tsx`（scale .96→1） | `Controls/Modal.axaml`（`anim-pop`） |
-| `transitions-dev/16-tabs-sliding.md` | `web/src/ui/Tabs.tsx` 滑块 | `Button.seg` 过渡 |
-| `beautifului/atoms/SegmentedControl.tsx` | `web/src/ui/Tabs.tsx` | `Views/TopHeaderView.axaml` 分段控件 |
+| 参考件 | Web 落地 |
+| --- | --- |
+| `shadcn-ui/ui/button.tsx` | `web/src/ui/Button.tsx`（primary/secondary/outline/ghost/danger/link × xs/sm/md/lg + icon） |
+| `shadcn-ui/ui/tabs.tsx` | `web/src/ui/Tabs.tsx` |
+| `shadcn-ui/ui/tooltip.tsx` | `web/src/ui/Tooltip.tsx` |
+| `beautifului/primitives/ThinkingState.tsx` | `web/src/components/NarrativeStream.tsx` 思考状态行 |
+| `beautifului/primitives/PromptBar.tsx` | `web/src/components/ComposerShelf.tsx` |
+| `transitions-dev/06-modal.md` | `web/src/ui/Modal.tsx`（scale .96→1） |
+| `transitions-dev/16-tabs-sliding.md` | `web/src/ui/Tabs.tsx` 滑块 |
+| `beautifului/atoms/SegmentedControl.tsx` | `web/src/ui/Tabs.tsx` |

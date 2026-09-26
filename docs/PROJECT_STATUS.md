@@ -8,8 +8,8 @@
 
 本地优先的剧情与角色扮演应用：Go 单二进制服务 + SQLite 故事库 + React 界面。回合、人物状态、物品与分支保存在本机；记忆修订以新节点追加，支持历史回看与剧情包导入导出。
 
-- **技术栈**：Go 1.26.6、SQLite（`modernc.org/sqlite`，无 CGO）、React 19 + TypeScript + Vite + Zustand、Node 24 / pnpm 11.9.0；桌面端为 Avalonia 12（.NET 10）。
-- **交付形态**：Web 端前端经 `//go:embed` 编译期嵌入，产物为单个可执行文件；桌面端（`desktop/`）为自包含发布 + 同捆 sidecar。发布目标为 Windows/macOS/Linux 五平台。
+- **技术栈**：Go 1.26.6、SQLite（`modernc.org/sqlite`，无 CGO）、React 19 + TypeScript + Vite + Zustand、Node 24 / pnpm 11.9.0。
+- **交付形态**：前端经 `//go:embed` 编译期嵌入，产物为单个可执行文件。发布目标为 Windows/macOS/Linux 五平台。
 - **默认边界**：默认回环绑定、不调用任何未配置的外部模型；局域网访问需配对码。
 
 ## 2. 架构
@@ -33,15 +33,6 @@ internal/
 └── util/         原子文件、数据目录锁、ID
 ```
 
-桌面端（`desktop/`）独立于 Go 模块，按职责分三层：
-
-```
-desktop/src/
-├── TavernAgent.Core/      Api（HTTP/SSE 客户端）、Stores（对应 web 的 Zustand store）
-├── TavernAgent.Sidecar/   子进程守护、健康检查、日志
-└── TavernAgent.Desktop/   视图与 ViewModel（Shell / 舞台 / 左右栏 / 弹窗 / 命令面板）
-```
-
 ## 3. 已交付能力
 
 | 领域 | 能力 |
@@ -62,7 +53,6 @@ desktop/src/
 | 前端 | 双主题设计系统 + 原语（`ui/` 的 Tabs/Tooltip/Popover/Toast/Skeleton/Kbd/Avatar/Card 等）；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；56px 顶栏；主题持久化并默认跟随系统 `prefers-color-scheme`；<480px 贴底抽屉与 44px 触控目标 |
 | 样式结构 | `styles.css` 退化为 `@import` 入口，按功能域拆成 18 个文件；六项 CSS 门禁（行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名、颜色字面值、玻璃残留）；`--glass-*` 兼容层已删除 |
 | 观测 | 请求级关联 ID（`X-Request-ID` 回显）、进程内追踪记录器、`/api/status` 的 `trace` 段（最近/最慢请求 + 分段打点） |
-| 桌面端（跨平台） | `desktop/`：Avalonia 12（.NET 10）+ Sidecar 子进程守护；扁平纸墨设计系统（`Styles/Surfaces.axaml`，无 Mica/Acrylic/氛围光）、**三栏内嵌**外壳（56px 顶栏 + 左栏 224/52 + 舞台 + 右栏 304/0，240ms 过渡）、命令面板、导演工作台、回合插画、TTS 播放；主题默认跟随系统并持久化；单实例锁；自包含发布并同捆 sidecar（`scripts/publish-desktop.ps1`） |
 
 ## 4. 运行与构建
 
@@ -118,16 +108,9 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 - **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
   （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
 - **样式层**：`!important` 存量已从 245 处降至 4 处（仅保留 `Button` 的 reduced-motion 归零、`Modal` 动画归零与无障碍原语）；跨文件重复选择器 18→0、颜色字面值与玻璃残留归零，门禁基线已收紧锁定。
-- **桌面端壳层能力回退**：旧 Wails 壳删除后，`-lan`（第二屏便捷开关）与 `-autostart`
-  （开机自启）两个入口随之消失；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
-  可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是补回 `cmd/tavernagent` 的参数，
-  还是改为在 Avalonia 端提供设置项。系统托盘同样未实现。
-- **桌面端稳定性（M10 已偿还）**：启动崩溃（Avalonia 12 `WindowDrawnDecorations` /
-  `HasTitleBar is readonly`）与运行期跨线程集合崩溃（`Collection was modified`）已修复——
-  store 通知统一经 `StoreDispatcher` 投递到 UI 线程、后台任务走 `SafeFireAndForget`、
-  UI 线程异常有兜底与日志；窗口 chrome 改为 `BorderOnly` + 自绘顶栏。回归测试见
-  `StoreDispatcherTests` / `ResponsiveLayoutTests`。仍待实机验证：Windows 之外平台、系统托盘、
-  `-lan`/`-autostart` 入口。
+- **壳层便捷入口回退**：`-lan`（第二屏便捷开关）与 `-autostart`
+  （开机自启）两个入口尚缺；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
+  可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是否补回 `cmd/tavernagent` 的参数。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 
 ## 7. 待做功能与近期完成
@@ -148,8 +131,6 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 
 - [系统提示词总览](PROMPTS.md)：全部系统提示词的逐字提取 + 组装顺序 + 修改规则（由
   `scripts/prompt_docs.py` 生成，`scripts/tests/test_prompt_docs.py` 防止漂移）。
-- [桌面端（跨平台 · Avalonia + Sidecar）](DESKTOP_AVALONIA.md)：架构、运行/打包脚本、
-  UI 范式、窗口材质与 reduced-motion 处理。
 - [运行维护说明](OPERATIONS.md)：安装、三槽位配置、局域网、备份与升级回退。
 - [素材授权](ASSET_LICENSES.md)、[第三方声明](../THIRD_PARTY_NOTICES.md)、[MIT 许可证](../LICENSE)。
 - [贡献指南](../CONTRIBUTING.md)、[安全报告](../SECURITY.md)。

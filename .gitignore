@@ -8,6 +8,9 @@
 /design-preview/
 /papers/
 /chars/
+# 本地角色卡素材：个人 .charx 归档与导出的卡片 JSON，不入库
+/card.json
+/charx/
 # 根目录的本地参考资料（学习用 PDF/规范文档，不入库）
 /AI-Agents-in-Depth-zh-CN.pdf
 /Agent开发规范.md
@@ -40,11 +43,6 @@ bin/
 obj/
 *.exe
 *.dll
-
-# Avalonia / .NET desktop
-desktop/**/bin/
-desktop/**/obj/
-desktop/**/TestResults/
 
 # Local secrets (API keys live only on the backend host)
 data/config/secrets.json

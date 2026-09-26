@@ -11,7 +11,6 @@
   <img src="https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go" alt="Go Version" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Avalonia-12-8B44AC?logo=dotnet" alt="Avalonia 12" />
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" />
 </p>
 
@@ -23,7 +22,7 @@
 
 ## 项目亮点
 
-**TavernAgent** 是一个专为 AI 角色扮演、交互跑团与非线性剧情推演设计的现代化桌面/Web 应用。采用 **Go 高性能无头服务 + SQLite 嵌入式存储 + React 19 现代化单页应用** 架构，并配有 **Avalonia 12 原生跨平台桌面端**（以 sidecar 方式拉起同一个后端），将数据完全保留在你的本地设备上。
+**TavernAgent** 是一个专为 AI 角色扮演、交互跑团与非线性剧情推演设计的本地优先 Web 应用。采用 **Go 高性能无头服务 + SQLite 嵌入式存储 + React 19 现代化单页应用** 架构，单个可执行文件即可运行（前端经 `//go:embed` 编译期嵌入），将数据完全保留在你的本地设备上。
 
 - **Liquid Glass 设计系统**：现代玻璃毛玻璃微光材质（Backdrop Blur / Specular Highlight / Fluid Responsive），沉浸而不喧宾夺主。
 - **纯净卡片生态**：完整兼容 **SillyTavern V2 / V3 角色卡**（PNG 及 JSON 格式）与 **charx 归档**（RisuAI ZIP，含内嵌立绘/图标，正文 `<img cmd>` 自动渲染），支持动态立绘、宏变量替换（`{{char}}`/`{{user}}`）、世界书联动与物品规则。
@@ -121,10 +120,6 @@ TavernAgent/
 │   │   ├── lib/           # 角色卡解析 (SillyTavern PNG tEXt/ccv3、charx 归档)、宏渲染与数据层
 │   │   └── ui/            # 基础无状态视觉基元 (Button, Modal, Pill, Field)
 │   └── public/            # 几何矢量 SVG 资产
-├── desktop/               # Avalonia 12 (.NET 10) 原生跨平台桌面端
-│   ├── src/TavernAgent.Core/      # API/SSE 客户端与状态仓库
-│   ├── src/TavernAgent.Sidecar/   # Go 服务子进程守护
-│   └── src/TavernAgent.Desktop/   # 视图与 ViewModel
 ├── docs/                  # 架构设计、安全政策与运行维护手册
 └── scripts/               # 自动化构建、端到端评测与发布审计工具链
 ```
@@ -148,11 +143,7 @@ pnpm test
 pnpm build
 cd ..
 
-# 3. 桌面端（.NET 10 SDK）构建与测试
-dotnet build desktop/TavernAgent.Desktop.slnx
-dotnet test  desktop/tests/TavernAgent.Desktop.Tests/TavernAgent.Desktop.Tests.csproj
-
-# 4. 运行开源发布准入审计（检查代码中是否存在私有凭据、非矢量位图或缺失协议）
+# 3. 运行开源发布准入审计（检查代码中是否存在私有凭据、非矢量位图或缺失协议）
 python scripts/release_audit.py --strict
 ```
 
@@ -162,7 +153,6 @@ python scripts/release_audit.py --strict
 
 - **局域网共享与配对**：支持绑定 `-addr 0.0.0.0:8890`，终端自动输出 6 位一次性安全 PIN 配对码，供移动设备或平板在家庭局域网内安全访问。
 - **剧情包离线归档**：可随时导出当前故事为 `.tavernpack` 文件，包含完整事件流、快照、因果树结构与记忆库，方便设备迁移与归档分享。
-- **原生桌面端**：`desktop/` 提供 Avalonia 12 跨平台客户端（Windows / macOS / Linux），自包含发布并同捆 sidecar；详见 [docs/DESKTOP_AVALONIA.md](docs/DESKTOP_AVALONIA.md)。
 - **详细运维手册**：请参阅 [docs/OPERATIONS.md](docs/OPERATIONS.md)。
 
 ---
