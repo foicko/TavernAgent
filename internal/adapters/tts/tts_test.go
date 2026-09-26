@@ -125,6 +125,48 @@ func TestSynthesizeOpenAIEndpoint(t *testing.T) {
 	}
 }
 
+// 换模型必须重新合成：缓存键里没有模型时，切换 tts-1 → gpt-4o-mini-tts 会一直拿到旧音频。
+// 响应超过上限时报错，不把截断的音频当成功结果缓存。
+func TestSynthesizeCacheKeyIncludesModelAndRejectsOversize(t *testing.T) {
+	calls := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		model, _ := body["model"].(string)
+		if model == "huge" {
+			_, _ = w.Write(make([]byte, maxAudioBytes+1))
+			return
+		}
+		_, _ = w.Write([]byte("audio:" + model))
+	}))
+	defer ts.Close()
+
+	svc := NewService()
+	opts := SynthesizeOptions{Engine: "openai", BaseURL: ts.URL + "/v1", Voice: "alloy", Text: "同一句台词"}
+	for _, model := range []string{"tts-1", "gpt-4o-mini-tts", "tts-1"} {
+		opts.Model = model
+		data, err := svc.SynthesizeWithOptions(context.Background(), opts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != "audio:"+model {
+			t.Fatalf("model %s got %q", model, data)
+		}
+	}
+	if calls != 2 {
+		t.Fatalf("expected 2 upstream calls (third is a cache hit), got %d", calls)
+	}
+
+	opts.Model = "huge"
+	if _, err := svc.SynthesizeWithOptions(context.Background(), opts); err == nil {
+		t.Fatal("oversized audio must be rejected, not truncated")
+	}
+	if _, err := svc.SynthesizeWithOptions(context.Background(), opts); err == nil || calls != 4 {
+		t.Fatalf("oversized result must not be cached: err=%v calls=%d", err, calls)
+	}
+}
+
 func TestSynthesizeMiMoEndpoint(t *testing.T) {
 	receivedApiKey := ""
 	receivedModel := ""

@@ -154,7 +154,10 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		httpReq.Header.Set("Authorization", "Bearer "+p.cfg.APIKey)
 	}
 
-	resp, err := p.cfg.HTTPClient.Do(httpReq)
+	resp, firstBudget, headerTimedOut, err := providerutil.DoWithinFirstTokenBudget(p.cfg.HTTPClient, httpReq, p.cfg.TimeoutFirstToken)
+	if headerTimedOut {
+		return ErrTimeoutFirstToken
+	}
 	if err != nil {
 		if streamCtx.Err() != nil {
 			return providerutil.StreamAbort(ctx)
@@ -176,7 +179,9 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		br := bufio.NewReader(resp.Body)
 		for {
 			line, err := br.ReadBytes('\n')
-			if err != nil {
+			// EOF 时 ReadBytes 仍会返回末尾未以换行结束的最后一行：先处理它，
+			// 下一轮读取再以 (nil, EOF) 退出，否则网关不补结尾换行时最后一个事件会被丢掉。
+			if err != nil && (err != io.EOF || len(line) == 0) {
 				if err != io.EOF {
 					select {
 					case bodyErrCh <- err:
@@ -205,7 +210,7 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 	var firstTimer *time.Timer
 	var firstDone <-chan time.Time
 	if p.cfg.TimeoutFirstToken > 0 {
-		firstTimer = time.NewTimer(p.cfg.TimeoutFirstToken)
+		firstTimer = time.NewTimer(firstBudget)
 		firstDone = firstTimer.C
 		defer firstTimer.Stop()
 	}

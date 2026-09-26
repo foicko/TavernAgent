@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"tavernagent/internal/ports"
 )
@@ -214,10 +215,15 @@ func (p *OpenAIProvider) EmbedBatch(ctx context.Context, texts []string) ([]port
 			return nil, fmt.Errorf("embedding request failed: %w", err)
 		}
 
-		respBody, err := io.ReadAll(resp.Body)
+		// 响应体设上限：误配到返回大页面或流式内容的端点时不能无界吃内存。
+		// 32 条 × 3072 维的 JSON 约 2 MB，64 MB 足够任何合理批量。
+		respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxEmbeddingResponseBytes+1))
 		_ = resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("read embedding response: %w", err)
+		}
+		if len(respBody) > maxEmbeddingResponseBytes {
+			return nil, fmt.Errorf("embedding response exceeds %d MB", maxEmbeddingResponseBytes>>20)
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -225,7 +231,7 @@ func (p *OpenAIProvider) EmbedBatch(ctx context.Context, texts []string) ([]port
 			if json.Unmarshal(respBody, &errResp) == nil && errResp.Error != nil && errResp.Error.Message != "" {
 				return nil, fmt.Errorf("embedding provider error (%d): %s", resp.StatusCode, errResp.Error.Message)
 			}
-			return nil, fmt.Errorf("embedding provider HTTP %d: %s", resp.StatusCode, string(respBody))
+			return nil, fmt.Errorf("embedding provider HTTP %d: %s", resp.StatusCode, errorSnippet(respBody))
 		}
 
 		var parsed openAIEmbeddingResponse
@@ -241,6 +247,10 @@ func (p *OpenAIProvider) EmbedBatch(ctx context.Context, texts []string) ([]port
 			if item.Index < 0 || item.Index >= len(chunk) {
 				return nil, fmt.Errorf("invalid embedding index %d for chunk size %d", item.Index, len(chunk))
 			}
+			// 条数相符但索引重复时，会有一个槽位留空（nil 向量被当成功结果返回）。
+			if allVectors[start+item.Index] != nil {
+				return nil, fmt.Errorf("duplicate embedding index %d", item.Index)
+			}
 			vec := ports.Vector(item.Embedding)
 			allVectors[start+item.Index] = vec
 			p.setDimension(len(vec))
@@ -248,6 +258,22 @@ func (p *OpenAIProvider) EmbedBatch(ctx context.Context, texts []string) ([]port
 	}
 
 	return allVectors, nil
+}
+
+// maxEmbeddingResponseBytes 是单次嵌入响应体的上限。
+const maxEmbeddingResponseBytes = 64 << 20
+
+// errorSnippet 截取响应体开头用于错误信息：整段响应不该进日志与 API 错误。
+func errorSnippet(b []byte) string {
+	const max = 512
+	if len(b) <= max {
+		return string(b)
+	}
+	cut := max
+	for cut > 0 && !utf8.RuneStart(b[cut]) {
+		cut--
+	}
+	return string(b[:cut]) + "…"
 }
 
 // Probe tests connectivity with the embedding provider, measures latency, and returns vector dimension.

@@ -194,7 +194,10 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		httpReq.Header.Set("Authorization", "Bearer "+p.cfg.APIKey)
 	}
 
-	resp, err := p.cfg.HTTPClient.Do(httpReq)
+	resp, firstBudget, headerTimedOut, err := providerutil.DoWithinFirstTokenBudget(p.cfg.HTTPClient, httpReq, p.cfg.TimeoutFirstToken)
+	if headerTimedOut {
+		return ErrTimeoutFirstToken
+	}
 	if err != nil {
 		if streamCtx.Err() != nil {
 			return providerutil.StreamAbort(ctx)
@@ -216,7 +219,9 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		var currentEvent string
 		for {
 			line, err := br.ReadBytes('\n')
-			if err != nil {
+			// EOF 时 ReadBytes 仍会返回末尾未以换行结束的最后一行：先处理它，
+			// 下一轮读取再以 (nil, EOF) 退出，否则网关不补结尾换行时最后一个事件会被丢掉。
+			if err != nil && (err != io.EOF || len(line) == 0) {
 				if err != io.EOF {
 					select {
 					case bodyErrCh <- err:
@@ -256,7 +261,7 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 	var firstTimer *time.Timer
 	var firstDone <-chan time.Time
 	if p.cfg.TimeoutFirstToken > 0 {
-		firstTimer = time.NewTimer(p.cfg.TimeoutFirstToken)
+		firstTimer = time.NewTimer(firstBudget)
 		firstDone = firstTimer.C
 		defer firstTimer.Stop()
 	}
@@ -270,13 +275,17 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 	// usage 在 Anthropic 是分帧上报的：message_start 给输入与缓存读取量，
 	// message_delta 给累积输出量。这里合并成一份再上报，保证调用方收到的
 	// 每一次回调都是「到目前为止的完整值」（取最后一次即最终结果）。
-	var usagePrompt, usageCompletion, usageCached int
+	//
+	// Anthropic 的 input_tokens 只是缓存断点之后的未缓存部分，不含缓存读取与写入；
+	// OpenAI 系的 prompt_tokens 则是完整输入。这里归一成完整输入（input + 读 + 写），
+	// 否则开启提示缓存后 Prompt 只剩零头，估算校准会被压到下限、预算放进两倍内容。
+	var usageInput, usageCompletion, usageCached, usageCacheWrite int
 	absorbUsage := func(u *anthropicUsage) {
 		if u == nil {
 			return
 		}
 		if u.InputTokens > 0 {
-			usagePrompt = u.InputTokens
+			usageInput = u.InputTokens
 		}
 		if u.OutputTokens > 0 {
 			usageCompletion = u.OutputTokens
@@ -284,9 +293,13 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		if u.CacheReadInputTokens > 0 {
 			usageCached = u.CacheReadInputTokens
 		}
+		if u.CacheCreationInputTokens > 0 {
+			usageCacheWrite = u.CacheCreationInputTokens
+		}
 	}
 	emitUsage := func() {
-		if usagePrompt == 0 && usageCompletion == 0 && usageCached == 0 {
+		usagePrompt := usageInput + usageCached + usageCacheWrite
+		if usagePrompt == 0 && usageCompletion == 0 {
 			return
 		}
 		sink.Usage(ports.TokenUsage{

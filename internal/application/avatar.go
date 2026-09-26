@@ -7,6 +7,9 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+
+	// charx 图标常以 WebP 存放（扩展名却可能是 .png），注册解码器后 image.Decode 才能识别。
+	_ "golang.org/x/image/webp"
 )
 
 // 角色卡头像的取值边界。
@@ -20,16 +23,30 @@ const (
 	avatarMaxEdge = 640
 	// avatarJPEGQuality 是缩略图（不透明图像）的 JPEG 质量。
 	avatarJPEGQuality = 85
+	// avatarMaxSourcePixels / avatarMaxSourceEdge 是解码前按头部声明尺寸做的预检：
+	// 几十字节的 PNG 就能声明 50000×50000，直接 image.Decode 会先分配数 GB 像素缓冲。
+	// 上限覆盖常见的 4K/8K 立绘，超出者不生成缩略图（头像缺失只是降级）。
+	avatarMaxSourcePixels = 64 << 20
+	avatarMaxSourceEdge   = 16384
 )
 
-// buildAvatarDataURL 把整幅 PNG 压成有界 data URL。
+// buildAvatarDataURL 把整幅图像压成有界 data URL。
 // 图像无法解码时返回空串，由调用方决定回退策略（此函数不报错）：
 // 头像缺失只影响展示，不该让整张角色卡导入失败。
+//
+// 用 image.Decode 而非 png.Decode：charx 图标资源经常是 WebP（甚至扩展名写着 .png），
+// 只认 PNG 会让这类卡永远拿不到头像缩略图。
 func buildAvatarDataURL(src []byte) string {
 	if len(src) == 0 {
 		return ""
 	}
-	img, err := png.Decode(bytes.NewReader(src))
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(src))
+	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 ||
+		cfg.Width > avatarMaxSourceEdge || cfg.Height > avatarMaxSourceEdge ||
+		cfg.Width*cfg.Height > avatarMaxSourcePixels {
+		return ""
+	}
+	img, format, err := image.Decode(bytes.NewReader(src))
 	if err != nil {
 		return ""
 	}
@@ -58,8 +75,9 @@ func buildAvatarDataURL(src []byte) string {
 	}
 	// 原图本来就在尺寸上限内、且比重新编码更小时直接沿用：小尺寸图标重新编码
 	// 只会变大（JPEG 不擅长极小图，PNG 头开销也不划算）。
+	// MIME 用实际解码出的格式，避免把 WebP 字节标成 image/png。
 	if !resized {
-		original := "data:image/png;base64," + base64.StdEncoding.EncodeToString(src)
+		original := "data:image/" + format + ";base64," + base64.StdEncoding.EncodeToString(src)
 		if len(original) < len(best) {
 			return original
 		}

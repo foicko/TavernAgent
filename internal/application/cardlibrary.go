@@ -93,11 +93,23 @@ func (s *CardService) persistCharxAssets(rep *ImportReport, cardID string) {
 		byPath[strings.TrimPrefix(strings.ReplaceAll(f.Name, "\\", "/"), "./")] = f
 	}
 	var saved int
+	var total uint64
 	for _, a := range rep.CharxAssets {
 		f, ok := byPath[a.ZipPath]
 		if !ok {
 			continue
 		}
+		// 按头部声明大小计量（archive/zip 读取时会校验实际字节数与声明一致）。
+		// 单项超限跳过；总量超限则停止落地剩余资源，防止压缩炸弹写满磁盘。
+		if f.UncompressedSize64 > maxCharxEntryBytes {
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源「%s」解压后超过 %d MB 单项上限，已跳过", a.Name, maxCharxEntryBytes>>20))
+			continue
+		}
+		if total+f.UncompressedSize64 > maxCharxTotalBytes {
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源解压总量超过 %d MB 上限，其余资源未落地", maxCharxTotalBytes>>20))
+			break
+		}
+		total += f.UncompressedSize64
 		if err := s.saveOneAsset(cardID, a, f); err != nil {
 			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源「%s」落地失败：%v", a.Name, err))
 			continue

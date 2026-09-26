@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
 )
@@ -81,14 +82,20 @@ const (
 	edgeOrigin       = "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold"
 	edgeUserAgent    = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0"
 	defaultMaxTokens = 2000
+	// edgeReadTimeout 是 Edge 合成流两帧之间的最长等待：服务端卡住时不能无限挂起请求。
+	edgeReadTimeout = 20 * time.Second
+	// maxCacheBytes / maxCacheEntries 约束内存缓存（单条音频可达数 MB，只按条数计会失控）。
+	maxCacheBytes   = 64 << 20
+	maxCacheEntries = 500
 )
 
 // Service 负责 TTS 语音合成与内存缓存。
 type Service struct {
-	mu       sync.RWMutex
-	cache    map[string][]byte
-	mockFn   func(voice, text string) ([]byte, error)
-	wsDialer *websocket.Dialer
+	mu         sync.RWMutex
+	cache      map[string][]byte
+	cacheBytes int
+	mockFn     func(voice, text string) ([]byte, error)
+	wsDialer   *websocket.Dialer
 }
 
 // NewService 创建 TTS 语音服务实例。
@@ -163,7 +170,8 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 		speed = 1.0
 	}
 
-	cachePrefix := fmt.Sprintf("%s:%s:%.2f:%s:%s", engine, voice, speed, opts.BaseURL, opts.Instruction)
+	// 模型也参与缓存键：同一文本与音色在 tts-1 与 gpt-4o-mini-tts（或不同 MiMo 模型）下是不同的音频。
+	cachePrefix := fmt.Sprintf("%s:%s:%s:%.2f:%s:%s", engine, strings.TrimSpace(opts.Model), voice, speed, opts.BaseURL, opts.Instruction)
 	h := md5.Sum([]byte(cachePrefix + ":" + text))
 	key := hex.EncodeToString(h[:])
 
@@ -182,9 +190,7 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 		if err != nil {
 			return nil, err
 		}
-		s.mu.Lock()
-		s.cache[key] = data
-		s.mu.Unlock()
+		s.storeCache(key, data)
 		return data, nil
 	}
 
@@ -201,13 +207,26 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 		return nil, err
 	}
 
+	s.storeCache(key, data)
+	return data, nil
+}
+
+// storeCache 写入缓存；条数或总字节超限时整体清空（简单的防溢出策略）。
+func (s *Service) storeCache(key string, data []byte) {
 	s.mu.Lock()
-	if len(s.cache) > 500 { // 简单的防溢出清理
+	defer s.mu.Unlock()
+	if old, ok := s.cache[key]; ok {
+		s.cacheBytes -= len(old)
+	}
+	if len(s.cache) >= maxCacheEntries || s.cacheBytes+len(data) > maxCacheBytes {
 		s.cache = make(map[string][]byte)
+		s.cacheBytes = 0
+	}
+	if len(data) > maxCacheBytes {
+		return // 单条就超过总量上限：不缓存
 	}
 	s.cache[key] = data
-	s.mu.Unlock()
-	return data, nil
+	s.cacheBytes += len(data)
 }
 
 func (s *Service) synthesizeOpenAI(ctx context.Context, opts SynthesizeOptions, voice, text string, speed float64) ([]byte, error) {
@@ -254,10 +273,38 @@ func (s *Service) synthesizeOpenAI(ctx context.Context, opts SynthesizeOptions, 
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("tts request returned HTTP %d: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("tts request returned HTTP %d: %s", resp.StatusCode, bodySnippet(respBody))
 	}
 
-	return io.ReadAll(io.LimitReader(resp.Body, 20*1024*1024))
+	return readCapped(resp.Body, maxAudioBytes)
+}
+
+// maxAudioBytes 是单段合成音频的上限；超出即报错，而不是把截断的音频当成功结果缓存。
+const maxAudioBytes = 20 << 20
+
+// readCapped 读取至多 limit 字节；内容超过上限时报错（不静默截断）。
+func readCapped(r io.Reader, limit int64) ([]byte, error) {
+	b, err := io.ReadAll(io.LimitReader(r, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(b)) > limit {
+		return nil, fmt.Errorf("tts response exceeds %d MB", limit>>20)
+	}
+	return b, nil
+}
+
+// bodySnippet 截取响应体开头用于错误信息：整段响应（可达数 MB）不该进日志与 API 错误。
+func bodySnippet(b []byte) string {
+	const max = 512
+	if len(b) <= max {
+		return string(b)
+	}
+	cut := max
+	for cut > 0 && !utf8.RuneStart(b[cut]) {
+		cut--
+	}
+	return string(b[:cut]) + "…"
 }
 
 func (s *Service) synthesizeMiMo(ctx context.Context, opts SynthesizeOptions, voice, text string) ([]byte, error) {
@@ -321,7 +368,8 @@ func (s *Service) synthesizeMiMo(ctx context.Context, opts SynthesizeOptions, vo
 	}
 	defer resp.Body.Close()
 
-	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
+	// base64 音频约为原始字节的 4/3，按音频上限留出余量。
+	respBody, err := readCapped(resp.Body, maxAudioBytes*3/2)
 	if err != nil {
 		return nil, fmt.Errorf("read mimo response: %w", err)
 	}
@@ -342,15 +390,18 @@ func (s *Service) synthesizeMiMo(ctx context.Context, opts SynthesizeOptions, vo
 	}
 
 	if err := json.Unmarshal(respBody, &parsed); err != nil {
-		return nil, fmt.Errorf("mimo response parse error (HTTP %d): %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("mimo response parse error (HTTP %d): %s", resp.StatusCode, bodySnippet(respBody))
 	}
 
 	if parsed.Error != nil && parsed.Error.Message != "" {
 		return nil, fmt.Errorf("小米 MiMo 错误 [%v]: %s", parsed.Error.Code, parsed.Error.Message)
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("mimo request returned HTTP %d: %s", resp.StatusCode, bodySnippet(respBody))
+	}
 
 	if len(parsed.Choices) == 0 || parsed.Choices[0].Message.Audio.Data == "" {
-		return nil, fmt.Errorf("mimo response contains no audio data: %s", string(respBody))
+		return nil, fmt.Errorf("mimo response contains no audio data: %s", bodySnippet(respBody))
 	}
 
 	audioBytes, err := base64.StdEncoding.DecodeString(parsed.Choices[0].Message.Audio.Data)
@@ -371,6 +422,9 @@ func (s *Service) synthesizeEdgeWS(ctx context.Context, voice, text string) ([]b
 		return nil, fmt.Errorf("connect to Edge-TTS service failed: %w", err)
 	}
 	defer conn.Close()
+	// ReadMessage 不感知 ctx：取消时直接关闭连接，让阻塞中的读立即返回。
+	stop := context.AfterFunc(ctx, func() { _ = conn.Close() })
+	defer stop()
 
 	// 1. 发送 speech.config
 	configMsg := "Content-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n" +
@@ -399,11 +453,14 @@ func (s *Service) synthesizeEdgeWS(ctx context.Context, voice, text string) ([]b
 		default:
 		}
 
+		_ = conn.SetReadDeadline(time.Now().Add(edgeReadTimeout))
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
-			if audioBuf.Len() > 0 {
-				return audioBuf.Bytes(), nil
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
 			}
+			// 没等到 turn.end 的音频是截断的：当作失败返回（调用方会缓存成功结果，
+			// 截断音频一旦入缓存，同一段文字以后永远只能播半截）。
 			return nil, fmt.Errorf("read tts message failed: %w", err)
 		}
 

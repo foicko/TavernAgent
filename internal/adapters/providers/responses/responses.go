@@ -100,11 +100,21 @@ type responsesPayload struct {
 	Type           string `json:"type"`
 	Delta          string `json:"delta"`
 	ReasoningDelta string `json:"reasoning_delta"`
-	Response       *struct {
-		Status        string `json:"status"`
-		StatusDetails *struct {
+	// Message/Code 是 type=="error" 事件的顶层字段（Responses 流式错误事件不嵌套 error 对象）。
+	Message  string `json:"message"`
+	Code     string `json:"code"`
+	Response *struct {
+		Status string `json:"status"`
+		// IncompleteDetails 在 status=="incomplete" 时说明原因：
+		// max_output_tokens 才是可续写的截断；content_filter 续写只会再被过滤。
+		IncompleteDetails *struct {
 			Reason string `json:"reason"`
-		} `json:"status_details"`
+		} `json:"incomplete_details"`
+		// Error 出现在 response.failed 事件中。
+		Error *struct {
+			Message string `json:"message"`
+			Code    string `json:"code"`
+		} `json:"error"`
 		// Usage 出现在 response.completed / response.done 事件中。
 		// Responses API 默认回传统计，无需额外开启选项。
 		Usage *struct {
@@ -144,7 +154,10 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		httpReq.Header.Set("Authorization", "Bearer "+p.cfg.APIKey)
 	}
 
-	resp, err := p.cfg.HTTPClient.Do(httpReq)
+	resp, firstBudget, headerTimedOut, err := providerutil.DoWithinFirstTokenBudget(p.cfg.HTTPClient, httpReq, p.cfg.TimeoutFirstToken)
+	if headerTimedOut {
+		return ErrTimeoutFirstToken
+	}
 	if err != nil {
 		if streamCtx.Err() != nil {
 			return providerutil.StreamAbort(ctx)
@@ -166,7 +179,9 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		var currentEvent string
 		for {
 			line, err := br.ReadBytes('\n')
-			if err != nil {
+			// EOF 时 ReadBytes 仍会返回末尾未以换行结束的最后一行：先处理它，
+			// 下一轮读取再以 (nil, EOF) 退出，否则网关不补结尾换行时最后一个事件会被丢掉。
+			if err != nil && (err != io.EOF || len(line) == 0) {
 				if err != io.EOF {
 					select {
 					case bodyErrCh <- err:
@@ -206,7 +221,7 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 	var firstTimer *time.Timer
 	var firstDone <-chan time.Time
 	if p.cfg.TimeoutFirstToken > 0 {
-		firstTimer = time.NewTimer(p.cfg.TimeoutFirstToken)
+		firstTimer = time.NewTimer(firstBudget)
 		firstDone = firstTimer.C
 		defer firstTimer.Stop()
 	}
@@ -267,13 +282,27 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 			if payload.Error != nil {
 				return fmt.Errorf("responses: 服务端错误: %s", payload.Error.Message)
 			}
+			if payload.Type == "error" {
+				return fmt.Errorf("responses: 服务端错误: %s", firstNonEmpty(payload.Message, payload.Code, "未知错误"))
+			}
 
-			// 截断检查：response.done 中 status 为 incomplete 或 max_output_tokens
 			if payload.Response != nil {
-				if payload.Response.Status == "incomplete" {
-					finishLength = true
-				}
-				if payload.Response.StatusDetails != nil && payload.Response.StatusDetails.Reason == "max_output_tokens" {
+				switch payload.Response.Status {
+				case "failed", "cancelled":
+					msg := payload.Response.Status
+					if e := payload.Response.Error; e != nil {
+						msg = firstNonEmpty(e.Message, e.Code, msg)
+					}
+					return fmt.Errorf("responses: 生成失败: %s", msg)
+				case "incomplete":
+					// 截断检查：只有输出上限导致的截断才进入续写态。
+					reason := ""
+					if d := payload.Response.IncompleteDetails; d != nil {
+						reason = d.Reason
+					}
+					if reason != "" && reason != "max_output_tokens" {
+						return fmt.Errorf("responses: 输出未完成: %s", reason)
+					}
 					finishLength = true
 				}
 				if u := payload.Response.Usage; u != nil {
@@ -364,4 +393,13 @@ func normalizeURL(baseURL string) string {
 		return raw
 	}
 	return raw + "/responses"
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }

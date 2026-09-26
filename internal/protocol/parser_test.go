@@ -74,6 +74,30 @@ func TestDuplicateJSONKeysRejected(t *testing.T) {
 	}
 }
 
+// 嵌套对象/数组闭合后，父对象的键值角色不能错位：
+// 两个字段取值相同不是重复键；嵌套值之后出现的真重复键必须被拒绝。
+func TestValidateJSONKeyTrackingAcrossNestedValues(t *testing.T) {
+	valid := []string{
+		`{"proposalId":"p1","type":"memory_add","entityIds":["npc_a"],"text":"x","memoryKind":"observed","confidence":"observed"}`,
+		`{"a":{"b":1},"c":"same","d":"same"}`,
+		`{"a":[{"k":"v"}],"b":{"c":[1,2]},"e":"v","f":"v"}`,
+	}
+	for _, in := range valid {
+		if err := validateJSON([]byte(in)); err != nil {
+			t.Errorf("valid JSON rejected: %s: %v", in, err)
+		}
+	}
+	dup := []string{
+		`{"v":1,"seq":3,"type":"final","options":[],"seq":4}`,
+		`{"a":{"b":1},"a":2}`,
+	}
+	for _, in := range dup {
+		if err := validateJSON([]byte(in)); err == nil {
+			t.Errorf("duplicate key accepted: %s", in)
+		}
+	}
+}
+
 // T04d 非法帧（未知 frame type / kind / intent / 版本）→ 拒绝。
 func TestInvalidFramesRejected(t *testing.T) {
 	cases := []string{

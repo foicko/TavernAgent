@@ -399,3 +399,17 @@ func TestSaveModelDropsUnknownReasoningEffort(t *testing.T) {
 		t.Fatalf("未知档位不应落盘: %s", raw)
 	}
 }
+
+// 接口地址里夹带的凭据在存储层同样要拒绝：旧的字符串判断永远不成立
+// （"http://" 里的斜杠总在 "@" 之前）。
+func TestSaveModelRejectsCredentialsInBaseURL(t *testing.T) {
+	store := openStore(t, t.TempDir())
+	for _, baseURL := range []string{"https://user:pass@a.example/v1", "http://token@a.example"} {
+		if _, err := store.SaveModel(ports.ModelInstance{Name: "A", Kind: "openai-chat", BaseURL: baseURL, Model: "m1"}); err == nil {
+			t.Fatalf("base URL with credentials accepted: %s", baseURL)
+		}
+	}
+	if _, err := store.SaveModel(ports.ModelInstance{Name: "B", Kind: "openai-chat", BaseURL: "https://a.example/v1?x=a@b", Model: "m1"}); err != nil {
+		t.Fatalf("an @ in the query is not userinfo: %v", err)
+	}
+}

@@ -495,7 +495,8 @@ type ChatRequest struct {
 // 前者是供应商**实际结算**的数字。两者同时落库（turn_usage），用于校准估算系数——
 // 没有真实读数时，压缩阈值、预算裁剪与缓存优化都无法被验证是否有效。
 type TokenUsage struct {
-	// Prompt 是输入 token。供应商若区分缓存，则为**未命中**部分的输入 token。
+	// Prompt 是完整输入 token（含命中缓存的部分），各供应商适配器须归一到这一口径：
+	// 估算校准用 Prompt/Estimated，只报未命中部分会把系数压到下限。
 	Prompt int
 	// Completion 是输出 token。
 	Completion int

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"tavernagent/internal/domain"
 )
@@ -109,7 +110,17 @@ func normalizeCard(card *CharacterCard) {
 	if len(prefix) < 6 {
 		prefix = hashString(prefix)
 	}
-	prefix = prefix[:6]
+	// 按字节截取，但退回到字符边界：外部 ID 可能含中文，直接切 6 字节会劈开一个字符，
+	// 派生出非法 UTF-8 的角色 ID（落库时被替换成 U+FFFD，与重新解析的 ID 对不上）。
+	// 边界恰好落在 6 字节的 ID 保持不变，已有会话的角色键不受影响。
+	cut := 6
+	for cut > 0 && cut < len(prefix) && !utf8.RuneStart(prefix[cut]) {
+		cut--
+	}
+	if cut == 0 {
+		cut = 6 // 前 6 字节里没有字符起点（非法输入）：退回按字节截取
+	}
+	prefix = prefix[:cut]
 	for i := range card.Characters {
 		if card.Characters[i].CharacterID == "" {
 			card.Characters[i].CharacterID = "npc_" + prefix + "_" + string(rune('a'+i))

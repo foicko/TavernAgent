@@ -192,3 +192,62 @@ func TestResponses_ReasoningEffort(t *testing.T) {
 		t.Errorf("期望 reasoning.effort=medium，实际 %s", body)
 	}
 }
+
+// 流中途的失败必须以错误返回：真实 error 事件的 message 在顶层，response.failed
+// 带 status=failed；content_filter 截断不能进入续写（续写只会被再次过滤）。
+func TestResponses_StreamFailureEvents(t *testing.T) {
+	cases := []struct {
+		name  string
+		event string
+		want  string
+	}{
+		{"error-event", `{"type":"error","code":"server_error","message":"upstream exploded"}`, "upstream exploded"},
+		{"response-failed", `{"type":"response.failed","response":{"status":"failed","error":{"code":"rate_limit_exceeded","message":"slow down"}}}`, "slow down"},
+		{"content-filter", `{"type":"response.incomplete","response":{"status":"incomplete","incomplete_details":{"reason":"content_filter"}}}`, "content_filter"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/event-stream")
+				_, _ = fmt.Fprint(w, "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n")
+				_, _ = fmt.Fprintf(w, "data: %s\n\n", tc.event)
+			}))
+			defer ts.Close()
+			prov := New(Config{BaseURL: ts.URL, Model: "gpt-4o", TimeoutFirstToken: 2 * time.Second})
+			err := prov.Stream(context.Background(), ports.ChatRequest{}, ports.OnChunkSink(func([]byte) error { return nil }))
+			if err == nil || errors.Is(err, ErrTruncated) || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("want error containing %q (not truncation), got %v", tc.want, err)
+			}
+		})
+	}
+}
+
+// 真实字段 incomplete_details.reason=max_output_tokens 才是可续写的截断。
+func TestResponses_IncompleteMaxOutputTokensIsTruncation(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = fmt.Fprint(w, "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n")
+		_, _ = fmt.Fprint(w, "data: {\"type\":\"response.incomplete\",\"response\":{\"status\":\"incomplete\",\"incomplete_details\":{\"reason\":\"max_output_tokens\"}}}\n\n")
+	}))
+	defer ts.Close()
+	prov := New(Config{BaseURL: ts.URL, Model: "gpt-4o", TimeoutFirstToken: 2 * time.Second})
+	err := prov.Stream(context.Background(), ports.ChatRequest{}, ports.OnChunkSink(func([]byte) error { return nil }))
+	if err != ErrTruncated {
+		t.Fatalf("expected ErrTruncated, got %v", err)
+	}
+}
+
+// 网关不补结尾换行：最后一个 data 行随 EOF 一起返回，也必须被处理（否则截断状态丢失）。
+func TestResponses_FinalEventWithoutTrailingNewline(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = fmt.Fprint(w, "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n")
+		_, _ = fmt.Fprint(w, "data: {\"type\":\"response.incomplete\",\"response\":{\"status\":\"incomplete\",\"incomplete_details\":{\"reason\":\"max_output_tokens\"}}}")
+	}))
+	defer ts.Close()
+	prov := New(Config{BaseURL: ts.URL, Model: "gpt-4o", TimeoutFirstToken: 2 * time.Second})
+	err := prov.Stream(context.Background(), ports.ChatRequest{}, ports.OnChunkSink(func([]byte) error { return nil }))
+	if err != ErrTruncated {
+		t.Fatalf("expected ErrTruncated from final unterminated event, got %v", err)
+	}
+}

@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"tavernagent/internal/adapters/mcp"
 	"tavernagent/internal/adapters/sqlite"
@@ -121,5 +124,29 @@ func TestMCPToolsListAndCall(t *testing.T) {
 	}
 	if len(callResp.Result.Content) == 0 || callResp.Result.Content[0].Text == "" {
 		t.Errorf("expected non-empty content in tools/call result")
+	}
+}
+
+// Cancellation must stop the server even while stdin is idle: a client that sends
+// SIGTERM without closing stdin should not keep the data-dir lock held.
+func TestServeStdioReturnsOnCancelWhileStdinIdle(t *testing.T) {
+	srv, _ := setupTestMCP(t)
+	stdin, stdinWriter := io.Pipe()
+	defer stdinWriter.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		var out bytes.Buffer
+		done <- srv.ServeStdio(ctx, stdin, &out)
+	}()
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("ServeStdio returned %v, want context.Canceled", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("ServeStdio did not return after cancellation while stdin was idle")
 	}
 }

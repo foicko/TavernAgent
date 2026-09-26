@@ -157,7 +157,10 @@ func loadIfCovers(paths Paths, hosts []string) (bool, bool) {
 	if err != nil {
 		return false, false
 	}
-	if _, err := os.Stat(paths.Key); err != nil {
+	// 证书与私钥是两次独立写入：中途崩溃、磁盘满或两个实例同时启动都可能留下
+	// "新证书 + 旧私钥"。只检查私钥文件存在会把这种坏对判为可用，此后每次启动
+	// 都在 LoadX509KeyPair 处失败。这里直接校验二者配对，不配对就重新生成。
+	if _, err := tls.LoadX509KeyPair(paths.Cert, paths.Key); err != nil {
 		return false, false
 	}
 	if time.Now().After(cert.NotAfter) {

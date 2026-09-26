@@ -74,6 +74,11 @@ type rpcErr struct {
 }
 
 // ServeStdio reads newline-delimited JSON-RPC from in and writes responses to out.
+//
+// The blocking read runs in its own goroutine so cancellation (Ctrl+C / SIGTERM
+// via signal.NotifyContext) is observed immediately. Otherwise the loop would
+// only notice ctx after the next stdin line arrives, keeping the data-dir lock
+// held and SQLite open until the client escalates to SIGKILL.
 func (s *Server) ServeStdio(ctx context.Context, in io.Reader, out io.Writer) error {
 	scanner := bufio.NewScanner(in)
 	// Support payloads up to 16MB for large card contents and histories
@@ -82,14 +87,38 @@ func (s *Server) ServeStdio(ctx context.Context, in io.Reader, out io.Writer) er
 
 	encoder := json.NewEncoder(out)
 
-	for scanner.Scan() {
+	lines := make(chan string)
+	scanErr := make(chan error, 1)
+	go func() {
+		defer close(lines)
+		for scanner.Scan() {
+			select {
+			case lines <- scanner.Text():
+			case <-ctx.Done():
+				return
+			}
+		}
+		scanErr <- scanner.Err()
+	}()
+
+	for {
+		var raw string
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
+		case l, ok := <-lines:
+			if !ok {
+				select {
+				case err := <-scanErr:
+					return err
+				default:
+					return ctx.Err()
+				}
+			}
+			raw = l
 		}
 
-		line := strings.TrimSpace(scanner.Text())
+		line := strings.TrimSpace(raw)
 		if line == "" {
 			continue
 		}
@@ -119,8 +148,6 @@ func (s *Server) ServeStdio(ctx context.Context, in io.Reader, out io.Writer) er
 		}
 		s.mu.Unlock()
 	}
-
-	return scanner.Err()
 }
 
 func (s *Server) handleNotification(_ context.Context, req jsonRPCRequest) {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -131,6 +132,45 @@ func TestOpenAIProvider_Errors(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error from 403 response, got nil")
 	}
+}
+
+// 非 JSON 的大错误页只截取开头进错误信息；索引重复时不能返回留空的槽位。
+func TestOpenAIProvider_ErrorSnippetAndDuplicateIndex(t *testing.T) {
+	html := server502Page()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte(html))
+	}))
+	defer server.Close()
+	dupServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"data":[{"index":0,"embedding":[1,2]},{"index":0,"embedding":[3,4]}]}`))
+	}))
+	defer dupServer.Close()
+
+	provider, err := NewOpenAIProvider(Config{BaseURL: server.URL, Model: "m"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = provider.EmbedText(context.Background(), "hello")
+	if err == nil || len(err.Error()) > 1024 {
+		t.Fatalf("error should carry only a short snippet of the body, got %v", err)
+	}
+
+	dupProvider, err := NewOpenAIProvider(Config{BaseURL: dupServer.URL, Model: "m"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := dupProvider.EmbedBatch(context.Background(), []string{"a", "b"}); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("duplicate indices must be rejected, got %v", err)
+	}
+}
+
+func server502Page() string {
+	b := make([]byte, 0, 200_000)
+	for len(b) < 200_000 {
+		b = append(b, "<html><body>502 Bad Gateway</body></html>"...)
+	}
+	return string(b)
 }
 
 func TestProbe(t *testing.T) {

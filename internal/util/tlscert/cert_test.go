@@ -62,6 +62,33 @@ func TestEnsureGeneratesAndReusesCertificate(t *testing.T) {
 	}
 }
 
+// 证书与私钥不配对（两次写入之间崩溃留下的"新证书 + 旧私钥"）：必须重新生成，
+// 而不是判为可用、让之后每次启动都在加载证书时失败。
+func TestEnsureRegeneratesMismatchedKeyPair(t *testing.T) {
+	dir := t.TempDir()
+	hosts := []string{"localhost", "127.0.0.1"}
+	paths, err := Ensure(dir, hosts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, otherKey, err := generate(hosts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(paths.Key, otherKey, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(paths); err == nil {
+		t.Fatal("前置条件：不配对的证书与私钥应无法加载")
+	}
+	if _, err := Ensure(dir, hosts); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(paths); err != nil {
+		t.Fatalf("Ensure 之后证书与私钥应重新配对: %v", err)
+	}
+}
+
 func TestGeneratedCertificateCoversHostsAndIsUsable(t *testing.T) {
 	dir := t.TempDir()
 	paths, err := Ensure(dir, []string{"localhost", "127.0.0.1", "10.0.0.5"})

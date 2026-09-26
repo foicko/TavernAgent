@@ -41,6 +41,8 @@ const (
 	metaKeyNotes   = "Notes"
 	metaKeyComment = "Comment"
 	maxMetaChunk   = 64 << 20 // 单个元数据块上限，防膨胀攻击
+	// maxMetaInflateTotal 是整份 PNG 文本块解压后的总量上限（多个小压缩块叠加）。
+	maxMetaInflateTotal = 128 << 20
 )
 
 // ImportCardPNG 从 PNG 字节流提取卡片元数据并解码为原生角色卡（纯 Go，无外部依赖）。
@@ -144,11 +146,25 @@ func (r *ImportReport) CardJSON() string {
 		return r.RawJSON
 	}
 	obj["avatar"] = avatar
+	// 没有显式 cardId 的卡，ID 是原始串的哈希派生值；补写 avatar 后原始串变了，
+	// 重新解析会派生出另一个 ID，卡库条目与由它建立的会话就对不上了。
+	// 把导入时派生的 ID 一并写回，让这份 JSON 的身份与卡库条目保持一致。
+	if !hasNonEmptyJSONString(obj["cardId"]) && r.Card.CardID != "" {
+		if id, err := json.Marshal(r.Card.CardID); err == nil {
+			obj["cardId"] = id
+		}
+	}
 	out, err := json.Marshal(obj)
 	if err != nil {
 		return r.RawJSON
 	}
 	return string(out)
+}
+
+// hasNonEmptyJSONString 报告 raw 是否是一个非空 JSON 字符串。
+func hasNonEmptyJSONString(raw json.RawMessage) bool {
+	var s string
+	return len(raw) > 0 && json.Unmarshal(raw, &s) == nil && s != ""
 }
 
 // attachPNGAvatar 生成有界头像缩略图并挂到卡片上。
@@ -639,6 +655,8 @@ func readPNGMeta(data []byte) (map[string]string, []string, error) {
 	}
 	meta := map[string]string{}
 	var warns []string
+	// inflateBudget 是整份文件的文本块解压总量：单块上限挡不住上百个小压缩块叠加。
+	inflateBudget := int64(maxMetaInflateTotal)
 	pos := 8
 	for pos+8 <= len(data) {
 		length := int(binary.BigEndian.Uint32(data[pos : pos+4]))
@@ -648,7 +666,7 @@ func readPNGMeta(data []byte) (map[string]string, []string, error) {
 		}
 		body := data[pos+8 : pos+8+length]
 		if ctype == "tEXt" || ctype == "zTXt" || ctype == "iTXt" {
-			if err := readTextChunk(ctype, body, meta); err != nil {
+			if err := readTextChunk(ctype, body, meta, &inflateBudget); err != nil {
 				warns = append(warns, fmt.Sprintf("%s 文本块读取失败，已跳过：%v", ctype, err))
 			}
 		}
@@ -673,12 +691,16 @@ func decodePNGText(b []byte) string {
 	return latin1ToString(b)
 }
 
-func readTextChunk(ctype string, body []byte, out map[string]string) error {
+func readTextChunk(ctype string, body []byte, out map[string]string, inflateBudget *int64) error {
 	nul := bytes.IndexByte(body, 0)
 	if nul < 1 || nul > 79 {
 		return errors.New("无效的文本 chunk：缺少关键字终止符")
 	}
 	key := string(body[:nul])
+	// 先按关键字过滤再解压：不认识的关键字直接跳过，不为它付出任何解压代价。
+	if !knownMetaKeys[key] {
+		return nil
+	}
 	rest := body[nul+1:]
 	var text string
 	switch ctype {
@@ -691,14 +713,9 @@ func readTextChunk(ctype string, body []byte, out map[string]string) error {
 		if rest[0] != 0 {
 			return errors.New("不支持的 zTXt 压缩方法")
 		}
-		zr, err := zlib.NewReader(bytes.NewReader(rest[1:]))
+		b, err := inflateMetaText(rest[1:], inflateBudget)
 		if err != nil {
-			return fmt.Errorf("zTXt 解压失败: %w", err)
-		}
-		defer zr.Close()
-		b, err := io.ReadAll(io.LimitReader(zr, maxMetaChunk))
-		if err != nil {
-			return fmt.Errorf("zTXt 读取失败: %w", err)
+			return fmt.Errorf("zTXt %w", err)
 		}
 		text = decodePNGText(b)
 	case "iTXt":
@@ -722,14 +739,9 @@ func readTextChunk(ctype string, body []byte, out map[string]string) error {
 		}
 		switch {
 		case compFlag == 1 && compMethod == 0:
-			zr, err := zlib.NewReader(bytes.NewReader(payload))
+			b, err := inflateMetaText(payload, inflateBudget)
 			if err != nil {
-				return fmt.Errorf("iTXt 解压失败: %w", err)
-			}
-			defer zr.Close()
-			b, err := io.ReadAll(io.LimitReader(zr, maxMetaChunk))
-			if err != nil {
-				return fmt.Errorf("iTXt 读取失败: %w", err)
+				return fmt.Errorf("iTXt %w", err)
 			}
 			text = decodePNGText(b)
 		case compFlag == 0:
@@ -740,10 +752,30 @@ func readTextChunk(ctype string, body []byte, out map[string]string) error {
 	default:
 		return nil
 	}
-	if key == metaKeyChara || key == metaKeyCCV3 || knownMetaKeys[key] {
-		out[key] = text
-	}
+	out[key] = text
 	return nil
+}
+
+// inflateMetaText 解压一个文本块，受单块上限与整份文件剩余预算双重约束。
+func inflateMetaText(compressed []byte, budget *int64) ([]byte, error) {
+	limit := int64(maxMetaChunk)
+	if *budget < limit {
+		limit = *budget
+	}
+	if limit <= 0 {
+		return nil, errors.New("解压总量超过上限")
+	}
+	zr, err := zlib.NewReader(bytes.NewReader(compressed))
+	if err != nil {
+		return nil, fmt.Errorf("解压失败: %w", err)
+	}
+	defer zr.Close()
+	b, err := io.ReadAll(io.LimitReader(zr, limit))
+	if err != nil {
+		return nil, fmt.Errorf("读取失败: %w", err)
+	}
+	*budget -= int64(len(b))
+	return b, nil
 }
 
 // latin1ToString 按 Latin-1（ISO-8859-1）解释字节（tEXt/zTXt 的官方编码；

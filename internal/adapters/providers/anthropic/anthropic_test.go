@@ -223,8 +223,9 @@ func TestAnthropic_Stream_MergesUsageAcrossEvents(t *testing.T) {
 		t.Fatal("usage 未上报")
 	}
 	// 最后一次回调必须同时含输入、输出与缓存命中量。
-	if last.Prompt != 200 || last.Completion != 33 || last.Cached != 96 || !last.Reported {
-		t.Fatalf("merged usage = %+v, want prompt=200 completion=33 cached=96", last)
+	// Prompt 归一为完整输入：input(200) + 缓存读取(96) + 缓存写入(40)，与 OpenAI 口径一致。
+	if last.Prompt != 336 || last.Completion != 33 || last.Cached != 96 || !last.Reported {
+		t.Fatalf("merged usage = %+v, want prompt=336 completion=33 cached=96", last)
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -627,7 +628,13 @@ func validateEndpoint(baseURL string, maxTokens, contextWindow int) error {
 		if !strings.HasPrefix(lower, "http://") && !strings.HasPrefix(lower, "https://") {
 			return errors.New("接口地址必须是 http(s) 地址，凭据请填在密钥栏")
 		}
-		if at := strings.Index(baseURL, "@"); at >= 0 && at < strings.IndexAny(baseURL, "/?") {
+		// 用 url.Parse 判断 userinfo：按字符串找 "@" 与首个 "/" 的先后永远不成立
+		// （"http://" 里的斜杠总在前面），凭据会被原样存进明文设置。
+		u, err := url.Parse(baseURL)
+		if err != nil || u.Host == "" {
+			return errors.New("接口地址格式不合法")
+		}
+		if u.User != nil {
 			return errors.New("接口地址不能包含凭据，请把密钥填在密钥栏")
 		}
 	}

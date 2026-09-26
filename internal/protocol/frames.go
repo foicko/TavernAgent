@@ -261,6 +261,14 @@ func validateJSON(data []byte) error {
 					return Invalid("unbalanced JSON delimiters", 0)
 				}
 				stack = stack[:len(stack)-1]
+				// 嵌套的对象/数组本身就是父对象里一个键的值：它闭合后，父对象的
+				// 下一个字符串必然是键。漏掉这一步会让之后的键值角色整体错位——
+				// 合法帧因两个字段取值相同被误判为「重复键」，真正的重复键反而漏检。
+				if len(stack) > 0 {
+					if parent := &stack[len(stack)-1]; parent.keys != nil {
+						parent.expectKey = true
+					}
+				}
 			}
 		case string:
 			sv := string(tv)

@@ -202,8 +202,11 @@ func runPrompt(ctx context.Context, args []string) error {
 	defer a.Close()
 
 	branches, err := a.Sessions.Branches(*sessionID)
-	if err != nil || len(branches) == 0 {
+	if err != nil {
 		return fmt.Errorf("获取分支失败: %w", err)
+	}
+	if len(branches) == 0 {
+		return fmt.Errorf("会话 %s 没有任何分支", *sessionID)
 	}
 	branch := branches[0]
 
