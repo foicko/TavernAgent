@@ -56,9 +56,8 @@ charx 卡常用 `editdisplay` 正则或 Lua 把模型输出变成自定义 UI（
 | 提交期归一化 | `internal/application/commitplan.go`（`preparePlanBlocksAndOptions`） |
 | 标记契约 | `internal/context/cardui.go`（`CardUIContract`） |
 | 语法解析（Web） | `web/src/lib/cardMarkers.tsx` + `web/src/components/CardHUD.tsx` |
-| 语法解析（桌面） | `desktop/src/TavernAgent.Core/CardMarkers/CardMarkerParser.cs` |
 
-三端解析器必须保持一致：同一组黄金用例分别在 `internal/cardmarkers`、`web/src/lib/__tests__/cardMarkers.test.tsx`、`desktop/tests/TavernAgent.Core.Tests/CardMarkerParserTests.cs` 里断言。
+两端解析器必须保持一致：同一组黄金用例分别在 `internal/cardmarkers`、`web/src/lib/__tests__/cardMarkers.test.tsx` 里断言。
 
 ## 5. 能力检测（导入兼容报告）
 
@@ -81,8 +80,6 @@ charx 卡常用 `editdisplay` 正则或 Lua 把模型输出变成自定义 UI（
   同名先到先得，保证抽取结果确定。
 - Web 端把 token 写进根元素的 `--card-accent/--card-bg/--card-ink/--card-font`，仅 `CardHUD` 与
   `SceneBar` 消费这些变量，因此不影响整体界面。
-- 桌面端把 token 转成画刷覆盖，**只作用于卡片表面**（`CardHudView` / `SceneBarView`，见
-  `desktop/src/TavernAgent.Desktop/Services/CardTheme.cs`），不波及整体界面；只解析 `#hex`。
 
 **不执行卡内 CSS**：只读取字面量值。
 
