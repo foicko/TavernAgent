@@ -47,4 +47,18 @@ describe("composer input retention", () => {
     expect(mocks.api.acceptTurn).not.toHaveBeenCalled();
     expect(screen.getByText(/当前会话与角色不匹配/)).toBeTruthy();
   });
+
+  it("回合失败时本轮注记也一并还回来", async () => {
+    useStory.setState({ activeCharacterId: "card_someone_else" });
+    render(<><NarrativeStream /><ComposerShelf /></>);
+    const box = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.change(box, { target: { value: "我要说话" } });
+    fireEvent.click(document.querySelector(".note-entry") as HTMLButtonElement);
+    const noteInput = document.querySelector(".composer-note-input") as HTMLInputElement;
+    fireEvent.change(noteInput, { target: { value: "放慢节奏" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "推进剧情" })); });
+    expect(useStory.getState().phase).toBe("failed");
+    expect(box.value).toBe("我要说话");
+    expect((document.querySelector(".composer-note-input") as HTMLInputElement).value).toBe("放慢节奏");
+  });
 });

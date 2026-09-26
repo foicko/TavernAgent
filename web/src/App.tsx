@@ -103,7 +103,7 @@ export default function App() {
     else document.body.classList.remove("mode-reading");
   }, [isLeftRailCollapsed, isRightRailCollapsed, viewMode]);
 
-  // 全局快捷键（与桌面端 MainWindow.axaml 保持同一张表）：
+  // 全局快捷键：
   // Ctrl+K 命令面板 · Ctrl+[ / Ctrl+] 左右栏 · Ctrl+, 设置 · Ctrl+Shift+L 主题
   // Alt+1..4 左栏标签（不用 Ctrl+数字：浏览器用它切换标签页）· Esc 自上层向下关闭
   useEffect(() => {

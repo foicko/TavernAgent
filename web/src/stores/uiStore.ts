@@ -10,10 +10,28 @@ export type ThemeMode = "light" | "dark";
 
 const THEME_STORAGE_KEY = "tavernagent.theme";
 
+// 存储被禁用（隐私模式 / 第三方 iframe）时连访问 window.localStorage 都会抛 SecurityError；
+// 主题读取发生在模块加载期，抛出会让整个应用白屏，所以读写都兜底为"不记忆"。
+function readSavedTheme(): string | null {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeSavedTheme(theme: ThemeMode): void {
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // localStorage 不可用时不记忆，也不报错
+  }
+}
+
 /** 首帧主题：用户显式选择优先，否则跟随系统 prefers-color-scheme。 */
 export function resolveInitialTheme(): ThemeMode {
   if (typeof window === "undefined") return "light";
-  const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const saved = readSavedTheme();
   if (saved === "light" || saved === "dark") return saved;
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
@@ -233,7 +251,7 @@ export const useUi = create<UiState>((set, get) => ({
   setTheme: (theme) => {
     set({ theme });
     applyThemeToDocument(theme);
-    if (typeof window !== "undefined") window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    if (typeof window !== "undefined") writeSavedTheme(theme);
   },
 
   switchActiveCharacter: (key) => {
@@ -328,7 +346,7 @@ export const useUi = create<UiState>((set, get) => ({
 if (typeof window !== "undefined" && window.matchMedia) {
   const media = window.matchMedia("(prefers-color-scheme: dark)");
   media.addEventListener("change", (event) => {
-    if (window.localStorage.getItem(THEME_STORAGE_KEY)) return;
+    if (readSavedTheme()) return;
     const next: ThemeMode = event.matches ? "dark" : "light";
     useUi.setState({ theme: next });
     applyThemeToDocument(next);

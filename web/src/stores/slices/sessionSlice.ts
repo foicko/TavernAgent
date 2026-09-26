@@ -11,7 +11,6 @@ import {
   getSessionListSeq,
   incrementSessionListSeq,
   messagesFromNodes,
-  navigationEpoch,
   owns,
   resolveCharKeyFromSession,
   scope,
@@ -65,9 +64,13 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
         pendingSessionId: id,
       });
     }
+    // 缓存命中时用户已经能操作：后台校验期间切分支 / 回看节点不会推进导航 epoch，
+    // 所以要按完整作用域（会话 + 分支 + 节点）判断这次刷新是否仍然作数，
+    // 否则迟到的默认分支视图会把用户刚切过去的分支覆盖回来。
+    const owner = scope();
     try {
       const view = await api.getSession(id);
-      if (epoch !== navigationEpoch) return;
+      if (!owns(owner)) return;
       sessionViewCache.set(id, view);
       rememberSession(id);
       useUi.getState().setActiveCharKey(resolveCharKeyFromSession(view));
@@ -89,7 +92,7 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
     } catch (e) {
       // 已恢复的在途回合不因一次校验失败被打回 failed：流仍在推，等它自己收敛。
       const running = ["generating", "truncated", "awaiting_confirm"].includes(get().phase) && !!get().lastTurnId;
-      if (epoch === navigationEpoch) {
+      if (owns(owner)) {
         set({ error: toErr(e), ...(running ? {} : { phase: "failed" as const }), sessionLoading: false, pendingSessionId: null });
       }
     }

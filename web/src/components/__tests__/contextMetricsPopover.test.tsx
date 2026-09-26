@@ -68,6 +68,18 @@ describe("tokenEstimator unit tests", () => {
     const metrics = calculateContextMetrics({ char: CHARACTER_PRESETS.custom, messages: [], inputText: "" });
     expect(metrics.modelName).toBe("");
   });
+
+  // 命中率是启发式估算，但不能再被钳进 45%~96.4% 的"好看区间"
+  it("reports the estimated cache hit rate without clamping", () => {
+    // 只有人设、没有历史与草稿：静态前缀全部可缓存 → 100%
+    const onlyPrefix = calculateContextMetrics({ char: CHARACTER_PRESETS.custom, messages: [], inputText: "" });
+    expect(onlyPrefix.cacheHitRate).toBe(100);
+
+    // 草稿远大于前缀：几乎没有可复用的缓存，应低于旧下限 45%
+    const draftHeavy = calculateContextMetrics({ char: CHARACTER_PRESETS.custom, messages: [], inputText: "draft ".repeat(3000) });
+    expect(draftHeavy.cacheHitRate).toBeLessThan(45);
+    expect(draftHeavy.cacheHitRate).toBeGreaterThanOrEqual(0);
+  });
 });
 
 describe("ContextMetricsPopover UI", () => {

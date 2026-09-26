@@ -182,7 +182,14 @@
         "dc": 12
       }
     ],
-    "hasMore": false
+    "hasMore": false,
+    "capabilities": {
+      "busy": false,
+      "canSend": false,
+      "canFork": false,
+      "atTurnNode": false,
+      "viewingHistory": false
+    }
   },
   "sseEvents": {
     "block.appended": {

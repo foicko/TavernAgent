@@ -300,10 +300,18 @@ export function associateSessionWithAvatar(sessionId: string, avatar: string): v
       memorySessionAvatarMap = {};
     }
   }
+  // 已经是最近一条且头像没变：顺序与内容都不会变，直接返回。
+  // characterPresentation 在每次渲染（含流式逐字）都会调到这里，不能每次都
+  // 把几十张 data URL 头像重新序列化写进 localStorage。
+  const map = memorySessionAvatarMap ?? {};
+  for (const firstKey in map) {
+    if (firstKey === sessionId && map[firstKey] === avatar) return;
+    break;
+  }
   // 重新插入以刷新顺序，超限时淘汰最早的一条。
   const next: Record<string, string> = { [sessionId]: avatar };
   let kept = 1;
-  for (const [key, value] of Object.entries(memorySessionAvatarMap ?? {})) {
+  for (const [key, value] of Object.entries(map)) {
     if (key === sessionId) continue;
     if (kept >= MAX_SESSION_AVATARS) break;
     next[key] = value;

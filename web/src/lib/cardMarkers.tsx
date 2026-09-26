@@ -3,7 +3,7 @@
 // 与 risuImages 一样刻意不做 HTML 解析：只识别固定几种标记形态，命中才渲染，
 // 否则原样保留文本。因此没有任意 HTML 注入面。
 //
-// 支持的标记（与 internal/cardmarkers、desktop CardMarkerParser 保持一致）：
+// 支持的标记（与 internal/cardmarkers 保持一致）：
 //   <img cmd="key"> / [IMG:key]   图片（卡内资源）
 //   [HUD:label=value|…]           状态面板
 //   [SCENE:title]                 场景

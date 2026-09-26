@@ -31,6 +31,7 @@ interface LeftRailTreePanelProps {
   liveRel?: { affection: number; trust: number; alertness: number };
   activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
   onOpenStoryMap: () => void;
+  style?: React.CSSProperties;
 }
 
 export const LeftRailTreePanel: React.FC<LeftRailTreePanelProps> = ({
@@ -48,9 +49,10 @@ export const LeftRailTreePanel: React.FC<LeftRailTreePanelProps> = ({
   liveRel,
   activateOnKey,
   onOpenStoryMap,
+  style,
 }) => {
   return (
-    <div className="branch-timeline-tree rail-view-panel" id="view-tree">
+    <div className="branch-timeline-tree rail-view-panel" id="view-tree" style={style}>
       {currentView && (
         <>
           <button className="story-map-open btn-quiet" onClick={onOpenStoryMap}>

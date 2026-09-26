@@ -7,6 +7,7 @@ import { INITIAL_LORE_ENTRIES } from "../lib/characterPresets";
 import { StoryMapModal } from "./StoryMapModal";
 import { characterPresentation } from "../lib/characterPresentation";
 import { DEFAULT_PLAYER_NAME } from "../lib/characterMacros";
+import { truncateText } from "../lib/truncateText";
 import { LorebookPanel } from "./LorebookPanel";
 import { LeftRailTreePanel, type DisplayTreeNode } from "./LeftRailTreePanel";
 import { LeftRailCharactersPanel } from "./LeftRailCharactersPanel";
@@ -98,9 +99,10 @@ export const LeftRail: React.FC = () => {
           if (isOpening) {
             desc = parsed.openingText || "命运起点 · 酒馆初见";
           } else {
+            const firstBlock = parsed.blocks?.[0]?.text;
             desc = parsed.inputText
-              ? `玩家: 「${parsed.inputText.slice(0, 36)}...」`
-              : parsed.blocks?.[0]?.text?.slice(0, 40) || "文学演义片段";
+              ? `玩家: 「${truncateText(String(parsed.inputText), 36)}」`
+              : typeof firstBlock === "string" && firstBlock ? truncateText(firstBlock, 40) : "文学演义片段";
           }
         } catch {
           desc = isOpening ? "命运起点" : "文学演义片段";
@@ -143,6 +145,9 @@ export const LeftRail: React.FC = () => {
   }, [hasBackendNodes, currentView, liveRel, char.treeNodes]);
 
   const activateOnKey = (run: () => void) => (event: React.KeyboardEvent) => {
+    // 只响应行本身获得焦点时的按键：行内嵌的删除 / 分支按钮冒泡上来的 Enter/Space
+    // 要留给按钮自己（否则会被 preventDefault 吞掉并误触发整行动作）。
+    if (event.target !== event.currentTarget) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       run();
@@ -209,8 +214,8 @@ export const LeftRail: React.FC = () => {
             onChange={(next) => switchLeftTab(next)}
             items={[
               { value: "tree", id: "subtab-btn-tree", label: "脉络" },
-              { value: "characters", id: "subtab-btn-characters", label: "角色库" },
-              { value: "lore", id: "subtab-btn-lore", label: "世界书" },
+              { value: "characters", id: "subtab-btn-characters", label: "角色" },
+              { value: "lore", id: "subtab-btn-lore", label: "世界" },
               { value: "sessions", id: "subtab-btn-sessions", label: "会话" },
             ]}
           />
@@ -226,46 +231,40 @@ export const LeftRail: React.FC = () => {
 
         <div className="rail-scroll-body">
           {/* 1. 因果分支树 */}
-          <div
-            style={{ display: leftTab === "tree" ? "block" : "none" }}
-          >
-            <LeftRailTreePanel
-              currentView={currentView}
-              hasBackendNodes={hasBackendNodes}
-              displayTreeNodes={displayTreeNodes}
-              probeNodeId={probeNodeId}
-              setProbeNodeId={setProbeNodeId}
-              branchConfirmId={branchConfirmId}
-              setBranchConfirmId={setBranchConfirmId}
-              forkFrom={forkFrom}
-              viewAt={viewAt}
-              regenerate={regenerate}
-              notifyQuiet={notifyQuiet}
-              liveRel={liveRel}
-              activateOnKey={activateOnKey}
-              onOpenStoryMap={() => setStoryMapOpen(true)}
-            />
-          </div>
+          <LeftRailTreePanel
+            style={{ display: leftTab === "tree" ? "flex" : "none" }}
+            currentView={currentView}
+            hasBackendNodes={hasBackendNodes}
+            displayTreeNodes={displayTreeNodes}
+            probeNodeId={probeNodeId}
+            setProbeNodeId={setProbeNodeId}
+            branchConfirmId={branchConfirmId}
+            setBranchConfirmId={setBranchConfirmId}
+            forkFrom={forkFrom}
+            viewAt={viewAt}
+            regenerate={regenerate}
+            notifyQuiet={notifyQuiet}
+            liveRel={liveRel}
+            activateOnKey={activateOnKey}
+            onOpenStoryMap={() => setStoryMapOpen(true)}
+          />
 
           {/* 2. 角色库 */}
-          <div
-            style={{ display: leftTab === "characters" ? "block" : "none" }}
-          >
-            <LeftRailCharactersPanel
-              importedCards={importedCards}
-              setImportedCards={setImportedCards}
-              currentView={currentView}
-              sessions={sessions}
-              playerName={playerName}
-              confirmCardId={confirmCardId}
-              setConfirmCardId={setConfirmCardId}
-              activeCharKey={activeCharKey}
-              selectCharacter={selectCharacter}
-              setCharImportOpen={setCharImportOpen}
-              toggleLeftRail={toggleLeftRail}
-              activateOnKey={activateOnKey}
-            />
-          </div>
+          <LeftRailCharactersPanel
+            style={{ display: leftTab === "characters" ? "flex" : "none" }}
+            importedCards={importedCards}
+            setImportedCards={setImportedCards}
+            currentView={currentView}
+            sessions={sessions}
+            playerName={playerName}
+            confirmCardId={confirmCardId}
+            setConfirmCardId={setConfirmCardId}
+            activeCharKey={activeCharKey}
+            selectCharacter={selectCharacter}
+            setCharImportOpen={setCharImportOpen}
+            toggleLeftRail={toggleLeftRail}
+            activateOnKey={activateOnKey}
+          />
 
           {/* 3. 世界书 */}
           <div
@@ -324,35 +323,32 @@ export const LeftRail: React.FC = () => {
           </div>
 
           {/* 4. 会话库 */}
-          <div
-            style={{ display: leftTab === "sessions" ? "block" : "none" }}
-          >
-            <LeftRailSessionsPanel
-              sessions={sessions}
-              sessionFilter={sessionFilter}
-              setSessionFilter={setSessionFilter}
-              currentView={currentView}
-              pendingSessionId={pendingSessionId}
-              sessionLoading={sessionLoading}
-              activeCharKey={activeCharKey}
-              char={char}
-              playerName={playerName}
-              confirmDeleteId={confirmDeleteId}
-              setConfirmDeleteId={setConfirmDeleteId}
-              openSession={openSession}
-              deleteSession={deleteSession}
-              startNewSessionForCurrentChar={startNewSessionForCurrentChar}
-              exportSession={exportSession}
-              importSession={importSession}
-              packError={packError}
-              clearPackError={clearPackError}
-              switchLeftTab={switchLeftTab}
-              setCharImportOpen={setCharImportOpen}
-              toggleLeftRail={toggleLeftRail}
-              notifyQuiet={notifyQuiet}
-              activateOnKey={activateOnKey}
-            />
-          </div>
+          <LeftRailSessionsPanel
+            style={{ display: leftTab === "sessions" ? "flex" : "none" }}
+            sessions={sessions}
+            sessionFilter={sessionFilter}
+            setSessionFilter={setSessionFilter}
+            currentView={currentView}
+            pendingSessionId={pendingSessionId}
+            sessionLoading={sessionLoading}
+            activeCharKey={activeCharKey}
+            char={char}
+            playerName={playerName}
+            confirmDeleteId={confirmDeleteId}
+            setConfirmDeleteId={setConfirmDeleteId}
+            openSession={openSession}
+            deleteSession={deleteSession}
+            startNewSessionForCurrentChar={startNewSessionForCurrentChar}
+            exportSession={exportSession}
+            importSession={importSession}
+            packError={packError}
+            clearPackError={clearPackError}
+            switchLeftTab={switchLeftTab}
+            setCharImportOpen={setCharImportOpen}
+            toggleLeftRail={toggleLeftRail}
+            notifyQuiet={notifyQuiet}
+            activateOnKey={activateOnKey}
+          />
         </div>
       </div>
     </aside>

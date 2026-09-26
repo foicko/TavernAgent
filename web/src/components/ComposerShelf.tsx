@@ -110,7 +110,9 @@ export const ComposerShelf: React.FC = () => {
     }
     const current = useStory.getState();
     if (current.phase === "failed" && (!sessionId || current.view?.sessionId === sessionId)) {
+      // 回合没进去：正文与本轮注记一起还回来，否则重发时注记会悄悄丢失
       setInputText(text);
+      setNote(attachedNote);
     }
   };
 

@@ -41,4 +41,18 @@ describe("recoverable SSE transport", () => {
     stops.push(subscribeTurnEvents("t", { onEvent: vi.fn(), onFinalError: vi.fn() }, ctrl.signal));
     await Promise.resolve(); expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("每次重连成功收到数据后退避计数归零，长连接不会因累计掉线而放弃", async () => {
+    vi.useFakeTimers();
+    let seq = 0;
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(stream([`id: t:${++seq}\nevent: block.appended\ndata: {}\n\n`])));
+    vi.stubGlobal("fetch", fetchMock);
+    const onFinalError = vi.fn();
+    stops.push(subscribeTurnEvents("t", { onEvent: vi.fn(), onFinalError }));
+    // 累计退避 1+2+4+8+16=31s 即耗尽；每次都成功重连时应一直以 1s 间隔继续
+    await vi.advanceTimersByTimeAsync(40_000);
+    expect(onFinalError).not.toHaveBeenCalled();
+    // 旧行为最多 1 次首连 + 5 次重连
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(6);
+  });
 });

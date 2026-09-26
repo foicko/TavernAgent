@@ -50,6 +50,7 @@ interface LeftRailSessionsPanelProps {
   toggleLeftRail: () => void;
   notifyQuiet: (message: string) => void;
   activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
+  style?: React.CSSProperties;
 }
 
 export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
@@ -76,9 +77,10 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
   toggleLeftRail,
   notifyQuiet,
   activateOnKey,
+  style,
 }) => {
   return (
-    <div id="view-sessions" className="rail-view-panel">
+    <div id="view-sessions" className="rail-view-panel" style={style}>
       {packError ? (
         <Banner tone="error" onDismiss={clearPackError}>
           {packError}

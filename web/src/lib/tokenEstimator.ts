@@ -148,16 +148,17 @@ export function calculateContextMetrics(params: CalculateContextParams): Context
   const rawPercentage = (totalUsedTokens / maxContextWindow) * 100;
   const percentage = Math.min(100, Math.round(rawPercentage * 10) / 10);
 
-  // 8. 真实前缀缓存命中率估算（Prefix Cache Hit Rate）
-  // 现代大模型（DeepSeek / Claude / Gemini）对静态系统提示、历史前序轮次自动建立前缀缓存
+  // 8. 前缀缓存命中率估算（Prefix Cache Hit Rate）
+  // 纯客户端启发式，并非供应商返回的实测值：假定静态系统提示与记忆全部命中、
+  // 历史前序轮次大部分命中（主流模型对前缀自动建缓存）。结果如实给出，不再钳进
+  // "看起来合理"的区间——那样会让 0% / 100% 这类真实极端永远显示不出来。
   const staticPrefix = systemTokens + memoryTokens;
   const cachedHistory = historyTokens > 500 ? historyTokens * 0.88 : historyTokens * 0.7;
   const totalCached = staticPrefix + cachedHistory;
   let cacheHitRate = 0;
   if (totalUsedTokens > 80) {
     const rawRate = (totalCached / totalUsedTokens) * 100;
-    // 典型值落在 75% ~ 95% 之间，呈现贴合实际的动态平滑曲线
-    cacheHitRate = Math.min(96.4, Math.max(45.0, Math.round(rawRate * 10) / 10));
+    cacheHitRate = Math.round(rawRate * 10) / 10;
   }
 
   // 9. 当前主线模型名（只如实反映配置，不再按 baseUrl 子串猜供应商）

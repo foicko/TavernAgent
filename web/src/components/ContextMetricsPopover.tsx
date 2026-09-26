@@ -106,7 +106,7 @@ export const ContextMetricsPopover: React.FC<ContextMetricsPopoverProps> = ({ in
         {/* 3. 前缀缓存命中率 */}
         <div className="context-popover-cache-row">
           <span className="context-cache-label">平均前缀缓存命中</span>
-          <span className="context-cache-val">{metrics.cacheHitRate}%</span>
+          <span className="context-cache-val">~{metrics.cacheHitRate}%</span>
         </div>
 
         {/* 4. 实时上下文详细构成列表 */}

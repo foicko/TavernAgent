@@ -18,16 +18,15 @@
 
 
 /* --- 四个可切换视图面板 -------------------------------------------------- */
-/* display 随 leftTab 变化，经 CSS 变量注入；其余布局固定 */
 .rail-view-panel {
-  display: var(--lr-panel-display, none);
+  display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* 分支树基类本身已是 flex，需要更高优先级让变量接管 display */
-.branch-timeline-tree.rail-view-panel {
-  display: var(--lr-panel-display, none);
+/* 紧凑页签内边距，保证四列等宽时字号与留白协调不折行/不出现省略号 */
+.rail-subtabs .ui-tabs__tab {
+  padding: 0 4px;
 }
 
 /* --- 因果分支树 ---------------------------------------------------------- */

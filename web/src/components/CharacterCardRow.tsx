@@ -55,6 +55,8 @@ export function CharacterCardRow({
       }}
       onKeyDown={(event) => {
         if (confirming) return;
+        // 行尾删除按钮冒泡上来的按键留给按钮自己，不能被当成"打开角色卡"。
+        if (event.target !== event.currentTarget) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onOpen();

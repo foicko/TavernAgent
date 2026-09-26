@@ -21,6 +21,7 @@ interface LeftRailCharactersPanelProps {
   setCharImportOpen: (open: boolean) => void;
   toggleLeftRail: () => void;
   activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
+  style?: React.CSSProperties;
 }
 
 export const LeftRailCharactersPanel: React.FC<LeftRailCharactersPanelProps> = ({
@@ -36,11 +37,12 @@ export const LeftRailCharactersPanel: React.FC<LeftRailCharactersPanelProps> = (
   setCharImportOpen,
   toggleLeftRail,
   activateOnKey,
+  style,
 }) => {
   const totalCards = SELECTABLE_PRESET_KEYS.length + importedCards.length;
 
   return (
-    <div id="view-characters" className="rail-view-panel">
+    <div id="view-characters" className="rail-view-panel" style={style}>
       <div className="roster-actions-bar">
         <button
           className="btn-primary-send roster-import-btn"

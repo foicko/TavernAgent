@@ -330,6 +330,19 @@ describe("story request ownership", () => {
     expect(mocks.api.cancelTurn).not.toHaveBeenCalled();
   });
 
+  it("a definitive 4xx rejection is not replayed under the same idempotency key", async () => {
+    mocks.api.getSession.mockResolvedValue(view("A"));
+    await useStory.getState().openSession("A");
+    // 队列满（429）是服务端的明确拒绝：后端已把该键记为失败回合，原样重放只会拿回它。
+    mocks.api.acceptTurn.mockRejectedValueOnce(Object.assign(new Error("该分支已有进行中的回合"), { status: 429 }));
+    await useStory.getState().send("开门");
+    const rejectedKey = mocks.api.acceptTurn.mock.calls[0][2].idempotencyKey;
+    mocks.api.acceptTurn.mockResolvedValue({ turnId: "fresh" });
+    await useStory.getState().retry();
+    expect(mocks.api.acceptTurn).toHaveBeenCalledTimes(2);
+    expect(mocks.api.acceptTurn.mock.calls[1][2].idempotencyKey).not.toBe(rejectedKey);
+  });
+
   it("retry reconciles a committed result instead of generating a duplicate", async () => {
     mocks.api.getSession.mockResolvedValue(view("A"));
     await useStory.getState().openSession("A");

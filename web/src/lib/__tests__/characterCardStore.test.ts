@@ -117,6 +117,22 @@ describe("会话头像映射", () => {
     expect(raw["session-49"]).toBe("data:image/jpeg;base64,AAAA");
     expect(mod.getSessionAvatar("session-49")).toBe("data:image/jpeg;base64,AAAA");
   });
+
+  it("关联未变化时跳过 localStorage 写入（每次渲染都会调用）", async () => {
+    const mod = await freshStore();
+    mod.associateSessionWithAvatar("s1", "data:image/png;base64,A");
+    mod.associateSessionWithAvatar("s2", "data:image/png;base64,B");
+    const setItem = vi.spyOn(window.localStorage, "setItem");
+
+    mod.associateSessionWithAvatar("s2", "data:image/png;base64,B");
+    expect(setItem).not.toHaveBeenCalled();
+
+    // 顺序变化（s1 重新变为最近）或头像变化仍要落盘
+    mod.associateSessionWithAvatar("s1", "data:image/png;base64,A");
+    mod.associateSessionWithAvatar("s1", "data:image/png;base64,C");
+    expect(setItem).toHaveBeenCalledTimes(2);
+    expect(mod.getSessionAvatar("s1")).toBe("data:image/png;base64,C");
+  });
 });
 
 describe("cleanShortRole", () => {

@@ -160,12 +160,6 @@ export const api = {
     http<{ authenticated: boolean; required: boolean }>("GET", "/api/v1/auth/status"),
   pair: (pin: string) =>
     http<{ ok: boolean; token: string }>("POST", "/api/v1/auth/pair", { pin }),
-  // 桌面壳桥（浏览器部署下 desktop=false / theme 返回 404）：
-  // 窗口跑在 loopback 源上，拿不到壳层注入的原生桥，
-  // 原生窗口配色只能由前端通过同源接口回传。
-  desktopInfo: () => http<{ desktop: boolean }>("GET", "/api/v1/desktop"),
-  setDesktopTheme: (mode: "light" | "dark") =>
-    http<void>("POST", "/api/v1/desktop/theme", { mode }),
   listSessions: () => http<{ sessions: SessionSummary[] }>("GET", "/api/v1/sessions"),
   // 永久删除一个故事及其全部数据。不可撤销，调用方必须先与用户确认；
   // 仍有进行中的回合时服务端返回 409 SESSION_BUSY。
@@ -446,6 +440,8 @@ function subscribeEvents(aggregateId: string, path: string, handlers: TurnStream
           for (;;) {
             const chunk = await readWithStall(reader, connection.signal, SSE_STALL_MS);
             if (chunk.done) break;
+            // 连接确实在出数据才算恢复：退避计数归零，否则长连接一生只能掉线 5 次
+            retries = 0;
             buf += decoder.decode(chunk.value, { stream: true });
             if (buf.length > 1024 * 1024) throw new Error("SSE event too large");
             let sep: RegExpExecArray | null;

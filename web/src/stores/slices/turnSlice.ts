@@ -252,13 +252,25 @@ async function startTurn(view: SessionView, key: string, input: TurnInput, owner
   if (!owns(owner) || owner.sessionId !== view.sessionId) return;
   pendingSubmission = { owner, view, key, input };
   setStoryState({ lastInput: input, lastTurnId: null });
-  const result: AcceptResult = await api.acceptTurn(view.sessionId, view.branch.branchId, {
-    idempotencyKey: key,
-    expectedHeadId: view.branch.headNodeId,
-    expectedVersion: view.branch.version,
-    expectedCharacterId: view.characterId,
-    input,
-  });
+  let result: AcceptResult;
+  try {
+    result = await api.acceptTurn(view.sessionId, view.branch.branchId, {
+      idempotencyKey: key,
+      expectedHeadId: view.branch.headNodeId,
+      expectedVersion: view.branch.version,
+      expectedCharacterId: view.characterId,
+      input,
+    });
+  } catch (e) {
+    // 4xx 是服务端给出的明确拒绝（队列满、分支已变化、校验失败），不是"响应丢失"：
+    // 后端已把这次受理记为失败终态，重试若沿用同一幂等键只会原样拿回那条失败回合。
+    // 超时（status 0）与 5xx 结果不明，仍保留以便原样重放。
+    const status = (e as { status?: unknown } | null)?.status;
+    if (typeof status === "number" && status >= 400 && status < 500 && pendingSubmission?.key === key) {
+      pendingSubmission = null;
+    }
+    throw e;
+  }
   if (!owns(owner)) return;
   if (pendingSubmission?.key === key) pendingSubmission = null;
   setStoryState({ lastTurnId: result.turnId, lastInput: input, thinkingText: "", draftBlocks: [], draftOptions: [] });
