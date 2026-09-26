@@ -217,6 +217,22 @@ func TestBudgetReportReachesObserver(t *testing.T) {
 	}
 }
 
+// 用量账本里的 estimated 必须是未校准的原始估算：校准系数由 reported/estimated
+// 反推，若记录的是已乘系数的值，系数会反馈进自身（收敛到 r/f 并来回振荡）。
+func TestCompileEstimatedInputTokensIsUncalibrated(t *testing.T) {
+	opts := ctxpkg.DefaultOptions()
+	f := newFixtureFull(t, nil, "", "", opts)
+	head, _ := commitBudgetChain(t, f, 3, 100)
+	req, err := f.compiler.WithBudget(200000, 1024).WithTokenCalibration(2.0).
+		Compile(context.Background(), testSessionID, head, "我继续往前。", ctxpkg.TurnDirectives{}, domain.NewWorldState(), nil)
+	if err != nil {
+		t.Fatalf("compile: %v", err)
+	}
+	if raw := ctxpkg.MessageTokens(req.Messages); req.EstimatedInputTokens != raw {
+		t.Fatalf("EstimatedInputTokens = %d，应为未校准估算 %d", req.EstimatedInputTokens, raw)
+	}
+}
+
 // 校准系数必须真的进入预算判定，否则"用真实用量校准"只是装饰。
 //
 // 注意观察量：编译器会**填满**预算，所以裁剪后的 Total 不会随系数变小；

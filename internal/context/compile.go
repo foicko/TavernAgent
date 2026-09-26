@@ -199,19 +199,46 @@ func (c *Compiler) Options() CompilerOptions {
 	return c.options
 }
 
+const (
+	// DefaultContextWindow 是窗口未知时的保守回退。
+	DefaultContextWindow = 8192
+	// DefaultReservedOutput 是输出预留的默认值。
+	DefaultReservedOutput = 2048
+)
+
+// SafetyMargin 是预算的安全余量：窗口越大留得越多，下限 512。
+func SafetyMargin(window int) int { return max(512, window/20) }
+
+// InputBudget 是"输入可用预算" = 窗口 − 输出预留 − 安全余量。
+//
+// 这是展示与裁剪共用的唯一推导：此前 web 的 modelLabels.inputBudget
+// 另写了一遍同一公式，一旦分叉会让"甜甜圈显示还有空间"和"实际被裁掉"分叉。客户端请直接消费本函数的输出
+// （`/api/v1/catalog` 的 contextPolicy 只发布策略常量，不发布推导）。
+func InputBudget(window, reserved int) int {
+	if window <= 0 {
+		window = DefaultContextWindow
+	}
+	if reserved <= 0 {
+		reserved = DefaultReservedOutput
+	}
+	// 校验只要求 window-maxTokens >= 2048，maxTokens 留空时按默认预留 2048
+	// 推导可能得负数（如窗口 2048）；展示值不应为负，钳到 0 表示"没有输入空间"。
+	return max(0, window-reserved-SafetyMargin(window))
+}
+
 // WithBudget returns an attempt-local compiler; concurrent turns never mutate
 // shared compiler options. Unknown providers use an explicit conservative limit.
 func (c *Compiler) WithBudget(window, reserved int) *Compiler {
 	copy := *c
 	if window <= 0 {
-		window = 8192
+		window = DefaultContextWindow
 	}
 	if reserved <= 0 {
-		reserved = 2048
+		reserved = DefaultReservedOutput
 	}
 	copy.options.ContextWindow = window
 	copy.options.ReservedOutput = reserved
-	copy.options.SafetyMargin = max(512, window/20)
+	copy.options.SafetyMargin = SafetyMargin(window)
 	return &copy
 }
 
@@ -389,13 +416,15 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 	req.InjectedMemoryIDs = memoryIDsOf(memories)
 	req.InjectedMemories = memoryRefsOf(memories)
 	req.InputBudget = breport.Budget
-	req.EstimatedInputTokens = breport.Total
 	req.NeedsCompaction = breport.PrepareCompression
 	req.ProtectedTurns = c.options.CompactionPolicy.TailWindowTurns
 	if c.options.ReservedOutput > 0 {
 		req.MaxTokens = c.options.ReservedOutput
 	}
 	req.Messages = c.buildMessages(lore, memories, ancestors, summaries, checks, sc, state, inputText, ledger, breport.DroppedHistory)
+	// 用量账本记录的必须是**未校准**的原始估算：校准系数正是由 reported/estimated
+	// 反推的，若写入已乘过系数的 breport.Total，系数会反馈进自身而来回振荡。
+	req.EstimatedInputTokens = MessageTokens(req.Messages)
 	return req, nil
 }
 

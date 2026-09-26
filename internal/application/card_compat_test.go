@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 // 原生卡也带 first_mes 等外键，不能被误判成 V1。
@@ -126,6 +127,49 @@ func TestImportCardPNG_NativeCardKeepsExtensionsAndGainsAvatar(t *testing.T) {
 	}
 }
 
+// 没有显式 cardId 的原生 PNG 卡：补写 avatar 后，重新解析这份 JSON 得到的卡 ID
+// 必须与导入时一致——卡库条目用导入时的 ID，建会话时解析的是补写后的 JSON。
+func TestImportCardPNG_NativeCardWithoutIDKeepsIdentityAfterAvatar(t *testing.T) {
+	raw := `{"schemaVersion":2,"name":"无号图卡","description":"人设",` +
+		`"characters":[{"name":"无号图卡","description":"人设","participant":true}]}`
+	rep, err := ImportCardPNG(buildDecodablePNG(t, 320, 320, pngTextChunk{Type: "tEXt", Keyword: "chara", Text: raw}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.Card.Avatar == "" {
+		t.Fatal("前置条件：应生成头像")
+	}
+	reparsed, err := ParseCharacterCard(rep.CardJSON())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reparsed.CardID != rep.Card.CardID {
+		t.Fatalf("补写头像后卡 ID 漂移：导入 %q，重新解析 %q", rep.Card.CardID, reparsed.CardID)
+	}
+	if reparsed.Characters[0].CharacterID != rep.Card.Characters[0].CharacterID {
+		t.Fatalf("角色 ID 漂移：%q vs %q", rep.Card.Characters[0].CharacterID, reparsed.Characters[0].CharacterID)
+	}
+}
+
+// 外部卡 ID 含中文时，派生的角色 ID 不能劈开字符（否则是非法 UTF-8）。
+func TestNormalizeCard_DerivedCharacterIDIsValidUTF8(t *testing.T) {
+	card, err := ParseCharacterCard(`{"schemaVersion":2,"cardId":"v2猫娘","name":"猫娘","characters":[{"name":"猫娘"}]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id := card.Characters[0].CharacterID; !utf8.ValidString(id) || id != "npc_v2猫_a" {
+		t.Fatalf("派生角色 ID = %q", id)
+	}
+	// 边界恰好落在第 6 字节的 ID 保持原派生结果，已有会话的角色键不受影响。
+	card, err = ParseCharacterCard(`{"schemaVersion":2,"cardId":"abcdef_long","name":"x","characters":[{"name":"x"}]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id := card.Characters[0].CharacterID; id != "npc_abcdef_a" {
+		t.Fatalf("派生角色 ID = %q", id)
+	}
+}
+
 // 无头像时原生卡必须逐字保留原始串（含缩进与未知字段）。
 func TestCardJSON_NativeWithoutAvatarIsByteIdentical(t *testing.T) {
 	raw := "{\n  \"schemaVersion\": 2,\n  \"name\": \"纯文本卡\",\n  \"characters\": []\n}"
@@ -168,10 +212,25 @@ func TestFitWithin_NilAndEmpty(t *testing.T) {
 
 func TestBuildAvatarDataURL_RejectsNonPNG(t *testing.T) {
 	if s := buildAvatarDataURL([]byte("not a png")); s != "" {
-		t.Fatalf("非 PNG 应返回空串，得到 %.32q", s)
+		t.Fatalf("无法解码的内容应返回空串，得到 %.32q", s)
 	}
 	if s := buildAvatarDataURL(nil); s != "" {
 		t.Fatalf("空输入应返回空串，得到 %.32q", s)
+	}
+}
+
+// charx 图标资源常以 WebP 存放（扩展名却写着 .png）。只认 PNG 的旧实现让这些卡
+// 永远拿不到头像缩略图，前端只能显示原始 embeded:// 引用而无法加载。
+func TestBuildAvatarDataURL_DecodesWebP(t *testing.T) {
+	// golang.org/x/image/testdata/gopher-doc.1bpp.lossless.webp（75×100，BSD-3）。
+	const webpB64 = "UklGRrIBAABXRUJQVlA4TKUBAAAvSsAYAA8w//M///MfeJAkbXvaSG7m8Q3GfYSBJekwQztm/IcZlgwnmWImn2BK7aFmBtnVir6q//8VOkFE/xm4baTIu8c48ArEo6+B3zFKYln3pqClSCKX0begFTAXFOLXHSyF8cCNcZEG4OywuA4KVVfJCiArU7GAgJI8+lJP/OKMT/fBAjevg1cYB7YVkFuWga2lyPi5I0HFy5YTpWIHg0RZpkniRVW9odHAKOwosWuOGdxIyn2OvaCDvhg/we6TwadPBPbqBV58MsLmMJ8yZnOWk8SRz4N+QoyPL+MnamzMvcE1rHNEr91F9GKZPVUcS9w7PhhH36suB9qPeYb/oLk6cuTiJ0wOK3m5h1cKjW6EVZCYMK7dxcKCBdgP9HkKr9gkAO2P8GKZGWVdIAatQa+1IDpt6qyorVwdy01xdW8Jkfk6xjEXmVQQ+HQdFr6OKhIN34dXWq0+0qr6EJSCeeVLH9+gvGTLyqM65PQ44ihzlTXxQKjKbAvshXgir7Lil9w4L2bvMycmjQcqXaMCO6BlY28i+FOLzbfI1vEqxAhotocAAA=="
+	raw, err := base64.StdEncoding.DecodeString(webpB64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := buildAvatarDataURL(raw)
+	if !strings.HasPrefix(got, "data:image/") {
+		t.Fatalf("WebP 应生成头像 data URL，得到 %.32q", got)
 	}
 }
 

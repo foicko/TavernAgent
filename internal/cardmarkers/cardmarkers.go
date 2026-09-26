@@ -49,10 +49,16 @@ var markerRe = regexp.MustCompile(`(?i)\[(HUD|SCENE|VAR):([^\[\]\r\n]{0,` + strc
 // escapeSentinel 是 `[[` 的临时占位，提取完成后还原为 `[`。不含 `[`，否则会被 markerRe 误匹配。
 const escapeSentinel = "\x00LBRACK\x00"
 
+// removedSentinel 标记被剥离的状态类标记所在位置，让 tidy 只收拾它两侧的空白。
+const removedSentinel = "\x00RM\x00"
+
 // Extract 从正文中剥离状态类标记，返回清理后的文本与解析出的提示。
 //
 // 表现类标记（[IMG:…] 与 <img cmd="…">）不在此处理：它们保留在文本里，由渲染层就地展示。
 // 因此没有任意 HTML 注入面——本函数只识别这三种固定形态。
+//
+// 返回文本保留 `[[` 转义：它会落库，之后还要被 SplitImages 与前端解析器再解析一遍，
+// 转义只能在最终渲染时还原一次。在这里还原会让落库的 `[[IMG:x]` 重新变成真正的标记。
 func Extract(text string) (string, []Hint) {
 	if text == "" || !strings.Contains(text, "[") {
 		return text, nil
@@ -67,17 +73,17 @@ func Extract(text string) (string, []Hint) {
 		case "HUD":
 			if v := parsePairs(body); len(v) > 0 {
 				hints = append(hints, Hint{Kind: KindHUD, Values: v})
-				return ""
+				return removedSentinel
 			}
 		case "SCENE":
 			if body != "" {
 				hints = append(hints, Hint{Kind: KindScene, Text: body})
-				return ""
+				return removedSentinel
 			}
 		case "VAR":
 			if v := parsePairs(body); len(v) > 0 {
 				hints = append(hints, Hint{Kind: KindVar, Values: v})
-				return ""
+				return removedSentinel
 			}
 		}
 		// 无法解析的标记原样保留：宁可让玩家看到原文，也不静默吞掉内容。
@@ -88,7 +94,7 @@ func Extract(text string) (string, []Hint) {
 	if len(hints) > 0 {
 		clean = tidy(clean)
 	}
-	clean = strings.ReplaceAll(clean, escapeSentinel, "[")
+	clean = strings.ReplaceAll(clean, escapeSentinel, "[[")
 	return clean, hints
 }
 
@@ -104,7 +110,72 @@ func ExtractBlocks(texts []string) ([]string, []Hint) {
 	return out, hints
 }
 
-// parsePairs 解析 `k=v|k=v` 形式的键值体；忽略空项与无 = 的项。
+// Segment 是正文的一小段：纯文本或卡内图片引用。
+type Segment struct {
+	Type     string `json:"type"` // text | image
+	Text     string `json:"text,omitempty"`
+	AssetKey string `json:"assetKey,omitempty"`
+}
+
+// imgRe 匹配表现类图片标记：`<img cmd="key">`（含自闭合）与 `[IMG:key]`。
+// 与 Extract 一样用 [^\[\]\r\n] 限制方括号形式，避免跨标记匹配。
+var imgRe = regexp.MustCompile(`(?i)<img\s+cmd\s*=\s*"([^"]{0,` + strconv.Itoa(maxMarkerBody) + `})"\s*/?>|\[IMG:([^\[\]\r\n]{0,` + strconv.Itoa(maxMarkerBody) + `})\]`)
+
+// SplitImages 把正文切成文本段与图片段。
+//
+// 这是"表现类标记"的唯一实现：渲染端不再需要持有语法的转义、容错与边界规则，
+// 只按段渲染。无法解析的形态（`<img>` 无 cmd、空键、`[[IMG:x]`）原样留在
+// 文本段里——宁可让玩家看到原文，也不静默吞掉内容（与 Extract 同一原则）。
+//
+// 输出保证：相邻文本段已合并；文本为空时不产生空段；无图片标记时返回单个文本段。
+func SplitImages(text string) []Segment {
+	if text == "" {
+		return nil
+	}
+	if !strings.Contains(text, "[") && !strings.Contains(text, "<") {
+		return []Segment{{Type: "text", Text: text}}
+	}
+	protected := strings.ReplaceAll(text, "[[", escapeSentinel)
+	var out []Segment
+	last := 0
+	for _, loc := range imgRe.FindAllStringSubmatchIndex(protected, -1) {
+		key := ""
+		if loc[2] >= 0 {
+			key = strings.TrimSpace(protected[loc[2]:loc[3]])
+		} else if loc[4] >= 0 {
+			key = strings.TrimSpace(protected[loc[4]:loc[5]])
+		}
+		if key == "" {
+			continue // 空键不构成图片：留在文本里
+		}
+		if loc[0] > last {
+			out = appendText(out, protected[last:loc[0]])
+		}
+		out = append(out, Segment{Type: "image", AssetKey: key})
+		last = loc[1]
+	}
+	if len(out) == 0 {
+		// 没有可解析的图片：还原转义后原样返回（转义还原不是改写，是分段的前提）。
+		return []Segment{{Type: "text", Text: strings.ReplaceAll(protected, escapeSentinel, "[")}}
+	}
+	if last < len(protected) {
+		out = appendText(out, protected[last:])
+	}
+	for i := range out {
+		out[i].Text = strings.ReplaceAll(out[i].Text, escapeSentinel, "[")
+	}
+	return out
+}
+
+// appendText 追加文本段（保留空白：分段不应改变正文的排版）。
+func appendText(out []Segment, text string) []Segment {
+	if text == "" {
+		return out
+	}
+	return append(out, Segment{Type: "text", Text: text})
+}
+
+// ParsePairs 解析 `k=v|k=v` 形式的键值体；忽略空项与无 = 的项。
 func parsePairs(body string) map[string]string {
 	if body == "" {
 		return nil
@@ -128,13 +199,22 @@ func parsePairs(body string) map[string]string {
 	return out
 }
 
-// tidy 收拾剥离标记后残留的空白：折叠连续空格、去掉行首尾空白。
+// tidy 收拾剥离标记后残留的空白：只处理被剥离位置两侧的空白（两侧都有空白时留一个空格，
+// 否则全部去掉），再去掉整段首尾空白。正文其余位置的缩进与连续空格（Markdown 嵌套列表、
+// 代码缩进）必须原样保留。
 func tidy(s string) string {
 	if s == "" {
 		return s
 	}
-	s = spacesRe.ReplaceAllString(s, " ")
+	s = removedRe.ReplaceAllStringFunc(s, func(m string) string {
+		first, last := m[0], m[len(m)-1]
+		if (first == ' ' || first == '\t') && (last == ' ' || last == '\t') {
+			return " "
+		}
+		return ""
+	})
 	return strings.TrimSpace(s)
 }
 
-var spacesRe = regexp.MustCompile(`[ \t]{2,}`)
+// removedRe 匹配一处或多处相邻的剥离位置，连同两侧的空格与制表符。
+var removedRe = regexp.MustCompile(`[ \t]*(?:` + regexp.QuoteMeta(removedSentinel) + `[ \t]*)+`)

@@ -51,6 +51,9 @@ type SessionView struct {
 	HasMore bool `json:"hasMore"`
 	// OldestTurnID 是窗口内最早的回合节点，用作向上翻页的游标。
 	OldestTurnID string `json:"oldestTurnId,omitempty"`
+	// Capabilities 是"当前能做什么"的服务端投影（架构设计 §2.2）。
+	// 客户端把它与本地瞬时状态做一次合取即可，不再各自实现能力判定。
+	Capabilities SessionCapabilities `json:"capabilities"`
 }
 
 // ViewQuery 是会话视图的读取参数。
@@ -295,8 +298,23 @@ func (s *SessionService) View(sessionID string, q ViewQuery) (*SessionView, erro
 	if err != nil {
 		return nil, err
 	}
+
+	// charx 卡若无法生成头像缩略图，状态里会残留归档内引用（embeded://…）。
+	// 改写为资源 URL，已有会话也能显示头像；仅在有改动时才重新序列化状态。
+	if resolveEmbeddedAvatars(s.store, sess.CharacterID, ws) {
+		if b, merr := json.Marshal(ws); merr == nil {
+			state = b
+		}
+	}
+
+	// 内联分段：正文里的图片标记由服务端切段，渲染端不再持有标记语法。
+	nodes = attachInlineSegmentsAll(nodes)
+	viewNode = attachInlineSegments(viewNode)
+	head = attachInlineSegments(head)
+
 	return &SessionView{
 		Actions:         actionViews(rules),
+		Capabilities:    sessionCapabilities(branch, viewNode),
 		SessionID:       sess.SessionID,
 		CharacterID:     sess.CharacterID,
 		Secrets:         secretViews,
@@ -338,7 +356,7 @@ func (s *SessionService) NodeView(nodeID string) (*NodeView, error) {
 			}
 		}
 	}
-	return &NodeView{Node: node, State: state, Candidates: candidates}, nil
+	return &NodeView{Node: attachInlineSegments(node), State: state, Candidates: candidates}, nil
 }
 
 // candidateGroups 找出链上"有多版本"的回合（同父兄弟），按父节点分组。

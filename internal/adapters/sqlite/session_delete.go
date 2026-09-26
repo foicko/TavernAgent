@@ -81,7 +81,11 @@ func (s *Store) DeleteSession(sessionID string) error {
 		{`DELETE FROM director_commands WHERE session_id=?`, sessionID},
 		{`DELETE FROM director_projections WHERE node_id IN (SELECT node_id FROM plot_nodes WHERE session_id=?)`, sessionID},
 
-		// 剧情系：事件、快照、书签、outbox
+		// 剧情系：摘要、事件、快照、书签、outbox
+		// summary_artifacts 没有会话列也没有外键，只能经端点节点关联；漏删会把
+		// 故事摘要原文留在磁盘上。必须在 plot_nodes 删除之前执行。
+		{`DELETE FROM summary_artifacts WHERE EXISTS (
+			SELECT 1 FROM plot_nodes p WHERE p.session_id=? AND p.node_id IN (summary_artifacts.from_node_id, summary_artifacts.to_node_id))`, sessionID},
 		{`DELETE FROM domain_events WHERE node_id IN (SELECT node_id FROM plot_nodes WHERE session_id=?)`, sessionID},
 		{`DELETE FROM state_snapshots WHERE node_id IN (SELECT node_id FROM plot_nodes WHERE session_id=?)`, sessionID},
 		{`DELETE FROM bookmarks WHERE session_id=?`, sessionID},

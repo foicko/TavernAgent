@@ -2,7 +2,9 @@ package context
 
 import (
 	"math"
+	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
@@ -17,13 +19,32 @@ import (
 func currentMemoryRelevance(candidates []*ports.MemoryCandidate, input string, state *domain.WorldState) map[string]float64 {
 	query := strings.ToLower(input)
 	if state != nil {
-		for id, ch := range state.Characters {
-			query = strings.ReplaceAll(query, strings.ToLower(id), " ")
-			for _, name := range ch.SearchTerms() {
-				if name != "" {
-					query = strings.ReplaceAll(query, strings.ToLower(name), " ")
-				}
+		// 名字按"长的先剥、同长按字典序"固定顺序剔除：map 遍历顺序随机，
+		// 重叠的名字（"莉尔"/"莉尔娜"）先剥短的会留下"娜"之类残片，排名随之漂移。
+		var names []string
+		seen := map[string]bool{}
+		addName := func(v string) {
+			v = strings.ToLower(v)
+			if v != "" && !seen[v] {
+				seen[v] = true
+				names = append(names, v)
 			}
+		}
+		for id, ch := range state.Characters {
+			addName(id)
+			for _, name := range ch.SearchTerms() {
+				addName(name)
+			}
+		}
+		sort.Slice(names, func(i, j int) bool {
+			li, lj := utf8.RuneCountInString(names[i]), utf8.RuneCountInString(names[j])
+			if li != lj {
+				return li > lj
+			}
+			return names[i] < names[j]
+		})
+		for _, name := range names {
+			query = strings.ReplaceAll(query, name, " ")
 		}
 	}
 	query += " " + strings.Join(search.ConceptTerms(input), " ")
@@ -56,12 +77,18 @@ func currentMemoryRelevance(candidates []*ports.MemoryCandidate, input string, s
 			weights[word] = math.Log(1 + (float64(len(candidates)-count)+0.5)/(float64(count)+0.5))
 		}
 	}
+	// 浮点加法不满足结合律：按固定的词序累加，避免 map 顺序让同分候选的排名抖动。
+	weightTerms := make([]string, 0, len(weights))
+	for word := range weights {
+		weightTerms = append(weightTerms, word)
+	}
+	sort.Strings(weightTerms)
 	scores := map[string]float64{}
 	maximum := 0.0
 	for id, words := range documents {
-		for word, weight := range weights {
+		for _, word := range weightTerms {
 			if words[word] {
-				scores[id] += weight
+				scores[id] += weights[word]
 			}
 		}
 		maximum = math.Max(maximum, scores[id])

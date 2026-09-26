@@ -441,7 +441,9 @@ func TestImportCardPNG_UndecodablePixelsStillImports(t *testing.T) {
 func TestImportCardPNG_BrokenTextChunkIsSkipped(t *testing.T) {
 	payload := v2Payload(t, map[string]any{"name": "正常卡", "first_mes": "你好"})
 	pngData := buildPNGMetadataOnly(t,
-		pngTextChunk{Type: "zTXt", Keyword: "Software", Text: "不是 zlib 数据"},
+		pngTextChunk{Type: "zTXt", Keyword: "Comment", Text: "不是 zlib 数据"},
+		// 不认识的关键字在解压前就被跳过：既不付出解压代价，也不产生告警噪音。
+		pngTextChunk{Type: "zTXt", Keyword: "Software", Text: "同样不是 zlib 数据"},
 		pngTextChunk{Type: "tEXt", Keyword: "chara", Text: payload},
 	)
 	rep, err := ImportCardPNG(pngData)
@@ -451,14 +453,14 @@ func TestImportCardPNG_BrokenTextChunkIsSkipped(t *testing.T) {
 	if rep.Card.Name != "正常卡" {
 		t.Fatalf("name = %q", rep.Card.Name)
 	}
-	found := false
+	found := 0
 	for _, w := range rep.Warnings {
 		if strings.Contains(w, "zTXt") {
-			found = true
+			found++
 		}
 	}
-	if !found {
-		t.Fatalf("应记录被跳过的文本块: %v", rep.Warnings)
+	if found != 1 {
+		t.Fatalf("应只记录已知关键字的损坏文本块（1 条）: %v", rep.Warnings)
 	}
 }
 

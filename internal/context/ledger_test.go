@@ -171,3 +171,21 @@ func TestRenderLedgerRelationships(t *testing.T) {
 		t.Fatalf("应包含当前关系状态: %s", s)
 	}
 }
+
+// 被钳到 0 的关系变化不得进入权威账本；缺 applied 字段的旧负载仍回退到 delta。
+func TestLedgerRelationDeltaSkipsClampedAndKeepsLegacy(t *testing.T) {
+	if d, ok := ledgerRelationDelta(`{"characterId":"npc_a","field":"trust","delta":5,"applied":0}`); ok {
+		t.Fatalf("applied=0（被钳住）不应进入账本，得到 %+v", d)
+	}
+	d, ok := ledgerRelationDelta(`{"characterId":"npc_a","field":"trust","delta":5}`)
+	if !ok || d.Applied != 5 {
+		t.Fatalf("缺 applied 的旧负载应回退到 delta：ok=%v %+v", ok, d)
+	}
+	d, ok = ledgerRelationDelta(`{"characterId":"npc_a","field":"trust","delta":5,"applied":2}`)
+	if !ok || d.Applied != 2 || d.Delta != 5 || d.CharacterID != "npc_a" || d.Field != "trust" {
+		t.Fatalf("部分生效应记实际生效量：ok=%v %+v", ok, d)
+	}
+	if _, ok := ledgerRelationDelta(`{not json`); ok {
+		t.Fatalf("损坏负载应被跳过")
+	}
+}

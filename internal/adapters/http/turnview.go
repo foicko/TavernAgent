@@ -3,6 +3,8 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+
+	"tavernagent/internal/application"
 )
 
 // 回合读取端点：终态返回结果节点，生成中额外返回**在途正文快照**。
@@ -25,6 +27,8 @@ func (s *Server) getTurn(w http.ResponseWriter, r *http.Request) {
 		"expectedVersion": turn.ExpectedVersion,
 		"failureCode":     turn.FailureCode,
 		"failureMessage":  turn.FailureMessage,
+		// 能力投影：客户端不再自己按 status 组合按钮可用性（架构设计 §2.2）。
+		"capabilities": application.CapabilitiesOfTurn(turn),
 	}
 	if turn.ResultNodeID != "" {
 		resp["resultNodeId"] = turn.ResultNodeID

@@ -55,6 +55,13 @@ type ModelInstance struct {
 	MaxTokens       int      `json:"maxTokens,omitempty"`
 	ContextWindow   int      `json:"contextWindow,omitempty"`
 	ReasoningEffort string   `json:"reasoningEffort,omitempty"` // low | medium | high；空 = 默认（不发送）
+	// InputBudget 是服务端算好的输入预算（计算字段，不落库）。
+	//
+	// 存在的理由：此前 web 的 modelLabels.inputBudget 另写了一遍同一公式
+	// （窗口 − 输出预留 − 安全余量），一旦分叉会让"界面显示还有空间"与
+	// "实际被裁剪"分叉。窗口未配置时为 nil（客户端据此显示"未设置"），
+	// 而不是臆造一个保守值。推导见 context.InputBudget。
+	InputBudget *int `json:"inputBudget,omitempty"`
 }
 
 // EffortLevels 返回可显式设置的思考强度档位（不含表示"默认"的空串）。

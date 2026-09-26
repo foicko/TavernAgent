@@ -8,9 +8,11 @@ package cardassets
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -85,7 +87,24 @@ func (s *Store) OpenAsset(cardID, file string) (io.ReadCloser, string, error) {
 		}
 		return nil, "", err
 	}
-	return f, mimeForExt(filepath.Ext(name)), nil
+	return f, sniffMime(f, name), nil
+}
+
+// sniffMime 按内容识别 MIME：charx 资源经常名实不符（扩展名 .png 实际是 WebP），
+// 只信扩展名会把 WebP 标成 image/png。嗅探失败时回退扩展名，绝不因此拒绝提供资源。
+func sniffMime(f *os.File, name string) string {
+	var head [512]byte
+	n, _ := io.ReadFull(f, head[:])
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return mimeForExt(filepath.Ext(name))
+	}
+	if n > 0 {
+		// 只在内容确实是图片时才覆盖扩展名推断，避免把非图片内容误报成 text/plain。
+		if mime := http.DetectContentType(head[:n]); strings.HasPrefix(mime, "image/") {
+			return mime
+		}
+	}
+	return mimeForExt(filepath.Ext(name))
 }
 
 // ListAssets 返回某张卡已落地的资源文件名（已清洗，可直接用于 URL）。无资源时返回空切片。
@@ -163,13 +182,22 @@ func safeSegment(raw string) (string, error) {
 
 // mimeForExt 按扩展名推断 MIME（卡资源常见类型）。
 func mimeForExt(ext string) string {
-	switch strings.ToLower(ext) {
+	ext = strings.ToLower(ext)
+	// 同名资源会带数字后缀（iconx.png_1）；去掉后按真实扩展名判断。
+	if i := strings.LastIndexByte(ext, '_'); i > 0 {
+		if _, err := strconv.Atoi(ext[i+1:]); err == nil {
+			ext = ext[:i]
+		}
+	}
+	switch ext {
 	case ".png":
 		return "image/png"
 	case ".jpg", ".jpeg":
 		return "image/jpeg"
 	case ".webp":
 		return "image/webp"
+	case ".avif":
+		return "image/avif"
 	case ".gif":
 		return "image/gif"
 	case ".json":

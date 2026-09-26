@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"tavernagent/internal/domain"
+	"tavernagent/internal/ports"
 )
 
 func TestEstimateTokens(t *testing.T) {
@@ -36,6 +37,17 @@ func TestInputBudget(t *testing.T) {
 	// Invalid configurations remain invalid; never invent a larger context.
 	if got := (CompilerOptions{ContextWindow: 100, ReservedOutput: 5000}).InputBudget(); got != -4900 {
 		t.Fatalf("overcommitted output budget = %d", got)
+	}
+}
+
+// 展示用的 InputBudget(window, reserved) 不应为负：校验放行的配置
+// （窗口 2048、输出预留留空→默认 2048）按公式会得到 -512。
+func TestPackageInputBudgetNeverNegative(t *testing.T) {
+	if got := InputBudget(2048, 0); got != 0 {
+		t.Fatalf("InputBudget(2048, 0) = %d, want 0", got)
+	}
+	if got := InputBudget(8192, 1024); got != 8192-1024-512 {
+		t.Fatalf("InputBudget(8192, 1024) = %d", got)
 	}
 }
 
@@ -199,5 +211,54 @@ func TestFitToBudgetKeepsEverythingWithinBudget(t *testing.T) {
 	}
 	if report.DroppedLorebook != 0 || report.DroppedMemories != 0 || report.DroppedHistory != 0 {
 		t.Fatalf("预算充裕却裁剪了: %+v", report)
+	}
+}
+
+// nodeOnlyStore 只实现摘要冗余判定需要的 GetNode；其余方法未实现（调用即 panic）。
+type nodeOnlyStore struct {
+	ports.CompileDeps
+	nodes map[string]*domain.PlotNode
+}
+
+func (s nodeOnlyStore) GetNode(id string) (*domain.PlotNode, error) {
+	return s.nodes[id], nil
+}
+
+// SummariesOnPath 按端点深度升序返回，[0] 往往是承重的最旧摘要。
+// 淘汰循环此前只看 summaries[0] 是否冗余，排在后面的冗余摘要永远丢不掉，
+// 于是本可装下的回合以 CONTEXT_OVER_BUDGET 失败。
+func TestFitBundleBudgetDropsRedundantSummaryAtAnyIndex(t *testing.T) {
+	nodes := map[string]*domain.PlotNode{}
+	for d := 1; d <= 7; d++ {
+		id := "d" + itoa(d)
+		nodes[id] = &domain.PlotNode{NodeID: id, Kind: domain.NodeKindTurn, Depth: d, TurnNumber: d,
+			ContentJSON: `{"inputText":"前进。","blocks":[{"kind":"narration","text":"第` + itoa(d) + `轮。"}]}`}
+	}
+	// 历史只剩 5..7 轮（1..2 轮已折叠），低于保护下限，不可再裁。
+	ancestors := []*domain.PlotNode{nodes["d5"], nodes["d6"], nodes["d7"]}
+	loadBearing := &domain.SummaryArtifact{SummaryID: "s_old", FromNodeID: "d1", ToNodeID: "d2", Text: "早段剧情摘要。"}
+	redundantSummary := &domain.SummaryArtifact{SummaryID: "s_new", FromNodeID: "d6", ToNodeID: "d7", Text: repeatCJK(t, 800)}
+	summaries := []*domain.SummaryArtifact{loadBearing, redundantSummary}
+
+	sc := sessionContext{OpeningText: "开场。"}
+	state := domain.NewWorldState()
+	c := New(nil, CompilerOptions{})
+	c.store = nodeOnlyStore{nodes: nodes}
+	// 预算恰好装下"必修 + 历史 + 承重摘要"，装不下那条 800 字的冗余摘要。
+	fits := c.EstimateMessages(c.buildMessages(nil, nil, ancestors, []*domain.SummaryArtifact{loadBearing}, nil, sc, state, "输入。", "", 0))
+	c.options.ContextWindow = fits + 50
+
+	_, _, fitHistory, fitSummaries, report, err := c.fitBundleBudget(nil, nil, ancestors, summaries, nil, sc, state, "输入。", "")
+	if err != nil {
+		t.Fatalf("丢掉排在后面的冗余摘要即可装下，却整轮失败：%v", err)
+	}
+	if report.DroppedSummaries != 1 || len(fitSummaries) != 1 || fitSummaries[0].SummaryID != "s_old" {
+		t.Fatalf("应只丢冗余摘要、保留承重摘要：report=%+v summaries=%v", report, fitSummaries)
+	}
+	if len(fitHistory) != len(ancestors) {
+		t.Fatalf("不该裁历史：%d -> %d", len(ancestors), len(fitHistory))
+	}
+	if len(summaries) != 2 || summaries[1] != redundantSummary {
+		t.Fatalf("调用方的摘要切片被改写了")
 	}
 }

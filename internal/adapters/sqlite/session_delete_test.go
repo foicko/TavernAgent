@@ -40,6 +40,7 @@ func sessionScopedCounts(t *testing.T, s *Store, sessionID string) map[string]in
 		"director_commands":          `SELECT COUNT(*) FROM director_commands WHERE session_id=?`,
 		"director_projections":       `SELECT COUNT(*) FROM director_projections WHERE node_id IN (` + nodes + `)`,
 		"bookmarks":                  `SELECT COUNT(*) FROM bookmarks WHERE session_id=?`,
+		"summary_artifacts":          `SELECT COUNT(*) FROM summary_artifacts WHERE from_node_id IN (` + nodes + `) OR to_node_id IN (` + nodes + `)`,
 		"outbox_events":              `SELECT COUNT(*) FROM outbox_events WHERE aggregate_id=? OR aggregate_id IN (` + turns + `) OR aggregate_id IN (` + branches + `)`,
 	}
 	counts := make(map[string]int, len(queries))
@@ -143,6 +144,8 @@ func seedFullSession(t *testing.T, s *Store, title string) (sessionID, branchID,
 	exec(`INSERT INTO director_projections(node_id,state_json) VALUES(?,?)`, turnNode.NodeID, "{}")
 	exec(`INSERT INTO bookmarks(bookmark_id,session_id,node_id,title) VALUES(?,?,?,?)`,
 		"bm_"+title, sess.SessionID, turnNode.NodeID, "书签")
+	exec(`INSERT INTO summary_artifacts(summary_id,from_node_id,to_node_id,source_hash,text) VALUES(?,?,?,?,?)`,
+		"sum_"+title, root.NodeID, turnNode.NodeID, "h", "故事摘要原文")
 	exec(`INSERT INTO outbox_events(event_id,aggregate_id,sequence,type,payload_json,created_at) VALUES(?,?,?,?,?,?)`,
 		"ob_"+title, sess.SessionID, 1, "session.updated", "{}", now)
 	exec(`INSERT INTO outbox_events(event_id,aggregate_id,sequence,type,payload_json,created_at) VALUES(?,?,?,?,?,?)`,

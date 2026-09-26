@@ -27,8 +27,12 @@ import (
 // 用具名结构体而不是一长串位置参数：参数变多时调用点仍然可读，
 // 也不会因为顺序写错而把两个服务对调。
 type Deps struct {
-	TTSService     *tts.Service
-	ImageService   *image.Service
+	TTSService   *tts.Service
+	ImageService *image.Service
+	// TTSPlans / ImagePlans 是演播与插画计划的业务规则（架构设计 §2.4、§2.5）。
+	// 为空时对应端点返回 501，与其它"未启用服务"的处理一致。
+	TTSPlans       *application.TTSPlanService
+	ImagePlans     *application.ImagePlanService
 	Director       *application.DirectorService
 	Sessions       *application.SessionService
 	Turns          *application.TurnService
@@ -44,9 +48,6 @@ type Deps struct {
 	AuthPIN        string // 局域网配对码（非空时，非本机局域网请求必须通过配对鉴权）
 	AuthToken      string // 配对成功的授权 Token（留空且 AuthPIN 非空时自动随机生成）
 	AllowedOrigins []string
-	// SetNativeTheme 是桌面壳注入的"切换原生窗口主题"回调，传 "light"/"dark"。
-	// 浏览器部署为空，此时 /api/v1/desktop/theme 返回 404。
-	SetNativeTheme func(mode string)
 	// Metrics 与 Usage 是运行观测端口（T0.2）。两者都可为空——
 	// 缺少读数时端点返回空对象，而不是 500：观测不得影响服务可用性。
 	Metrics *application.RuntimeMetrics
@@ -59,7 +60,6 @@ type Deps struct {
 	// 观测不该成为启动的前置条件，缺了它服务照常可用，只是没有分段读数。
 	Tracer ports.Tracer
 	// TLSConfig 非空时监听套接字会被包成 TLS（局域网 HTTPS）。
-	// 只影响 ListenAndServeContext 自己创建的监听；桌面壳自带 loopback 监听，不受影响。
 	TLSConfig *tls.Config
 }
 
@@ -86,7 +86,9 @@ type Server struct {
 	authToken      string
 	ttsService     *tts.Service
 	imageService   *image.Service
-	setNativeTheme func(mode string)
+	ttsPlans       *application.TTSPlanService
+	imagePlans     *application.ImagePlanService
+	catalog        application.Catalog
 	pairFails      map[string]pairFailure
 	now            func() time.Time
 	tracer         ports.Tracer
@@ -126,7 +128,6 @@ func New(deps Deps) (*Server, error) {
 		manager:    deps.Manager, bus: deps.Bus,
 		addr: deps.Addr, origin: "http://" + deps.Addr,
 		allowedOrigins: append([]string(nil), deps.AllowedOrigins...),
-		setNativeTheme: deps.SetNativeTheme,
 		metrics:        deps.Metrics,
 		usage:          deps.Usage,
 		ablation:       deps.Ablation,
@@ -135,9 +136,13 @@ func New(deps Deps) (*Server, error) {
 		authToken:      token,
 		ttsService:     ttsSvc,
 		imageService:   imgSvc,
-		tracer:         tracer,
-		tlsConfig:      deps.TLSConfig,
-		pairFails:      make(map[string]pairFailure), now: time.Now,
+		ttsPlans:       deps.TTSPlans,
+		imagePlans:     deps.ImagePlans,
+		// 展示目录是进程内常量：构建一次，用内容哈希做 ETag（架构设计 §2.1）。
+		catalog:   application.BuildCatalog(),
+		tracer:    tracer,
+		tlsConfig: deps.TLSConfig,
+		pairFails: make(map[string]pairFailure), now: time.Now,
 	}, nil
 }
 
@@ -146,6 +151,9 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/tts/voices", s.listTTSVoices)
 	mux.HandleFunc("POST /api/v1/tts/synthesize", s.security(s.synthesizeTTS))
+	// 演播/插画计划：把客户端的切分与提示词规则收拢到后端（架构设计 §2.4、§2.5）。
+	mux.HandleFunc("POST /api/v1/tts/plan", s.security(s.planTTS))
+	mux.HandleFunc("POST /api/v1/images/plan", s.security(s.planImage))
 	mux.HandleFunc("POST /api/v1/images/generate", s.security(s.generateImage))
 	mux.HandleFunc("GET /api/v1/images/{filename}", s.serveImageFile)
 	mux.HandleFunc("POST /api/v1/embeddings/probe", s.security(s.probeEmbedding))
@@ -193,7 +201,8 @@ func (s *Server) Handler() http.Handler {
 	// 局域网配对鉴权 API（SEC-01）
 	mux.HandleFunc("POST /api/v1/auth/pair", s.pairAuth)
 	mux.HandleFunc("GET /api/v1/auth/status", s.authStatus)
-	s.registerDesktopRoutes(mux)
+	// 展示目录：枚举与标签的唯一来源（架构设计 §2.1）
+	mux.HandleFunc("GET /api/v1/catalog", s.security(s.getCatalog))
 	mux.HandleFunc("GET /api/status", s.security(s.runtimeStatus))
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"ok": true})

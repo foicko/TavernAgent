@@ -32,3 +32,22 @@ func TestReleaseDirectorSeesRecentStoryAlongsideOlderSummary(t *testing.T) {
 		t.Fatal("adding an older summary removed the current, uncovered story facts from the director prompt")
 	}
 }
+
+// 次要关键词全部短于下限被忽略时，条目应按"没有次要关键词"处理，而不是永远无法触发。
+func TestLorebookEntryWithOnlyShortSecondaryKeysStillTriggers(t *testing.T) {
+	e := domain.LorebookEntry{Keys: []string{"古堡"}, SecondaryKeys: []string{"门", "夜"}}
+	if !entryMatches(e, "我们走向古堡。", 2) {
+		t.Fatal("次要关键词全部不可用时条目被静默锁死")
+	}
+	if entryMatches(e, "我们走向森林。", 2) {
+		t.Fatal("主关键词未命中不应触发")
+	}
+	// 仍有可用次要关键词时照常要求命中其一。
+	e.SecondaryKeys = []string{"门", "夜晚"}
+	if entryMatches(e, "我们走向古堡。", 2) {
+		t.Fatal("存在可用次要关键词却未命中时不应触发")
+	}
+	if !entryMatches(e, "夜晚我们走向古堡。", 2) {
+		t.Fatal("命中可用次要关键词时应触发")
+	}
+}

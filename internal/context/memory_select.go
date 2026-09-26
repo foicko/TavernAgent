@@ -296,7 +296,7 @@ func (c *Compiler) selectMemories(cands []*ports.MemoryCandidate, effective map[
 	}
 	sc := c.newMemoryScorer(cands, effective, state, haystack, checkText, currentTurn)
 	hits := make([]scoredMemory, 0, len(cands))
-	for _, cand := range cands {
+	for _, cand := range unrankedByImportance(cands) {
 		if hit, ok := sc.score(cand, effective); ok {
 			hits = append(hits, hit)
 		}
@@ -306,6 +306,26 @@ func (c *Compiler) selectMemories(cands []*ports.MemoryCandidate, effective map[
 	}
 	sortScoredMemories(hits)
 	return c.budgetMemories(hits)
+}
+
+// unrankedByImportance 返回打分遍历顺序：无名次候选排在后面，并按重要度降序、ID 升序。
+//
+// 无名次保底名额（maxUnranked）按遍历顺序先到先得，而候选来自 SQL 的 memory_id
+// 顺序；不重排的话名额会给最早写入的记忆，而不是最重要的。命中结果最终由
+// sortScoredMemories 全序排序，遍历顺序只影响保底名额归属。
+func unrankedByImportance(cands []*ports.MemoryCandidate) []*ports.MemoryCandidate {
+	ordered := append([]*ports.MemoryCandidate(nil), cands...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		a, b := ordered[i], ordered[j]
+		if a.HasRank || b.HasRank {
+			return a.HasRank && !b.HasRank
+		}
+		if a.Memory.Importance != b.Memory.Importance {
+			return a.Memory.Importance > b.Memory.Importance
+		}
+		return a.Memory.MemoryID < b.Memory.MemoryID
+	})
+	return ordered
 }
 
 // newMemoryScorer 计算权重、名次归一化区间、查询实体与当前问题相关性。

@@ -123,7 +123,21 @@ func (c *Compiler) fitBundleBudget(lore []lorebookHit, memories []*domain.Memory
 		without := c.EstimateMessages(c.buildMessages(nil, nil, nil, nil, checks, sc, state, input, ledger, 0))
 		return max(0, withSummaries-without)
 	}
+	// firstRedundant 返回任意位置上第一条冗余摘要的下标；SummariesOnPath 按端点
+	// 深度升序排列，[0] 往往是承重的最旧摘要，只看它会漏掉后面可丢的冗余摘要。
+	firstRedundant := func() int {
+		for i, a := range summaries {
+			if redundant(a) {
+				return i
+			}
+		}
+		return -1
+	}
 	for report.Total > budget {
+		redundantIdx := -1
+		if len(lore) == 0 && len(memories) == 0 {
+			redundantIdx = firstRedundant()
+		}
 		switch {
 		case len(lore) > 0:
 			lore = lore[:len(lore)-1]
@@ -132,8 +146,8 @@ func (c *Compiler) fitBundleBudget(lore []lorebookHit, memories []*domain.Memory
 			memories = memories[:len(memories)-1]
 			report.DroppedMemories++
 		// 冗余摘要（区间原文仍完整在历史里）先丢：丢掉不损失任何信息。
-		case len(summaries) > 0 && redundant(summaries[0]):
-			summaries = summaries[1:]
+		case redundantIdx >= 0:
+			summaries = append(summaries[:redundantIdx:redundantIdx], summaries[redundantIdx+1:]...)
 			report.DroppedSummaries++
 		// 历史回合先于承重摘要被淘汰：单条摘要承载几十轮的信息密度远高于单个回合，
 		// 丢摘要换空间会连旧故事一起丢掉。

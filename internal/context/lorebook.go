@@ -115,14 +115,18 @@ func entryMatches(e domain.LorebookEntry, haystack string, minRunes int) bool {
 	if len(e.SecondaryKeys) == 0 {
 		return true
 	}
+	// 次要关键词全部短于 minRunes 被忽略时，视同未配置次要关键词——
+	// 否则"至少命中一个"永远无法满足，条目会被静默锁死。
+	usable := 0
 	for _, sk := range e.SecondaryKeys {
 		sk = strings.TrimSpace(sk)
 		if len([]rune(sk)) < minRunes {
 			continue
 		}
+		usable++
 		if strings.Contains(haystack, strings.ToLower(sk)) {
 			return true
 		}
 	}
-	return false
+	return usable == 0
 }

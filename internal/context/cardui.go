@@ -17,8 +17,7 @@ type cardUIInfo struct {
 // 它把卡作者自定义的标记语法（如 [CeresStatus:…]）归一到本应用的标准标记，
 // 使各端能用原生组件渲染状态/场景，而不必执行卡里的 HTML/CSS/JS。
 //
-// 必须与 internal/cardmarkers 的语法、web/src/lib/cardMarkers.ts 与
-// desktop CardMarkerParser 的解析保持一致。
+// 必须与 internal/cardmarkers 的语法、web/src/lib/cardMarkers.ts 的解析保持一致。
 const CardUIContract = `【卡片界面标记】
 本角色卡可能带有自定义的状态/场景标记。请改用下列**标准标记**表达同等信息，写在 block 帧的 text 字段里（不要写进 final 帧）：
 - 场景：[SCENE:地点或场景标题]

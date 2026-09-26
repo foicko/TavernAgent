@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -212,4 +213,82 @@ func hasWarning(warnings []string, needle string) bool {
 		}
 	}
 	return false
+}
+
+// 单项超限的资源跳过、总量超限即停止落地：头部声明的解压大小就是计量依据，
+// 不能靠 io.LimitReader 静默截断后当作成功保存（那样会落下损坏的图片）。
+func TestCardService_CharxAssetSizeCaps(t *testing.T) {
+	const declared = 60 << 20 // 每项声明 60 MB：未超单项上限，但 35 项合计超过总量上限
+	assetsDecl := []any{
+		map[string]any{"type": "x-risu-asset", "uri": "embeded://assets/big.png", "name": "big", "ext": "png"},
+	}
+	for i := 0; i < 35; i++ {
+		assetsDecl = append(assetsDecl, map[string]any{
+			"type": "x-risu-asset", "uri": fmt.Sprintf("embeded://assets/p%02d.png", i), "name": fmt.Sprintf("p%02d", i), "ext": "png",
+		})
+	}
+	card, err := json.Marshal(map[string]any{
+		"spec": "chara_card_v3", "spec_version": "3.0",
+		"data": map[string]any{"name": "大卡", "description": "d", "first_mes": "hi", "assets": assetsDecl},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := filepath.Join(t.TempDir(), "big.charx")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(f)
+	w, err := zw.Create("card.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write(card); err != nil {
+		t.Fatal(err)
+	}
+	// CreateRaw 只写头部声明的大小，实际只放 1 字节：预检在读取前就应拦下。
+	rawEntry := func(name string, size uint64) {
+		hw, err := zw.CreateRaw(&zip.FileHeader{Name: name, Method: zip.Store, CompressedSize64: 1, UncompressedSize64: size})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := hw.Write([]byte{0}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rawEntry("assets/big.png", maxCharxEntryBytes+1)
+	for i := 0; i < 35; i++ {
+		rawEntry(fmt.Sprintf("assets/p%02d.png", i), declared)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	rep, err := ImportCardCharx(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := sqlite.Open(t.TempDir(), ports.RealClock{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	store, err := cardassets.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewCardService(st, store).SaveReport(rep); err != nil {
+		t.Fatal(err)
+	}
+	if !hasWarning(rep.Warnings, "单项上限") {
+		t.Fatalf("超过单项上限的资源应告警: %v", rep.Warnings)
+	}
+	if !hasWarning(rep.Warnings, "解压总量超过") {
+		t.Fatalf("超过总量上限应告警: %v", rep.Warnings)
+	}
 }

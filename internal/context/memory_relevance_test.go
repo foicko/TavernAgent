@@ -20,3 +20,25 @@ func TestCurrentTopicBeatsRecentHighImportanceIncidentalMatch(t *testing.T) {
 		t.Fatalf("topic lost to incidental match: %v", idsOf(got))
 	}
 }
+
+// 重叠的名字（"莉尔"/"莉尔娜"）必须长的先剥：此前按 map 顺序剥，先剥短名会
+// 留下"娜"残片，让含"娜的"的无关记忆时有时无地得分。
+func TestCurrentMemoryRelevanceStripsOverlappingNamesDeterministically(t *testing.T) {
+	state := domain.NewWorldState()
+	state.Characters["npc_a"] = domain.CharacterInfo{CharacterID: "npc_a", Name: "莉尔"}
+	state.Characters["npc_b"] = domain.CharacterInfo{CharacterID: "npc_b", Name: "莉尔娜"}
+	candidates := []*ports.MemoryCandidate{
+		{Memory: &domain.MemoryRecord{MemoryID: "leftover", Content: "娜的旧事。"}},
+		{Memory: &domain.MemoryRecord{MemoryID: "sword", Content: "的剑放好了。"}},
+		{Memory: &domain.MemoryRecord{MemoryID: "other", Content: "天气晴朗。"}},
+	}
+	for i := 0; i < 64; i++ {
+		scores := currentMemoryRelevance(candidates, "莉尔娜的剑在哪", state)
+		if scores["leftover"] != 0 {
+			t.Fatalf("第 %d 次：名字残片参与了打分：%v", i, scores)
+		}
+		if scores["sword"] != 1 {
+			t.Fatalf("第 %d 次：真正的话题应得满分：%v", i, scores)
+		}
+	}
+}

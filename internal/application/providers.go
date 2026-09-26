@@ -82,7 +82,26 @@ func (m *ProviderManager) ConfigSnapshot(slot string) ports.ProviderConfig {
 
 // Catalog 返回实例与槽位的视图（masked=true 时密钥脱敏）。
 func (m *ProviderManager) Catalog(masked bool) (*ports.ModelCatalog, error) {
-	return m.store.LoadCatalog(masked)
+	catalog, err := m.store.LoadCatalog(masked)
+	if err != nil {
+		return nil, err
+	}
+	fillInputBudget(catalog.Models)
+	return catalog, nil
+}
+
+// fillInputBudget 给实例列表补上展示用的输入预算。
+//
+// 这是"客户端不再各自推导同一公式"的落点：Web 的 modelLabels.inputBudget
+// 此前另写一遍 window − reserved − max(512, window/20)。
+// 窗口未配置（<=0）时不填，客户端据此显示"未设置"——那与"窗口=8192"是两回事。
+func fillInputBudget(models []ports.ModelInstance) {
+	for i := range models {
+		if models[i].ContextWindow > 0 {
+			budget := ctxpkg.InputBudget(models[i].ContextWindow, models[i].MaxTokens)
+			models[i].InputBudget = &budget
+		}
+	}
 }
 
 // SaveModel 新建或更新模型实例并刷新缓存客户端（影响后续新尝试）。
@@ -99,7 +118,16 @@ func (m *ProviderManager) SaveModel(instance ports.ModelInstance) (ports.ModelIn
 	if err := m.Reload(); err != nil {
 		return ports.ModelInstance{}, Err("STORAGE_UNAVAILABLE", "重新加载模型配置失败: "+err.Error(), 503)
 	}
-	return saved, nil
+	// 保存响应同样带上计算字段：客户端拿到刚保存的实例即可直接显示预算，
+	// 不必再为"新建"与"列表"各接一条推导路径。
+	return withInputBudget(saved), nil
+}
+
+// withInputBudget 返回带输入预算的实例副本（切片元素是值类型，无法就地改）。
+func withInputBudget(instance ports.ModelInstance) ports.ModelInstance {
+	models := []ports.ModelInstance{instance}
+	fillInputBudget(models)
+	return models[0]
 }
 
 // DeleteModel 删除未被引用的实例；仍被槽位引用时返回 409（绝不悄悄改槽位）。

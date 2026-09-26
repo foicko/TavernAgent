@@ -1,6 +1,7 @@
 package cardassets
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -31,6 +32,31 @@ func TestStore_SaveOpenRoundTrip(t *testing.T) {
 	names, err := s.ListAssets("card_1")
 	if err != nil || len(names) != 1 || names[0] != "anis_smile.webp" {
 		t.Fatalf("list = %v err=%v", names, err)
+	}
+}
+
+// charx 资源经常名实不符（.png 里其实是 WebP）：MIME 必须按内容嗅探，
+// 否则浏览器/客户端会拿到错误的 Content-Type。
+func TestStore_SniffsMimeFromContent(t *testing.T) {
+	s, err := New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 最小 WebP 头：RIFF????WEBPVP…，扩展名故意写成 .png。
+	webp := append([]byte("RIFF\x24\x00\x00\x00WEBPVP8 "), make([]byte, 20)...)
+	if err := s.SaveAsset("card_1", "iconx.png", bytes.NewReader(webp)); err != nil {
+		t.Fatal(err)
+	}
+	rc, mime, err := s.OpenAsset("card_1", "iconx.png")
+	if err != nil || mime != "image/webp" {
+		t.Fatalf("WebP 内容应嗅探为 image/webp，得到 %q err=%v", mime, err)
+	}
+	_ = rc.Close()
+	if mimeForExt(".avif") != "image/avif" {
+		t.Fatalf("avif mime = %q", mimeForExt(".avif"))
+	}
+	if mimeForExt(".png_3") != "image/png" {
+		t.Fatalf("png_3 mime = %q", mimeForExt(".png_3"))
 	}
 }
 

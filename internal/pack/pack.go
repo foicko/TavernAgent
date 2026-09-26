@@ -30,6 +30,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -290,7 +291,7 @@ func Read(r io.ReaderAt, size int64) (*ReadResult, error) {
 			return nil, unsafe(fmt.Sprintf("duplicate entry %q", p))
 		}
 		seen[p] = true
-		if f.Mode()&0100000 != 0 { // 符号链接位
+		if f.Mode()&os.ModeSymlink != 0 { // zip 把 S_IFLNK 映射为 os.ModeSymlink
 			return nil, unsafe(fmt.Sprintf("symlink entry not allowed: %q", p))
 		}
 		if int64(f.UncompressedSize64) > MaxEntryBytes {

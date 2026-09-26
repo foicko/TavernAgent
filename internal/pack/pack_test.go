@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -180,11 +181,13 @@ func TestRejectsDuplicateEntry(t *testing.T) {
 }
 
 // 符号链接条目必须被拒绝：它可以把解压引到包外。
+// 必须断言是安全拒绝：此前位检查 `&0100000` 永远不命中，旧用例只是因为
+// 缺 manifest 而报错，掩盖了检查失效。
 func TestRejectsSymlinkEntry(t *testing.T) {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
 	hdr := &zip.FileHeader{Name: "link", Method: zip.Store}
-	hdr.SetMode(0o120777) // 符号链接
+	hdr.SetMode(os.ModeSymlink | 0o777)
 	w, err := zw.CreateHeader(hdr)
 	if err != nil {
 		t.Fatalf("create header: %v", err)
@@ -193,8 +196,9 @@ func TestRejectsSymlinkEntry(t *testing.T) {
 	zw.Close()
 
 	_, err = Read(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
-	if err == nil {
-		t.Fatalf("符号链接条目应被拒绝")
+	var sec *SecurityError
+	if !errors.As(err, &sec) || !strings.Contains(sec.Reason, "symlink") {
+		t.Fatalf("符号链接条目应被安全拒绝，实际: %v", err)
 	}
 }
 

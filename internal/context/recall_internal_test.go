@@ -1,6 +1,7 @@
 package context
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -244,6 +245,23 @@ func TestUnrankedFallbackBounded(t *testing.T) {
 	}
 	if len(got) != 2 {
 		t.Fatalf("高重要度保底候选应达到配额 2，实际为: %d (%v)", len(got), idsOf(got))
+	}
+}
+
+// 保底名额按重要度分配，而不是按候选（SQL memory_id）顺序先到先得。
+func TestUnrankedFallbackQuotaPrefersImportance(t *testing.T) {
+	opts := DefaultOptions()
+	opts.MaxUnrankedFallback = 2
+	opts.MinFallbackImportance = 7
+	c := New(nil, opts)
+	cands := []*ports.MemoryCandidate{
+		{Memory: &domain.MemoryRecord{MemoryID: "m_a", Content: "王国第三机密：国王早已被影子替身取代。", Importance: 7}, SourceTurn: 1},
+		{Memory: &domain.MemoryRecord{MemoryID: "m_b", Content: "王国第二机密：深渊封印即将在冬至破裂。", Importance: 8}, SourceTurn: 2},
+		{Memory: &domain.MemoryRecord{MemoryID: "m_c", Content: "王国核心机密：地下藏有上古符文巨构。", Importance: 10}, SourceTurn: 3},
+	}
+	got := idsOf(c.selectMemories(cands, effectiveOf(cands), nil, "今天天气不错，去集市买苹果。", 5))
+	if len(got) != 2 || !slices.Contains(got, "m_c") || !slices.Contains(got, "m_b") {
+		t.Fatalf("保底名额应给重要度最高的两条 m_c/m_b，实际：%v", got)
 	}
 }
 

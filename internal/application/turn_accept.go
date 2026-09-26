@@ -172,7 +172,8 @@ func (s *TurnService) persistAcceptedTurn(ctx context.Context, sessionID, branch
 		return nil, Err("STORAGE_UNAVAILABLE", "受理失败: "+err.Error(), 503)
 	}
 	if !ok {
-		// 队列满：删除孤儿请求，避免占用幂等键。
+		// 队列满：把孤儿请求落到失败终态（不删行）。该幂等键从此绑定这次失败，
+		// 同键重放会拿回这条失败回合；客户端收到 4xx 明确拒绝后应换新键重试。
 		_ = s.store.SetCancelIntent(turn.TurnID, true)
 		_ = s.store.UpdateTurnResult(turn.TurnID, domain.TurnFailed, "", "QUEUE_FULL", "该分支已有进行中的回合")
 		return nil, Err("QUEUE_FULL", "该分支已有进行中的回合", 429)

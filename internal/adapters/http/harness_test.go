@@ -59,6 +59,9 @@ func newTestServerWithProvider(t *testing.T, provider ports.ModelProvider) (*htt
 		Cards:      application.NewCardService(st, assetStore),
 		CardAssets: assetStore,
 		Archive:    application.NewArchiveService(st, "test"),
+		// 计划服务：端点用例需要真实的切分与提示词结果。
+		TTSPlans:   application.NewTTSPlanService(st),
+		ImagePlans: application.NewImagePlanService(st),
 		Bus:        bus, Addr: "127.0.0.1:8890",
 	})
 	ts := httptest.NewServer(srv.Handler())

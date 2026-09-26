@@ -156,10 +156,23 @@ type UIHint struct {
 }
 
 // TextBlock 是已提交正文的有类型块。
+//
+// Segments 是 Text 的内联分段（服务端投影时补齐）：把卡片的表现类标记
+// （`[IMG:key]` / `<img cmd="key">`）切成文本段与图片段，渲染端只需逐段
+// 映射为控件。此前这段语法在 Go / TypeScript / C# 各实现了一遍。
 type TextBlock struct {
-	Kind      string `json:"kind"` // narration | dialogue | inner_monologue
-	SpeakerID string `json:"speakerId,omitempty"`
-	Text      string `json:"text"`
+	Kind      string          `json:"kind"` // narration | dialogue | inner_monologue
+	SpeakerID string          `json:"speakerId,omitempty"`
+	Text      string          `json:"text"`
+	Segments  []InlineSegment `json:"segments,omitempty"`
+}
+
+// InlineSegment 是正文的一小段：纯文本或卡内图片引用。
+type InlineSegment struct {
+	Type string `json:"type"` // text | image
+	Text string `json:"text,omitempty"`
+	// AssetKey 是卡内资源键；URL 由渲染端按 `/api/v1/cards/{cardId}/assets/{key}` 拼装。
+	AssetKey string `json:"assetKey,omitempty"`
 }
 
 // Option 是已提交的候选选项。

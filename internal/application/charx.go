@@ -69,6 +69,20 @@ func ImportCardCharx(archivePath string) (*ImportReport, error) {
 	return rep, nil
 }
 
+// IsCharxArchive 报告 path 是否是一个可解析的 charx 归档（ZIP 且含 card.json）。
+//
+// 用于按内容而非首字节魔数识别 charx：部分站点下载的 .charx 是「图片头 + ZIP」
+// 多形态文件（JPEG/ZIP polyglot），首字节并非 PK\x03\x04，只有尾部的 ZIP 中央目录
+// 能揭示其归档本质。zip.OpenReader 只读取目录区（不解压内容），对超大文件也安全。
+func IsCharxArchive(path string) bool {
+	zr, err := zip.OpenReader(path)
+	if err != nil {
+		return false
+	}
+	defer zr.Close()
+	return findCharxCardEntry(&zr.Reader) != nil
+}
+
 // findCharxCardEntry 定位 card.json：优先根级，其次最浅的同名条目。
 func findCharxCardEntry(zr *zip.Reader) *zip.File {
 	var fallback *zip.File
@@ -102,6 +116,10 @@ func collectCharxAssets(zr *zip.Reader, card *CharacterCard) []CharxAsset {
 		byPath[strings.TrimPrefix(strings.ReplaceAll(f.Name, "\\", "/"), "./")] = f
 	}
 	used := map[string]bool{}
+	// refByPath：多个资源名可以指向同一个归档条目（例如两种表情共用一张图）。
+	// 它们共享一个落地文件，而不是各写一份——否则一张小卡声明上万个同路径资源，
+	// 就能把一个高压缩比条目放大成上万次写盘。
+	refByPath := map[string]string{}
 	var out []CharxAsset
 	for i := range card.Assets {
 		a := &card.Assets[i]
@@ -116,7 +134,13 @@ func collectCharxAssets(zr *zip.Reader, card *CharacterCard) []CharxAsset {
 		if ext == "" {
 			ext = strings.TrimPrefix(path.Ext(zipPath), ".")
 		}
+		if ref, seen := refByPath[zipPath]; seen {
+			a.Ref = ref
+			a.Ext = ext
+			continue
+		}
 		ref := uniqueAssetFile(a.Name, zipPath, ext, used)
+		refByPath[zipPath] = ref
 		a.Ref = ref
 		a.Ext = ext
 		out = append(out, CharxAsset{Name: a.Name, ZipPath: zipPath, Ref: ref, Ext: ext})
@@ -209,11 +233,13 @@ func attachCharxAvatar(rep *ImportReport, zr *zip.Reader) {
 	sort.Strings(iconFiles)
 	candidates = append(candidates, iconFiles...)
 
+	tried := make(map[string]bool, len(candidates))
 	for _, p := range candidates {
 		f, ok := byPath[p]
-		if !ok {
+		if !ok || tried[p] {
 			continue
 		}
+		tried[p] = true
 		data, err := readZipEntry(f, maxCharxEntryBytes)
 		if err != nil {
 			continue
@@ -292,8 +318,16 @@ func hasRisuExtension(raw string) bool {
 	return strings.Contains(raw, "\"risuai\"") || strings.Contains(raw, "\"depth_prompt\"")
 }
 
+// errCharxEntryTooLarge 表示归档条目解压后超过单项上限。
+var errCharxEntryTooLarge = errors.New("条目解压后超过单项上限")
+
 // readZipEntry 读取一个归档条目，最多 limit 字节（防止压缩炸弹）。
+// 超限直接报错而不是静默截断：截断的图片/JSON 只会在后续解码时以更费解的方式失败。
+// archive/zip 在读取时会校验实际字节数与头部声明一致，所以按声明大小预检是可靠的。
 func readZipEntry(f *zip.File, limit int64) ([]byte, error) {
+	if f.UncompressedSize64 > uint64(limit) {
+		return nil, errCharxEntryTooLarge
+	}
 	rc, err := f.Open()
 	if err != nil {
 		return nil, err

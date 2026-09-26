@@ -52,6 +52,53 @@ func buildCharxBytes(t *testing.T) []byte {
 	return buf.Bytes()
 }
 
+// TestImportCard_CharxWithPrependedImage 覆盖「图片头 + ZIP」多形态 .charx：
+// 首字节是 JPEG 魔数（FF D8 FF E0）而非 PK\x03\x04，必须仍能按内容识别为 charx，
+// 否则会被当作二进制 JSON 解析失败，或被内存上限误拒。
+func TestImportCard_CharxWithPrependedImage(t *testing.T) {
+	_, base := newTestServer(t)
+
+	var jpeg bytes.Buffer
+	jpeg.Write([]byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00})
+	jpeg.Write([]byte{0xFF, 0xD9})
+	payload := append(jpeg.Bytes(), buildCharxBytes(t)...)
+
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	fw, err := mw.CreateFormFile("file", "polyglot.charx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fw.Write(payload); err != nil {
+		t.Fatal(err)
+	}
+	mw.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, base+"/api/v1/cards", &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/v1/cards: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		t.Fatalf("status = %d: %s", resp.StatusCode, string(raw))
+	}
+
+	var res struct {
+		Format string `json:"format"`
+		Source string `json:"source"`
+		Name   string `json:"name"`
+	}
+	if err := json.Unmarshal(raw, &res); err != nil {
+		t.Fatal(err)
+	}
+	if res.Format != "charx" || res.Source != "charx" || res.Name != "charx 公主" {
+		t.Fatalf("format/source/name = %q/%q/%q", res.Format, res.Source, res.Name)
+	}
+}
+
 func TestImportCard_CharxEndToEnd(t *testing.T) {
 	ts, base := newTestServer(t)
 

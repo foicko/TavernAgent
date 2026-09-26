@@ -360,19 +360,9 @@ func (c *Compiler) compileLedger(nodeID string, state *domain.WorldState, sc ses
 		}
 		switch en.Event.Type {
 		case domain.EventRelationshipDelta:
-			var p domain.RelationshipDeltaPayload
-			if err := json.Unmarshal([]byte(en.Event.PayloadJSON), &p); err == nil {
-				applied := p.Applied
-				if applied == 0 && p.Delta != 0 {
-					applied = p.Delta
-				}
-				relations = append(relations, LedgerRelationDelta{
-					TurnNumber:  en.TurnNumber,
-					CharacterID: p.CharacterID,
-					Field:       p.Field,
-					Delta:       p.Delta,
-					Applied:     applied,
-				})
+			if d, ok := ledgerRelationDelta(en.Event.PayloadJSON); ok {
+				d.TurnNumber = en.TurnNumber
+				relations = append(relations, d)
 			}
 		case domain.EventSecretUnlock:
 			var p domain.SecretUnlockPayload
@@ -385,4 +375,28 @@ func (c *Compiler) compileLedger(nodeID string, state *domain.WorldState, sc ses
 	}
 
 	return RenderDomainLedger(state, checks, sc.PlayerName, relations), secretUnlockTurns, nil
+}
+
+// ledgerRelationDelta 把一条 relationship_delta 事件负载解析为账本条目。
+//
+// 实际生效量为 0（例如信任已到上限被钳住）时返回 ok=false：commitplan 照样落事件，
+// 但"权威"账本若写出 [信任 +5] 就是在对模型说谎。只有缺少 applied 字段的旧负载
+// 才回退到 Delta——必须区分"字段缺失"与"显式为 0"，不能只看零值。
+func ledgerRelationDelta(payloadJSON string) (LedgerRelationDelta, bool) {
+	var p domain.RelationshipDeltaPayload
+	if err := json.Unmarshal([]byte(payloadJSON), &p); err != nil {
+		return LedgerRelationDelta{}, false
+	}
+	var presence struct {
+		Applied *int `json:"applied"`
+	}
+	_ = json.Unmarshal([]byte(payloadJSON), &presence)
+	applied := p.Applied
+	if presence.Applied == nil {
+		applied = p.Delta
+	}
+	if applied == 0 {
+		return LedgerRelationDelta{}, false
+	}
+	return LedgerRelationDelta{CharacterID: p.CharacterID, Field: p.Field, Delta: p.Delta, Applied: applied}, true
 }

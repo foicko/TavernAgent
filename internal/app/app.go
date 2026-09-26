@@ -1,8 +1,7 @@
 // Package app 是组合根：把存储、配置、供应商与 HTTP 适配器装配成一个可运行实例。
 //
-// 无头服务入口（cmd/tavernagent）与桌面端（desktop/，以 sidecar 方式拉起它）共用它，
-// 这样"桌面端"与"命令行端"必定是同一个后端——桌面模式不是另写一套装配，
-// 而是同一个 http.Handler 承载在同一个 loopback 监听上，只是多开了一个原生窗口。
+// 无头服务入口是 cmd/tavernagent：单个进程既提供 REST/SSE，也通过 //go:embed
+// 把 Web 前端发出来，浏览器访问同一地址即可使用。
 //
 // 分层说明：组合根是唯一允许同时依赖全部适配器的地方；应用层/领域层依旧不知道
 // 数据库、网络与模型 SDK 的存在。
@@ -36,14 +35,12 @@ import (
 type Config struct {
 	// DataDir 是数据目录（存储、配置、密钥、锁都在这里）。
 	DataDir string
-	// Addr 是网络监听地址；桌面模式不监听 TCP 时可只用于来源回退，不参与监听。
+	// Addr 是网络监听地址，同时作为同源来源校验的回退值。
 	Addr string
 	// FallbackKind 是"未配置任何模型时"的回退供应商，目前只支持 "mock"。
 	FallbackKind string
-	// PIN 是局域网配对码；留空表示不启用配对鉴权（仅适合不开放 TCP 的单机桌面模式）。
+	// PIN 是局域网配对码；留空表示不启用配对鉴权（仅适合不开放 TCP 的本机单机部署）。
 	PIN string
-	// SetNativeTheme 是桌面壳注入的原生窗口配色回调（浏览器部署留空）。
-	SetNativeTheme func(mode string)
 	// AllowedOrigins 是额外放行的浏览器来源（开发代理等）。
 	AllowedOrigins []string
 	// Ablation 是启动期生效的消融开关（评估用）。
@@ -51,7 +48,6 @@ type Config struct {
 	// AppVersion 会写进剧情包清单，用于排查"这个包是哪个版本导出的"。
 	AppVersion string
 	// TLSConfig 非空时，无头监听会包成 HTTPS（局域网加密访问）。
-	// 桌面壳自带 loopback 监听，不受此项影响。
 	TLSConfig *tls.Config
 }
 
@@ -191,13 +187,15 @@ func Bootstrap(cfg Config) (*App, error) {
 	server, err := httpadapter.New(httpadapter.Deps{
 		Director:     directorSvc,
 		ImageService: imgSvc,
-		Sessions:     sessionSvc, Turns: turnSvc, Branches: branchSvc,
+		// 演播/插画计划服务：客户端不再各自实现切分与提示词规则。
+		TTSPlans:   application.NewTTSPlanService(store),
+		ImagePlans: application.NewImagePlanService(store),
+		Sessions:   sessionSvc, Turns: turnSvc, Branches: branchSvc,
 		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: cfg.Addr,
 		Cards:          cardSvc,
 		CardAssets:     cardAssets,
 		StaticFS:       staticFS,
 		AuthPIN:        cfg.PIN,
-		SetNativeTheme: cfg.SetNativeTheme,
 		AllowedOrigins: cfg.AllowedOrigins,
 		Metrics:        metrics,
 		Usage:          store,

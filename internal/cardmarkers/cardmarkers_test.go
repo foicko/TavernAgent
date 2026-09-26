@@ -8,7 +8,8 @@ import (
 func TestExtractStripsStateMarkers(t *testing.T) {
 	text := "她抬起头。[SCENE:教堂] 窗外的雪停了。[HUD:理智=82|体力=40]"
 	clean, hints := Extract(text)
-	if clean != "她抬起头。 窗外的雪停了。" {
+	// 标记左侧无空白：剥离后不留空格（中文正文不该凭空多出空格）。
+	if clean != "她抬起头。窗外的雪停了。" {
 		t.Errorf("clean = %q", clean)
 	}
 	if len(hints) != 2 {
@@ -34,12 +35,40 @@ func TestExtractKeepsPresentationalMarkers(t *testing.T) {
 }
 
 func TestExtractEscapedBracket(t *testing.T) {
+	// 转义原样保留在落库文本里，只在渲染时还原一次。
 	clean, hints := Extract("数组写作 [[HUD:x] 形式")
-	if clean != "数组写作 [HUD:x] 形式" {
+	if clean != "数组写作 [[HUD:x] 形式" {
 		t.Errorf("clean = %q", clean)
 	}
 	if len(hints) != 0 {
 		t.Errorf("escaped marker must not be parsed: %+v", hints)
+	}
+}
+
+// 提交时 Extract、读取时 SplitImages：转义的图片标记走完整条管线后仍是字面文本。
+func TestEscapedImageSurvivesCommitThenSplit(t *testing.T) {
+	stored, _ := Extract("写作 [[IMG:x] 形式[HUD:hp=3]")
+	segs := SplitImages(stored)
+	if len(segs) != 1 || segs[0].Type != "text" || segs[0].Text != "写作 [IMG:x] 形式" {
+		t.Fatalf("stored=%q segs=%+v", stored, segs)
+	}
+}
+
+// 剥离标记只收拾它两侧的空白，正文其余位置的缩进必须保留。
+func TestExtractPreservesIndentation(t *testing.T) {
+	in := "- a\n  - nested [HUD:hp=3]\n    code  x"
+	clean, hints := Extract(in)
+	if len(hints) != 1 {
+		t.Fatalf("hints = %+v", hints)
+	}
+	if want := "- a\n  - nested\n    code  x"; clean != want {
+		t.Errorf("clean = %q, want %q", clean, want)
+	}
+	if clean, _ := Extract("左 [SCENE:酒馆] 右"); clean != "左 右" {
+		t.Errorf("两侧空白应合并为一个空格: %q", clean)
+	}
+	if clean, _ := Extract("左[SCENE:酒馆]右"); clean != "左右" {
+		t.Errorf("两侧无空白时不应插入空格: %q", clean)
 	}
 }
 

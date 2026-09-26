@@ -107,6 +107,73 @@ func TestModelInstanceAPI(t *testing.T) {
 	}
 }
 
+// 输入预算是服务端计算字段：接口回传的值必须与 context.InputBudget 完全一致，
+// 否则又会和客户端推导出的展示值分叉（这正是本次收敛要消灭的问题）。
+func TestModelInstanceInputBudget(t *testing.T) {
+	ts, _ := newModelConfigServer(t)
+
+	// 配置了窗口与输出预留的实例：inputBudget = InputBudget(window, maxTokens)。
+	body := `{"name":"预算","kind":"openai-chat","baseUrl":"https://api.example.com","model":"deepseek-chat","contextWindow":32768,"maxTokens":2048}`
+	req, _ := http.NewRequest("POST", ts.URL+"/api/v1/config/models", strings.NewReader(body))
+	r := post(t, req)
+	if r.status != 200 {
+		t.Fatalf("create status = %d body=%s", r.status, r.body)
+	}
+	var created struct {
+		ID          string `json:"id"`
+		InputBudget *int   `json:"inputBudget"`
+	}
+	if err := json.Unmarshal([]byte(r.body), &created); err != nil || created.ID == "" {
+		t.Fatalf("解析实例失败: %s (%v)", r.body, err)
+	}
+	want := ctxpkg.InputBudget(32768, 2048)
+	if created.InputBudget == nil || *created.InputBudget != want {
+		t.Fatalf("save 响应 inputBudget = %v, 期望 %d", created.InputBudget, want)
+	}
+
+	// 列表同样带上该字段。
+	req2, _ := http.NewRequest("GET", ts.URL+"/api/v1/config/models", nil)
+	r2 := post(t, req2)
+	var catalog struct {
+		Models []struct {
+			ID          string `json:"id"`
+			InputBudget *int   `json:"inputBudget"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal([]byte(r2.body), &catalog); err != nil {
+		t.Fatalf("解析目录: %v (%s)", err, r2.body)
+	}
+	found := false
+	for _, m := range catalog.Models {
+		if m.ID != created.ID {
+			continue
+		}
+		found = true
+		if m.InputBudget == nil || *m.InputBudget != want {
+			t.Fatalf("列表 inputBudget = %v, 期望 %d", m.InputBudget, want)
+		}
+	}
+	if !found {
+		t.Fatalf("列表中缺少刚创建的实例: %s", r2.body)
+	}
+
+	// 未配置窗口（<=0）时不回填：客户端据此显示"未设置"，而不是臆造一个保守值。
+	req3, _ := http.NewRequest("POST", ts.URL+"/api/v1/config/models", strings.NewReader(`{"name":"无窗口","kind":"openai-chat","baseUrl":"https://api.example.com","model":"m"}`))
+	r3 := post(t, req3)
+	if r3.status != 200 {
+		t.Fatalf("create(no window) status = %d %s", r3.status, r3.body)
+	}
+	var noWindow struct {
+		InputBudget *int `json:"inputBudget"`
+	}
+	if err := json.Unmarshal([]byte(r3.body), &noWindow); err != nil {
+		t.Fatalf("解析实例: %v", err)
+	}
+	if noWindow.InputBudget != nil {
+		t.Fatalf("窗口未设置时不应回填 inputBudget, 实得 %d", *noWindow.InputBudget)
+	}
+}
+
 // 槽位只存引用：接受 enabled+modelId，拒绝连接信息字段，拒绝未知槽位与不存在的实例，
 // 被引用的实例删除时 409 并指出槽位。
 func TestSlotAssignmentAPI(t *testing.T) {
