@@ -15,6 +15,9 @@ import { detachTurnStream, openDerivedBranch, recoverActiveTurn } from "./turnSl
 import { useSettings } from "../settingsStore";
 import { emptyDirectorState } from "./directorSlice";
 
+// branchBusy 的单调序号：迟到的 finally 不得清除更新操作的忙碌锁。
+let branchOpSeq = 0;
+
 export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
   // navigateView 是切换分支/回溯节点/回到现在的唯一入口：先记录落点，
   // 再套用新落点并重新拉取视图；拉取失败时回滚落点并留下可见错误。
@@ -29,8 +32,16 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
       memories: get().memories,
       memoryUsage: get().memoryUsage,
       memoryError: get().memoryError,
+      // 回滚必须连同生成草稿与分页游标一起还原，否则失败后输入台空白、历史分页错位。
+      draftBlocks: get().draftBlocks,
+      draftOptions: get().draftOptions,
+      lastTurnId: get().lastTurnId,
+      hasMoreHistory: get().hasMoreHistory,
+      oldestTurnId: get().oldestTurnId,
+      olderMessages: get().olderMessages,
     };
-    set(apply() as never);
+    // 落点变化意味着历史分页作废：清空已加载的更早消息，避免跨分支串页。
+    set({ ...apply(), olderMessages: [] } as never);
     try {
       await get().reloadView();
       return true;
@@ -116,6 +127,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     const owner = scope();
     const view = get().view;
     if (!view || isTurnBusy(get().phase) || get().branchBusy) return;
+    const op = ++branchOpSeq;
     set({ branchBusy: true, error: null });
     try {
       const res = (await api.editTurn(view.sessionId, view.branch.branchId, {
@@ -129,8 +141,8 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     } catch (e) {
       if (owns(owner)) set({ error: toErr(e) });
     } finally {
-      // 无条件清除：openDerivedBranch 会切分支使 owns() 失效，条件清除会把忙碌锁死。
-      set({ branchBusy: false });
+      // 仅当没有更新的分支操作接管时才清除，避免迟到 finally 提前释放新的忙碌锁。
+      if (op === branchOpSeq) set({ branchBusy: false });
     }
   },
 
@@ -138,6 +150,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     const owner = scope();
     const view = get().view;
     if (!view || isTurnBusy(get().phase) || get().branchBusy) return;
+    const op = ++branchOpSeq;
     set({ branchBusy: true, error: null });
     try {
       const res = await api.forkBranch(view.sessionId, { fromNodeId: nodeId, name, expectedCharacterId: view.characterId });
@@ -146,7 +159,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     } catch (e) {
       if (owns(owner)) set({ error: toErr(e) });
     } finally {
-      set({ branchBusy: false });
+      if (op === branchOpSeq) set({ branchBusy: false });
     }
   },
 
@@ -168,9 +181,13 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
         set({ loadingOlder: false });
         return;
       }
-      const olderMessages = messagesFromNodes(older, get().turnThinking).filter((m) => m.role !== "opening");
+      const newOlder = messagesFromNodes(older, get().turnThinking).filter((m) => m.role !== "opening");
+      const snapshot = get();
+      const seen = new Set([...snapshot.messages.map((m) => m.id), ...snapshot.olderMessages.map((m) => m.id)]);
+      const add = newOlder.filter((m) => !seen.has(m.id));
       set({
-        messages: [...olderMessages.filter(m => !get().messages.some(existing => existing.id === m.id)), ...get().messages],
+        olderMessages: [...add, ...snapshot.olderMessages],
+        messages: [...add, ...snapshot.messages],
         hasMoreHistory: !!older.hasMore,
         oldestTurnId: older.oldestTurnId ?? null,
         loadingOlder: false,

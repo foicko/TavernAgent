@@ -99,6 +99,17 @@ export const useEmbeddingSettings = create<EmbeddingSettingsState>()(
     }),
     {
       name: "tavernagent_embedding_settings",
+      version: 1,
+      // 密钥不落盘：localStorage 可被任意 XSS/浏览器扩展读取。
+      partialize: (state) => ({
+        enabled: state.enabled,
+        provider: state.provider,
+        baseUrl: state.baseUrl,
+        model: state.model,
+        dimension: state.dimension,
+        hybridRRFWeight: state.hybridRRFWeight,
+        topK: state.topK,
+      }),
     }
   )
 );

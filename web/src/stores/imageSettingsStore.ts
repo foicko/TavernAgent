@@ -107,6 +107,15 @@ export const useImageSettings = create<ImageSettingsState>()(
     }),
     {
       name: "tavernagent_image_settings",
+      version: 1,
+      // 密钥不落盘；插画结果可从服务端资源 URL 重建，也不落盘以免撑爆配额。
+      partialize: (state) => ({
+        engine: state.engine,
+        customBaseUrl: state.customBaseUrl,
+        customModel: state.customModel,
+        size: state.size,
+        stylePreset: state.stylePreset,
+      }),
     }
   )
 );

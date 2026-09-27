@@ -182,7 +182,7 @@ export function beginNavigation(onDetachStream?: () => void): number {
 export function emptyStory(): Partial<StoryState> {
   return {
     ...emptyDirectorState,
-    view: null, messages: [], draftBlocks: [], draftOptions: [], phase: "idle", thinkingText: "", turnThinking: {}, turnThinkingSeconds: {}, lastTurnId: null,
+    view: null, messages: [], olderMessages: [], draftBlocks: [], draftOptions: [], phase: "idle", thinkingText: "", turnThinking: {}, turnThinkingSeconds: {}, lastTurnId: null,
     error: null, hud: null, memories: [], memoryUsage: null, memoryError: null, memoryLoading: false, activeCharacterId: null, pendingInput: null, lastInput: null,
     memoryPaging: emptyMemoryPaging(), activeBranchId: null, viewNodeId: null, branchBusy: false, packError: null, hasMoreHistory: false, oldestTurnId: null, loadingOlder: false, sessionLoading: false, pendingSessionId: null,
   };
@@ -196,6 +196,7 @@ export function createInitialStoryState(): Partial<StoryState> {
     sessions: [],
     view: null,
     messages: [],
+    olderMessages: [],
     draftBlocks: [],
     draftOptions: [],
     phase: "idle",

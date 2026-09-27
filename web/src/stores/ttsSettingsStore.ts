@@ -63,6 +63,18 @@ export const useTTSSettings = create<TTSSettingsState>()(
     }),
     {
       name: "tavernagent_tts_settings",
+      version: 1,
+      // 密钥不落盘：localStorage 可被任意 XSS/浏览器扩展读取，服务端才是凭据存放处。
+      partialize: (state) => ({
+        engine: state.engine,
+        edgeVoice: state.edgeVoice,
+        customBaseUrl: state.customBaseUrl,
+        customModel: state.customModel,
+        customVoice: state.customVoice,
+        speed: state.speed,
+        dialogueOnly: state.dialogueOnly,
+        directorMode: state.directorMode,
+      }),
     }
   )
 );

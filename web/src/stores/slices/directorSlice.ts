@@ -153,7 +153,7 @@ export function createDirectorSlice(set: StoreSet, get: StoreGet) {
     },
     discussDirector: async (text: string) => {
       const view = get().view, owner = scope();
-      if (!view || get().viewNodeId || !text.trim()) return;
+      if (!view || get().viewNodeId || !text.trim() || isTurnBusy(get().phase)) return;
       const body = { expectedCharacterId: view.characterId, expectedHeadId: view.branch.headNodeId,
         expectedDraftVersion: get().directorView?.draft?.version ?? 0, text: text.trim() };
       const payload = JSON.stringify({ sessionId: view.sessionId, branchId: view.branch.branchId, body });

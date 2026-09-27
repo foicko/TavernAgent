@@ -69,12 +69,12 @@ function notifyAuthRequired() {
 }
 
 // The same authentication and deadline also apply to uploads and downloads.
-async function binaryRequest(path: string, init: RequestInit = {}): Promise<Response> {
+async function binaryRequest(path: string, init: RequestInit = {}, timeoutMs = 30_000): Promise<Response> {
   const headers = new Headers(init.headers);
   const token = getStoredAuthToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   try {
-    const res = await fetch(BASE + path, { ...init, headers, signal: AbortSignal.timeout(30_000) });
+    const res = await fetch(BASE + path, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
     if (!res.ok) {
       if (res.status === 401) notifyAuthRequired();
       throw new ApiError(res.status, await res.text());
@@ -88,7 +88,7 @@ async function binaryRequest(path: string, init: RequestInit = {}): Promise<Resp
   }
 }
 
-async function http<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function http<T>(method: string, path: string, body?: unknown, timeoutMs = 30_000): Promise<T> {
   const headers: Record<string, string> = {};
   if (body) {
     headers["Content-Type"] = "application/json";
@@ -104,7 +104,7 @@ async function http<T>(method: string, path: string, body?: unknown): Promise<T>
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
     // AbortSignal.timeout 在超时时抛 TimeoutError（Safari 旧版为 AbortError）
@@ -343,7 +343,7 @@ export const api = {
       patch,
     ),
   organizeMemories: (sessionId: string, branchId: string, expectedCharacterId: string) =>
-    http<{ merged?: unknown[] }>("POST", `/api/v1/sessions/${sessionId}/branches/${branchId}/memories/organize`, { expectedCharacterId }),
+    http<{ merged?: unknown[] }>("POST", `/api/v1/sessions/${sessionId}/branches/${branchId}/memories/organize`, { expectedCharacterId }, 120_000),
 };
 
 type WorldStateDto = {
@@ -582,7 +582,7 @@ export async function synthesizeTTS(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
+  }, 120_000);
   return res.blob();
 }
 
@@ -607,7 +607,8 @@ export interface GeneratedImageResult {
 }
 
 export async function generateImage(params: GenerateImageParams): Promise<GeneratedImageResult> {
-  return http<GeneratedImageResult>("POST", "/api/v1/images/generate", params);
+  // 生图常超 30s（后端图像客户端超时为 120s），必须给足窗口，否则前端先中止而后端仍写入结果。
+  return http<GeneratedImageResult>("POST", "/api/v1/images/generate", params, 120_000);
 }
 
 export interface EmbeddingProbeRequest {

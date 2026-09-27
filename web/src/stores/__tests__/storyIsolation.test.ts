@@ -416,6 +416,28 @@ describe("story request ownership", () => {
     expect(blocks[0].text).toBe("文");
   });
 
+  it("加载更早的历史在 reloadView 后仍然保留（S9）", async () => {
+    const base = view("A");
+    mocks.api.getSession.mockResolvedValue(base);
+    await useStory.getState().openSession("A");
+    expect(useStory.getState().messages.map((m) => m.id)).toContain("turn_A");
+
+    const olderView: SessionView = {
+      ...base, hasMore: false, oldestTurnId: "turn_old",
+      nodes: [{ nodeId: "turn_old", sessionId: "A", parentId: "root_A", kind: "turn", depth: 0, turnNumber: 0, contentJson: JSON.stringify({ blocks: [{ kind: "narration", text: "更早的一幕" }] }), createdAt: "" }],
+    };
+    mocks.api.getSession.mockResolvedValueOnce(olderView);
+    await useStory.getState().loadOlder();
+    expect(useStory.getState().messages.map((m) => m.id)).toContain("turn_old");
+
+    // 后台刷新（默认窗口）不得丢掉已加载的更早消息。
+    mocks.api.getSession.mockResolvedValue(base);
+    await useStory.getState().reloadView();
+    const ids = useStory.getState().messages.map((m) => m.id);
+    expect(ids).toContain("turn_old");
+    expect(ids).toContain("turn_A");
+  });
+
   it("maintenance heads retain the latest dialogue option reference", async () => {
     mocks.api.getSession.mockResolvedValue(view("A")); await useStory.getState().openSession("A");
     mocks.api.acceptTurn.mockResolvedValue({ turnId: "t1" });

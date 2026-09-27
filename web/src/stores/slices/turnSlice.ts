@@ -475,12 +475,18 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     if (!st.viewNodeId) {
       sessionViewCache.set(fresh.sessionId, fresh);
     }
+    const freshMessages = messagesFromNodes(fresh, turnThinking, turnThinkingSeconds);
+    // 保留通过"加载更早"分页得到的、不在本次窗口里的历史；同分支才合并，避免跨分支串页。
+    const sameBranch = st.view?.sessionId === fresh.sessionId && st.view?.branch.branchId === fresh.branch.branchId;
+    const freshIds = new Set(freshMessages.map((m) => m.id));
+    const keptOlder = (sameBranch ? st.olderMessages : []).filter((m) => !freshIds.has(m.id));
     set({
       view: fresh,
       hud: fresh.state,
       turnThinking,
       turnThinkingSeconds,
-      messages: messagesFromNodes(fresh, turnThinking, turnThinkingSeconds),
+      messages: [...keptOlder, ...freshMessages],
+      olderMessages: keptOlder,
       ...(["generating", "truncated", "awaiting_confirm"].includes(get().phase) && get().lastTurnId ? {} : { draftBlocks: [], draftOptions: [] }),
       ...(completedTurn ? { phase: "idle" as const, thinkingText: "" } : {}),
       error: null,
