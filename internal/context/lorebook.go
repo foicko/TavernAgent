@@ -1,6 +1,7 @@
 package context
 
 import (
+	"sort"
 	"strings"
 
 	"tavernagent/internal/domain"
@@ -39,7 +40,8 @@ type secretEntry struct {
 }
 
 // matchLorebook 按关键词在检索文本中命中世界书条目。
-// 命中顺序稳定（世界书声明顺序 → 条目声明顺序）；受条数与字符预算约束。
+// 命中顺序稳定（世界书声明顺序 → 条目 Order 升序，Order 相同保持声明顺序）；
+// 常驻条目（Constant）不依赖关键词、优先于普通命中；两者同受条数与字符预算约束。
 // 只读：不写库、不改状态、不因命中次数提升任何权重（T18）。
 func (c *Compiler) matchLorebook(sc sessionContext, haystack string) []lorebookHit {
 	if len(sc.Lorebooks) == 0 {
@@ -49,26 +51,45 @@ func (c *Compiler) matchLorebook(sc sessionContext, haystack string) []lorebookH
 
 	var hits []lorebookHit
 	used, usedRunes := 0, 0
-	for _, book := range sc.Lorebooks {
-		seen := map[string]bool{}
-		for _, e := range book.EnabledEntries() {
-			if e.EntryID != "" && seen[e.EntryID] {
-				continue
+	// 两轮：先常驻（无条件注入，承载角色核心设定），再关键词命中。共享预算与
+	// 去重映射，保证同一本书里被两轮同时选中的条目只注入一次。
+	for _, wantConstant := range []bool{true, false} {
+		for _, book := range sc.Lorebooks {
+			seen := map[string]bool{}
+			for _, e := range orderedEntries(book) {
+				if e.Constant != wantConstant {
+					continue
+				}
+				if e.EntryID != "" && seen[e.EntryID] {
+					continue
+				}
+				if !wantConstant && !entryMatches(e, hay, c.options.MinLorebookKeyRunes) {
+					continue
+				}
+				n := len([]rune(e.Content))
+				if used >= c.options.MaxLorebookEntries || usedRunes+n > c.options.MaxLorebookRunes {
+					continue // 超预算：跳过该条，后续更短的条目仍有机会命中
+				}
+				seen[e.EntryID] = true
+				hits = append(hits, lorebookHit{Book: book.Name, Entry: e})
+				used++
+				usedRunes += n
 			}
-			if !entryMatches(e, hay, c.options.MinLorebookKeyRunes) {
-				continue
-			}
-			n := len([]rune(e.Content))
-			if used >= c.options.MaxLorebookEntries || usedRunes+n > c.options.MaxLorebookRunes {
-				continue // 超预算：跳过该条，后续更短的条目仍有机会命中
-			}
-			seen[e.EntryID] = true
-			hits = append(hits, lorebookHit{Book: book.Name, Entry: e})
-			used++
-			usedRunes += n
 		}
 	}
 	return hits
+}
+
+// orderedEntries 返回启用中的条目，按 Order 升序稳定排序。
+// 未声明 Order（零值）的旧卡因此保持原有声明顺序，行为不变。
+func orderedEntries(book domain.Lorebook) []domain.LorebookEntry {
+	entries := book.EnabledEntries()
+	if len(entries) > 1 {
+		sort.SliceStable(entries, func(i, j int) bool {
+			return entries[i].Order < entries[j].Order
+		})
+	}
+	return entries
 }
 
 // buildHaystack 拼出检索文本：开场白 + 最近正文历史 + 当前输入。

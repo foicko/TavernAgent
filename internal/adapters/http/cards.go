@@ -228,11 +228,18 @@ func parseCardFile(path string) (*application.ImportReport, error) {
 		}
 		return application.ImportCardPNG(data)
 	case n >= 4 && bytes.HasPrefix(head, []byte("PK\x03\x04")):
+		// .tacard 也含（可选的）兼容 card.json，可能被 charx 误认；tacard.json 优先。
+		if application.IsTacardArchive(path) {
+			return application.ImportCardTacard(path)
+		}
 		return application.ImportCardCharx(path)
 	default:
 		// 图片头 + ZIP 多形态的 .charx（首字节不是 PK，但尾部有 ZIP 中央目录）：
 		// 必须按内容识别，且要先于内存上限判断，否则几十 MB 的归档会被
 		// enforceInlineCardLimit 误拒，或作为二进制被当成 JSON 解析失败。
+		if application.IsTacardArchive(path) {
+			return application.ImportCardTacard(path)
+		}
 		if application.IsCharxArchive(path) {
 			return application.ImportCardCharx(path)
 		}

@@ -75,6 +75,15 @@ type LorebookEntry struct {
 	SecondaryKeys []string `json:"secondaryKeys,omitempty"` // 次要关键词（主词命中且任一次要词也命中时方才激活）
 	Content       string   `json:"content"`
 	Enabled       bool     `json:"enabled"` // 禁用条目不参与命中
+	// Constant 为真时该条目无条件注入，不依赖关键词命中。对应 .tacard 的
+	// constant 与 SillyTavern/V3 世界书的常驻条目（核心设定，预算紧张时优先保留）。
+	Constant bool `json:"constant,omitempty"`
+	// Order 是注入顺序：数值小者先注入（稳定排序）。零值保持卡片声明顺序，
+	// 使未声明 order 的旧卡行为逐字节不变。
+	Order int `json:"order,omitempty"`
+	// Position 保留卡片声明的插入位置（before_char / after_char）。当前仅作保真记录：
+	// 世界书统一注入【世界设定】段，避免按位置劈开提示词结构。
+	Position string `json:"position,omitempty"`
 }
 
 // Lorebook 是世界书（V2/V3 character_book 的规范化形态）。

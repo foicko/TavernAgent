@@ -204,7 +204,7 @@ export const CharacterImportModal: React.FC = () => {
           id="char-card-file-input"
           className="char-card-file-input"
           type="file"
-          accept=".png,.json,.charx"
+          accept=".png,.json,.charx,.tacard"
           disabled={creating}
           onChange={(e) => {
             const f = e.target.files?.[0];
@@ -214,10 +214,10 @@ export const CharacterImportModal: React.FC = () => {
         />
         <div className="import-dropzone__icon"><Icon name="download" size={22} /></div>
         <div className="import-dropzone__title">
-          {parsing ? "正在读取角色设定与开场…" : "点击或拖拽 PNG / JSON / CHARX 角色卡至此"}
+          {parsing ? "正在读取角色设定与开场…" : "点击或拖拽 PNG / JSON / CHARX / TACARD 角色卡至此"}
         </div>
         <div className="import-dropzone__hint">
-          支持原生角色卡、Tavern V2 / V3 与 charx 归档（含内嵌立绘）；导入后可选择身份与开场。
+          支持原生角色卡、Tavern V2 / V3、charx 归档与 .tacard 原生卡（零脚本，含内嵌立绘与世界书）；导入后可选择身份与开场。
         </div>
       </div>
 

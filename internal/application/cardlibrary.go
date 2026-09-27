@@ -95,15 +95,17 @@ func (s *CardService) persistEmbeddedAssets(rep *ImportReport, cardID string) {
 	}
 }
 
-// persistCharxAssets 把 charx 归档中的资源流式写入卡资源存储。
+// persistCharxAssets 把归档卡（charx / tacard）中的资源流式写入卡资源存储。
+// 两类容器共用本管线（都登记到 rep.CharxAssets / rep.CharxArchivePath）。
 // 资源落地失败只告警、不回滚卡片：卡内容本身已可用，缺图属于降级。
 func (s *CardService) persistCharxAssets(rep *ImportReport, cardID string) {
 	if s.assets == nil || rep == nil || rep.CharxArchivePath == "" || len(rep.CharxAssets) == 0 {
 		return
 	}
+	label := archiveFormatLabel(rep)
 	zr, err := zip.OpenReader(rep.CharxArchivePath)
 	if err != nil {
-		rep.Warnings = append(rep.Warnings, "charx 资源落地失败（归档无法打开）："+err.Error())
+		rep.Warnings = append(rep.Warnings, label+" 资源落地失败（归档无法打开）："+err.Error())
 		return
 	}
 	defer zr.Close()
@@ -124,23 +126,31 @@ func (s *CardService) persistCharxAssets(rep *ImportReport, cardID string) {
 		// 按头部声明大小计量（archive/zip 读取时会校验实际字节数与声明一致）。
 		// 单项超限跳过；总量超限则停止落地剩余资源，防止压缩炸弹写满磁盘。
 		if f.UncompressedSize64 > maxCharxEntryBytes {
-			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源「%s」解压后超过 %d MB 单项上限，已跳过", a.Name, maxCharxEntryBytes>>20))
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源「%s」解压后超过 %d MB 单项上限，已跳过", label, a.Name, maxCharxEntryBytes>>20))
 			continue
 		}
 		if total+f.UncompressedSize64 > maxCharxTotalBytes {
-			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源解压总量超过 %d MB 上限，其余资源未落地", maxCharxTotalBytes>>20))
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源解压总量超过 %d MB 上限，其余资源未落地", label, maxCharxTotalBytes>>20))
 			break
 		}
 		total += f.UncompressedSize64
 		if err := s.saveOneAsset(cardID, a, f); err != nil {
-			rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 资源「%s」落地失败：%v", a.Name, err))
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源「%s」落地失败：%v", label, a.Name, err))
 			continue
 		}
 		saved++
 	}
 	if saved < len(rep.CharxAssets) {
-		rep.Warnings = append(rep.Warnings, fmt.Sprintf("charx 共 %d 项资源，成功落地 %d 项", len(rep.CharxAssets), saved))
+		rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 共 %d 项资源，成功落地 %d 项", label, len(rep.CharxAssets), saved))
 	}
+}
+
+// archiveFormatLabel 返回资源落地告警里的容器名（charx / tacard）。
+func archiveFormatLabel(rep *ImportReport) string {
+	if rep != nil && strings.TrimSpace(rep.Format) != "" {
+		return rep.Format
+	}
+	return "charx"
 }
 
 // saveOneAsset 打开单个归档条目并交给资源存储落盘，带解压上限。

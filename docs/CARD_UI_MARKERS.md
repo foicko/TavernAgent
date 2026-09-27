@@ -10,6 +10,10 @@ charx 卡常用 `editdisplay` 正则或 Lua 把模型输出变成自定义 UI（
 本方案只接受卡的**意图**，不接受卡的**代码**：把卡的标记语法翻译成一组标准标记，
 各端用原生组件渲染。
 
+原生 `.tacard` 卡（见 [TACARD_SPEC](TACARD_SPEC.md)）直接以这组标记为标准语法：
+`[IMG:id]` 引用 `assets` 清单中的资源 id，`[HUD]/[SCENE]/[VAR]` 承载状态；导入时其
+`ui_contract.default_variables` 作为会话变量初值、`theme_tokens` 作为卡片主题 token。
+
 ## 2. 语法（v1）
 
 标记写在模型输出的 `block` 帧 `text` 里（不是 `final` 帧）。
