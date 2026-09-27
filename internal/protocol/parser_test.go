@@ -235,6 +235,62 @@ func TestNoDegradeOnMalformedFrameAttempt(t *testing.T) {
 	}
 }
 
+// T06e：模型先写散文、再补一份完整帧序列时，兼容模式必须剔除帧 JSON，
+// 否则玩家会在正文里看到 {"v":1,"type":"final",...}（真实线上回归）。
+func TestNarrativeCompatStripsProtocolFrames(t *testing.T) {
+	prose := "雨水沿着酒馆的窗框流下。\n「你终于回来了。」她说。"
+	frames := strings.Join([]string{
+		mkBlock(1, BlockNarration, "雨水沿着酒馆的窗框流下。"),
+		mkBlock(2, BlockDialogue, "「你终于回来了。」"),
+		mkFinal(3,
+			`{"proposalId":"p1","type":"memory_add","text":"她等了很久。"}`,
+			`{"optionId":"o1","intent":"emotional","text":"道歉"}`),
+	}, "\n")
+	p := NewStreamParser()
+	if err := p.Feed([]byte(prose + "\n" + frames + "\n")); err != nil {
+		t.Fatalf("feed: %v", err)
+	}
+	if p.Mode() != ModeNarrative {
+		t.Fatalf("mode = %q, want %q", p.Mode(), ModeNarrative)
+	}
+	draft, err := p.Finish()
+	if err != nil {
+		t.Fatalf("finish: %v", err)
+	}
+	got := strings.Join(blockTexts(draft.Blocks), "\n")
+	for _, leak := range []string{`"type":"block"`, `"type":"final"`, "proposalId", "optionId", `"v":1`} {
+		if strings.Contains(got, leak) {
+			t.Fatalf("协议帧漏进正文（%s）: %q", leak, got)
+		}
+	}
+	if !strings.Contains(got, "你终于回来了") {
+		t.Fatalf("正文丢失: %q", got)
+	}
+	if len(draft.Proposals) != 0 || len(draft.Options) != 0 {
+		t.Fatalf("兼容模式仍应零提议/选项: proposals=%d options=%d", len(draft.Proposals), len(draft.Options))
+	}
+}
+
+// T06f：散文与帧挤在同一行（无换行）时也要剔除帧、保留正文。
+func TestNarrativeCompatStripsInlineFrames(t *testing.T) {
+	line := "她合上门回了房间。" + mkFinal(1, "", "")
+	p := NewStreamParser()
+	if err := p.Feed([]byte(line + "\n")); err != nil {
+		t.Fatalf("feed: %v", err)
+	}
+	draft, err := p.Finish()
+	if err != nil {
+		t.Fatalf("finish: %v", err)
+	}
+	got := strings.Join(blockTexts(draft.Blocks), "\n")
+	if strings.Contains(got, `"type":"final"`) || strings.Contains(got, `"v":1`) {
+		t.Fatalf("同一行的帧未被剔除: %q", got)
+	}
+	if !strings.Contains(got, "她合上门回了房间。") {
+		t.Fatalf("正文丢失: %q", got)
+	}
+}
+
 func blockTexts(blocks []BlockFrame) []string {
 	out := make([]string, 0, len(blocks))
 	for _, b := range blocks {

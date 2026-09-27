@@ -352,7 +352,7 @@ func (p *StreamParser) Finish() (TurnDraft, error) {
 
 // narrativeDraft 把已累积的原文成形为兼容模式草稿：叙述块 + 空提议 + 空选项。
 func (p *StreamParser) narrativeDraft() (TurnDraft, error) {
-	text := strings.TrimSpace(string(p.raw))
+	text := strings.TrimSpace(stripFrameLines(string(p.raw)))
 	if text == "" {
 		return TurnDraft{}, ErrMissingFinal
 	}
@@ -365,6 +365,70 @@ func (p *StreamParser) narrativeDraft() (TurnDraft, error) {
 	}
 	p.draft = TurnDraft{Blocks: blocks, Proposals: []Proposal{}, Options: []OptionFrame{}}
 	return p.draft, nil
+}
+
+// stripFrameLines 从兼容模式原文里剔除可识别的协议帧文本，避免 JSON 帧漏进正文。
+//
+// 触发场景：模型先写一段散文、再补一份完整帧序列（或代理把思考文本混入正文），
+// 首个非帧行已让整条流按契约降级为叙事；这些帧是**重复的**结构化输出，
+// 若原样展示，玩家就会看到 `{"v":1,"type":"final",...}`。
+//
+// 只丢弃能被 parseFrame 认下的整帧（整行帧，或散文后直接跟帧的同一行尾部）；
+// 普通叙事里出现的 `{` 不受影响，正文其余部分逐字保留。
+func stripFrameLines(raw string) string {
+	if !strings.Contains(raw, `"type"`) {
+		return raw
+	}
+	var out strings.Builder
+	out.Grow(len(raw))
+	for _, seg := range strings.SplitAfter(raw, "\n") {
+		keep, _ := splitOffFrames(seg)
+		out.WriteString(keep)
+	}
+	return out.String()
+}
+
+// splitOffFrames 把一段文本切成「保留部分 + 被丢弃的帧部分」。
+//   - 整段就是帧序列 → 全部丢弃；
+//   - 散文后面直接跟帧（同一行、无换行）→ 保留散文、丢弃帧；
+//   - 其余情况原样保留。
+func splitOffFrames(seg string) (keep string, dropped bool) {
+	trimmed := strings.TrimSpace(seg)
+	if trimmed == "" {
+		return seg, false
+	}
+	if strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
+		if isFrameSequence(trimmed) {
+			return "", true
+		}
+		return seg, false
+	}
+	// 散文 + 帧：从第一个帧对象处切开，只保留前面的正文。
+	if idx := strings.Index(seg, `{"v":`); idx >= 0 {
+		if isFrameSequence(strings.TrimSpace(seg[idx:])) {
+			return seg[:idx], true
+		}
+	}
+	return seg, false
+}
+
+// isFrameSequence 报告 s 是否完全由合法协议帧（可多个，含 final）组成。
+// 复用了 acceptLine 的切分与 parseFrame 的校验，保证判据与结构化模式一致。
+func isFrameSequence(s string) bool {
+	if !strings.HasPrefix(s, "{") && !strings.HasPrefix(s, "[") {
+		return false
+	}
+	values, err := splitJSONValues([]byte(s))
+	if err != nil || len(values) == 0 {
+		return false
+	}
+	for _, v := range values {
+		has, _, perr := parseFrame(v)
+		if perr != nil || !has {
+			return false
+		}
+	}
+	return true
 }
 
 // splitNarration 把兼容模式原文切成不超过 MaxBlockRunes 的块，
