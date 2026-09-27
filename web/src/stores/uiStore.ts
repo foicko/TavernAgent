@@ -360,3 +360,15 @@ if (typeof window !== "undefined" && window.matchMedia) {
     applyThemeToDocument(next);
   });
 }
+
+// 视口跨入移动抽屉断点（≤768px）时自动收起两侧栏：否则宽屏加载后再变窄/旋转，
+// 离屏抽屉会以 transform:translateX(0) 盖住正文且遮罩生效，除顶栏切换外无路可退。
+if (typeof window !== "undefined" && window.matchMedia) {
+  const mobile = window.matchMedia("(max-width: 768px)");
+  const collapseForMobile = (event: MediaQueryListEvent | MediaQueryList) => {
+    if (!event.matches) return;
+    useUi.setState({ isLeftRailCollapsed: true, isRightRailCollapsed: true });
+  };
+  mobile.addEventListener("change", collapseForMobile);
+  if (mobile.matches) collapseForMobile(mobile);
+}

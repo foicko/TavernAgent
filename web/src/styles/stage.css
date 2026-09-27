@@ -128,6 +128,15 @@
   transform: translateY(0);
 }
 
+/* 触屏没有 hover：回合工具栏常显，否则朗读/引用/复制/生图在手机与平板上不可达。 */
+@media (hover: none), (pointer: coarse) {
+  .turn-quick-toolbar {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
 .turn-tool-btn {
   background: transparent;
   border: none;

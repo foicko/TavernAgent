@@ -87,7 +87,7 @@
   /* 文本梯度（墨黑深阶） */
   --text-main: #111827;    /* ink */
   --text-muted: #4b5563;   /* ink-2 */
-  --text-dim: #9ca3af;     /* ink-3 */
+  --text-dim: #6b7280;     /* ink-3（≥4.5:1，满足 AA） */
 
   /* 强调色（高级墨蓝/钴蓝体系） */
   --accent-solid: #2563eb;
@@ -230,7 +230,7 @@
 
   --text-main: #f4f4f6;
   --text-muted: #9fa0a9;
-  --text-dim: #71727d;
+  --text-dim: #8b8c96;
 
   --accent-solid: #2563eb;
   --accent-contrast: #ffffff;
@@ -294,11 +294,11 @@
 
   --text-main: #f3f0f9;    /* ink: 柔和冷月光白 */
   --text-muted: #9d94ab;   /* ink-2: 次级雾紫灰 */
-  --text-dim: #6d657c;     /* ink-3: 弱化辅助字 */
+  --text-dim: #8b8298;     /* ink-3: 弱化辅助字（≥4.5:1，满足 AA） */
 
-  --accent-solid: #8b5cf6; /* 霓光电紫 */
+  --accent-solid: #7c3aed; /* 霓光电紫（白字 ≥4.5:1，满足 AA） */
   --accent-contrast: #ffffff;
-  --accent-subtle: rgba(139, 92, 246, 0.16);
+  --accent-subtle: rgba(124, 58, 237, 0.16);
   --accent-glow: #a78bfa;  /* 高亮流光紫 */
   --accent-amber: #f59e0b; /* 琥珀金 */
   --accent-green: #10b981; /* 翡翠绿（步骤指示） */

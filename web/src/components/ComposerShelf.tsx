@@ -258,10 +258,11 @@ export const ComposerShelf: React.FC = () => {
             混进正文会被当成角色说过的话，污染剧情。 */}
         {noteOpen && (
           <div className="composer-note-row">
-            <span className="composer-note-label" title="注记只作用于这一轮，不会出现在正文里">
+            <label className="composer-note-label" htmlFor="composer-note-input" title="注记只作用于这一轮，不会出现在正文里">
               <Icon name="note" size={12} /> 注记
-            </span>
+            </label>
             <input
+              id="composer-note-input"
               className="composer-note-input"
               value={note}
               maxLength={2000}
@@ -289,6 +290,7 @@ export const ComposerShelf: React.FC = () => {
         <div className="composer-input-wrapper composer-recessed-box">
           <textarea
             id="story-input"
+            aria-label="故事输入"
             ref={textareaRef}
             className="composer-textarea"
             placeholder={char.inputPlaceholder}
