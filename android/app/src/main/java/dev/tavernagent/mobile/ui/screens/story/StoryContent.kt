@@ -559,13 +559,19 @@ fun ThinkingBlock(thinking: String, seconds: Int?, streaming: Boolean) {
     var expanded by remember { mutableStateOf(false) }
     val tail = thinking.trim().lineSequence().lastOrNull().orEmpty()
 
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val alphaPulse by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(800), repeatMode = RepeatMode.Reverse),
-        label = "pulseAlpha",
-    )
+    val alphaPulse = if (streaming) {
+        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+        val value by infiniteTransition.animateFloat(
+            initialValue = 0.6f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(tween(800), repeatMode = RepeatMode.Reverse),
+            label = "pulseAlpha",
+        )
+        value
+    } else {
+        // 非流式（历史/已完成）时不要创建无限动画：否则每条消息都持续调度帧与重组。
+        1f
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -670,13 +676,14 @@ private fun messageStamp(createdAt: String?, turnNumber: Int): String {
 }
 
 /** 极简内联 Markdown 解析（粗体、斜体、行内代码） */
+private val inlineBoldRe = Regex("\\*\\*(.+?)\\*\\*")
+private val inlineItalicRe = Regex("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)")
+private val inlineCodeRe = Regex("`([^`]+)`")
+
 fun inlineMarkdown(text: String): AnnotatedString = buildAnnotatedString {
     var index = 0
-    val bold = Regex("\\*\\*(.+?)\\*\\*")
-    val italic = Regex("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)")
-    val code = Regex("`([^`]+)`")
 
-    val matches = (bold.findAll(text) + italic.findAll(text) + code.findAll(text))
+    val matches = (inlineBoldRe.findAll(text) + inlineItalicRe.findAll(text) + inlineCodeRe.findAll(text))
         .sortedBy { it.range.first }
 
     for (match in matches) {

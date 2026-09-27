@@ -12,6 +12,8 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 传输层辅助。
@@ -40,18 +42,22 @@ object HttpEngine {
     }
 
     /** 用未校验的握手读回对端证书，用于让用户确认指纹。 */
-    fun fetchPeerCertificate(host: String, port: Int, timeoutMillis: Int = 8000): X509Certificate {
-        val context = SSLContext.getInstance("TLS")
-        context.init(null, arrayOf<javax.net.ssl.TrustManager>(permissiveManager()), SecureRandom())
-        val socket = context.socketFactory.createSocket() as SSLSocket
-        try {
-            socket.connect(InetSocketAddress(host, port), timeoutMillis)
-            socket.startHandshake()
-            return socket.session.peerCertificates.first() as X509Certificate
-        } finally {
-            runCatching { socket.close() }
+    suspend fun fetchPeerCertificate(host: String, port: Int, timeoutMillis: Int = 8000): X509Certificate =
+        // 必须在 IO 线程执行：这是阻塞 socket（连接 + 握手最长 8s），而调用方
+        // （ConnectViewModel）跑在 Main.immediate，直接调用会触发
+        // NetworkOnMainThreadException 或 ANR。
+        withContext(Dispatchers.IO) {
+            val context = SSLContext.getInstance("TLS")
+            context.init(null, arrayOf<javax.net.ssl.TrustManager>(permissiveManager()), SecureRandom())
+            val socket = context.socketFactory.createSocket() as SSLSocket
+            try {
+                socket.connect(InetSocketAddress(host, port), timeoutMillis)
+                socket.startHandshake()
+                socket.session.peerCertificates.first() as X509Certificate
+            } finally {
+                runCatching { socket.close() }
+            }
         }
-    }
 
     fun sha256Fingerprint(certificate: X509Certificate): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(certificate.encoded)

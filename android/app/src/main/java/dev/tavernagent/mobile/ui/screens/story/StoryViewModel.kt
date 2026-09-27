@@ -240,7 +240,13 @@ class StoryViewModel(
                 view = view,
                 worldState = worldState,
                 messages = messages,
-                viewingNodeId = if (keepViewingNode) it.viewingNodeId else null,
+                viewingNodeId = if (keepViewingNode) {
+                    it.viewingNodeId
+                } else {
+                    // 由服务端返回的视图推导，而不是"加载即清空"：否则进入历史节点后
+                    // 只读态立刻消失、canSend 变真，用户以为在最新处却其实在浏览历史。
+                    view.viewNodeId.takeIf { id -> id.isNotBlank() && id != view.branch.headNodeId }
+                },
                 error = if (it.phase == TurnPhase.FAILED) it.error else null,
                 playerAvatarUrl = playerAvatar ?: it.playerAvatarUrl,
                 characterName = cached?.name?.takeIf { name -> name.isNotBlank() } ?: it.characterName,
@@ -604,6 +610,8 @@ class StoryViewModel(
             val view = runCatching {
                 repository.view(_state.value.sessionId, _state.value.branchId, null, 100)
             }.getOrNull()
+            // 网络往返期间用户可能已取消并发出新回合：绝不能用旧回合的视图/终态覆盖新回合。
+            if (_state.value.currentTurnId != turnId) return@launch
             if (view != null) {
                 // 思考内容从 turnId 迁移到新节点，历史回看时仍可见。
                 val head = view.branch.headNodeId
