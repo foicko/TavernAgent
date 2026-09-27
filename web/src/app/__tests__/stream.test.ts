@@ -55,4 +55,16 @@ describe("recoverable SSE transport", () => {
     // 旧行为最多 1 次首连 + 5 次重连
     expect(fetchMock.mock.calls.length).toBeGreaterThan(6);
   });
+
+  it("事件处理抛错时上报 onFinalError 并终止，而不是当作断线静默重连（S8）", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(stream(['id: t:1\nevent: block.appended\ndata: {}\n\n']));
+    vi.stubGlobal("fetch", fetchMock);
+    const onEvent = vi.fn(() => { throw new Error("handler boom"); });
+    const onFinalError = vi.fn();
+    stops.push(subscribeTurnEvents("t", { onEvent, onFinalError }));
+    await vi.waitFor(() => expect(onFinalError).toHaveBeenCalledOnce());
+    expect(onFinalError.mock.calls[0][0].message).toContain("handler boom");
+    // 不能进入重连风暴：处理异常后应终止，而非再次拉流。
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
 });

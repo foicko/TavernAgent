@@ -182,9 +182,12 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
     case "block.delta": {
       const payload = ev.data as { seq?: number; kind?: string; speakerId?: string | null; delta?: string };
       if (payload?.delta) {
-        const seq = payload.seq ?? 1;
         const kind = (payload.kind as TextBlock["kind"]) || "narration";
         const blocks = [...getStoryState().draftBlocks];
+        // 后端在未见到 "seq"（或字段乱序）时会给出 seq=0；与 mergeInFlightDraft 同口径
+        // 归一化，避免 blocks[-1] 为 undefined 后读 target.text 抛错（进而丢事件）。
+        const rawSeq = payload.seq ?? 0;
+        const seq = rawSeq > 0 ? rawSeq : blocks.length + 1;
         if (seq <= blocks.length) {
           const target = blocks[seq - 1];
           blocks[seq - 1] = {
@@ -231,16 +234,19 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
       break;
     case "turn.cancelled":
       onEnd();
+      thinkingStartedAt.delete(turnId);
       setStoryState({ phase: "idle", draftBlocks: [], draftOptions: [] });
       break;
     case "turn.failed": {
       const d = ev.data as { message?: string };
       onEnd();
+      thinkingStartedAt.delete(turnId);
       setStoryState({ phase: "failed", error: d.message ?? "生成失败", draftBlocks: [], draftOptions: [] });
       break;
     }
     case "turn.conflicted":
       onEnd();
+      thinkingStartedAt.delete(turnId);
       setStoryState({ phase: "failed", error: "分支已变化，请刷新后再试", draftBlocks: [], draftOptions: [] });
       break;
   }

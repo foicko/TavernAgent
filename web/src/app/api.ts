@@ -116,14 +116,9 @@ async function http<T>(method: string, path: string, body?: unknown): Promise<T>
   const text = await res.text();
   if (!res.ok) {
     if (res.status === 401) {
-      try {
-        const errJson = JSON.parse(text);
-        if (errJson.code === "AUTH_REQUIRED") {
-          notifyAuthRequired();
-        }
-      } catch {
-        // ignore
-      }
+      // 任意 401 都应触发重新配对：代理/网关可能返回非 JSON 错误体，
+      // 只在 AUTH_REQUIRED 时才通知会让 REST 路径静默停在未鉴权态。
+      notifyAuthRequired();
     }
     throw new ApiError(res.status, text);
   }
@@ -443,7 +438,12 @@ function subscribeEvents(aggregateId: string, path: string, handlers: TurnStream
             // 连接确实在出数据才算恢复：退避计数归零，否则长连接一生只能掉线 5 次
             retries = 0;
             buf += decoder.decode(chunk.value, { stream: true });
-            if (buf.length > 1024 * 1024) throw new Error("SSE event too large");
+            if (buf.length > 1024 * 1024) {
+              // 单个事件超过上限：无法安全解析出 id 以跳过，直接上报并终止，
+              // 避免"从同一游标重连 → 再撞同一事件"的死循环。
+              handlers.onFinalError(new Error("SSE event too large"));
+              return;
+            }
             let sep: RegExpExecArray | null;
             while ((sep = /\r?\n\r?\n/.exec(buf))) {
               const raw = buf.slice(0, sep.index);
@@ -452,15 +452,25 @@ function subscribeEvents(aggregateId: string, path: string, handlers: TurnStream
               if (!evt) continue;
               // Unnumbered deltas/thinking inherit last-event-id per SSE, but
               // must not be treated as duplicate durable business events.
+              let durableSeq = 0;
               if (/^id:/m.test(raw)) {
                 if (!evt.id.startsWith(aggregateId + ":")) continue;
-                const seq = Number(evt.id.slice(aggregateId.length + 1));
-                if (!Number.isSafeInteger(seq) || seq <= maxSeq) continue;
-                maxSeq = seq;
-                lastEventId = evt.id;
+                durableSeq = Number(evt.id.slice(aggregateId.length + 1));
+                if (!Number.isSafeInteger(durableSeq) || durableSeq <= maxSeq) continue;
               }
               if (lifetime.signal.aborted) return;
-              handlers.onEvent(evt);
+              try {
+                handlers.onEvent(evt);
+              } catch (handlerError) {
+                // 事件处理异常不能与"连接断开"混为一谈：游标尚未推进，事件不会被跳过；
+                // 但重放同一事件只会再次抛错，故显式上报并终止，避免静默丢事件 + 重连风暴。
+                handlers.onFinalError(handlerError instanceof Error ? handlerError : new Error(String(handlerError)));
+                return;
+              }
+              if (durableSeq > 0) {
+                maxSeq = durableSeq;
+                lastEventId = evt.id;
+              }
               if (terminal.has(evt.event)) return;
             }
           }

@@ -406,6 +406,16 @@ describe("story request ownership", () => {
     expect(useStory.getState().error).toBeNull();
   });
 
+  it("seq=0 的 block.delta 不会抛错（归一化到下一块）", async () => {
+    mocks.api.getSession.mockResolvedValue(view("A")); await useStory.getState().openSession("A");
+    useStory.setState({ lastTurnId: "t1", phase: "generating", draftBlocks: [] });
+    // 后端在未见到 "seq" 时会给出 seq=0；旧实现会 blocks[-1]=undefined 后读 target.text 抛错。
+    expect(() => routeEvent({ event: "block.delta", data: { seq: 0, kind: "narration", delta: "文" } }, "A", "t1", vi.fn())).not.toThrow();
+    const blocks = useStory.getState().draftBlocks;
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].text).toBe("文");
+  });
+
   it("maintenance heads retain the latest dialogue option reference", async () => {
     mocks.api.getSession.mockResolvedValue(view("A")); await useStory.getState().openSession("A");
     mocks.api.acceptTurn.mockResolvedValue({ turnId: "t1" });
