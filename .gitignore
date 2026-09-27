@@ -66,3 +66,45 @@ __pycache__/
 # 发布审计对仓库里的任何位图一律判违规（scripts/release_audit.py），
 # 且本项目"仓库里只放矢量"的约定由此保持。
 docs/artifacts/architecture/*.png
+
+# 本地运行库 scaffold（脚本生成的 data.<用途>-<时间戳>/ 快照，含 storage.db，不入库）
+/data.*/
+
+# 私人角色卡一次性处理脚本：依赖未入库的 charx/ 与 output/，仅本地使用。
+# 逐条列名（而非通配）以免误伤以后新增的正式脚本。
+/scripts/analyze_cult.py
+/scripts/analyze_demon_farm.py
+/scripts/analyze_facility.py
+/scripts/analyze_fera.py
+/scripts/analyze_haru.py
+/scripts/analyze_re_tsf.py
+/scripts/charx_to_tacard.py
+/scripts/check_status.py
+/scripts/convert_aiyu.py
+/scripts/convert_cult_simulator.py
+/scripts/convert_demon_farm.py
+/scripts/convert_fera.py
+/scripts/convert_haru.py
+/scripts/convert_monster_facility.py
+/scripts/convert_re_tsf.py
+/scripts/extract_cult_canon.py
+/scripts/extract_fera_all_starts.py
+/scripts/extract_fera_starts.py
+/scripts/extract_haru_scenes.py
+/scripts/inspect_aiyu_lore.py
+/scripts/inspect_card.py
+/scripts/inspect_card_texts.py
+/scripts/locate_fera_texts.py
+/scripts/parse_haru.py
+/scripts/survey_cards.py
+/scripts/translate_akira_to_tacard.py
+/scripts/translate_blair_to_tacard.py
+/scripts/translate_cafe_to_tacard.py
+/scripts/translate_cheongwon_to_tacard.py
+/scripts/translate_chikantrain_to_tacard.py
+/scripts/translate_digital_to_tacard.py
+/scripts/translate_jiwoo_to_tacard.py
+/scripts/translate_magirevo_to_tacard.py
+/scripts/translate_roommate_to_tacard.py
+/scripts/translate_soraka_to_tacard.py
+/scripts/verify_all_tacards.py
