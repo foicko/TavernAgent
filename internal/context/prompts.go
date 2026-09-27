@@ -731,7 +731,8 @@ func (c *Compiler) buildPlanningMessages(lore []lorebookHit, memories []*domain.
 	if len(summaries) > 0 {
 		b.WriteString("\n【故事背景与历史摘要（只读参考）】\n")
 		for _, a := range summaries {
-			txt := strings.TrimSpace(a.Text)
+			// 摘要由模型从既往叙事反推，可能被正文间接污染：必须与其它资料一样中和边界标签。
+			txt := strings.TrimSpace(neutralizeBoundaryTags(a.Text))
 			b.WriteString("- " + oneLine(txt) + "\n")
 		}
 	}
@@ -740,7 +741,8 @@ func (c *Compiler) buildPlanningMessages(lore []lorebookHit, memories []*domain.
 		for _, n := range ancestors {
 			if tc, err := parseTurnContent(n.ContentJSON); err == nil {
 				blocksText := renderBlocksPruned(tc.Blocks, true)
-				b.WriteString(fmt.Sprintf("上一幕输入：%s\n上一幕剧情：%s\n", oneLine(tc.InputText), oneLine(blocksText)))
+				b.WriteString(fmt.Sprintf("上一幕输入：%s\n上一幕剧情：%s\n",
+					oneLine(neutralizeBoundaryTags(tc.InputText)), oneLine(neutralizeBoundaryTags(blocksText))))
 			}
 		}
 	}

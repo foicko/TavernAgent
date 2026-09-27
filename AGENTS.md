@@ -57,5 +57,5 @@ CI（`.github/workflows/quality.yml`）额外要求：`gofmt -l internal cmd` �
 - `internal/adapters/http`：REST + SSE 契约；`internal/adapters/providers`：chat / responses / anthropic / mock；`internal/adapters/sqlite`：存储与迁移。
 - 卡片 UI 标记（`<img cmd>`/`<img="…">`/`<img_obj>`/`<imgBG>`/`<img src>`、`[HUD]`/`[SCENE]`/`[VAR]`）在 **`internal/cardmarkers`（Go）与 `web/src/lib/cardMarkers.tsx` 各有一份语法，改一处必须同步另一处**；详见 `docs/CARD_UI_MARKERS.md`。
 - charx / PNG 内嵌资源在导入时落地到 `data/cards/<cardID>/`，经 `/api/v1/cards/{id}/assets/{ref}` 提供（该路由不加鉴权，因为浏览器 `<img>` 无法带 token）。
-- `showcase/`（独立 Vite 展示站，`scripts/dev-showcase.ps1`，5174）与 `reference-components/` 是设计参考，不属于主二进制。
+- `showcase/`（独立 Vite 展示站，`scripts/dev-showcase.ps1`，5174）与 `reference-components/` 是设计参考，不属于主二进制（`reference-components/` 为第三方下载源码、无上游许可证，已移出跟踪，仅本地保留）。
 - `android/`：原生 Android 客户端（Kotlin/Compose + OkHttp/SSE），与 Web 端共用同一 REST + SSE 契约（`android/docs/API_CONTRACT.md`）；改动接口时需同步该契约文档与客户端 DTO。

@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"tavernagent/internal/ports"
+	"tavernagent/internal/util/endpointguard"
 )
 
 const (
@@ -86,6 +87,9 @@ var _ ports.EmbeddingProvider = (*OpenAIProvider)(nil)
 
 // NewOpenAIProvider creates an initialized OpenAI-compatible embedding provider.
 func NewOpenAIProvider(cfg Config) (*OpenAIProvider, error) {
+	if err := endpointguard.Validate(cfg.BaseURL); err != nil {
+		return nil, err
+	}
 	model := strings.TrimSpace(cfg.Model)
 	if model == "" {
 		model = DefaultModel

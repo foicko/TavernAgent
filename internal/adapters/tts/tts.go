@@ -18,6 +18,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
+
+	"tavernagent/internal/util/endpointguard"
 )
 
 // Voice 表示可用的 TTS 音色配置。
@@ -145,6 +147,9 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 	text := strings.TrimSpace(opts.Text)
 	if text == "" {
 		return nil, fmt.Errorf("text cannot be empty")
+	}
+	if err := endpointguard.Validate(opts.BaseURL); err != nil {
+		return nil, err
 	}
 
 	engine := strings.ToLower(strings.TrimSpace(opts.Engine))

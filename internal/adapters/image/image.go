@@ -16,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"tavernagent/internal/util/endpointguard"
 )
 
 // maxErrorBodySnippet 限制回显给客户端/日志的上游响应体长度，避免把
@@ -90,6 +92,9 @@ func (s *Service) Generate(ctx context.Context, opts GenerateOptions) (*Generate
 	prompt := strings.TrimSpace(opts.Prompt)
 	if prompt == "" {
 		return nil, fmt.Errorf("prompt cannot be empty")
+	}
+	if err := endpointguard.Validate(opts.BaseURL); err != nil {
+		return nil, err
 	}
 
 	s.mu.RLock()

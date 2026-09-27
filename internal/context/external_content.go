@@ -96,12 +96,38 @@ func externalContentBlock(source, trust string, attrs map[string]string, body st
 func neutralizeBoundaryTags(s string) string {
 	for _, tag := range []string{"external_content", "system-reminder", "system_reminder", "player_note"} {
 		// 先处理成对形态，得到人可读的 [/tag]；再兜住不闭合的残留前缀。
-		s = strings.ReplaceAll(s, "</"+tag+">", "[/"+tag+"]")
-		s = strings.ReplaceAll(s, "<"+tag+">", "["+tag+"]")
-		s = strings.ReplaceAll(s, "</"+tag, "[/"+tag)
-		s = strings.ReplaceAll(s, "<"+tag, "["+tag)
+		// 必须大小写不敏感：攻击者可用 <EXTERNAL_CONTENT> 之类变体绕过精确匹配。
+		s = replaceFold(s, "</"+tag+">", "[/"+tag+"]")
+		s = replaceFold(s, "<"+tag+">", "["+tag+"]")
+		s = replaceFold(s, "</"+tag, "[/"+tag)
+		s = replaceFold(s, "<"+tag, "["+tag)
 	}
 	return s
+}
+
+// replaceFold 是大小写不敏感的 strings.ReplaceAll：匹配忽略大小写，
+// 输出统一用 new 的写法（保持结果可预测）。
+func replaceFold(s, old, new string) string {
+	if old == "" {
+		return s
+	}
+	lower, needle := strings.ToLower(s), strings.ToLower(old)
+	if !strings.Contains(lower, needle) {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; ; {
+		j := strings.Index(lower[i:], needle)
+		if j < 0 {
+			b.WriteString(s[i:])
+			return b.String()
+		}
+		j += i
+		b.WriteString(s[i:j])
+		b.WriteString(new)
+		i = j + len(old)
+	}
 }
 
 // neutralizeAttribute 清理属性值：属性值里出现引号或尖括号会把标签结构撕开。

@@ -4,6 +4,9 @@
 /pi-agent/
 /LiveAgent/
 
+# 设计参考组件源码（第三方下载，无上游许可证文本，仅本地参考，不入库）
+/reference-components/
+
 # Local reference materials & assets (design mockups, papers, imported char cards)
 /design-preview/
 /papers/
