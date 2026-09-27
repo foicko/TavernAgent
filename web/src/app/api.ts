@@ -550,12 +550,9 @@ export function parseSSEBlock(raw: string, prevId: string): SSEEvent | null {
 }
 
 export async function getTTSVoices(): Promise<TTSVoice[]> {
-  try {
-    const data = await http<{ voices: TTSVoice[] }>("GET", "/api/v1/tts/voices");
-    return data.voices || [];
-  } catch {
-    return [];
-  }
+  // 失败必须让调用方看见（代理/鉴权/网络），而不是静默返回空列表——那与"没有音色"不可区分。
+  const data = await http<{ voices: TTSVoice[] }>("GET", "/api/v1/tts/voices");
+  return data.voices || [];
 }
 
 export interface TTSSynthesizeParams {

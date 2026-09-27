@@ -11,7 +11,7 @@ import {
   incrementSendSeq,
   toErr,
 } from "../storyHelpers";
-import { detachTurnStream, openDerivedBranch, recoverActiveTurn } from "./turnSlice";
+import { clearPendingSubmission, detachTurnStream, openDerivedBranch, recoverActiveTurn } from "./turnSlice";
 import { useSettings } from "../settingsStore";
 import { emptyDirectorState } from "./directorSlice";
 
@@ -41,6 +41,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
       olderMessages: get().olderMessages,
     };
     // 落点变化意味着历史分页作废：清空已加载的更早消息，避免跨分支串页。
+    clearPendingSubmission();
     set({ ...apply(), olderMessages: [] } as never);
     try {
       await get().reloadView();

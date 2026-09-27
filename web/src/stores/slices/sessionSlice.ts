@@ -20,7 +20,7 @@ import {
   toErr,
   watchSession,
 } from "../storyHelpers";
-import { activeTurnSub, detachTurnStream, recoverActiveTurn } from "./turnSlice";
+import { activeTurnSub, clearPendingSubmission, detachTurnStream, recoverActiveTurn } from "./turnSlice";
 import { rememberSession } from "../sessionMemory";
 import { DEFAULT_PLAYER_NAME } from "../../lib/characterMacros";
 
@@ -33,6 +33,7 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
 
   openSession: async (id: string) => {
     const epoch = beginNavigation(() => detachTurnStream());
+    clearPendingSubmission();
     const cached = sessionViewCache.get(id);
     if (cached) {
       rememberSession(id);

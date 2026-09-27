@@ -10,6 +10,9 @@ export type ThemeMode = "light" | "dark" | "violet";
 
 const THEME_STORAGE_KEY = "tavernagent.theme";
 
+// 轻提示的单一超时句柄：新提示到来时取消旧定时器，避免残留定时器在拆除后触发 setState。
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
 // 存储被禁用（隐私模式 / 第三方 iframe）时连访问 window.localStorage 都会抛 SecurityError；
 // 主题读取发生在模块加载期，抛出会让整个应用白屏，所以读写都兜底为"不记忆"。
 function readSavedTheme(): string | null {
@@ -322,7 +325,8 @@ export const useUi = create<UiState>((set, get) => ({
 
   notifyQuiet: (msg) => {
     set({ toastMessage: msg });
-    setTimeout(() => {
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
       if (get().toastMessage === msg) {
         set({ toastMessage: null });
       }

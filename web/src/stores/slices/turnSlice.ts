@@ -254,6 +254,11 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
 
 let pendingSubmission: { owner: ReturnType<typeof scope>; view: SessionView; key: string; input: TurnInput } | null = null;
 
+// 导航（切会话/分支/落点）时丢弃上一次"结果未知"的提交记录，避免陈旧状态被后续 retry 误用。
+export function clearPendingSubmission(): void {
+  pendingSubmission = null;
+}
+
 async function startTurn(view: SessionView, key: string, input: TurnInput, owner = scope()) {
   if (!owns(owner) || owner.sessionId !== view.sessionId) return;
   pendingSubmission = { owner, view, key, input };

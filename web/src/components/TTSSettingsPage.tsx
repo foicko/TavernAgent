@@ -35,6 +35,7 @@ export function TTSSettingsPage() {
   const resetToDefaults = useTTSSettings((s) => s.resetToDefaults);
 
   const [voices, setVoices] = useState<TTSVoice[]>([]);
+  const [voicesError, setVoicesError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
 
@@ -48,8 +49,9 @@ export function TTSSettingsPage() {
             setVoices(v);
           }
         }
-      } catch {
-        // 忽略网络或获取异常
+      } catch (err) {
+        // 让用户知道"音色列表拉取失败"，并已回退到内置默认音色。
+        if (!cancelled) setVoicesError(err instanceof Error ? err.message : "无法获取音色列表，已显示内置默认音色");
       }
     };
     void fetchVoices();
@@ -100,7 +102,7 @@ export function TTSSettingsPage() {
 
       {engine === "edge" && (
         <Section title="Edge-TTS 声音配置" description="由微软神经语音引擎驱动，无需 API Key。">
-          <Field label="音色选择" hint="支持多种自然富有情感的中英文音色。">
+          <Field label="音色选择" hint={voicesError ?? "支持多种自然富有情感的中英文音色。"}>
             <Select
               value={edgeVoice}
               onChange={(e) => setEdgeVoice(e.target.value)}
