@@ -180,8 +180,13 @@ func (s *Store) CommitMemoryBatch(ctx context.Context, b *ports.MemoryBatch) (*p
 		if _, err := tx.Exec(`INSERT INTO state_snapshots(node_id,snapshot_version,ruleset_version,state_json,state_hash) VALUES(?,1,?,?,?)`, nodeID, ruleset, stateJSON, state.HashID()); err != nil {
 			return nil, err
 		}
-		if _, err := tx.Exec(`UPDATE branches SET head_node_id=?,version=version+1 WHERE branch_id=? AND head_node_id=? AND version=? AND active_turn_id=''`, nodeID, b.BranchID, head, version); err != nil {
+		res, err := tx.Exec(`UPDATE branches SET head_node_id=?,version=version+1 WHERE branch_id=? AND head_node_id=? AND version=? AND active_turn_id=''`, nodeID, b.BranchID, head, version)
+		if err != nil {
 			return nil, err
+		}
+		if n, _ := res.RowsAffected(); n != 1 {
+			// 与 CommitTurn 同口径：CAS 失配绝不静默提交错误的 head/version。
+			return &ports.CommitResult{ConflictCode: "HEAD_CONFLICT"}, nil
 		}
 		version++
 		if _, err := tx.Exec(`UPDATE sessions SET updated_at=? WHERE session_id=?`, s.now(), session); err != nil {

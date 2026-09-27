@@ -6,6 +6,8 @@ package http
 // 密钥只回脱敏值，留空或回传掩码都表示保留原密钥。
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"time"
 
@@ -129,11 +131,11 @@ func (s *Server) probeModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req probeRequest
-	if r.ContentLength > 0 {
-		if err := decodeJSON(w, r, &req, maxRequestBytes); err != nil {
-			writeBodyError(w, err)
-			return
-		}
+	// 始终尝试解码：chunked 请求的 ContentLength 为 -1，据此跳过会静默忽略请求体。
+	// 空体是合法的（沿用默认探测），decodeJSON 对空体返回 io.EOF，这里容忍。
+	if err := decodeJSON(w, r, &req, maxRequestBytes); err != nil && !errors.Is(err, io.EOF) {
+		writeBodyError(w, err)
+		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()

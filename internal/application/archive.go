@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"tavernagent/internal/domain"
@@ -116,18 +117,28 @@ func (s *ArchiveService) Import(ctx context.Context, data []byte) (*ImportResult
 	if err != nil {
 		return nil, Err("STORAGE_UNAVAILABLE", "写入失败: "+err.Error(), 503)
 	}
-	s.persistImportedAssets(sess.CharacterID, rr.Assets)
-	return &ImportResult{Session: sess, Manifest: rr.Manifest, Assets: len(rr.Assets)}, nil
+	saved := s.persistImportedAssets(sess.CharacterID, rr.Assets)
+	if saved < len(rr.Assets) {
+		slog.Warn("剧情包部分内嵌资源未落地", "characterId", sess.CharacterID, "saved", saved, "total", len(rr.Assets))
+	}
+	return &ImportResult{Session: sess, Manifest: rr.Manifest, Assets: saved}, nil
 }
 
-// persistImportedAssets 把剧情包内的卡资源落地到会话角色名下（best-effort）。
-func (s *ArchiveService) persistImportedAssets(characterID string, assets map[string][]byte) {
+// persistImportedAssets 把剧情包内的卡资源落地到会话角色名下（best-effort），
+// 返回成功落地的数量——失败必须可观测，不能把"全部失败"报告成"全部成功"。
+func (s *ArchiveService) persistImportedAssets(characterID string, assets map[string][]byte) int {
 	if s.assets == nil || characterID == "" || len(assets) == 0 {
-		return
+		return 0
 	}
+	saved := 0
 	for name, data := range assets {
-		_ = s.assets.SaveAsset(characterID, name, bytes.NewReader(data))
+		if err := s.assets.SaveAsset(characterID, name, bytes.NewReader(data)); err != nil {
+			slog.Warn("剧情包资源落地失败", "characterId", characterID, "asset", name, "error", err)
+			continue
+		}
+		saved++
 	}
+	return saved
 }
 
 // validateBundle 做导入前的结构与兼容性校验（技术契约 §12.2 + T22）。

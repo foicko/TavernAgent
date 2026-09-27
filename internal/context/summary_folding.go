@@ -24,8 +24,11 @@ func (c *Compiler) foldSummarizedHistory(history []*domain.PlotNode, summaries [
 			return node, nil
 		}
 		node, err := c.store.GetNode(id)
-		if err != nil || node == nil {
-			return nil, fmt.Errorf("read summary source %s: %v", id, err)
+		if err != nil {
+			return nil, fmt.Errorf("read summary source %s: %w", id, err)
+		}
+		if node == nil {
+			return nil, fmt.Errorf("summary source %s missing", id)
 		}
 		byID[id] = node
 		return node, nil

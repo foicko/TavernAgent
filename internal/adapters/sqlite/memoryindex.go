@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"encoding/json"
+	"log/slog"
 	"strings"
 
 	"tavernagent/internal/domain"
@@ -60,7 +61,14 @@ func (s *Store) ensureMemoryIndex() error {
 	s.fts = true
 	_, err := s.db.Exec(`CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts_tri USING fts5(memory_id UNINDEXED, text, tokenize='trigram')`)
 	s.trigram = err == nil
-	return s.backfillMemoryIndex()
+	if berr := s.backfillMemoryIndex(); berr != nil {
+		// 索引只是加速结构：回填失败必须降级（与 FTS5 不可用同口径），
+		// 不能阻断整个故事库打开。
+		slog.Warn("记忆词法索引回填失败，已降级为无索引检索", "error", berr)
+		s.fts = false
+		s.trigram = false
+	}
+	return nil
 }
 
 // LexicalIndexAvailable 报告词法索引是否可用。
