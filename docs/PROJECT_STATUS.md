@@ -2,14 +2,14 @@
 
 本文件是项目的**唯一权威文档**：记录当前架构、已交付能力、工程门禁、已知技术债与待做事项。设计取舍与历史决策已并入本文；面向终端用户的安装运维与授权信息见 [运行维护说明](OPERATIONS.md) 与 [素材授权](ASSET_LICENSES.md)。
 
-> 最近更新：2026-09-24
+> 最近更新：2026-09-28
 
 ## 1. 项目概述
 
-本地优先的剧情与角色扮演应用：Go 单二进制服务 + SQLite 故事库 + React 界面。回合、人物状态、物品与分支保存在本机；记忆修订以新节点追加，支持历史回看与剧情包导入导出。
+本地优先的剧情与角色扮演应用：Go 单二进制服务 + SQLite 故事库 + React 界面。回合、人物状态、物品与分支保存在本机；记忆修订以新节点追加，支持历史回看与剧情包导入导出。移动端另有原生 Android 客户端（Kotlin/Compose），只连接本机或局域网服务端。
 
 - **技术栈**：Go 1.26.6、SQLite（`modernc.org/sqlite`，无 CGO）、React 19 + TypeScript + Vite + Zustand、Node 24 / pnpm 11.9.0。
-- **交付形态**：前端经 `//go:embed` 编译期嵌入，产物为单个可执行文件。发布目标为 Windows/macOS/Linux 五平台。
+- **交付形态**：前端经 `//go:embed` 编译期嵌入，产物为单个可执行文件。发布目标为 Windows/macOS/Linux 五平台。原生 Android 客户端在 `android/` 独立 Gradle 构建，不参与该二进制。
 - **默认边界**：默认回环绑定、不调用任何未配置的外部模型；局域网访问需配对码。
 
 ## 2. 架构
@@ -46,11 +46,13 @@ internal/
 | 分支与历史 | 分叉、重生成（候选版本）、带要求重演、编辑输入/正文、只读历史、图谱与剧情/记忆图 |
 | 玩家提示 | 回合依据层（检定算式 / 状态变化摘要 / 参考到的记忆快照）；玩家注记（非叙事要求，与正文分开存）；选项节流（auto 隔轮、always 每轮、never 强制清空）；全部由服务端已提交数据推导，前端不做推断 |
 | charx 卡片 UI 映射 | `.charx` 导入与内嵌资源落地；`<img cmd>`/`[HUD]`/`[SCENE]`/`[VAR]` 标记归一化为原生组件（不执行卡内 HTML/CSS/JS/Lua）；HUD 进度条、常驻场景标签、会话变量（面板 + 提示词注入 + `{{getvar}}` 只读子集）、`backgroundHTML` 主题 token（web + 桌面卡片表面）、情绪立绘、`sdData` 生图模板。详见 [CARD_UI_MARKERS](CARD_UI_MARKERS.md) |
+| .tacard 原生卡 | `.tacard` 导入（以 `tacard.json` 为唯一权威，忽略兼容层 `card.json`）：`openings` 多剧本开场、`lorebook` 世界书（含常驻 `constant` 无条件注入与 `order` 层级顺序）、`assets` 内嵌资源流式落地、`avatar_asset` 头像缩略图、`ui_contract` 主题 token 与变量初值；严格执行零脚本策略（含 `.risum/.lua/.js/.exe` 等即拒绝导入）。规范见 [TACARD_SPEC](TACARD_SPEC.md) |
 | 剧情包 | 导出/导入往返、引用重映射、损坏与路径穿越拒绝、导入后续写 |
 | 模型配置 | 模型实例 CRUD + primary/assist/reflection 三槽位；服务商预设；密钥脱敏；探测；用量台账 |
 | 协议适配 | Chat Completions、Responses、Anthropic Messages；思考链增量；截断归类；超时/取消区分 |
 | 局域网 | 可绑定 `0.0.0.0`、随机配对码、恒时鉴权、来源白名单、请求限额、SSE 截止时间；**自签 HTTPS**（`-tls=auto`，证书持久化 + 指纹可比对） |
-| 前端 | 双主题设计系统 + 原语（`ui/` 的 Tabs/Tooltip/Popover/Toast/Skeleton/Kbd/Avatar/Card 等）；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；56px 顶栏；主题持久化并默认跟随系统 `prefers-color-scheme`；<480px 贴底抽屉与 44px 触控目标 |
+| 前端 | 三主题设计系统（乳白纸墨 / 曜石墨黑 / 幻夜幽紫）+ 原语（`ui/` 的 Tabs/Tooltip/Popover/Toast/Skeleton/Kbd/Avatar/Card 等）；阅读/工作台双视口流式渲染；IME、焦点、滚动、网络重试；**`Ctrl/Cmd+K` 命令面板**；56px 顶栏；主题持久化并默认跟随系统 `prefers-color-scheme`；<480px 贴底抽屉与 44px 触控目标 |
+| Android 客户端 | 原生 Kotlin 2.3 / Jetpack Compose（Material 3）移动入口（`android/`，独立 Gradle 构建，不参与单二进制嵌入）：连接配对 + 自签证书 TOFU、角色库、流式聊天、分支与回溯、角色/记忆/导演/模型面板、系统 TTS、故事包归档；只走 REST + SSE，不在本地做业务推断。详见 [android/README](../android/README.md) |
 | 样式结构 | `styles.css` 退化为 `@import` 入口，按功能域拆成 18 个文件；六项 CSS 门禁（行数棘轮、`!important` 棘轮、跨文件重复选择器、死类名、颜色字面值、玻璃残留）；`--glass-*` 兼容层已删除 |
 | 观测 | 请求级关联 ID（`X-Request-ID` 回显）、进程内追踪记录器、`/api/status` 的 `trace` 段（最近/最慢请求 + 分段打点） |
 
@@ -133,5 +135,6 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
   `scripts/prompt_docs.py` 生成，`scripts/tests/test_prompt_docs.py` 防止漂移）。
 - [运行维护说明](OPERATIONS.md)：安装、三槽位配置、局域网、备份与升级回退。
 - [素材授权](ASSET_LICENSES.md)、[第三方声明](../THIRD_PARTY_NOTICES.md)、[MIT 许可证](../LICENSE)。
+- [Android 客户端](../android/README.md)：移动端构建、连接配对、功能矩阵与测试；契约见 [android/docs/API_CONTRACT.md](../android/docs/API_CONTRACT.md)。
 - [贡献指南](../CONTRIBUTING.md)、[安全报告](../SECURITY.md)。
 - 架构图（脚本生成）：`docs/artifacts/architecture/architecture.svg`、`functions.svg`。
