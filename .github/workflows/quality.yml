@@ -15,6 +15,7 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -67,6 +68,22 @@ jobs:
           name: browser-evidence
           path: output/playwright
 
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Android unit tests and debug build
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon
+
   artifact-runtime:
     needs: quality
     strategy:
@@ -89,6 +106,7 @@ jobs:
             target: linux/arm64
             name: linux-arm64
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

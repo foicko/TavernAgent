@@ -4,7 +4,9 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "0.0.0.0",
+    // 默认只绑回环：dev server 会暴露源码与代理 API 面，不应默认对整个局域网开放。
+    // 需要局域网联调时用 `VITE_DEV_HOST=0.0.0.0 pnpm dev`（或 `pnpm dev -- --host`）。
+    host: process.env.VITE_DEV_HOST ?? "127.0.0.1",
     port: 5173,
     proxy: {
       // 允许用 VITE_API_TARGET 指向另一个后端实例（性能基线要在数据集上测，
