@@ -35,6 +35,7 @@ class GenerationService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var progressJob: Job? = null
+    private var stopJob: Job? = null
     private var turnId: String = ""
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -60,6 +61,8 @@ class GenerationService : Service() {
         }
         this.sessionId = sessionId
         this.branchId = branchId
+        // 新回合开始：取消可能仍在挂起的"延迟停止"，否则续写/重生成会在 1.5s 后被停掉。
+        stopJob?.cancel()
         startForeground(NOTIFICATION_ID, buildNotification(title, "正在演绎…", ongoing = true))
         if (newTurnId != turnId) {
             turnId = newTurnId
@@ -105,7 +108,8 @@ class GenerationService : Service() {
     }
 
     private fun stopSelfSoon() {
-        scope.launch {
+        stopJob?.cancel()
+        stopJob = scope.launch {
             delay(1_500)
             stopSelf()
         }

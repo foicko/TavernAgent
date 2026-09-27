@@ -187,7 +187,16 @@ class StoryViewModel(
                     before = before,
                 )
             }.onSuccess { view ->
+                // before != null 表示"加载更早"：服务端只返回更早的窗口，
+                // 必须与当前（更新的）消息合并，否则最近回合会从屏幕消失。
+                val previous = _state.value.messages
                 applyView(view, keepViewingNode = before != null)
+                if (before != null && previous.isNotEmpty()) {
+                    _state.update { st ->
+                        val olderIds = st.messages.map { it.id }.toSet()
+                        st.copy(messages = st.messages + previous.filter { it.id !in olderIds })
+                    }
+                }
                 repository.rememberLocation(view.sessionId, view.branch.branchId, view.branch.headNodeId, view.title)
                 val activeTurn = view.branch.activeTurnId
                 if (!activeTurn.isNullOrBlank() && streamJob?.isActive != true) {
