@@ -192,6 +192,7 @@ func Bootstrap(cfg Config) (*App, error) {
 		ImagePlans: application.NewImagePlanService(store),
 		Sessions:   sessionSvc, Turns: turnSvc, Branches: branchSvc,
 		Memories: memorySvc, Archive: archiveSvc, Manager: manager, Bus: bus, Addr: cfg.Addr,
+		DataDir:        cfg.DataDir,
 		Cards:          cardSvc,
 		CardAssets:     cardAssets,
 		StaticFS:       staticFS,

@@ -234,12 +234,18 @@ func attachCharxAvatar(rep *ImportReport, zr *zip.Reader) {
 	candidates = append(candidates, iconFiles...)
 
 	tried := make(map[string]bool, len(candidates))
+	attempts := 0
 	for _, p := range candidates {
+		if attempts >= maxAvatarCandidates {
+			// 声明了大量候选且都解不出图时，逐张读满 64MB 会造成内存/CPU 放大。
+			break
+		}
 		f, ok := byPath[p]
 		if !ok || tried[p] {
 			continue
 		}
 		tried[p] = true
+		attempts++
 		data, err := readZipEntry(f, maxCharxEntryBytes)
 		if err != nil {
 			continue

@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -44,6 +45,7 @@ type Deps struct {
 	Manager        *application.ProviderManager
 	Bus            *application.EventBus
 	Addr           string
+	DataDir        string // 数据目录：仅用于在未注入 ImageService 时定位回退的图像存储目录
 	StaticFS       fs.FS
 	AuthPIN        string // 局域网配对码（非空时，非本机局域网请求必须通过配对鉴权）
 	AuthToken      string // 配对成功的授权 Token（留空且 AuthPIN 非空时自动随机生成）
@@ -117,7 +119,12 @@ func New(deps Deps) (*Server, error) {
 	}
 	imgSvc := deps.ImageService
 	if imgSvc == nil {
-		imgSvc, _ = image.NewService("data/images")
+		// 回退服务必须落在配置的数据目录内，不能硬编码到进程 CWD 下的 data/images。
+		dir := "data/images"
+		if strings.TrimSpace(deps.DataDir) != "" {
+			dir = filepath.Join(deps.DataDir, "images")
+		}
+		imgSvc, _ = image.NewService(dir)
 	}
 	return &Server{
 		director: deps.Director,

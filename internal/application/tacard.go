@@ -26,6 +26,10 @@ const (
 	tacardSpecV1 = "tacard/v1"
 )
 
+// maxAvatarCandidates 限制头像候选的尝试次数：每个候选可能读满 64MB，
+// 声明大量候选且都解不出图时会造成内存/CPU 放大。
+const maxAvatarCandidates = 8
+
 // tacardForbiddenExt 是规范第 5 节禁入的可执行/脚本文件扩展名（小写，不含点）。
 // 命中任意一项即整卡拒绝，而不是静默忽略：零脚本策略是 .tacard 的安全契约。
 var tacardForbiddenExt = map[string]bool{
@@ -365,11 +369,16 @@ func attachTacardAvatar(rep *ImportReport, zr *zip.Reader, avatarAsset string) {
 	}
 
 	tried := map[string]bool{}
+	attempts := 0
 	for _, p := range candidates {
+		if attempts >= maxAvatarCandidates {
+			break
+		}
 		if p == "" || tried[p] {
 			continue
 		}
 		tried[p] = true
+		attempts++
 		f, ok := byPath[p]
 		if !ok {
 			continue
