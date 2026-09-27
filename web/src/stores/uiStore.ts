@@ -6,7 +6,7 @@ import { DEFAULT_PRESET_KEY } from "../lib/characterPresets";
 export type ViewportMode = "studio" | "reading";
 export type LeftSubtab = "tree" | "characters" | "lore" | "sessions";
 export type TachieExpression = "alert" | "calm" | "smile" | "whisper";
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark" | "violet";
 
 const THEME_STORAGE_KEY = "tavernagent.theme";
 
@@ -32,7 +32,7 @@ function writeSavedTheme(theme: ThemeMode): void {
 export function resolveInitialTheme(): ThemeMode {
   if (typeof window === "undefined") return "light";
   const saved = readSavedTheme();
-  if (saved === "light" || saved === "dark") return saved;
+  if (saved === "light" || saved === "dark" || saved === "violet") return saved;
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -40,6 +40,7 @@ export function resolveInitialTheme(): ThemeMode {
 export function applyThemeToDocument(theme: ThemeMode): void {
   if (typeof document === "undefined") return;
   if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+  else if (theme === "violet") document.documentElement.setAttribute("data-theme", "violet");
   else document.documentElement.removeAttribute("data-theme");
 }
 
@@ -243,9 +244,16 @@ export const useUi = create<UiState>((set, get) => ({
   },
 
   toggleTheme: () => {
-    const next = get().theme === "dark" ? "light" : "dark";
+    const current = get().theme;
+    const next: ThemeMode = current === "light" ? "dark" : current === "dark" ? "violet" : "light";
     get().setTheme(next);
-    get().notifyQuiet(next === "dark" ? "已切换为：墨黑幽夜主题" : "已切换为：乳白纸墨主题");
+    const msg =
+      next === "dark"
+        ? "已切换为：曜石墨黑主题"
+        : next === "violet"
+          ? "已切换为：幻夜幽紫主题"
+          : "已切换为：乳白纸墨主题";
+    get().notifyQuiet(msg);
   },
 
   setTheme: (theme) => {

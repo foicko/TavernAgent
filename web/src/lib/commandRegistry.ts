@@ -188,9 +188,14 @@ export function buildCommands(): Command[] {
     },
     {
       id: "view:theme",
-      title: ui.theme === "dark" ? "切换到乳白纸墨主题" : "切换到墨黑幽夜主题",
+      title:
+        ui.theme === "light"
+          ? "切换到曜石墨黑主题"
+          : ui.theme === "dark"
+            ? "切换到幻夜幽紫主题"
+            : "切换到乳白纸墨主题",
       group: "view",
-      keywords: ["theme", "dark", "light", "zhuti", "shense", "qianse"],
+      keywords: ["theme", "dark", "light", "violet", "zhuti", "shense", "qianse", "zise"],
       hint: "Ctrl+Shift+L",
       run: () => useUi.getState().toggleTheme(),
     },

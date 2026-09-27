@@ -22,13 +22,15 @@ describe("uiStore 主题在存储不可用时", () => {
 
   it("模块加载与首帧主题解析不抛错", async () => {
     const mod = await import("../uiStore");
-    expect(mod.resolveInitialTheme()).toMatch(/^(light|dark)$/);
-    expect(mod.useUi.getState().theme).toMatch(/^(light|dark)$/);
+    expect(mod.resolveInitialTheme()).toMatch(/^(light|dark|violet)$/);
+    expect(mod.useUi.getState().theme).toMatch(/^(light|dark|violet)$/);
   });
 
   it("切换主题照常生效，只是不记忆", async () => {
     const { useUi } = await import("../uiStore");
     expect(() => useUi.getState().setTheme("dark")).not.toThrow();
     expect(useUi.getState().theme).toBe("dark");
+    expect(() => useUi.getState().setTheme("violet")).not.toThrow();
+    expect(useUi.getState().theme).toBe("violet");
   });
 });

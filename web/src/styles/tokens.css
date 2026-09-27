@@ -221,48 +221,122 @@
   --bg-canvas: #141518;    /* canvas */
   --bg-surface: #1a1b1f;   /* surface */
   --bg-subtle: #16171a;    /* inset */
-  --bg-elevated: #212227;
+  --bg-elevated: #222329;
 
-  --border-light: #2a2b30;
-  --border-mid: #383940;
+  --border-light: #28292f;
+  --border-mid: #383942;
   --border-dark: #f4f4f6;
-  --border-subtle: #1f2024;
+  --border-subtle: #1c1d22;
 
   --text-main: #f4f4f6;
-  --text-muted: #a1a1aa;
-  --text-dim: #71717a;
+  --text-muted: #9fa0a9;
+  --text-dim: #71727d;
 
   --accent-solid: #2563eb;
   --accent-contrast: #ffffff;
   --accent-subtle: rgba(37, 99, 235, 0.15);
-  --accent-glow: #3b82f6;
+  --accent-glow: #60a5fa;
   --accent-amber: #f59e0b;
   --accent-green: #10b981;
 
   /* 焦点环 */
-  --ring: rgba(37, 99, 235, 0.40);
+  --ring: rgba(59, 130, 246, 0.45);
   --ring-offset: 2px;
-  --ring-glow: rgba(37, 99, 235, 0.22);
+  --ring-glow: rgba(59, 130, 246, 0.22);
+  --shadow-ring: 0 0 0 2px var(--ring);
 
-  --meter-track: #2a2b30;
+  --scrim: rgba(0, 0, 0, 0.65);
+
+  --meter-track: #28292f;
   --meter-fill: #2563eb;
+  --meter-aff: #f43f5e;
+  --meter-trust: #3b82f6;
+  --meter-alert: #f59e0b;
 
-  --color-danger-text: #ef4444;
+  --memory-episodic: #3b82f6;
+  --memory-inference: #f59e0b;
+  --memory-secret: #a855f7;
+
+  --color-danger-text: #f87171;
   --color-danger-bg: rgba(239, 68, 68, 0.14);
   --color-warn-border: #f59e0b;
   --color-warn-bg: rgba(245, 158, 11, 0.14);
   --color-success-bg: rgba(16, 185, 129, 0.14);
-  --color-node-muted: #71717a;
+  --color-node-muted: #71727d;
 
   --color-success: #10b981;
   --color-warning: #f59e0b;
-  --color-info: #2563eb;
+  --color-info: #3b82f6;
 
-  --bg-muted: #212227;
+  --bg-muted: #202127;
   --bg-panel: #141518;
 
   /* 深色阴影：白色发丝环 + 黑色柔和层 */
-  --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.09), 0 3px 10px rgba(0, 0, 0, 0.35);
-  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 16px 36px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 3px rgba(0, 0, 0, 0.40);
+  --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.42);
+  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.11), 0 18px 40px rgba(0, 0, 0, 0.60);
+}
+
+/* --------------------------------------------------------------------------
+   3. 幻夜幽紫（Midnight Violet：现代 AI IDE / 霓光幽夜体系）
+   -------------------------------------------------------------------------- */
+[data-theme="violet"] {
+  --bg-base: #13111a;      /* page: 深邃微紫黑曜石底 */
+  --bg-canvas: #161420;    /* canvas: 下沉阶梯画布 */
+  --bg-surface: #1d1927;   /* surface: 主工作区卡片 */
+  --bg-subtle: #191624;    /* inset: 凹槽输入/信息块 */
+  --bg-elevated: #252033;  /* elevated: 浮层/模态框/选中高亮 */
+
+  --border-light: #2d263b; /* 发丝描边（极细紫灰） */
+  --border-mid: #3d3350;   /* 次级分割线 */
+  --border-dark: #f3f0f9;  /* 高反差对比边 */
+  --border-subtle: #221d2d;/* 悬浮/柔和边 */
+
+  --text-main: #f3f0f9;    /* ink: 柔和冷月光白 */
+  --text-muted: #9d94ab;   /* ink-2: 次级雾紫灰 */
+  --text-dim: #6d657c;     /* ink-3: 弱化辅助字 */
+
+  --accent-solid: #8b5cf6; /* 霓光电紫 */
+  --accent-contrast: #ffffff;
+  --accent-subtle: rgba(139, 92, 246, 0.16);
+  --accent-glow: #a78bfa;  /* 高亮流光紫 */
+  --accent-amber: #f59e0b; /* 琥珀金 */
+  --accent-green: #10b981; /* 翡翠绿（步骤指示） */
+
+  /* 焦点环 */
+  --ring: rgba(139, 92, 246, 0.45);
+  --ring-offset: 2px;
+  --ring-glow: rgba(139, 92, 246, 0.22);
+  --shadow-ring: 0 0 0 2px var(--ring);
+
+  --scrim: rgba(8, 6, 12, 0.68);
+
+  --meter-track: #2a2438;
+  --meter-fill: #8b5cf6;
+  --meter-aff: #f43f5e;
+  --meter-trust: #8b5cf6;
+  --meter-alert: #f59e0b;
+
+  --memory-episodic: #8b5cf6;
+  --memory-inference: #f59e0b;
+  --memory-secret: #c084fc;
+
+  --color-danger-text: #fb7185;
+  --color-danger-bg: rgba(244, 63, 94, 0.14);
+  --color-warn-border: #f59e0b;
+  --color-warn-bg: rgba(245, 158, 11, 0.14);
+  --color-success-bg: rgba(16, 185, 129, 0.14);
+  --color-node-muted: #6d657c;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-info: #8b5cf6;
+
+  --bg-muted: #211c2e;     /* field */
+  --bg-panel: #161420;
+
+  /* 幻夜阴影：微紫发丝环 + 深邃环境柔阴影 */
+  --shadow-sm: 0 0 0 1px rgba(167, 139, 250, 0.12), 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 0 0 1px rgba(167, 139, 250, 0.14), 0 4px 12px rgba(0, 0, 0, 0.48);
+  --shadow-float: 0 0 0 1px rgba(167, 139, 250, 0.18), 0 18px 42px rgba(0, 0, 0, 0.65);
 }

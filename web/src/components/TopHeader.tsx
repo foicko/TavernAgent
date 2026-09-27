@@ -136,18 +136,35 @@ export const TopHeader: React.FC = () => {
           <span className="header-btn-text header-active-model-name">{activeModelName}</span>
         </button>
 
-        {/* Monochrome Theme Switcher (乳白纸墨 vs 墨黑幽夜) */}
+        {/* Theme Switcher (乳白纸墨 -> 曜石墨黑 -> 幻夜幽紫) */}
         <button
           className="btn-quiet"
           onClick={toggleTheme}
           id="theme-btn"
-          title={theme === "dark" ? "切换到乳白纸墨主题" : "切换到墨黑夜色主题"}
-          aria-label={theme === "dark" ? "当前为墨黑夜色主题，点击切换到乳白纸墨" : "当前为乳白纸墨主题，点击切换到墨黑夜色"}
+          title={
+            theme === "light"
+              ? "切换到曜石墨黑主题"
+              : theme === "dark"
+                ? "切换到幻夜幽紫主题"
+                : "切换到乳白纸墨主题"
+          }
+          aria-label={
+            theme === "light"
+              ? "当前为乳白纸墨主题，点击切换到曜石墨黑"
+              : theme === "dark"
+                ? "当前为曜石墨黑主题，点击切换到幻夜幽紫"
+                : "当前为幻夜幽紫主题，点击切换到乳白纸墨"
+          }
         >
           <span id="theme-icon" style={{ display: "inline-flex" }}>
-            <Icon name={theme === "dark" ? "sun" : "moon"} size={14} />
+            <Icon
+              name={theme === "light" ? "moon" : theme === "dark" ? "sparkles" : "sun"}
+              size={14}
+            />
           </span>
-          <span id="theme-text" className="header-btn-text">{theme === "dark" ? "乳白纸墨" : "墨黑夜色"}</span>
+          <span id="theme-text" className="header-btn-text">
+            {theme === "light" ? "曜石墨黑" : theme === "dark" ? "幻夜幽紫" : "乳白纸墨"}
+          </span>
         </button>
       </div>
     </header>
