@@ -84,3 +84,48 @@ describe("deleteImportedCardRemote", () => {
     expect(store.listImportedCards().map((c) => c.cardId)).toEqual(["c1"]);
   });
 });
+
+// localStorage 装不下时，也绝不能把服务端已有的卡从列表里删掉——
+// 这正是「卡库导入 17 张、界面只显示前几张」的回归用例。
+function installQuota(limitChars: number): void {
+  const store = new Map<string, string>();
+  const mock = {
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string) => {
+      let total = value.length;
+      for (const [k, v] of store) if (k !== key) total += v.length;
+      if (total > limitChars) {
+        const err = new Error("QuotaExceededError");
+        err.name = "QuotaExceededError";
+        throw err;
+      }
+      store.set(key, value);
+    },
+    removeItem: (key: string) => store.delete(key),
+    clear: () => store.clear(),
+    key: (i: number) => Array.from(store.keys())[i] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+  Object.defineProperty(window, "localStorage", { value: mock, configurable: true, writable: true });
+}
+
+describe("缓存装不下时的列表完整性", () => {
+  it("服务端有多少张就显示多少张，缓存只裁剪落盘副本", async () => {
+    installQuota(20_000);
+    const store = await freshStore();
+    const cards = Array.from({ length: 20 }, (_, i) => ({
+      cardId: `c${i}`,
+      name: `卡${i}`,
+      avatar: "data:image/png;base64," + "A".repeat(4000), // 20 × ~4KB ≫ 20KB 配额
+    }));
+    mocks.listCards.mockResolvedValue({ cards });
+
+    await store.refreshImportedCards();
+
+    expect(store.listImportedCards()).toHaveLength(20);
+    const persisted = JSON.parse(window.localStorage.getItem("tavernagent_imported_character_cards") ?? "[]");
+    expect(persisted.length).toBeLessThan(20);
+  });
+});

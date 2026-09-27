@@ -82,7 +82,7 @@ describe("saveImportedCard 存储治理", () => {
     expect(stored.shortName).toBe("巨型卡");
   });
 
-  it("配额不足时淘汰最旧的卡片并如实上报", async () => {
+  it("配额不足时淘汰最旧的缓存，但内存保留完整卡库", async () => {
     installQuota(4200);
     const mod = await freshStore();
     const results = [0, 1, 2, 3].map((i) => mod.saveImportedCard(cardWith(i)));
@@ -90,18 +90,43 @@ describe("saveImportedCard 存储治理", () => {
     const last = results[results.length - 1];
     expect(last.persisted).toBe(true);
     expect(last.evicted).toBeGreaterThan(0);
-    const cards = mod.listImportedCards();
-    expect(cards.length).toBeLessThan(4);
-    expect(cards[0].name).toBe("角色3");
+    // 服务端才是卡库真相：内存保留全部 4 张，界面不会因缓存装不下而少显示。
+    expect(mod.listImportedCards().map((c) => c.name)).toEqual(["角色3", "角色2", "角色1", "角色0"]);
+    // localStorage 只是按配额从尾部裁剪的缓存。
+    const persisted = JSON.parse(window.localStorage.getItem("tavernagent_imported_character_cards")!);
+    expect(persisted.length).toBeLessThan(4);
+    expect(persisted[0].name).toBe("角色3");
   });
 
-  it("列表里保留的是真正落盘的内容（内存缓存与存储一致）", async () => {
+  it("内存保留完整卡库，落盘只是被裁剪的缓存", async () => {
     installQuota(4200);
     const mod = await freshStore();
     [0, 1, 2, 3].forEach((i) => mod.saveImportedCard(cardWith(i)));
 
     const persisted = JSON.parse(window.localStorage.getItem("tavernagent_imported_character_cards")!);
-    expect(mod.listImportedCards().map((c) => c.cardId)).toEqual(persisted.map((c: { cardId: string }) => c.cardId));
+    expect(persisted.length).toBeLessThan(mod.listImportedCards().length);
+    expect(mod.listImportedCards()[0].cardId).toBe(persisted[0].cardId);
+  });
+
+  it("超大头像只留在内存，不写进 localStorage", async () => {
+    const mod = await freshStore();
+    const big = "data:image/png;base64," + "A".repeat(40_000); // > 24KB 阈值
+    mod.saveImportedCard({
+      name: "大头像卡",
+      avatar: big,
+      characterJson: JSON.stringify({ schemaVersion: 2, name: "大头像卡" }),
+    });
+    expect(mod.listImportedCards()[0].avatar).toBe(big);
+    expect(JSON.parse(window.localStorage.getItem("tavernagent_imported_character_cards")!)[0].avatar).toBeUndefined();
+
+    // 小图仍照常落盘，保证离线也有头像可显示。
+    mod.saveImportedCard({
+      name: "小图卡",
+      avatar: "data:image/png;base64,AA",
+      characterJson: JSON.stringify({ schemaVersion: 2, name: "小图卡" }),
+    });
+    const persisted = JSON.parse(window.localStorage.getItem("tavernagent_imported_character_cards")!);
+    expect(persisted.find((c: { name: string }) => c.name === "小图卡").avatar).toBe("data:image/png;base64,AA");
   });
 });
 

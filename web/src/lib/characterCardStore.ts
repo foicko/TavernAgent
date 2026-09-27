@@ -1,13 +1,15 @@
-// characterCardStore: 本地持久化角色卡库与头像映射中心
-// 确保导入的角色卡在刷新页面后立绘、元数据与会话头像永不丢失。
+// characterCardStore: 角色卡库的本地缓存与头像映射中心。
+//
+// 真相在服务端；localStorage 只是离线缓存。因此内存始终保留服务端返回的**完整**列表，
+// 缓存写不下时只裁剪落盘副本、绝不从界面列表里删卡（历史上这份裁剪会让卡库"只显示前几张"）。
 //
 import { parseAttrLine } from "./dossierAttrs";
 import { api } from "../app/api";
 import type { CardLibrarySummary } from "../app/types";
 
-// 本地存储（localStorage）总配额通常只有 5MB，且写入失败是静默的：
-// 一旦超限，要么整份列表丢失、要么头像在刷新后消失。这里的对策是
-// ① 不保存可按需重建的大字段（兆级 characterJson）② 写入失败时逐级淘汰并如实上报。
+// 本地存储（localStorage）总配额通常只有 5MB，且写入失败是静默的。这里的对策是
+// ① 不保存可按需重建的大字段（兆级 characterJson、超过阈值的大图头像）；
+// ② 仍然写不下时只从缓存尾部淘汰，如实上报淘汰数量，但内存列表保持完整。
 
 export interface StoredCharacterCard {
   cardId: string;
@@ -41,6 +43,10 @@ const SESSION_AVATAR_KEY = "tavernagent_session_avatar_map";
 const MAX_STORED_CARD_JSON = 64 * 1024;
 // 会话头像映射的条目上限，避免长期使用后无限增长。
 const MAX_SESSION_AVATARS = 40;
+// 落盘头像的体积上限。角色卡头像多为几百 KB 的 data URL，整张写进 localStorage
+// 会瞬间吃满 ~5MB 配额，反而把后面的卡挤掉（表现为"卡库只显示前几张"）。
+// 超过阈值的不落盘、只留内存：服务端始终是真相，刷新即可恢复。
+const MAX_PERSISTED_AVATAR = 24 * 1024;
 
 // 内存单例缓存，提高读取效率
 let memoryCardsCache: StoredCharacterCard[] | null = null;
@@ -138,12 +144,13 @@ export function saveImportedCard(card: Partial<StoredCharacterCard> & { name: st
   };
 
   const nextList = [entry, ...existingList.filter((c) => c.characterId !== entry.characterId && c.cardId !== entry.cardId)];
-  const { saved, evicted } = persistCards(nextList);
-  memoryCardsCache = saved;
+  const { persisted, evicted } = persistCards(nextList);
+  // 内存保留完整卡库（含大图头像）；localStorage 只是缓存，配额不足时按尾部淘汰。
+  memoryCardsCache = nextList;
 
-  // 新卡永远排在列表首位、淘汰从尾部开始，因此列表非空即代表这张卡已落盘；
+  // 新卡永远排在列表首位、淘汰从尾部开始，因此落盘列表非空即代表这张卡已写入缓存；
   // 被淘汰的旧卡数量单独上报，不与「这张卡有没有存下来」混为一谈。
-  return { card: entry, evicted, persisted: saved.length > 0 };
+  return { card: entry, evicted, persisted: persisted.length > 0 };
 }
 
 /**
@@ -159,10 +166,10 @@ export function deleteImportedCard(cardId: string): StoredCharacterCard[] {
   const existingList = listImportedCards();
   const nextList = existingList.filter((c) => c.cardId !== cardId);
   if (nextList.length === existingList.length) return existingList;
-  const { saved } = persistCards(nextList);
+  persistCards(nextList);
   // 缓存必须同步更新：否则界面在下次整页刷新前仍会渲染已删除的卡。
-  memoryCardsCache = saved;
-  return saved;
+  memoryCardsCache = nextList;
+  return nextList;
 }
 
 /**
@@ -178,8 +185,10 @@ export async function refreshImportedCards(): Promise<void> {
   const existing = listImportedCards();
   const byId = new Map(existing.map((c) => [c.cardId, c]));
   const merged = (cards ?? []).map((summary) => summaryToStored(summary, byId.get(summary.cardId)));
-  const { saved } = persistCards(merged);
-  memoryCardsCache = saved;
+  // 落盘尽力而为：写不下的部分只留在内存。服务端是真相，界面按**完整**列表渲染，
+  // 绝不因为 localStorage 装不下就把服务端已有的卡从列表里静默删掉。
+  persistCards(merged);
+  memoryCardsCache = merged;
 }
 
 /**
@@ -220,21 +229,42 @@ function summaryToStored(summary: CardLibrarySummary, existing?: StoredCharacter
 }
 
 /**
- * persistCards 逐级降级写入：配额不足时从最旧的卡片开始淘汰，直到写入成功。
- * 返回真正落盘的列表——内存缓存必须与之一致，否则界面会显示刷新后就消失的卡。
+ * persistCards 逐级降级写入 localStorage：先去掉超过阈值的大图头像，配额仍不足时
+ * 再从最旧的卡片开始淘汰，直到写入成功。
+ *
+ * 返回**真正落盘**的列表；调用方应把完整列表留在内存中渲染（服务端是真相）。
+ * 内存与存储不再强求一致：缓存只是离线时的降级投影。
  */
-function persistCards(cards: StoredCharacterCard[]): { saved: StoredCharacterCard[]; evicted: number } {
-  let list = cards.slice();
+function persistCards(cards: StoredCharacterCard[]): { persisted: StoredCharacterCard[]; evicted: number } {
+  let list = stripAvatarsForStorage(cards);
   let evicted = 0;
   while (list.length > 0) {
     if (safeSetItem(STORAGE_KEY, JSON.stringify(list))) {
-      return { saved: list, evicted };
+      return { persisted: list, evicted };
     }
     if (list.length === 1) break;
     list = list.slice(0, list.length - 1);
     evicted++;
   }
-  return { saved: [], evicted };
+  return { persisted: [], evicted };
+}
+
+/** avatarForStorage 返回可落盘的头像：超过体积上限的大图返回 undefined（只留内存）。 */
+function avatarForStorage(avatar?: string): string | undefined {
+  if (!avatar) return undefined;
+  return avatar.length <= MAX_PERSISTED_AVATAR ? avatar : undefined;
+}
+
+/** stripAvatarsForStorage 复制一份去掉过大的头像的列表，避免大图吃满配额。 */
+function stripAvatarsForStorage(cards: StoredCharacterCard[]): StoredCharacterCard[] {
+  let changed = false;
+  const out = cards.map((c) => {
+    const small = avatarForStorage(c.avatar);
+    if (small === c.avatar) return c;
+    changed = true;
+    return { ...c, avatar: small };
+  });
+  return changed ? out : cards;
 }
 
 /**
@@ -318,7 +348,14 @@ export function associateSessionWithAvatar(sessionId: string, avatar: string): v
     kept++;
   }
   memorySessionAvatarMap = next;
-  safeSetItem(SESSION_AVATAR_KEY, JSON.stringify(next));
+  // 同样只把体积可接受的头像落盘：40 张大图足以吃满整个 localStorage 配额，
+  // 进而连累角色卡库写不进去。内存保留完整映射，落盘失败仅是离线降级。
+  const persisted: Record<string, string> = {};
+  for (const [key, value] of Object.entries(next)) {
+    const small = avatarForStorage(value);
+    if (small) persisted[key] = small;
+  }
+  safeSetItem(SESSION_AVATAR_KEY, JSON.stringify(persisted));
 }
 
 export function getSessionAvatar(sessionId?: string): string | undefined {
