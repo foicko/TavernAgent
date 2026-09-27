@@ -138,12 +138,15 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 	}
 	url := p.cfg.BaseURL
 
-	streamCtx := ctx
-	cancel := func() {}
-	if p.cfg.TimeoutTotal > 0 {
-		streamCtx, cancel = context.WithTimeout(ctx, p.cfg.TimeoutTotal)
-	}
+	// 始终派生可取消的上下文：即使未设总超时，也要保证 sink 提前返回时能唤醒
+	// body 读取 goroutine（否则它可能永久阻塞在 lineCh 发送上）。
+	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	if p.cfg.TimeoutTotal > 0 {
+		var timeoutCancel context.CancelFunc
+		streamCtx, timeoutCancel = context.WithTimeout(streamCtx, p.cfg.TimeoutTotal)
+		defer timeoutCancel()
+	}
 
 	httpReq, err := http.NewRequestWithContext(streamCtx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {

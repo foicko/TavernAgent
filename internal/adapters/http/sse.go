@@ -67,6 +67,10 @@ func (s *Server) eventStream(w http.ResponseWriter, r *http.Request, aggregateID
 			}
 			events, err := s.bus.Poll(aggregateID, after, 256)
 			if err != nil {
+				// 明确告知客户端这是错误而非正常结束，避免它无限挂起/重连。
+				_ = controller.SetWriteDeadline(time.Now().Add(30 * time.Second))
+				_, _ = io.WriteString(w, "event: error\ndata: {\"message\":\"event stream poll failed\"}\n\n")
+				flusher.Flush()
 				return false
 			}
 			for _, ev := range events {

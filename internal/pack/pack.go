@@ -227,11 +227,18 @@ func writePack(w io.Writer, bundle *domain.SessionBundle, assets map[string][]by
 	if _, err := zw.Create(dirAssets); err != nil {
 		return nil, err
 	}
+	// 清洗可能把不同键映射成同名；去重加后缀，避免导出时静默丢资源。
+	used := map[string]int{}
 	for name, data := range assets {
 		safe := safeAssetName(name)
 		if safe == "" {
 			continue
 		}
+		if n := used[safe]; n > 0 {
+			ext := path.Ext(safe)
+			safe = fmt.Sprintf("%s_%d%s", strings.TrimSuffix(safe, ext), n, ext)
+		}
+		used[safe]++
 		if err := writeZipEntry(zw, dirAssets+safe, data); err != nil {
 			return nil, err
 		}
