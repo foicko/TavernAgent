@@ -149,13 +149,13 @@ func New(deps Deps) (*Server, error) {
 // Handler 返回 http.Handler（供测试直接使用）。
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/v1/tts/voices", s.listTTSVoices)
+	mux.HandleFunc("GET /api/v1/tts/voices", s.hostOnly(s.listTTSVoices))
 	mux.HandleFunc("POST /api/v1/tts/synthesize", s.security(s.synthesizeTTS))
 	// 演播/插画计划：把客户端的切分与提示词规则收拢到后端（架构设计 §2.4、§2.5）。
 	mux.HandleFunc("POST /api/v1/tts/plan", s.security(s.planTTS))
 	mux.HandleFunc("POST /api/v1/images/plan", s.security(s.planImage))
 	mux.HandleFunc("POST /api/v1/images/generate", s.security(s.generateImage))
-	mux.HandleFunc("GET /api/v1/images/{filename}", s.serveImageFile)
+	mux.HandleFunc("GET /api/v1/images/{filename}", s.hostOnly(s.serveImageFile))
 	mux.HandleFunc("POST /api/v1/embeddings/probe", s.security(s.probeEmbedding))
 	mux.HandleFunc("POST /api/v1/embeddings", s.security(s.computeEmbeddings))
 	mux.HandleFunc("GET /api/v1/sessions/{id}/branches/{branchId}/director", s.directorRoute(s.getDirector))

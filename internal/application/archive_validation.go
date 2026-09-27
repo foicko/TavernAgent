@@ -6,9 +6,35 @@ import (
 	"log/slog"
 	"reflect"
 	"sort"
+	"strings"
 
 	"tavernagent/internal/domain"
 )
+
+// validateNodePayloads 校验节点负载的形状，避免把结构非法的节点放进库里，
+// 到后台压缩/投影时才 panic（例如 memory_change 的 {"memoryChanges":[null]}）。
+func validateNodePayloads(nodes map[string]*domain.PlotNode) error {
+	for _, n := range nodes {
+		if n == nil || n.Kind != domain.NodeKindMemoryChange {
+			continue
+		}
+		var change struct {
+			Memories []*domain.MemoryRecord `json:"memoryChanges"`
+		}
+		if err := json.Unmarshal([]byte(n.ContentJSON), &change); err != nil {
+			return Err("INVALID_PACK", "记忆变更节点内容无效", 400)
+		}
+		for _, m := range change.Memories {
+			if m == nil {
+				return Err("INVALID_PACK", "记忆变更节点包含空记忆", 400)
+			}
+			if strings.TrimSpace(m.MemoryID) == "" {
+				return Err("INVALID_PACK", "记忆变更节点缺少记忆 ID", 400)
+			}
+		}
+	}
+	return nil
+}
 
 func validateBundleRules(b *domain.SessionBundle, root *domain.PlotNode) error {
 	_, err := bundleRules(b, root)
@@ -49,6 +75,9 @@ func bundleRules(b *domain.SessionBundle, root *domain.PlotNode) (domain.Ruleset
 
 func validateBundleReferences(b *domain.SessionBundle, nodes map[string]*domain.PlotNode) error {
 	bad := func(message string) error { return Err("INVALID_PACK", message, 400) }
+	if err := validateNodePayloads(nodes); err != nil {
+		return err
+	}
 	ancestor := func(from, to string) bool {
 		for n := nodes[to]; n != nil; n = nodes[n.ParentID] {
 			if n.NodeID == from {

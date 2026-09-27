@@ -78,3 +78,17 @@ func TestParseCompactionSummary_Invalid(t *testing.T) {
 		t.Errorf("expected error for missing root tag, got nil")
 	}
 }
+
+// 远端 pack 可携带 {"memoryChanges":[null]}；压缩输入构建不得 panic（回归 S1）。
+func TestBuildCompactionChatRequestIgnoresNullMemoryChange(t *testing.T) {
+	node := &domain.PlotNode{
+		NodeID:      "mem_1",
+		Kind:        domain.NodeKindMemoryChange,
+		TurnNumber:  2,
+		ContentJSON: `{"memoryChanges":[null]}`,
+	}
+	req := ctxpkg.BuildCompactionChatRequest("沙织", "玩家", "", nil, []*domain.PlotNode{node}, domain.NewWorldState())
+	if len(req.Messages) == 0 {
+		t.Fatal("expected a chat request")
+	}
+}

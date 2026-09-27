@@ -6,8 +6,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/mattn/go-sqlite3 v1.14.52
-	golang.org/x/image v0.41.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/image v0.46.0
+	golang.org/x/sys v0.48.0
 	modernc.org/sqlite v1.58.0
 )
 

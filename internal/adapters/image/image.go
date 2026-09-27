@@ -18,6 +18,19 @@ import (
 	"time"
 )
 
+// maxErrorBodySnippet 限制回显给客户端/日志的上游响应体长度，避免把
+// 可能含私有数据或内部页面的大型响应体（当前读取上限 32MB）原样带出。
+const maxErrorBodySnippet = 512
+
+// bodySnippet 返回用于错误信息的响应体摘要（截断并去空白）。
+func bodySnippet(b []byte) string {
+	s := strings.TrimSpace(string(b))
+	if len(s) > maxErrorBodySnippet {
+		s = s[:maxErrorBodySnippet] + "…"
+	}
+	return s
+}
+
 // GenerateOptions 描述图像生成参数。
 type GenerateOptions struct {
 	Engine         string `json:"engine,omitempty"` // "openai" | "sd-webui"
@@ -173,7 +186,7 @@ func (s *Service) generateOpenAI(ctx context.Context, opts GenerateOptions) ([]b
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("image provider returned HTTP %d: %s", resp.StatusCode, string(respBody))
+		return nil, "", fmt.Errorf("image provider returned HTTP %d: %s", resp.StatusCode, bodySnippet(respBody))
 	}
 
 	var parsed struct {
@@ -287,7 +300,7 @@ func (s *Service) generateSDWebUI(ctx context.Context, opts GenerateOptions) ([]
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("sd-webui returned HTTP %d: %s", resp.StatusCode, string(respBody))
+		return nil, "", fmt.Errorf("sd-webui returned HTTP %d: %s", resp.StatusCode, bodySnippet(respBody))
 	}
 
 	var parsed struct {
@@ -468,7 +481,7 @@ func (s *Service) generateComfyUI(ctx context.Context, opts GenerateOptions) ([]
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024*1024))
-		return nil, "", fmt.Errorf("comfyui returned HTTP %d: %s", resp.StatusCode, string(body))
+		return nil, "", fmt.Errorf("comfyui returned HTTP %d: %s", resp.StatusCode, bodySnippet(body))
 	}
 
 	var promptResp struct {

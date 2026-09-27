@@ -43,6 +43,22 @@ func (s *Server) security(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// hostOnly 只做 Host 白名单（防 DNS rebinding），不做 Token 鉴权。
+//
+// 用于浏览器 <img>/<audio> 无法携带 Bearer Token 的只读资源路由：保持"可公开读取"，
+// 但仍拒绝非本机/非私有网段的 Host，避免恶意网页把自身来源 rebinding 到 127.0.0.1
+// 后读走本机的卡资源与生成图（SEC-REBIND-01）。注意 Host 头可被客户端伪造，
+// 因此它只是 rebinding 防线，**不是**授权边界——授权仍由 security 的 Token 判定。
+func (s *Server) hostOnly(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !isLANHost(r.Host) {
+			writeError(w, 403, "FORBIDDEN", "只允许本机或局域网私有网络访问", false, "")
+			return
+		}
+		h(w, r)
+	}
+}
+
 func extractToken(r *http.Request) string {
 	auth := r.Header.Get("Authorization")
 	if strings.HasPrefix(auth, "Bearer ") {

@@ -112,6 +112,7 @@ func TestServeImageFileEndpoint(t *testing.T) {
 
 	// 404 for nonexistent image
 	req404 := httptest.NewRequest("GET", "/api/v1/images/not_exists.png", nil)
+	req404.Host = "127.0.0.1:8890"
 	rec404 := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec404, req404)
 	if rec404.Code != http.StatusNotFound {

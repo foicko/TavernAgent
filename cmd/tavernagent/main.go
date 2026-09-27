@@ -46,6 +46,8 @@ type cliOptions struct {
 	showVersion    bool
 	ablation       ctxpkg.Ablation
 	tls            tlsOptions
+	// tlsExplicit 记录用户是否显式传了 -tls（用于"非回环未指定时自动启用 HTTPS"）。
+	tlsExplicit bool
 }
 
 // parseFlags 声明并解析全部命令行开关。
@@ -71,7 +73,7 @@ func parseFlags() (cliOptions, error) {
 			return nil
 		})
 	// TLS 开关同样在解析期校验：取值写错就直接退出，绝不"悄悄跑成明文"。
-	tlsSpec := flag.String("tls", "off", "局域网加密传输：off（默认，明文 HTTP）/ auto（自动生成自签证书）/ files（使用 -tls-cert/-tls-key）")
+	tlsSpec := flag.String("tls", "off", "局域网加密传输：off（明文 HTTP；非回环绑定未显式指定时会自动升级为 auto）/ auto（自动生成自签证书）/ files（使用 -tls-cert/-tls-key）")
 	tlsCert := flag.String("tls-cert", "", "-tls=files 时的证书文件路径（PEM）")
 	tlsKey := flag.String("tls-key", "", "-tls=files 时的私钥文件路径（PEM）")
 	flag.Parse()
@@ -79,10 +81,16 @@ func parseFlags() (cliOptions, error) {
 	if err != nil {
 		return cliOptions{}, err
 	}
+	tlsSet := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "tls" {
+			tlsSet = true
+		}
+	})
 	return cliOptions{
 		addr: *addr, dataDir: *dataDir, fallbackKind: *fallbackKind, pin: *pin,
 		allowedOrigins: *allowedOrigins, showVersion: *showVersion, ablation: ablation,
-		tls: tlsOptions{mode: mode, cert: *tlsCert, key: *tlsKey},
+		tls: tlsOptions{mode: mode, cert: *tlsCert, key: *tlsKey}, tlsExplicit: tlsSet,
 	}, nil
 }
 
@@ -98,6 +106,12 @@ func run() error {
 	// 纯输入校验放在产生副作用（配对码打印、取锁、开库）之前。
 	if opts.fallbackKind != "" && opts.fallbackKind != "mock" {
 		return fmt.Errorf("不支持的开发供应商 %q；可使用 mock 或留空", opts.fallbackKind)
+	}
+	// 安全默认：绑定非回环地址且用户未显式指定 -tls 时，自动启用自签 HTTPS，
+	// 避免配对码与 Bearer Token 在共享局域网被明文截获。显式 -tls off 仍被尊重。
+	if opts.tls.mode == tlsOff && !isLoopbackAddr(opts.addr) && !opts.tlsExplicit {
+		opts.tls.mode = tlsAuto
+		log.Printf("⚠️  检测到非回环绑定 %s 且未显式指定 -tls，已自动启用自签 HTTPS；如需明文请显式传 -tls off", opts.addr)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

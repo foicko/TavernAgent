@@ -28,9 +28,9 @@ func (s *Server) registerCardRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/cards/import", s.security(s.importCard))
 	mux.HandleFunc("GET /api/v1/cards", s.security(s.listCards))
 	mux.HandleFunc("GET /api/v1/cards/{cardId}", s.security(s.getCard))
-	// 资源 GET 不加 security：浏览器 <img> 无法携带 Bearer Token，
-	// 与 /api/v1/images 保持一致的只读公开策略。
-	mux.HandleFunc("GET /api/v1/cards/{cardId}/assets/{name}", s.serveCardAsset)
+	// 资源 GET 不加 Token 鉴权：浏览器 <img> 无法携带 Bearer Token。
+	// 但仍套 hostOnly（Host 白名单）以防 DNS rebinding 读走本机卡资源。
+	mux.HandleFunc("GET /api/v1/cards/{cardId}/assets/{name}", s.hostOnly(s.serveCardAsset))
 	mux.HandleFunc("DELETE /api/v1/cards/{cardId}", s.security(s.deleteCard))
 }
 
@@ -360,7 +360,7 @@ func (s *Server) serveCardAsset(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rc.Close()
 	w.Header().Set("Content-Type", mime)
-	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
 	w.WriteHeader(http.StatusOK)
 	_, _ = io.Copy(w, rc)
 }

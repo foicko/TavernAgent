@@ -74,6 +74,11 @@ func BuildCompactionChatRequest(charName, playerName, openingText string, prevSu
 				}
 				if json.Unmarshal([]byte(n.ContentJSON), &change) == nil {
 					for _, m := range change.Memories {
+						if m == nil {
+							// 远端内容可携带 {"memoryChanges":[null]}；导入校验已拒绝，
+							// 此处仍守卫以防历史数据或其他写入路径，避免后台压缩 panic。
+							continue
+						}
 						probe := *m
 						probe.Hidden = false
 						if !domain.MemoryVisibleTo(&probe, baseState) {
