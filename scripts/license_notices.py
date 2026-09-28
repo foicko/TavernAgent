@@ -16,6 +16,7 @@ def collect():
     output = ROOT/"LICENSES"
     output.mkdir(exist_ok=True)
     rows, missing = [], []
+    written = set()
     # 先把整个模块图拉下来：依赖图里可能存在“已锁定但未下载”的模块（例如只需要
     # 在别的平台上构建的间接依赖），`go list -m -json all` 对它们不返回 Dir，
     # 会让下面的 add() 直接 KeyError。CLI 与库同模块的依赖（如已移除的 Wails）必然踩到。
@@ -30,6 +31,7 @@ def collect():
         for index, file in enumerate(files):
             destination = output/f"{stem}-{index+1}.txt"
             destination.write_bytes(file.read_bytes())
+            written.add(destination.name)
             links.append(f"[{file.name}](LICENSES/{destination.name})")
         rows.append(f"| {name} | {version} | {declared} | {' · '.join(links)} |")
     raw = subprocess.check_output(["go", "list", "-m", "-json", "all"], cwd=ROOT, text=True)
@@ -50,6 +52,13 @@ def collect():
             add(dependency["name"], ", ".join(dependency["versions"]), dependency["paths"][0], license_name)
     if missing:
         raise RuntimeError("Missing license texts: " + ", ".join(missing))
+    # 裁剪陈旧文本：依赖图里已移除的组件不应继续留下许可证文件（M84）。
+    # 不裁剪的话 LICENSES/ 会长期保留 Wails 时代的残留，通知与文本对不上。
+    stale = [f for f in output.iterdir() if f.is_file() and f.name not in written]
+    for f in stale:
+        f.unlink()
+    if stale:
+        print(f"Pruned {len(stale)} stale license text(s)")
     (ROOT/"THIRD_PARTY_NOTICES.md").write_text("# Third-party dependency notices\n\nGenerated conservatively from all locked Go modules and the installed production frontend dependency graph. Some Go modules support development only; listing a license here does not imply that component is linked into every artifact. The original license texts govern their respective components; the project MIT license does not replace them. Build and test tools are not bundled in the executable.\n\n| Component | Version | License | Included text |\n| --- | --- | --- | --- |\n" + "\n".join(rows) + "\n\nOriginal story assets are listed in [ASSET_LICENSES.md](docs/ASSET_LICENSES.md). SQLite itself is public domain; its Go translation and supporting libraries retain the notices listed above.\n", encoding="utf-8")
     print(f"Collected {len(rows)} dependency notices")
 

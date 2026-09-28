@@ -41,6 +41,10 @@ jobs:
           pnpm test
           pnpm build
           pnpm audit --registry=https://registry.npmjs.org --audit-level=high
+      - name: Third-party notices are up to date
+        run: |
+          python scripts/license_notices.py
+          git diff --exit-code -- THIRD_PARTY_NOTICES.md LICENSES
       - name: Go formatting, tests, race and vet
         run: |
           test -z "$(gofmt -l internal cmd)"
