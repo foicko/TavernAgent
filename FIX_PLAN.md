@@ -11,7 +11,8 @@
 | B1 | 后端崩溃与安全红线 | S1, M13, S6, S3, S4, M14, M15 | ✅ 已完成 |
 | B1b | 后端安全补遗（注入/SSRF/许可） | S2, S5, S7 | ✅ 已完成 |
 | B2 | 后端正确性与降级 | M6, M12, M21, M24, M26 | ✅ 已完成 |
-| B2b | 后端结构性/并发（需设计） | M1, M2, M3, M4, M17, M22, M23, M29 | ⬜ |
+| B2b | 后端结构性/并发（需设计） | M1, M2, M3, M4, M17, M23, M29 | ⬜ |
+| B2c | 导演 activate 草稿 upsert | M22 | ✅ 已完成 |
 | B3 | 后端性能与鲁棒（部分） | M10, M25, M28 | ✅ 已完成 |
 | B3b | 后端性能与鲁棒（其余） | M7, M18 | ✅ 已完成 |
 | B3c | 后端性能与鲁棒（余下） | M16, M19 | ✅ 已完成 |
@@ -56,7 +57,7 @@
 
 - **M11（TTS `[轻叹]` 插入）**：复核 `web/src/lib/ttsDirector.ts:225`，Go 端口与 TS 参考实现逐字一致（仅在前置风格前缀存在时插入）。**非缺陷，不改**。
 - **M30（`DeleteSession` 把 `awaiting_continuation` 当非忙碌）**：`session_delete_test.go:226` 明确断言"暂停中的草稿不算在途，允许删除"，属**有意设计**。如需改动应先讨论语义，暂不动。
-- **M22（导演 activate 草稿存在性）**：加 `RowsAffected` 校验会破坏 `TestDirectorRestartRecoveryAndProjectionReplay`（允许无草稿行时 activate）。正确做法是 `INSERT … ON CONFLICT` 的 upsert 语义，需单独设计，**顺延到 B2b**。
+- **M22（导演 activate 草稿存在性）**：加 `RowsAffected` 校验会破坏 `TestDirectorRestartRecoveryAndProjectionReplay`（允许无草稿行时 activate）。**已改为 `INSERT … ON CONFLICT` 的 upsert 语义（B2c）**：activate 现在会创建/更新草稿行；测试同步改为读回 activate 建立的草稿。
 - **M1/M2（上下文存储错误 fail-closed）**：需要改 `loadSessionContext` 签名并贯穿调用链，属结构性改动，**顺延到 B2b/R10**。
 - **M3（秘密宏展开）**：模板 `Content` 参与 `CardIdentity` 校验，直接持久化展开后的卡 JSON 会破坏导入/导出身份校验；正确做法是在加载期展开，需单独设计，**顺延到 B2b**。
 - **M4（规则前置条件默认属性）**：改默认值会改变既有规则语义，需产品决策，**顺延**。

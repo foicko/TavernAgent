@@ -295,7 +295,7 @@ func (s *Store) CommitDirector(ctx context.Context, c *ports.DirectorCommit) (*p
 		if err != nil {
 			return nil, err
 		}
-		if _, err := tx.Exec(`UPDATE director_drafts SET version=version+1,base_revision_id=?,plan_json=?,updated_at=? WHERE branch_id=?`, c.Node.NodeID, string(planJSON), s.now(), c.BranchID); err != nil {
+		if _, err := tx.Exec(`INSERT INTO director_drafts(branch_id,session_id,version,base_revision_id,plan_json,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(branch_id) DO UPDATE SET version=director_drafts.version+1,base_revision_id=excluded.base_revision_id,plan_json=excluded.plan_json,updated_at=excluded.updated_at`, c.BranchID, session, 1, c.Node.NodeID, string(planJSON), s.now()); err != nil {
 			return nil, err
 		}
 	}

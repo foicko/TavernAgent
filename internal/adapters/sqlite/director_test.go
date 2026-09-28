@@ -37,9 +37,10 @@ func TestDirectorRestartRecoveryAndProjectionReplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	draft := &domain.DirectorDraft{SessionID: session.SessionID, BranchID: branch.BranchID, BaseRevisionID: "activation", Plan: plan}
-	if err := st.SaveDirectorDraft(draft, 0); err != nil {
-		t.Fatal(err)
+	// activate 现在会用 upsert 落库草稿（M22）：直接读回，而不是再存一次。
+	draft, err := st.GetDirectorDraft(branch.BranchID)
+	if err != nil || draft == nil {
+		t.Fatalf("activate 应创建草稿: %+v %v", draft, err)
 	}
 	raw, _ := json.Marshal(draft)
 	request := &domain.DirectorRequest{RequestID: "unfinished", SessionID: session.SessionID, BranchID: branch.BranchID,
@@ -81,6 +82,40 @@ func TestDirectorRestartRecoveryAndProjectionReplay(t *testing.T) {
 	saved, _ := st.GetDirectorDraft(branch.BranchID)
 	if saved.Version != draft.Version {
 		t.Fatal("late output overwrote a recovered draft")
+	}
+}
+
+// M22：activate 在尚无草稿行时也必须落库（原 UPDATE 会静默影响 0 行）。
+func TestDirectorActivateCreatesDraftWhenMissing(t *testing.T) {
+	dir := t.TempDir()
+	st, err := Open(dir, ports.RealClock{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	session, root, branch := seedSession(t, st)
+	plan := domain.DirectorPlan{PlanID: "activation", RevisionID: "activation", Title: "相遇", Beats: []domain.DirectorBeat{
+		{BeatID: "first", Title: "认识", Instruction: "交换姓名", CompletionCriteria: "双方说出姓名"},
+	}}
+	result, err := st.CommitDirector(context.Background(), &ports.DirectorCommit{
+		SessionID: session.SessionID, BranchID: branch.BranchID,
+		ExpectedHeadID: root.NodeID, ExpectedVersion: 0,
+		IdempotencyKey: "activation", PayloadHash: "activation",
+		Node:   &domain.PlotNode{NodeID: "activation", ContentJSON: `{}`},
+		Change: domain.DirectorChange{Action: "activate", Plan: &plan},
+	})
+	if err != nil || !result.Committed {
+		t.Fatalf("director commit: %+v %v", result, err)
+	}
+	draft, err := st.GetDirectorDraft(branch.BranchID)
+	if err != nil {
+		t.Fatalf("读取草稿失败: %v", err)
+	}
+	if draft == nil {
+		t.Fatal("activate 必须创建草稿（原 UPDATE 会静默影响 0 行）")
+	}
+	if draft.Plan.Title != "相遇" || draft.BaseRevisionID != "activation" {
+		t.Fatalf("draft = %+v", draft)
 	}
 }
 
