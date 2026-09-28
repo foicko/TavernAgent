@@ -124,6 +124,10 @@ func ImportCardTacard(archivePath string) (*ImportReport, error) {
 	}
 	defer zr.Close()
 
+	if err := checkArchiveEntryCount(&zr.Reader); err != nil {
+		return nil, fmt.Errorf("tacard %w", err)
+	}
+
 	if bad := tacardForbiddenEntries(&zr.Reader); len(bad) > 0 {
 		return nil, fmt.Errorf(
 			"tacard 含规范禁入的可执行/脚本文件（零脚本策略），已拒绝导入: %s",
@@ -383,7 +387,7 @@ func attachTacardAvatar(rep *ImportReport, zr *zip.Reader, avatarAsset string) {
 		if !ok {
 			continue
 		}
-		data, err := readZipEntry(f, maxCharxEntryBytes)
+		data, err := readZipEntry(f, maxCardArchiveEntryBytes)
 		if err != nil {
 			continue
 		}

@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"errors"
 	"fmt"
-	"io"
 	"path"
 	"sort"
 	"strings"
@@ -13,15 +12,7 @@ import (
 // charx 是 RisuAI 的 ZIP 角色卡归档：根级 card.json 为 chara_card_v3 信封，
 // assets/** 为立绘/图标资源（以 assets[].name 作为正文 <img cmd="..."> 的键），
 // module.risum 为 RisuAI 模块（脚本，本应用不执行），x_meta/** 为逐资源元数据。
-const (
-	charxCardEntry = "card.json"
-	// maxCharxCardBytes 是 card.json 解压后的上限（防止压缩炸弹）。
-	maxCharxCardBytes = 8 << 20
-	// maxCharxEntryBytes 是单个资源解压后的上限。
-	maxCharxEntryBytes = 64 << 20
-	// maxCharxTotalBytes 是全部资源解压后的总量上限。
-	maxCharxTotalBytes = 2 << 30
-)
+const charxCardEntry = "card.json"
 
 // CharxAsset 是 charx 归档中待落地的一项资源。
 type CharxAsset struct {
@@ -42,14 +33,18 @@ func ImportCardCharx(archivePath string) (*ImportReport, error) {
 	}
 	defer zr.Close()
 
+	if err := checkArchiveEntryCount(&zr.Reader); err != nil {
+		return nil, fmt.Errorf("charx %w", err)
+	}
+
 	entry := findCharxCardEntry(&zr.Reader)
 	if entry == nil {
 		return nil, errors.New("charx 归档中未找到 card.json")
 	}
-	if entry.UncompressedSize64 > maxCharxCardBytes {
-		return nil, fmt.Errorf("charx 的 card.json 解压后超过 %d MB 上限", maxCharxCardBytes>>20)
+	if entry.UncompressedSize64 > maxCardArchiveCardBytes {
+		return nil, fmt.Errorf("charx 的 card.json 解压后超过 %d MB 上限", maxCardArchiveCardBytes>>20)
 	}
-	payload, err := readZipEntry(entry, maxCharxCardBytes)
+	payload, err := readZipEntry(entry, maxCardArchiveCardBytes)
 	if err != nil {
 		return nil, fmt.Errorf("读取 card.json 失败: %w", err)
 	}
@@ -246,7 +241,7 @@ func attachCharxAvatar(rep *ImportReport, zr *zip.Reader) {
 		}
 		tried[p] = true
 		attempts++
-		data, err := readZipEntry(f, maxCharxEntryBytes)
+		data, err := readZipEntry(f, maxCardArchiveEntryBytes)
 		if err != nil {
 			continue
 		}
@@ -322,22 +317,4 @@ func hasImgCmd(card *CharacterCard) bool {
 // hasRisuExtension 粗略检测原始 JSON 是否带 RisuAI 扩展键。
 func hasRisuExtension(raw string) bool {
 	return strings.Contains(raw, "\"risuai\"") || strings.Contains(raw, "\"depth_prompt\"")
-}
-
-// errCharxEntryTooLarge 表示归档条目解压后超过单项上限。
-var errCharxEntryTooLarge = errors.New("条目解压后超过单项上限")
-
-// readZipEntry 读取一个归档条目，最多 limit 字节（防止压缩炸弹）。
-// 超限直接报错而不是静默截断：截断的图片/JSON 只会在后续解码时以更费解的方式失败。
-// archive/zip 在读取时会校验实际字节数与头部声明一致，所以按声明大小预检是可靠的。
-func readZipEntry(f *zip.File, limit int64) ([]byte, error) {
-	if f.UncompressedSize64 > uint64(limit) {
-		return nil, errCharxEntryTooLarge
-	}
-	rc, err := f.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer rc.Close()
-	return io.ReadAll(io.LimitReader(rc, limit))
 }

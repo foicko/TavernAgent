@@ -258,7 +258,7 @@ func TestCardService_CharxAssetSizeCaps(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	rawEntry("assets/big.png", maxCharxEntryBytes+1)
+	rawEntry("assets/big.png", maxCardArchiveEntryBytes+1)
 	for i := 0; i < 35; i++ {
 		rawEntry(fmt.Sprintf("assets/p%02d.png", i), declared)
 	}

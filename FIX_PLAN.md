@@ -202,7 +202,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R6 | ✅ 已完成 | `storyRuntime` 集中运行期状态（含 G33/G37/G38/G42）；G41 顺延（派生 selector 重构）|
 | R5 | ✅ 已完成 | SSE 传输层拆到 `app/stream.ts`；事件错误边界与超限/401 边界用例补齐 |
 | R8 | ✅ 已完成 | SSE 读取骨架收敛为 `providerutil.ReadSSE`（三份拷贝 → 1）；定时器主循环按协议保留（见备注）|
-| R9 | ⬜ | |
+| R9 | ✅ 已完成 | 归档边界/读取器集中在 `cardarchive.go`；新增条目数上限；landing 本就是共享路径（PNG 除外）|
 | R7 | ⬜ | |
 | R10 | ⬜ | |
 | R11 | ⬜ | |
@@ -254,7 +254,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 **Wave 3 · Go 后端**
 
 - **B10-R8**（`refactor(providers,r8)`）：三条协议各自的「逐行读 SSE + 多行 data 拼接 + 空行分帧 + EOF 末行 + 漏发空行网关兼容 + ctx 取消」goroutine 完全同构，收敛为 `providerutil.ReadSSE`（新增 `providerutil/sse.go`），三处调用点改为消费事件通道；`openai` 的 `ssePayload` 随之删除。**偏差说明**：定时器主循环（首字/空闲/总时限、空流归类）三协议的「事件→token/结束」映射差异较大，抽公共 pump 需引入解码回调，收益低于风险，故保留各自主循环。新增 `sse_test.go` 覆盖多行 data、EOF 末行、漏空行 JSON 分派、注释/空 data。
-- **B10-R9**（`refactor(app,r9)`，3–4 提交）：有界归档读取器（entry 数/单 entry/总量上限 + 魔数预检）→ 统一资源落地与 `Warnings` → 三路径共用同一报告 + `NodeKind` 校验。以 `card_test.go`/`tacard_test.go`/`cards_tacard_test.go` 守护。
+- **B10-R9**（`refactor(app,r9)`）：核对发现三条导入器**已共用**资源落地路径（charx/tacard 经 `rep.CharxAssets`+`persistCharxAssets`；PNG 是内存中已解码的 chunk，本质不同），S1/M6/M7/M13 亦已完成。本次做的是把散在 `charx.go`、却被 archive/tacard/cardlibrary 共用的**归档边界与读取器**集中到新 `cardarchive.go`（中性命名 `maxCardArchive{Card,Entry,Total}Bytes`、`readZipEntry`、`cardArchiveEntries`、`archiveEntryPath`），并**新增条目数上限** `maxCardArchiveEntries`（在 charx/tacard 导入入口与落地路径统一生效）。**发现并规避**：charx 支持 JPEG/ZIP polyglot（首字节非 `PK`），因此**不加** PK 魔数硬校验——`zip.OpenReader` 的中央目录扫描才是正确检测。
 - **B10-R7**（`refactor(http,sqlite,r7)`，4 提交）：mux 中间件（始终 `isLANHost` + 非回环强制 token，路由显式 opt-out）→ 统一 `bodySnippet(≤512)` 替换原始回显 → `sqlIN(column, ids)` 替换全部手写构造 → **M29**（投影物化移出读路径）→ **M23**（无投影 fail-closed）。以 HTTP 契约测试 + `ExportSession` 并发用例守护。
 - **B10-R10**（`refactor(app,context,r10)`，4–5 提交）：抽 `turnRunner`（单一锁序 + 生命周期记账）并让现有测试全绿 → `Compile` 改 `compileSession`（每依赖加载一次、暴露已测尺寸）→ 增量预算 + mandatory 单次估算（**M5**）→ **M1/M2** 存储错误 fail-closed → **M3** 秘密宏加载期展开。全程 `go test -race` 守护。
 

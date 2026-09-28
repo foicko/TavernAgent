@@ -109,12 +109,10 @@ func (s *CardService) persistCharxAssets(rep *ImportReport, cardID string) {
 		return
 	}
 	defer zr.Close()
-	byPath := make(map[string]*zip.File, len(zr.File))
-	for _, f := range zr.File {
-		if f.FileInfo().IsDir() {
-			continue
-		}
-		byPath[strings.TrimPrefix(strings.ReplaceAll(f.Name, "\\", "/"), "./")] = f
+	byPath, err := cardArchiveEntries(&zr.Reader)
+	if err != nil {
+		rep.Warnings = append(rep.Warnings, label+" 资源落地失败："+err.Error())
+		return
 	}
 	var saved int
 	var total uint64
@@ -125,12 +123,12 @@ func (s *CardService) persistCharxAssets(rep *ImportReport, cardID string) {
 		}
 		// 按头部声明大小计量（archive/zip 读取时会校验实际字节数与声明一致）。
 		// 单项超限跳过；总量超限则停止落地剩余资源，防止压缩炸弹写满磁盘。
-		if f.UncompressedSize64 > maxCharxEntryBytes {
-			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源「%s」解压后超过 %d MB 单项上限，已跳过", label, a.Name, maxCharxEntryBytes>>20))
+		if f.UncompressedSize64 > maxCardArchiveEntryBytes {
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源「%s」解压后超过 %d MB 单项上限，已跳过", label, a.Name, maxCardArchiveEntryBytes>>20))
 			continue
 		}
-		if total+f.UncompressedSize64 > maxCharxTotalBytes {
-			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源解压总量超过 %d MB 上限，其余资源未落地", label, maxCharxTotalBytes>>20))
+		if total+f.UncompressedSize64 > maxCardArchiveTotalBytes {
+			rep.Warnings = append(rep.Warnings, fmt.Sprintf("%s 资源解压总量超过 %d MB 上限，其余资源未落地", label, maxCardArchiveTotalBytes>>20))
 			break
 		}
 		total += f.UncompressedSize64
@@ -160,7 +158,7 @@ func (s *CardService) saveOneAsset(cardID string, a CharxAsset, f *zip.File) err
 		return err
 	}
 	defer rc.Close()
-	return s.assets.SaveAsset(cardID, a.Ref, io.LimitReader(rc, maxCharxEntryBytes))
+	return s.assets.SaveAsset(cardID, a.Ref, io.LimitReader(rc, maxCardArchiveEntryBytes))
 }
 
 // List 返回卡库摘要（CharacterJSON 为空，避免下发兆级内容）。

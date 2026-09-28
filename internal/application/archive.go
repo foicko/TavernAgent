@@ -73,7 +73,7 @@ func (s *ArchiveService) collectAssets(bundle *domain.SessionBundle) map[string]
 		if err != nil {
 			continue
 		}
-		data, rerr := io.ReadAll(io.LimitReader(rc, maxCharxEntryBytes))
+		data, rerr := io.ReadAll(io.LimitReader(rc, maxCardArchiveEntryBytes))
 		rc.Close()
 		if rerr != nil {
 			continue
