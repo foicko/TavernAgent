@@ -60,7 +60,7 @@
 | B11e-C | 轻微项 Android（API Key/槽位/通知图标） | G44, G45, G46 | ✅ 已完成 |
 | B11e-C2 | Android（TTS/记忆行/SSE/导航/构建） | G47–G49, G52–G55 → 并入 R11 | 🔀 并入 R |
 | B11e-D | 轻微项 工具/仓库 | G74, G75, G78 | ✅ 已完成 |
-| B11e-D2 | 工具/仓库（余下） | G72/G73/G76/G77 → 并入 R12 | 🔀 并入 R |
+| B11e-D2 | 工具/仓库（余下） | G72/G73/G76/G77 → 并入 R12 | ✅ 经 R12（G77 顺延）|
 
 ## 每批交付要求
 
@@ -206,7 +206,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R7 | ✅ 已完成 | G25 `sqlIN`、错误体摘要 `httpbody`、API Host 防线、M29 投影写移出读路径、M23 基准缺失 fail-closed |
 | R10 | 🔄 部分完成 | ✅ M4（属性默认值统一）、✅ M5（mandatory 只估一次 + 阶段内二分增量拟合）、✅ M3（秘密宏加载期展开）；⬜ turnRunner/compileSession 拆分 |
 | R11 | ⬜ | |
-| R12 | ⬜ | |
+| R12 | ✅ 已完成 | dependabot/Android CI 已在 B9；本轮：gosec 启用 + M84 许可证门禁 + G73（发行版校验和 + 依赖验证）+ G76（G77 顺延，见备注）|
 
 #### 0. 吸收映射（重构覆盖的剩余条目）
 
@@ -270,7 +270,9 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 
 **Wave 5 · 供应链**
 
-- **B10-R12**（`chore(ci,r12)`，3 提交）：`dependabot.yml`（gomod/npm `/web`/gradle `/android`/actions）+ `golangci.yml` 启用 `gosec` → Android CI job（JDK 21 + SDK 36 + 缓存）→ `license_notices.py` 进 CI（重生成后 diff 为空）。
+- **B10-R12**（`chore(ci,r12)`，4 提交）：`dependabot.yml`（四生态）与 Android CI job 已在 B9 落地；本轮补齐：① `.golangci.yml` 启用 `gosec`（并修复其暴露的真实问题：`pack.Read` 的 `uint64→int64` 可被恶意 zip 绕过体积上限、`tavernctl` 导出文件权限、R8 遗留的两处 `sseEvent` 死代码、mcp `branchID` ineffectual assignment；其余 19 条非测试告警逐条复核后按规则豁免并写明理由，最终 0 告警）；② **M84** `license_notices.py` 增加陈旧文本裁剪，重生成后 `THIRD_PARTY_NOTICES.md` 102 行 → 36 个真实依赖、`LICENSES/` 143 → 42，并在 CI 加「重生成后 diff 为空」门禁；③ **G73** Gradle 发行版固定 `distributionSha256Sum` + 生成 `verification-metadata.xml`（`--rerun-tasks` 严格校验下 `testDebugUnitTest`/`assembleDebug` 全绿）；④ **G76** `quality_check.py` 去掉作者机器硬编码路径（`inspect_card*.py` 已在 B9 移出跟踪）。
+  - **顺延 G77**：两个架构图脚本（434/393 行）的重复脚手架抽取属纯开发脚本可维护性重构，不影响交付物；单列后续。
+  - **B9b（需联网）仍待做**：M81–M84 大版本升级。
 - **B9b**（各自独立提交，需联网）：M81 ESLint 10、M82 Vite 8/Vitest/Playwright/jsdom/TS、M83 OkHttp 5/Coil 3/AGP 9/Gradle 9/Compose BOM/sqlite、M84 `THIRD_PARTY_NOTICES` 重生成。
 
 #### 3. 每步验证基线

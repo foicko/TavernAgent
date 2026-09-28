@@ -1,12 +1,35 @@
-"""真机质量对照：用 chars/ 的真实角色卡跑一轮，打印实际输出与提示词规模。"""
+"""真机质量对照：用一张真实角色卡跑一轮，打印实际输出与提示词规模。
+
+用法：`python scripts/quality_check.py [角色卡 JSON 路径]`
+未给路径时依次取：环境变量 `TAVERN_QUALITY_CARD` → `chars/` 下的第一张 `.json`。
+（此前硬编码了作者机器的 `data/cardtest/...json`，换台机器必然失败。）
+"""
 import json
+import os
+import sys
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-API = "http://127.0.0.1:8890"
-CARD = Path("data/cardtest/saori-hot-and-dominant-stepaunt-sayuri-s.json")
+API = os.environ.get("TAVERN_API", "http://127.0.0.1:8890")
+
+
+def resolve_card() -> Path:
+    if len(sys.argv) > 1:
+        return Path(sys.argv[1])
+    if env := os.environ.get("TAVERN_QUALITY_CARD"):
+        return Path(env)
+    cards = sorted(Path("chars").glob("*.json"))
+    if cards:
+        return cards[0]
+    raise SystemExit(
+        "未找到角色卡：请传入路径（python scripts/quality_check.py <card.json>），"
+        "或设置 TAVERN_QUALITY_CARD。"
+    )
+
+
+CARD = resolve_card()
 
 
 def req(method, path, body=None, timeout=200):
