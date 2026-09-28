@@ -217,7 +217,24 @@ func (s *Server) Handler() http.Handler {
 	if s.staticFS != nil {
 		mux.Handle("/", spaHandler(s.staticFS))
 	}
-	return withLogging(mux, s.tracer)
+	return withLogging(s.apiHostGuard(mux), s.tracer)
+}
+
+// apiHostGuard 是 mux 外层的第一道防线：所有 `/api/` 请求先做 Host 白名单
+// （防 DNS rebinding / 误暴露到公网）。
+//
+// 此前完全依赖每个路由"记得包 s.security / s.hostOnly"——新增路由一旦漏包就直接
+// 暴露给任意 Host。放到最外层后，漏包最多只少一层 Token 校验（授权边界仍在
+// security.go 的 Token 判定），但不会少 Host 校验。healthz 与静态资源不在 /api/ 下，
+// 不受影响；配对/状态路由自身也做 Host 校验，这里是冗余的第二道。
+func (s *Server) apiHostGuard(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/") && !isLANHost(r.Host) {
+			writeError(w, 403, "FORBIDDEN", "只允许本机或局域网私有网络访问", false, "")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func spaHandler(staticFS fs.FS) http.Handler {
