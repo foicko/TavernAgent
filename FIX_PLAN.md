@@ -47,7 +47,7 @@
 | B9b | 大版本依赖升级与许可证门禁 | M81, M82, M83, M84 | ⬜ |
 | B10 | 重构（独立 PR） | R1–R12（详见 B10-重构执行计划） | 📋 计划已定 |
 | B10-R4 | 设计系统收敛 | M72 ✅；G61 ✅；G63 ✅；G62 ✅（经 R2）；徽章收敛留独立项 | ✅ 完成 |
-| B10-R3 | 列表行统一到 `ui/ListRow`（语义已由 M66 修好，结构迁移待做） | R3 | ⬜ |
+| B10-R3 | 列表行统一到 `ui/ListRow`（会话行 + 两份角色卡行；已合并重复实现） | R3 | ✅ 完成 |
 | B11 | 轻微项清理（按子批处理） | G1–G78 | 🔄 见子批 |
 | B11a | 轻微项（Go 正确性/资源优先项） | G3, G5, G8, G23, G25, G26, G30, G31 | ✅ 已完成 |
 | B11b | 轻微项（解析/并发/资源/样式） | G1, G2, G6, G7, G9, G10, G12, G20, G22, G51, G57, G59 | ✅ 已完成 |
@@ -197,7 +197,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R | 状态 | 备注 |
 | --- | --- | --- |
 | R2 | ✅ 已完成 | 会话筛选、立绘神情差分 → `Tabs`；另两处经核实为不同模式（见下）|
-| R3 | ⬜ | |
+| R3 | ✅ 已完成 | 会话行、两份角色卡行（已收录+预设）→ `ListRow`；另两类经核实为不同模式（见下）|
 | R1 | ⬜ | |
 | R6 | ⬜ | |
 | R5 | ⬜ | |
@@ -242,7 +242,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 **Wave 1 · Web 设计系统收官**
 
 - **B10-R2**（`refactor(web,r2)`，3 提交）：**已核对 4 处真实语义**——只有 2 处是分段控件：会话筛选、立绘神情差分 → `Tabs`；`composer-syntax-group`（`handleTagClick` 向输入框插入包裹，是动作组）与 `memory-filter-row`（5 项含计数、窄屏必须换行的筛选芯片行）不适用 `Tabs`，保留但补 `role="group"`/`aria-label`。删除对应自绘 CSS；有意视觉改动已 `pnpm css:snapshot`。补方向键/`aria-checked` 用例。
-- **B10-R3**（`refactor(web,r3)`，4 提交/行类型）：`session-entry-card`、`char-card-entry`、`node-item`、物品槽 → `ListRow`；保留全部既有 `data-testid`；确认删除/分支控件恢复可 Tab 达。更新 `leftRail.test.tsx`。
+- **B10-R3**（`refactor(web,r3)`，4 提交）：**已核对 4 类行真实结构**——真正是「行」的是会话行与角色卡行（且角色卡行有**两份重复实现**：`CharacterCardRow` 与 `LeftRailCharactersPanel` 内联预设行），已统一到 `ListRow`（扩展 `leading`/`id` 槽，合并两份实现）；`node-item`（带展开面板的 disclosure）与 `item-slot`（网格磁贴、无尾部操作）是不同模式，保留并记录。保留全部 `data-testid`；有意视觉收敛已 `pnpm css:snapshot`。
 - **B10-R4 收尾**：仅剩徽章收敛（78 个自绘 badge/pill/chip/tag 选择器 → `Pill` 变体），范围大且无对应 G 编号 → **见决策点**。
 
 **Wave 2 · Web 架构**
