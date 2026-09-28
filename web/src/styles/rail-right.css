@@ -249,40 +249,6 @@ body.rail-right-collapsed:not(.mode-reading) .floating-rail-trigger-right {
   z-index: 2;
 }
 
-.tachie-expr-switcher {
-  display: flex;
-  gap: 3px;
-  background: var(--bg-surface);
-  padding: 3px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
-}
-
-.expr-switch-btn {
-  font-size: var(--fs-11);
-  font-family: inherit;
-  border: none;
-  background: transparent;
-  padding: 3px 10px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  color: var(--text-muted);
-  transition: background-color var(--duration-quick) var(--ease-smooth-out),
-              color var(--duration-quick) var(--ease-smooth-out);
-  user-select: none;
-  font-weight: var(--fw-medium);
-}
-.expr-switch-btn:hover {
-  color: var(--text-main);
-  background: var(--bg-subtle);
-}
-.expr-switch-btn.active {
-  background: var(--text-main);
-  color: var(--bg-surface);
-  font-weight: var(--fw-semibold);
-}
-
 /* 角色名与标签卡 */
 .tachie-nameplate {
   display: flex;

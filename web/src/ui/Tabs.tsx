@@ -19,6 +19,8 @@ export interface TabsProps<T extends string = string> {
   onChange: (value: T) => void;
   /** radiogroup 的可访问名。 */
   label: string;
+  /** 悬停提示（可选）。 */
+  title?: string;
   /** segmented：胶囊轨道 + 滑动高亮块；underline：底部滑动下划线。 */
   variant?: "segmented" | "underline";
   size?: "sm" | "md";
@@ -39,6 +41,7 @@ export function Tabs<T extends string = string>({
   value,
   onChange,
   label,
+  title,
   variant = "segmented",
   size = "md",
   fill = false,
@@ -112,7 +115,7 @@ export function Tabs<T extends string = string>({
     .join(" ");
 
   return (
-    <div ref={listRef} role="radiogroup" aria-label={label} className={classes} onKeyDown={onKeyDown}>
+    <div ref={listRef} role="radiogroup" aria-label={label} title={title} className={classes} onKeyDown={onKeyDown}>
       <span ref={indicatorRef} className="ui-tabs__indicator" aria-hidden="true" />
       {items.map((item) => {
         const selected = item.value === value;

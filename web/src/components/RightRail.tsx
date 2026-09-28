@@ -10,6 +10,7 @@ import { PromisesModal } from "./PromisesModal";
 import { MemoryBankModal } from "./MemoryBankModal";
 import { Icon, type IconName } from "../ui/Icon";
 import { EmptyState } from "../ui/EmptyState";
+import { Tabs } from "../ui/Tabs";
 import { useCardEmotionMap } from "../stores/cardAssetStore";
 import "./RightRail.css";
 
@@ -161,24 +162,19 @@ export const RightRail: React.FC = () => {
 
           {/* 底部微交互浮层：表情差分切换器 */}
           <div className="tachie-bottom-bar">
-            <div className="tachie-expr-switcher" title="实时切换角色神情差分">
-              {([
-                ["alert", "警觉"],
-                ["calm", "冷静"],
-                ["smile", "释怀"],
-                ["whisper", "动容"],
-              ] as Array<[TachieExpression, string]>).map(([expr, label]) => (
-                <button
-                  key={expr}
-                  type="button"
-                  className={`expr-switch-btn ${tachieExpression === expr ? "active" : ""}`}
-                  aria-pressed={tachieExpression === expr}
-                  onClick={() => setTachieExpression(expr)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              label="角色神情差分"
+              title="实时切换角色神情差分"
+              size="sm"
+              value={tachieExpression}
+              onChange={setTachieExpression}
+              items={[
+                { value: "alert", label: "警觉" },
+                { value: "calm", label: "冷静" },
+                { value: "smile", label: "释怀" },
+                { value: "whisper", label: "动容" },
+              ]}
+            />
           </div>
         </div>
 
