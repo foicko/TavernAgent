@@ -1,14 +1,27 @@
-/* 空态：统一的"还没有内容"占位。 */
+/* 空态：统一的"还没有内容"占位。变体：dashed（默认，虚线卡片）/ plain（无框）。 */
 .ui-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-5) var(--space-4);
+  text-align: center;
+}
+
+.ui-empty--dashed {
   border: 1px dashed var(--border-light);
   border-radius: var(--radius-md);
   background: var(--bg-subtle);
-  text-align: center;
+}
+
+.ui-empty--plain {
+  border: none;
+  background: transparent;
+}
+
+.ui-empty--sm {
+  padding: var(--space-4) var(--space-3);
+  gap: var(--space-1);
 }
 
 .ui-empty__icon {
@@ -24,10 +37,28 @@
   line-height: 1;
 }
 
+.ui-empty--sm .ui-empty__icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* plain 变体只承载图标本身（无瓷砖底板）。 */
+.ui-empty--plain .ui-empty__icon {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+}
+
 .ui-empty__title {
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
   color: var(--text-main);
+}
+
+.ui-empty--sm .ui-empty__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
 }
 
 .ui-empty__description {
@@ -37,6 +68,16 @@
   max-width: 46ch;
 }
 
+.ui-empty--sm .ui-empty__description {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-normal);
+}
+
 .ui-empty__action {
   margin-top: var(--space-1);
+}
+
+/* 在网格容器里横跨整行（如物品槽空态）。 */
+.ui-empty--span-full {
+  grid-column: 1 / -1;
 }

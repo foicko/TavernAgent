@@ -1,6 +1,7 @@
 import React from "react";
 import { Icon } from "../ui/Icon";
 import { Banner } from "../ui/Banner";
+import { EmptyState } from "../ui/EmptyState";
 import { RowDeleteControl } from "./RowDeleteControl";
 import { CHARACTER_PRESETS } from "../lib/characterPresets";
 import { storedCardTag, type PresentedCharacter } from "../lib/characterPresentation";
@@ -111,22 +112,24 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
       </div>
 
       {sessionsError && sessions.length === 0 ? (
-        <div className="session-empty-state">
-          <div className="empty-icon"><Icon name="alert" size={22} /></div>
-          <div className="empty-title">无法加载故事列表</div>
-          <div className="empty-desc">{sessionsError}</div>
-          <button type="button" className="btn-quiet" onClick={() => void loadSessions()}>
-            <Icon name="refresh" size={13} /> 重试
-          </button>
-        </div>
+        <EmptyState
+          size="sm"
+          icon={<Icon name="alert" size={22} />}
+          title="无法加载故事列表"
+          description={sessionsError}
+          action={
+            <button type="button" className="btn-quiet" onClick={() => void loadSessions()}>
+              <Icon name="refresh" size={13} /> 重试
+            </button>
+          }
+        />
       ) : sessions.length === 0 ? (
-        <div className="session-empty-state">
-          <div className="empty-icon"><Icon name="scroll" size={22} /></div>
-          <div className="empty-title">暂无历史故事会话</div>
-          <div className="empty-desc">
-            点击下方按钮开辟，或直接在底部输入框发言开启全新故事。
-          </div>
-        </div>
+        <EmptyState
+          size="sm"
+          icon={<Icon name="scroll" size={22} />}
+          title="暂无历史故事会话"
+          description="点击下方按钮开辟，或直接在底部输入框发言开启全新故事。"
+        />
       ) : (
         <div className="session-list-stack">
           {(sessionFilter === "current"

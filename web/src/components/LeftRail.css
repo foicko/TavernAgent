@@ -35,33 +35,6 @@
   color: var(--text-dim);
 }
 
-.tree-empty-card {
-  margin: var(--space-2) 0;
-  padding: var(--space-6) 14px;
-  border: 1px dashed var(--border-light);
-  border-radius: var(--radius-md);
-  background: var(--bg-subtle);
-  color: var(--text-dim);
-  font-size: var(--fs-sm);
-  text-align: center;
-}
-
-.tree-empty-icon {
-  display: inline-flex;
-  margin-bottom: 6px;
-  color: var(--text-dim);
-}
-
-.tree-empty-title {
-  margin-bottom: var(--space-1);
-  font-weight: var(--fw-semibold);
-  color: var(--text-main);
-}
-
-.tree-empty-desc {
-  line-height: var(--lh-normal);
-}
-
 /* 分支节点回合标签文本 */
 .node-tag-text {
   display: inline-flex;

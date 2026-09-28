@@ -301,33 +301,6 @@
   color: var(--text-dim);
 }
 
-/* HUD Empty State Cards */
-.hud-empty-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 16px 12px;
-  background: var(--bg-subtle);
-  border: 1px dashed var(--border-mid);
-  border-radius: var(--radius-md);
-  color: var(--text-dim);
-  text-align: center;
-}
-
-.hud-empty-card .empty-card-icon {
-  display: inline-flex;
-  line-height: 1;
-  opacity: 0.8;
-}
-
-.hud-empty-card .empty-card-text {
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  color: var(--text-muted);
-}
-
 /* Story Checkpoint Section */
 .story-checkpoint-body {
   display: flex;

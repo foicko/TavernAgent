@@ -1,5 +1,6 @@
 import React from "react";
 import { Icon } from "../ui/Icon";
+import { EmptyState } from "../ui/EmptyState";
 import { CharacterCardRow } from "./CharacterCardRow";
 import { CHARACTER_PRESETS, SELECTABLE_PRESET_KEYS } from "../lib/characterPresets";
 import { openCard } from "../lib/cardLaunch";
@@ -58,10 +59,12 @@ export const LeftRailCharactersPanel: React.FC<LeftRailCharactersPanelProps> = (
       </div>
 
       {totalCards === 0 && (
-        <div className="hud-empty-card" style={{ padding: "16px 12px", textAlign: "center" }}>
-          <div style={{ marginBottom: "6px", color: "var(--text-dim)" }}><Icon name="user" size={22} /></div>
-          <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>暂无角色卡，请点击上方「+ 导入 / 创建角色卡」开始</div>
-        </div>
+        <EmptyState
+          size="sm"
+          icon={<Icon name="user" size={22} />}
+          title="暂无角色卡"
+          description="请点击上方「+ 导入 / 创建角色卡」开始"
+        />
       )}
 
       {/* 用户已收录/导入的角色卡 */}

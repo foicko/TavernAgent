@@ -135,9 +135,6 @@
 }
 
 /* --- 携带物品与信物 ------------------------------------------------------ */
-.hud-empty-card.hud-empty-card--full {
-  grid-column: 1 / -1;
-}
 
 /* --- 认知记忆库（弹窗头部动作） ------------------------------------------ */
 .hud-block-title-actions {
@@ -165,34 +162,6 @@
   color: var(--text-main);
   background: var(--bg-surface);
   border-color: var(--border-mid);
-}
-
-/* 记忆库空状态卡片 */
-.memory-empty-card {
-  margin: 6px 0;
-  padding: var(--space-5) 14px;
-  border: 1px dashed var(--border-light);
-  border-radius: var(--radius-md);
-  background: var(--bg-subtle);
-  color: var(--text-dim);
-  font-size: var(--fs-sm);
-  text-align: center;
-}
-
-.memory-empty-icon {
-  display: inline-flex;
-  margin-bottom: 6px;
-  color: var(--text-dim);
-}
-
-.memory-empty-title {
-  margin-bottom: var(--space-1);
-  font-weight: var(--fw-semibold);
-  color: var(--text-main);
-}
-
-.memory-empty-desc {
-  line-height: 1.5;
 }
 
 /* 记忆行内编辑按钮尺寸 */

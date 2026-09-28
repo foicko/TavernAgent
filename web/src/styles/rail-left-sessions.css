@@ -245,34 +245,6 @@
   font-size: var(--fs-10);
 }
 
-/* Session Empty State */
-.session-empty-state {
-  padding: 24px 14px;
-  text-align: center;
-  color: var(--text-dim);
-  font-size: var(--fs-12);
-  background: var(--bg-subtle);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--border-light);
-  margin: 4px 0;
-}
-
-.session-empty-state .empty-icon {
-  display: inline-flex;
-  color: var(--text-dim);
-  margin-bottom: 6px;
-}
-
-.session-empty-state .empty-title {
-  font-weight: var(--fw-semibold);
-  color: var(--text-main);
-  margin-bottom: 4px;
-}
-
-.session-empty-state .empty-desc {
-  line-height: 1.5;
-}
-
 /* Session Bottom Action Shelf */
 .session-action-shelf {
   display: flex;

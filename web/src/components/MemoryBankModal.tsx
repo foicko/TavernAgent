@@ -4,6 +4,7 @@ import { useStory, storyBusy } from "../stores/storyStore";
 import { characterPresentation } from "../lib/characterPresentation";
 import { Modal } from "../ui/Modal";
 import { Icon } from "../ui/Icon";
+import { EmptyState } from "../ui/EmptyState";
 import "./MemoryBankModal.css";
 
 export const MemoryBankModal: React.FC = () => {
@@ -288,13 +289,11 @@ export const MemoryBankModal: React.FC = () => {
 
       <div className="memory-bank-stream memory-modal-stream" id="memory-bank-stream">
         {filteredMemories.length === 0 ? (
-          <div className="memory-empty-card">
-            <div className="memory-empty-icon"><Icon name="brain" size={28} /></div>
-            <div className="memory-empty-title">
-              {memoryError ? "暂时无法读取记忆" : memoryLoading ? "正在读取记忆…" : memoryFilter === "hidden" ? "没有隐藏的记忆" : "此分类暂无生效记忆"}
-            </div>
-            <div className="memory-empty-desc">随剧情推进积累亲历与推测。可在设置里打开「后台记忆」，让它自动整理认知记录。</div>
-          </div>
+          <EmptyState
+            icon={<Icon name="brain" size={28} />}
+            title={memoryError ? "暂时无法读取记忆" : memoryLoading ? "正在读取记忆…" : memoryFilter === "hidden" ? "没有隐藏的记忆" : "此分类暂无生效记忆"}
+            description="随剧情推进积累亲历与推测。可在设置里打开「后台记忆」，让它自动整理认知记录。"
+          />
         ) : (
           pagedMemories.map((m) => {
             const isPinned = m.isPinned;

@@ -9,6 +9,7 @@ import { DossierModal } from "./DossierModal";
 import { PromisesModal } from "./PromisesModal";
 import { MemoryBankModal } from "./MemoryBankModal";
 import { Icon, type IconName } from "../ui/Icon";
+import { EmptyState } from "../ui/EmptyState";
 import { useCardEmotionMap } from "../stores/cardAssetStore";
 import "./RightRail.css";
 
@@ -351,10 +352,12 @@ export const RightRail: React.FC = () => {
 
         <div className="item-slot-grid">
           {liveInventory.length === 0 ? (
-            <div className="hud-empty-card hud-empty-card--full">
-              <Icon name="package" size={18} className="empty-card-icon" />
-              <span className="empty-card-text">随身包裹空空如也</span>
-            </div>
+            <EmptyState
+              size="sm"
+              className="ui-empty--span-full"
+              icon={<Icon name="package" size={18} />}
+              title="随身包裹空空如也"
+            />
           ) : (
             liveInventory.map((item) => (
               <div

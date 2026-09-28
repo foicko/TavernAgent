@@ -1,5 +1,6 @@
 import React from "react";
 import { Icon } from "../ui/Icon";
+import { EmptyState } from "../ui/EmptyState";
 import { StoryOutlineSection } from "./StoryMapModal";
 import type { SessionView } from "../app/types";
 
@@ -68,13 +69,12 @@ export const LeftRailTreePanel: React.FC<LeftRailTreePanelProps> = ({
         {displayTreeNodes.length > 0 && <div className="tree-vertical-line" />}
 
         {displayTreeNodes.length === 0 ? (
-          <div className="tree-empty-card">
-            <div className="tree-empty-icon"><Icon name="leaf" size={22} /></div>
-            <div className="tree-empty-title">因果树未播种</div>
-            <div className="tree-empty-desc">
-              推进第一轮对话后，大模型将在此自动生长因果拓扑与历史快照。
-            </div>
-          </div>
+          <EmptyState
+            size="sm"
+            icon={<Icon name="leaf" size={22} />}
+            title="因果树未播种"
+            description="推进第一轮对话后，大模型将在此自动生长因果拓扑与历史快照。"
+          />
         ) : (
           displayTreeNodes.map((node) => {
             const isOpen = probeNodeId === node.id;

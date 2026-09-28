@@ -6,6 +6,7 @@ import { directorScopeKey } from "../stores/slices/directorSlice";
 import { owns, scope } from "../stores/storyHelpers";
 import { Button, IconButton } from "../ui/Button";
 import { Icon } from "../ui/Icon";
+import { EmptyState } from "../ui/EmptyState";
 
 const blankPlan = (): DirectorPlan => ({ title: "", guidance: "", beats: [] });
 const statusText = { active: "执行中", paused: "已暂停", completed: "已完成" };
@@ -230,7 +231,14 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
         <section className="director-discussion" aria-label="导演讨论">
           <h3>讨论走向</h3><p className="director-muted">这里的讨论独立保存。描述你想发生什么，或粘贴已有的大纲。</p>
           <div className="director-chat" aria-live="polite">
-            {!workspace.requests.length && <div className="director-empty"><span><Icon name="sparkles" size={22} /></span><p>希望下一幕发生什么？</p><small>例如：先让两人试探彼此，再因旧信产生误会，最后留下和解的机会。</small></div>}
+            {!workspace.requests.length && (
+              <EmptyState
+                variant="plain"
+                icon={<Icon name="sparkles" size={22} />}
+                title="希望下一幕发生什么？"
+                description="例如：先让两人试探彼此，再因旧信产生误会，最后留下和解的机会。"
+              />
+            )}
             {workspace.requests.map(request => <div key={request.requestId} className="director-exchange">
               <article className="director-chat-user"><strong>你</strong><p>{request.text}</p></article>
               <article className="director-chat-assistant"><strong>导演助手</strong>
