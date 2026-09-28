@@ -293,6 +293,11 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 3. **R11 粒度**：按 a/b/c 三个子批（推荐）还是整体一批？
 4. **提交策略**：每个 R 完成即 commit（推荐，便于回滚）还是每个 Wave 结束一起 commit？
 
+### 运行期缺陷（用户反馈，独立于 R）
+
+- **选项不能正确显示**（`b0d453a`）：输出协议是自研的（`internal/protocol`，逐行 JSON 帧）。此前选项走**整帧级**硬校验，未知 `intent`（模型常写 curious/cautious/neutral）、缺/重 `optionId`、超过 4 条任一情况都会作废整个 `final` 帧——连同同一帧里的 `proposals`，表现为整轮失败或选项凭空消失。现改为选项层就地规范化（超 4 截断、空文本丢弃、intent 归一/回落 clever、optionId 补齐去重），`proposals` 仍严格。补测 `TestOptionsNormalizedNotRejected`、`TestProposalsStillStrict`、`TestMaxOptionsTruncated`。
+- **图片不能正常加载**（`97074d3`）：① 服务端卡资源清单在 `ref` 未回填时把归档内路径 `embeded://…` 当图片 URL 回传，客户端必然破图——现只返回落地 `ref` 的 assets 路由或卡里显式的外部 http(s)/data 地址，其余留空由客户端跳过；② Web 的资源键解析只按资源 `name` 匹配，而 Android 还按资源 URL 末段（`ref`）匹配，模型/卡原文写落地文件名时 Web 落空——已为 Web 补齐 ref 匹配（含 percent-decode）。
+
 ### B11 · 轻微项（G1–G78）
 
 按区域批量清理；优先潜在正确性/资源项：G5（运算符优先级）、G8（RRF 负权重）、G9（共享记录变更）、G23（非原子写图）、G24（资源名碰撞/保留名）、G25（`inClause` 空切片）、G26（时钟）、G30（`Hijacker`）、G31（编码错误/Content-Type）。
