@@ -1,12 +1,15 @@
 import { useEffect, useRef, type KeyboardEvent } from "react";
+import { popLayer, pushLayer } from "./modalStack";
 
-// 同一时刻可能有多个对话框（模态叠模态）：只有最外层关闭时才恢复背景。
-let openDialogs = 0;
-let savedBodyOverflow = "";
-
-// Every custom dialog uses the same keyboard boundary and restores its opener.
+// 所有自定义对话框共用同一键盘边界（Tab 循环 + Esc 关闭），并把自身注册进
+// lib/modalStack：栈顶之外的应用内容与更下层对话框都会被 inert。
 export function useDialogFocus(open: boolean, onClose?: () => void) {
   const ref = useRef<HTMLDivElement>(null);
+  // onClose 通过 ref 取最新值：注册 effect 只依赖 open，避免每次渲染都重新进出栈
+  // （那会导致焦点被反复重设）。
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>(
     'button:not(:disabled), a[href], input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [tabindex="0"]',
   ) ?? []).filter(element => element.tabIndex >= 0 && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden");
@@ -17,22 +20,23 @@ export function useDialogFocus(open: boolean, onClose?: () => void) {
     const dialog = ref.current;
     if (dialog && !dialog.contains(document.activeElement)) dialog.focus();
 
-    // 背景 inert + 滚动锁：仅靠 aria-modal 无法阻止辅助技术/指针到达背景内容。
-    openDialogs += 1;
-    const root = document.getElementById("root");
-    if (openDialogs === 1) {
-      root?.setAttribute("inert", "");
-      root?.setAttribute("aria-hidden", "true");
-      savedBodyOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-    }
+    const layerId = pushLayer({
+      onClose: () => onCloseRef.current?.(),
+      setInert: (inert) => {
+        const element = ref.current;
+        if (!element) return;
+        if (inert) {
+          element.setAttribute("inert", "");
+          element.setAttribute("aria-hidden", "true");
+        } else {
+          element.removeAttribute("inert");
+          element.removeAttribute("aria-hidden");
+        }
+      },
+    });
+
     return () => {
-      openDialogs = Math.max(0, openDialogs - 1);
-      if (openDialogs === 0) {
-        root?.removeAttribute("inert");
-        root?.removeAttribute("aria-hidden");
-        document.body.style.overflow = savedBodyOverflow;
-      }
+      popLayer(layerId);
       if (previous?.isConnected) previous.focus();
     };
   }, [open]);
@@ -41,7 +45,7 @@ export function useDialogFocus(open: boolean, onClose?: () => void) {
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
-      onClose?.();
+      onCloseRef.current?.();
     } else if (event.key === "Tab") {
       const items = focusable();
       const current = document.activeElement;
