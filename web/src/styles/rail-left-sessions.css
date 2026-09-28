@@ -31,40 +31,6 @@
   border: 1px solid var(--border-light);
 }
 
-.session-segmented-control {
-  display: flex;
-  background: var(--bg-muted);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-full);
-  padding: 2px;
-  gap: 2px;
-}
-
-.session-segment-btn {
-  background: transparent;
-  border: none;
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  font-family: inherit;
-  color: var(--text-muted);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: background-color var(--duration-quick) var(--ease-smooth-out),
-              color var(--duration-quick) var(--ease-smooth-out);
-  white-space: nowrap;
-}
-
-.session-segment-btn:hover {
-  color: var(--text-main);
-}
-
-.session-segment-btn.active {
-  background: var(--text-main);
-  color: var(--bg-surface);
-  font-weight: var(--fw-semibold);
-}
-
 /* Session List Stack */
 .session-list-stack {
   display: flex;

@@ -2,6 +2,7 @@ import React from "react";
 import { Icon } from "../ui/Icon";
 import { Banner } from "../ui/Banner";
 import { EmptyState } from "../ui/EmptyState";
+import { Tabs } from "../ui/Tabs";
 import { RowDeleteControl } from "./RowDeleteControl";
 import { CHARACTER_PRESETS } from "../lib/characterPresets";
 import { storedCardTag, type PresentedCharacter } from "../lib/characterPresentation";
@@ -95,20 +96,16 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
           <span>历史故事会话</span>
           <span className="session-total-count">{sessions.length}</span>
         </div>
-        <div className="session-segmented-control">
-          <button
-            className={`session-segment-btn ${sessionFilter === "all" ? "active" : ""}`}
-            onClick={() => setSessionFilter("all")}
-          >
-            全部 ({sessions.length})
-          </button>
-          <button
-            className={`session-segment-btn ${sessionFilter === "current" ? "active" : ""}`}
-            onClick={() => setSessionFilter("current")}
-          >
-            仅 {char.shortName}
-          </button>
-        </div>
+        <Tabs
+          label="会话筛选"
+          size="sm"
+          value={sessionFilter}
+          onChange={setSessionFilter}
+          items={[
+            { value: "all", label: `全部 (${sessions.length})` },
+            { value: "current", label: `仅 ${char.shortName}` },
+          ]}
+        />
       </div>
 
       {sessionsError && sessions.length === 0 ? (
