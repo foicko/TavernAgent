@@ -194,6 +194,26 @@
   box-shadow: 0 0 0 1px var(--accent-solid);
 }
 
+/* 行内主操作是真实按钮（与行尾删除控件并列，不嵌套交互元素）。 */
+.char-card-main {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.char-card-main:disabled {
+  cursor: default;
+}
+
 .char-card-thumb {
   width: 40px;
   height: 40px;

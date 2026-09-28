@@ -174,6 +174,8 @@ describe("LeftRail left information rail", () => {
 
     // M66：会话行内不得嵌套交互元素（现在是真实 button + 并列的删除控件）。
     expect(document.querySelectorAll("#view-sessions button button")).toHaveLength(0);
+    // 因果树节点同理：节点主操作是 button，探针卡是并列兄弟。
+    expect(document.querySelectorAll("#view-tree button button")).toHaveLength(0);
 
     const trash = screen.getByRole("button", { name: "删除故事 亚美的冒险" });
     trash.focus();

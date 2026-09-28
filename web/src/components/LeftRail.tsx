@@ -247,7 +247,6 @@ export const LeftRail: React.FC = () => {
             regenerate={regenerate}
             notifyQuiet={notifyQuiet}
             liveRel={liveRel}
-            activateOnKey={activateOnKey}
             onOpenStoryMap={() => setStoryMapOpen(true)}
           />
 

@@ -183,6 +183,21 @@
   transform: translateX(3px);
 }
 
+/* 节点主操作是真实按钮（探针卡是并列兄弟，不嵌套交互元素）。 */
+.node-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .node-item:hover::before {
   border-color: var(--accent-solid);
   transform: scale(1.25);

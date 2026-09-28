@@ -45,45 +45,37 @@ export function CharacterCardRow({
     <div
       className={`char-card-entry ${selected ? "active" : ""} ${confirming ? "confirming" : ""}`}
       id={`roster-card-${card.cardId}`}
-      role="button"
-      tabIndex={0}
-      aria-pressed={selected}
-      aria-label={`打开角色卡 ${card.name}`}
-      onClick={() => {
-        if (confirming) return; // 确认态下避免误触切换主角
-        onOpen();
-      }}
-      onKeyDown={(event) => {
-        if (confirming) return;
-        // 行尾删除按钮冒泡上来的按键留给按钮自己，不能被当成"打开角色卡"。
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
     >
-      {card.avatar ? (
-        <img src={card.avatar} alt={card.name} className="char-card-thumb" />
-      ) : (
-        <div className="char-card-thumb char-card-thumb--fallback" aria-hidden="true">
-          <Icon name="mask" size={18} />
-        </div>
-      )}
-      <div className="char-card-info">
-        <div className="char-card-name-row">
-          <span className="char-card-name" title={card.name}>{card.shortName || card.name}</span>
-          {/* 确认态下让位给按钮：徽标会把它挤成竖排 */}
-          {!confirming ? <span className="char-card-badge">{badge}</span> : null}
-        </div>
-        {confirming ? (
-          <span className="row-confirm-hint">
-            从卡库移除{sessionCount > 0 ? `；${sessionCount} 个存档仍可继续游玩` : ""}
-          </span>
+      <button
+        type="button"
+        className="char-card-main"
+        aria-pressed={selected}
+        aria-label={`打开角色卡 ${card.name}`}
+        disabled={confirming}
+        onClick={onOpen}
+      >
+        {card.avatar ? (
+          <img src={card.avatar} alt={card.name} className="char-card-thumb" />
         ) : (
-          <span className="char-card-desc">{storedCardTag(card, playerName)}</span>
+          <div className="char-card-thumb char-card-thumb--fallback" aria-hidden="true">
+            <Icon name="mask" size={18} />
+          </div>
         )}
-      </div>
+        <div className="char-card-info">
+          <div className="char-card-name-row">
+            <span className="char-card-name" title={card.name}>{card.shortName || card.name}</span>
+            {/* 确认态下让位给按钮：徽标会把它挤成竖排 */}
+            {!confirming ? <span className="char-card-badge">{badge}</span> : null}
+          </div>
+          {confirming ? (
+            <span className="row-confirm-hint">
+              从卡库移除{sessionCount > 0 ? `；${sessionCount} 个存档仍可继续游玩` : ""}
+            </span>
+          ) : (
+            <span className="char-card-desc">{storedCardTag(card, playerName)}</span>
+          )}
+        </div>
+      </button>
       <RowDeleteControl
         confirming={confirming}
         idleLabel={`删除角色卡 ${card.name}`}

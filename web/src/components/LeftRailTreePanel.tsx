@@ -29,7 +29,6 @@ interface LeftRailTreePanelProps {
   regenerate: (nodeId: string) => Promise<unknown>;
   notifyQuiet: (message: string) => void;
   liveRel?: { affection: number; trust: number; alertness: number };
-  activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
   onOpenStoryMap: () => void;
   style?: React.CSSProperties;
 }
@@ -47,7 +46,6 @@ export const LeftRailTreePanel: React.FC<LeftRailTreePanelProps> = ({
   regenerate,
   notifyQuiet,
   liveRel,
-  activateOnKey,
   onOpenStoryMap,
   style,
 }) => {
@@ -85,19 +83,17 @@ export const LeftRailTreePanel: React.FC<LeftRailTreePanelProps> = ({
               <div
                 key={node.id}
                 className={`node-item ${node.isActive ? "active" : ""} ${node.isViewing ? "viewing" : ""} ${isOpen ? "opened" : ""} ${node.isFork ? "fork" : ""}`}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isOpen}
-                onClick={() => {
-                  setProbeNodeId(isOpen ? null : node.id);
-                  setBranchConfirmId(null);
-                }}
-                onKeyDown={activateOnKey(() => {
-                  setProbeNodeId(isOpen ? null : node.id);
-                  setBranchConfirmId(null);
-                })}
               >
-                <div className="node-turn-tag">
+                <button
+                  type="button"
+                  className="node-main"
+                  aria-expanded={isOpen}
+                  onClick={() => {
+                    setProbeNodeId(isOpen ? null : node.id);
+                    setBranchConfirmId(null);
+                  }}
+                >
+                  <div className="node-turn-tag">
                   <div className="node-tag-group">
                     <span className="node-tag-text">{node.tag}</span>
                     {node.isViewing && <span className="node-badge-viewing">当前视角</span>}
@@ -131,9 +127,10 @@ export const LeftRailTreePanel: React.FC<LeftRailTreePanelProps> = ({
                     </span>
                   </div>
                 )}
+                </button>
 
                 {isOpen && (
-                  <div className="branch-probe-card" onClick={(e) => e.stopPropagation()}>
+                  <div className="branch-probe-card">
                     <div className="probe-head">
                       <span>快照控制</span>
                       <button
