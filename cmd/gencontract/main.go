@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"tavernagent/internal/application"
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
 )
@@ -39,6 +40,11 @@ var manifest = []entry{
 	{reflect.TypeOf(domain.DirectorSummary{}), "DirectorSummary", "DirectorSummaryDto"},
 	{reflect.TypeOf(ports.ModelInstance{}), "ModelInstance", "ModelInstanceDto"},
 	{reflect.TypeOf(domain.MemoryUsage{}), "MemoryUsage", "MemoryUsageDto"},
+	{reflect.TypeOf(application.BranchView{}), "BranchView", "BranchDto"},
+	{reflect.TypeOf(application.TurnCapabilities{}), "TurnCapabilities", "TurnCapabilitiesDto"},
+	{reflect.TypeOf(application.AcceptResult{}), "AcceptResult", "AcceptTurnResponseDto"},
+	{reflect.TypeOf(application.DeriveResponse{}), "DeriveResult", "DeriveTurnResponseDto"},
+	{reflect.TypeOf(application.AssistantEditResponse{}), "AssistantEditResult", "AssistantEditResponseDto"},
 }
 
 var (

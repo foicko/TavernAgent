@@ -3,6 +3,10 @@
 // 部分 DTO 由 Go 生成（源：cmd/gencontract，见 docs/spec/06-dto.md）：
 // 这里只做再导出，手写定义不得与生成物重复。
 import type {
+  AcceptResult,
+  AssistantEditResult,
+  BranchView,
+  DeriveResult,
   DirectorBeat,
   DirectorBeatProgress,
   DirectorEvidence,
@@ -11,8 +15,13 @@ import type {
   DirectorSummary,
   MemoryUsage,
   ModelInstance,
+  TurnCapabilities,
 } from "./generated/dto.generated";
 export type {
+  AcceptResult,
+  AssistantEditResult,
+  BranchView,
+  DeriveResult,
   DirectorBeat,
   DirectorBeatProgress,
   DirectorEvidence,
@@ -21,6 +30,7 @@ export type {
   DirectorSummary,
   MemoryUsage,
   ModelInstance,
+  TurnCapabilities,
 };
 
 export interface TextBlock {
@@ -109,13 +119,7 @@ export interface PlotNode {
   createdAt: string;
 }
 
-export interface BranchView {
-  branchId: string;
-  name: string;
-  headNodeId: string;
-  version: number;
-	activeTurnId?: string;
-}
+// BranchView 字段形状由 Go 生成（见文件顶部再导出）。
 
 export interface RelationValue {
   affection: number;
@@ -252,15 +256,7 @@ export interface LorebookPage {
   nextOffset: number;
 }
 
-/** 分支派生（分叉 / 重生成 / 编辑玩家输入）的受理结果。 */
-export interface DeriveResult {
-  branch: BranchView;
-  branchId: string;
-  turnId: string;
-  status: string;
-  statusUrl?: string;
-  eventsUrl?: string;
-}
+// DeriveResult / AssistantEditResult / AcceptResult 字段形状由 Go 生成（见文件顶部再导出）。
 
 /** 剧情包导入结果（后端分配新会话）。 */
 export interface ImportResult {
@@ -272,13 +268,7 @@ export interface ImportResult {
   assets?: number;
 }
 
-/** 编辑助手正文的结果：同步提交的纯叙事候选。 */
-export interface AssistantEditResult {
-  branch: BranchView;
-  branchId: string;
-  nodeId: string;
-  mode: string;
-}
+/** 编辑助手正文的结果：同步提交的纯叙事候选（字段形状见文件顶部再导出）。 */
 
 export interface SessionSummary {
   sessionId: string;
@@ -289,12 +279,7 @@ export interface SessionSummary {
   rootNodeId?: string;
 }
 
-export interface AcceptResult {
-  turnId: string;
-  status: string;
-  statusUrl: string;
-  eventsUrl: string;
-}
+// AcceptResult 字段形状由 Go 生成（见文件顶部再导出）。
 
 export interface TurnView {
   turnId: string;

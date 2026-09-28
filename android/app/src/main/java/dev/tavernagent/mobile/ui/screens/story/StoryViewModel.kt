@@ -608,7 +608,7 @@ class StoryViewModel(
             if (view != null) {
                 applyView(view)
                 repository.rememberLocation(view.sessionId, view.branch.branchId, view.branch.headNodeId, view.title)
-                view.branch.activeTurnId?.takeIf { it.isNotBlank() }?.let { startStream(it) }
+                view.branch.activeTurnId.takeIf { it.isNotBlank() }?.let { startStream(it) }
             }
         }
     }

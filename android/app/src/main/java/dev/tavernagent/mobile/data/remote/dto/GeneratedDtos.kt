@@ -80,3 +80,47 @@ data class MemoryUsageDto(
     val reclaimable: Int = 0,
 )
 
+@Serializable
+data class BranchDto(
+    val branchId: String = "",
+    val name: String = "",
+    val headNodeId: String = "",
+    val version: Long = 0L,
+    val activeTurnId: String = "",
+)
+
+@Serializable
+data class TurnCapabilitiesDto(
+    val canCancel: Boolean = false,
+    val canContinue: Boolean = false,
+    val canRetry: Boolean = false,
+    val terminal: Boolean = false,
+)
+
+@Serializable
+data class AcceptTurnResponseDto(
+    val turnId: String = "",
+    val status: String = "",
+    val statusUrl: String = "",
+    val eventsUrl: String = "",
+)
+
+@Serializable
+data class DeriveTurnResponseDto(
+    val branch: BranchDto = BranchDto(),
+    val branchId: String = "",
+    val turnId: String = "",
+    val status: String = "",
+    val statusUrl: String = "",
+    val eventsUrl: String = "",
+    val headNodeId: String = "",
+)
+
+@Serializable
+data class AssistantEditResponseDto(
+    val branch: BranchDto = BranchDto(),
+    val branchId: String = "",
+    val nodeId: String = "",
+    val mode: String = "",
+)
+

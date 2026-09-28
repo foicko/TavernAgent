@@ -87,15 +87,7 @@ data class SessionDto(
 @Serializable
 data class SessionListDto(val sessions: List<SessionDto> = emptyList())
 
-@Serializable
-data class BranchDto(
-    val branchId: String = "",
-    val sessionId: String? = null,
-    val name: String = "",
-    val headNodeId: String = "",
-    val version: Long = 0,
-    val activeTurnId: String? = null,
-)
+// BranchDto 由 Go 生成（GeneratedDtos.kt），此处不再手写。
 
 @Serializable
 data class BranchListDto(val branches: List<BranchDto> = emptyList())

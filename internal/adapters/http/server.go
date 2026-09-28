@@ -371,14 +371,14 @@ func (s *Server) regenerateTurn(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, err)
 		return
 	}
-	writeJSON(w, 202, map[string]any{
-		"branch":     res.Branch,
-		"branchId":   res.Branch.BranchID,
-		"turnId":     res.Turn.TurnID,
-		"status":     res.Turn.Status,
-		"statusUrl":  "/api/v1/turns/" + res.Turn.TurnID,
-		"eventsUrl":  "/api/v1/turns/" + res.Turn.TurnID + "/events",
-		"headNodeId": res.Branch.HeadNodeID,
+	writeJSON(w, 202, application.DeriveResponse{
+		Branch:     application.BranchViewOf(res.Branch),
+		BranchID:   res.Branch.BranchID,
+		TurnID:     res.Turn.TurnID,
+		Status:     res.Turn.Status,
+		StatusURL:  "/api/v1/turns/" + res.Turn.TurnID,
+		EventsURL:  "/api/v1/turns/" + res.Turn.TurnID + "/events",
+		HeadNodeID: res.Branch.HeadNodeID,
 	})
 }
 
@@ -422,13 +422,13 @@ func (s *Server) editTurn(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, err)
 			return
 		}
-		writeJSON(w, 202, map[string]any{
-			"branch":    res.Branch,
-			"branchId":  res.Branch.BranchID,
-			"turnId":    res.Turn.TurnID,
-			"status":    res.Turn.Status,
-			"statusUrl": "/api/v1/turns/" + res.Turn.TurnID,
-			"eventsUrl": "/api/v1/turns/" + res.Turn.TurnID + "/events",
+		writeJSON(w, 202, application.DeriveResponse{
+			Branch:    application.BranchViewOf(res.Branch),
+			BranchID:  res.Branch.BranchID,
+			TurnID:    res.Turn.TurnID,
+			Status:    res.Turn.Status,
+			StatusURL: "/api/v1/turns/" + res.Turn.TurnID,
+			EventsURL: "/api/v1/turns/" + res.Turn.TurnID + "/events",
 		})
 	case len(req.Blocks) > 0:
 		res, err := s.branches.EditAssistantText(r.Context(), sessionID, application.AssistantEditRequest{
@@ -439,11 +439,11 @@ func (s *Server) editTurn(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, err)
 			return
 		}
-		writeJSON(w, 201, map[string]any{
-			"branch":   res.Branch,
-			"branchId": res.Branch.BranchID,
-			"nodeId":   res.Node.NodeID,
-			"mode":     "narrative",
+		writeJSON(w, 201, application.AssistantEditResponse{
+			Branch:   application.BranchViewOf(res.Branch),
+			BranchID: res.Branch.BranchID,
+			NodeID:   res.Node.NodeID,
+			Mode:     "narrative",
 		})
 	default:
 		writeError(w, 400, "EDIT_EMPTY", "需要 input（编辑玩家输入）或 blocks（编辑助手正文）", false, "")
@@ -487,11 +487,11 @@ func (s *Server) acceptTurn(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, err)
 		return
 	}
-	writeJSON(w, 202, map[string]any{
-		"turnId":    turn.TurnID,
-		"status":    turn.Status,
-		"statusUrl": "/api/v1/turns/" + turn.TurnID,
-		"eventsUrl": "/api/v1/turns/" + turn.TurnID + "/events",
+	writeJSON(w, 202, application.AcceptResult{
+		TurnID:    turn.TurnID,
+		Status:    turn.Status,
+		StatusURL: "/api/v1/turns/" + turn.TurnID,
+		EventsURL: "/api/v1/turns/" + turn.TurnID + "/events",
 	})
 }
 

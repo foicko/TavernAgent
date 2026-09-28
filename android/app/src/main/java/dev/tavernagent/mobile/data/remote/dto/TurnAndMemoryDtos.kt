@@ -4,41 +4,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 // ---- 回合 ----
-
-@Serializable
-data class AcceptTurnResponseDto(
-    val turnId: String = "",
-    val status: String = "",
-    val statusUrl: String? = null,
-    val eventsUrl: String? = null,
-)
-
-@Serializable
-data class DeriveTurnResponseDto(
-    val branch: BranchDto? = null,
-    val branchId: String = "",
-    val turnId: String = "",
-    val status: String = "",
-    val statusUrl: String? = null,
-    val eventsUrl: String? = null,
-    val headNodeId: String? = null,
-)
-
-@Serializable
-data class AssistantEditResponseDto(
-    val branch: BranchDto? = null,
-    val branchId: String = "",
-    val nodeId: String = "",
-    val mode: String? = null,
-)
-
-@Serializable
-data class TurnCapabilitiesDto(
-    val canCancel: Boolean = false,
-    val canContinue: Boolean = false,
-    val canRetry: Boolean = false,
-    val terminal: Boolean = false,
-)
+// AcceptTurnResponseDto / DeriveTurnResponseDto / AssistantEditResponseDto /
+// TurnCapabilitiesDto 由 Go 生成（GeneratedDtos.kt），此处不再手写。
 
 @Serializable
 data class InFlightDto(

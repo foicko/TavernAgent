@@ -53,12 +53,13 @@
   Kotlin 生成物与手写 DTO 同包，直接删除被覆盖的手写 data class。
 - CI：`go run ./cmd/gencontract --check`（生成物过期即失败）。
 
-**当前覆盖（第一批）**：`DirectorEvidence` / `DirectorBeat` / `DirectorPlan` / `DirectorBeatProgress` /
-`DirectorState` / `DirectorSummary` / `ModelInstance` / `MemoryUsage`。清单在 `cmd/gencontract/main.go` 的 `manifest`。
+**当前覆盖**：`DirectorEvidence` / `DirectorBeat` / `DirectorPlan` / `DirectorBeatProgress` /
+`DirectorState` / `DirectorSummary` / `ModelInstance` / `MemoryUsage` / `BranchView` /
+`TurnCapabilities` / `AcceptResult` / `DeriveResult` / `AssistantEditResult`。清单在 `cmd/gencontract/main.go` 的 `manifest`。
 
-**尚未覆盖**：`SessionView`、`TurnView`/`TurnContent`、`WorldState`、`MemoryView` 等。
-其中 `TurnView` 等是 `http` 层的 **ad-hoc `map[string]any` 响应（全仓 44 处）**，没有可反射的 Go 结构体——
-必须先把它们重构成具名 struct，才能纳入生成。这是下一步，也是「覆盖全部」的前置。
+**尚未覆盖**：`TurnView`/`TurnContent`、`SessionView`、`WorldState`、`MemoryView`、`CardPreview` 等。
+`TurnView` 等曾是 `http` 层的 **ad-hoc `map[string]any` 响应**——已把回合受理/派生/编辑结果改成具名
+struct 并纳入生成；其余同类 map 响应仍待重构。这是「覆盖全部」的前置。
 
 ## 5. 生成器的类型映射
 

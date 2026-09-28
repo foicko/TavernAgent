@@ -70,3 +70,42 @@ export interface MemoryUsage {
   reclaimable: number;
 }
 
+export interface BranchView {
+  branchId: string;
+  name: string;
+  headNodeId: string;
+  version: number;
+  activeTurnId?: string;
+}
+
+export interface TurnCapabilities {
+  canCancel: boolean;
+  canContinue: boolean;
+  canRetry: boolean;
+  terminal: boolean;
+}
+
+export interface AcceptResult {
+  turnId: string;
+  status: string;
+  statusUrl: string;
+  eventsUrl: string;
+}
+
+export interface DeriveResult {
+  branch: BranchView;
+  branchId: string;
+  turnId: string;
+  status: string;
+  statusUrl?: string;
+  eventsUrl?: string;
+  headNodeId?: string;
+}
+
+export interface AssistantEditResult {
+  branch: BranchView;
+  branchId: string;
+  nodeId: string;
+  mode: string;
+}
+
