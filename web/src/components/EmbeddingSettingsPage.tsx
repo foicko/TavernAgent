@@ -19,8 +19,6 @@ export function EmbeddingSettingsPage() {
   const apiKey = useEmbeddingSettings((s) => s.apiKey);
   const model = useEmbeddingSettings((s) => s.model);
   const dimension = useEmbeddingSettings((s) => s.dimension);
-  const hybridRRFWeight = useEmbeddingSettings((s) => s.hybridRRFWeight);
-  const topK = useEmbeddingSettings((s) => s.topK);
 
   const setEnabled = useEmbeddingSettings((s) => s.setEnabled);
   const setProvider = useEmbeddingSettings((s) => s.setProvider);
@@ -28,8 +26,6 @@ export function EmbeddingSettingsPage() {
   const setApiKey = useEmbeddingSettings((s) => s.setApiKey);
   const setModel = useEmbeddingSettings((s) => s.setModel);
   const setDimension = useEmbeddingSettings((s) => s.setDimension);
-  const setHybridRRFWeight = useEmbeddingSettings((s) => s.setHybridRRFWeight);
-  const setTopK = useEmbeddingSettings((s) => s.setTopK);
 
   const applyBgeSmallOllama = useEmbeddingSettings((s) => s.applyBgeSmallOllama);
   const applySiliconFlow = useEmbeddingSettings((s) => s.applySiliconFlow);
@@ -96,8 +92,8 @@ export function EmbeddingSettingsPage() {
         <Switch
           checked={enabled}
           onChange={setEnabled}
-          label="启用向量语义增强检索 (Hybrid RRF)"
-          hint="开启后将结合 FTS5 稀疏词法索引与稠密向量相似度（Reciprocal Rank Fusion），大幅提升长程隐式记忆与代词指代召回率。"
+          label="启用向量语义检索"
+          hint="配置并探测 OpenAI-compatible 的 /v1/embeddings 服务；密钥不落盘。"
         />
 
         <div className="embedding-two-col">
@@ -162,33 +158,7 @@ export function EmbeddingSettingsPage() {
               }}
             />
           </Field>
-
-          <Field label="召回候选上限 (Top-K)" hint="检索出的记忆候选条数（默认 5 条）。">
-            <TextInput
-              type="number"
-              value={String(topK)}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                if (!isNaN(val) && val > 0) setTopK(val);
-              }}
-            />
-          </Field>
         </div>
-
-        <Field
-          label={`检索融合权重：词法 BM25 ${(1 - hybridRRFWeight).toFixed(2)} : 向量语义 ${hybridRRFWeight.toFixed(2)}`}
-          hint="控制倒数排名融合（RRF）中词法匹配与语义向量的偏向（推荐 0.50 均衡）。"
-        >
-          <input
-            type="range"
-            min="0.1"
-            max="0.9"
-            step="0.05"
-            value={hybridRRFWeight}
-            className="embedding-slider"
-            onChange={(e) => setHybridRRFWeight(parseFloat(e.target.value))}
-          />
-        </Field>
 
         <div className="embedding-tip-box">
           <Icon name="lightbulb" size={13} className="embedding-tip-icon" />

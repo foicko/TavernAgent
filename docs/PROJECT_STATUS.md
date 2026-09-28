@@ -121,9 +121,8 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 - **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
   （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
 - **样式层**：`!important` 存量已从 245 处降至 4 处（仅保留 `Button` 的 reduced-motion 归零、`Modal` 动画归零与无障碍原语）；跨文件重复选择器 18→0、颜色字面值与玻璃残留归零，门禁基线已收紧锁定。
-- **壳层便捷入口回退**：`-lan`（第二屏便捷开关）与 `-autostart`
-  （开机自启）两个入口尚缺；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
-  可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是否补回 `cmd/tavernagent` 的参数。
+- **壳层便捷入口回退**：`-lan`（第二屏便捷开关）尚缺；无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
+  可等价实现第二屏。`-autostart`（开机自启）与其底层包 `internal/util/autostart` 已随重构删除，待决定是否重做。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
 - **单元测试面收窄（2026-09）**：按精简策略删除了纯领域/解析/映射/UI 原语的单测，这些模块的回归风险改由浏览器 e2e、手工验证与类型/lint 门禁承担；新增功能默认不补单测，除非触及安全边界或不可逆路径。
 
@@ -135,7 +134,7 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
    - **P2-A MCP 协议服务**：`internal/adapters/mcp` 提供标准 JSON-RPC 2.0 stdio 服务，支持外部 AI (Claude Desktop, Cursor) 读取会话、状态、记忆与提示词。
    - **P2-B 单二进制 CLI 工具链**：`cmd/tavernctl` 提供 `audit`（数据库自检）、`prompt`（上下文提示词解析）、`mcp`（启动 MCP 服务）、`pack`（归档导入导出）。
    - **P3-A SQLite 双轨编译**：默认无依赖纯 Go (`modernc.org/sqlite`)，可选支持高性能 CGO 原生驱动 (`-tags cgo`，`mattn/go-sqlite3`)。
-   - **P3-B 混合向量检索接口**：`internal/ports/vector.go` 与 `internal/search/hybrid.go` 提供向量嵌入端口与 RRF (Reciprocal Rank Fusion) 混合重排能力。
+   - **P3-B 混合向量检索（已删除）**：原 `internal/search/hybrid.go`（RRF / 内存向量索引）从未接线，已随重构删除；仅保留 `internal/ports` 的 embeddings 端口与 `internal/adapters/embedding` 的探测/计算端点（设置页「记忆向量」可用）。
 2. **发布闭环**：完成真实模型协议/叙事验收（含 `longplay` 随机卡长程应用验收）与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
 3. **M5 后续规划**：群像聚光灯、立绘动作表情联动、多 NPC 视角隔离。
 4. **LAN 增强**：第二设备网络/防火墙实机验证（HTTPS 通道与配对流程已有自动化冒烟：

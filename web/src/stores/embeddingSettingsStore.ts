@@ -10,8 +10,6 @@ export interface EmbeddingSettingsState {
   apiKey: string;
   model: string;
   dimension: number;
-  hybridRRFWeight: number; // 0.0 ~ 1.0, 0.5 means equal weight for lexical and vector
-  topK: number;
 
   setEnabled: (enabled: boolean) => void;
   setProvider: (provider: EmbeddingProviderType) => void;
@@ -19,8 +17,6 @@ export interface EmbeddingSettingsState {
   setApiKey: (apiKey: string) => void;
   setModel: (model: string) => void;
   setDimension: (dimension: number) => void;
-  setHybridRRFWeight: (weight: number) => void;
-  setTopK: (topK: number) => void;
 
   applyBgeSmallOllama: () => void;
   applySiliconFlow: () => void;
@@ -37,8 +33,6 @@ export const DEFAULT_EMBEDDING_SETTINGS = {
   apiKey: "",
   model: "bge-small-zh-v1.5",
   dimension: 512,
-  hybridRRFWeight: 0.5,
-  topK: 5,
 };
 
 export const useEmbeddingSettings = create<EmbeddingSettingsState>()(
@@ -52,8 +46,6 @@ export const useEmbeddingSettings = create<EmbeddingSettingsState>()(
       setApiKey: (apiKey) => set({ apiKey }),
       setModel: (model) => set({ model }),
       setDimension: (dimension) => set({ dimension }),
-      setHybridRRFWeight: (hybridRRFWeight) => set({ hybridRRFWeight }),
-      setTopK: (topK) => set({ topK }),
 
       applyBgeSmallOllama: () =>
         set({
@@ -107,8 +99,6 @@ export const useEmbeddingSettings = create<EmbeddingSettingsState>()(
         baseUrl: state.baseUrl,
         model: state.model,
         dimension: state.dimension,
-        hybridRRFWeight: state.hybridRRFWeight,
-        topK: state.topK,
       }),
     }
   )

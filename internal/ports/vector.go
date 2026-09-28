@@ -1,22 +1,13 @@
-// Package ports defines embedding and vector retrieval port contracts for TavernAgent.
-// These interfaces support hybrid lexical-semantic retrieval (BM25 + Dense Vector Embeddings)
-// while keeping the domain and application layers decoupled from specific embedding backends.
+// Package ports defines embedding port contracts for TavernAgent.
+//
+// The embedding provider abstraction keeps the application layer decoupled from
+// specific embedding backends (OpenAI-compatible REST, Ollama, vLLM, ...).
 package ports
 
-import (
-	"context"
+import "context"
 
-	"tavernagent/internal/search"
-)
-
-// Vector aliases the core vector slice type from search.
-type Vector = search.Vector
-
-// VectorMatch aliases the scored match type from search.
-type VectorMatch = search.VectorMatch
-
-// VectorIndex aliases the vector storage and nearest-neighbor search port.
-type VectorIndex = search.VectorIndex
+// Vector is a dense embedding vector.
+type Vector []float32
 
 // EmbeddingProvider transforms raw text into vector representations.
 // Implementations can wrap OpenAI embeddings, Ollama, ONNX Runtime, or local microservices.

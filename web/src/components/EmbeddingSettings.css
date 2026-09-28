@@ -32,12 +32,6 @@
   margin-top: var(--space-2);
 }
 
-.embedding-slider {
-  width: 100%;
-  accent-color: var(--accent-solid);
-  cursor: pointer;
-}
-
 .embedding-probe-card {
   margin-top: var(--space-2);
   padding: var(--space-3);
