@@ -16,6 +16,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,6 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -187,7 +191,7 @@ private fun SlotCard(
                 )
             }
             Box {
-                OutlinedButton(onClick = { menuOpen = true }, enabled = !busy || true, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { menuOpen = true }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = models.firstOrNull { it.id == selected }?.let { "${it.name}（${it.model ?: it.kind}）" }
                             ?: "选择模型连接…",
@@ -200,7 +204,8 @@ private fun SlotCard(
                             onClick = {
                                 menuOpen = false
                                 selected = model.id
-                                if (enabled) onSave(enabled, model.id)
+                                // 槽位关闭时也要持久化 modelId：否则刷新后选择丢失。
+                                onSave(enabled, model.id)
                             },
                         )
                     }
@@ -280,6 +285,7 @@ private fun ModelEditDialog(
     var baseUrl by remember { mutableStateOf(initial.baseUrl.orEmpty()) }
     var model by remember { mutableStateOf(initial.model.orEmpty()) }
     var apiKey by remember { mutableStateOf("") }
+    var showKey by remember { mutableStateOf(false) }
     var contextWindow by remember { mutableStateOf(initial.contextWindow.takeIf { it > 0 }?.toString() ?: "128000") }
     var maxTokens by remember { mutableStateOf(initial.maxTokens.takeIf { it > 0 }?.toString() ?: "8192") }
     var kindMenu by remember { mutableStateOf(false) }
@@ -327,6 +333,16 @@ private fun ModelEditDialog(
                     label = { Text(if (initial.hasApiKey) "API Key（留空表示保留原密钥）" else "API Key") },
                     singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Password),
+                    // 默认遮蔽，避免密钥明文显示/被截屏；右侧可切换可见性。
+                    visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showKey = !showKey }) {
+                            Icon(
+                                if (showKey) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (showKey) "隐藏密钥" else "显示密钥",
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(

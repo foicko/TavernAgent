@@ -117,7 +117,7 @@ class GenerationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, GenerationNotifications.CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_edit)
+            .setSmallIcon(R.drawable.ic_stat_tavern)
             .setContentTitle(title.ifBlank { getString(R.string.app_name) })
             .setContentText(text)
             .setOngoing(ongoing)
@@ -183,7 +183,7 @@ class NotificationPresenter(context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = NotificationCompat.Builder(appContext, GenerationNotifications.CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_edit)
+            .setSmallIcon(R.drawable.ic_stat_tavern)
             .setContentTitle(state.sessionTitle.ifBlank { "TavernAgent" })
             .setContentText(if (success) "回复已完成" else (state.error ?: "生成未完成"))
             .setAutoCancel(true)
