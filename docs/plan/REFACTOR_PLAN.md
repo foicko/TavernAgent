@@ -19,7 +19,7 @@
 - 提交序列：`B2 → B5 → B1(收尾) → B3 → B4`（先低风险、后高爆炸半径；B5 为 B3/B4 清障）。
 - 每阶段提交前保留可回滚点：阶段粒度越细越好，B4 内部再拆 4 个子提交。
 
-## 2. B1 砍不发货 surface（基本已完成）
+## 2. B1 砍不发货 surface（✅ 已完成）
 
 **已完成**：`showcase/` → `archive/showcase/`；`FIX_PLAN.md`/`OPTIMIZATION_PLAN.md` → `docs/plan/`；
 路径引用（`.gitignore`、`dev-showcase.ps1`、`AGENTS.md`）已同步。
@@ -31,7 +31,7 @@
 
 **验收**：顶层目录仅 `internal web android scripts docs archive cmd LICENSES .github testdata`；无脚本引用失效路径。
 
-## 3. B2 死码与未接线能力清算
+## 3. B2 死码与未接线能力清算（✅ 已完成）
 
 权威信号：`golangci-lint unused`（0）已清；`deadcode` 候选 41 个需逐条裁决。
 
@@ -125,7 +125,7 @@
 
 **验收**：`application` 文件数显著下降；对外 import 路径不变（除新子包）；全门禁绿；无循环依赖。
 
-## 6. B5 分层修正 + 门禁（为 B3/B4 清障）
+## 6. B5 分层修正 + 门禁（✅ 已完成）
 
 - 现状：`internal/domain/organizer.go` 与 `internal/ports/vector.go` import `internal/search`（反向依赖）。
 - 方案：
