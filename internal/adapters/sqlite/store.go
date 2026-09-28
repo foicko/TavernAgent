@@ -237,11 +237,6 @@ func MarshalState(s *domain.WorldState) string {
 	return b
 }
 
-// UnmarshalState 反序列化世界状态。
-func UnmarshalState(data string) (*domain.WorldState, error) {
-	return domain.UnmarshalWorld(data)
-}
-
 // SaveSummary 写入摘要产物（实现见 summaries.go，此处满足 ports.Store 组合）。
 // SaveSummary 由 summaries.go 提供。
 

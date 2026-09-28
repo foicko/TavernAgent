@@ -108,10 +108,6 @@ func (d *requestDrain) wait(timeout time.Duration) error {
 	}
 }
 
-func (s *Server) ListenAndServeContext(ctx context.Context) error {
-	return s.ListenAndServeContextOnReady(ctx, nil)
-}
-
 // ListenAndServeContextOnReady 与 ListenAndServeContext 相同，但在端口真正绑定
 // 成功之后、开始服务之前调用 onReady。调用方据此打印"服务就绪"，避免端口占用
 // 时先报成功、再报失败。

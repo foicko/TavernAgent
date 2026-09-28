@@ -522,18 +522,6 @@ func (s *WorldState) ValidateKeepsakeSlot(ownerID string, newKeepsake bool) erro
 	return nil
 }
 
-// ---- 承诺规则（契约 §5.1） ----
-
-// SettlePromise 结算承诺：校验其未在一事件中重复结算。
-func SettlePromise(p *Promise, target PromiseState, settleReceipt string) error {
-	if p.SettledByRec != "" {
-		return fmt.Errorf("promise %q already settled by receipt %q", p.PromiseID, p.SettledByRec)
-	}
-	p.State = target
-	p.SettledByRec = settleReceipt
-	return nil
-}
-
 // ---- 事件投影 ----
 
 // RelationshipDeltaPayload 是 relationship_delta 事件负载。

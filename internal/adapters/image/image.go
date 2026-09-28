@@ -76,13 +76,6 @@ func NewService(dataDir string) (*Service, error) {
 	}, nil
 }
 
-// SetMock 用于单元测试中注入模拟生成行为。
-func (s *Service) SetMock(fn func(opts GenerateOptions) (*GeneratedImage, error)) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.mockFn = fn
-}
-
 // Generate 根据参数调用对应引擎生成图片并保存至本地文件系统。
 func (s *Service) Generate(ctx context.Context, opts GenerateOptions) (*GeneratedImage, error) {
 	prompt := strings.TrimSpace(opts.Prompt)

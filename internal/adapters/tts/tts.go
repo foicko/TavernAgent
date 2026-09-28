@@ -117,13 +117,6 @@ func NewService() *Service {
 	}
 }
 
-// SetMock 用于单元测试注入固定音频或模拟离线错误。
-func (s *Service) SetMock(fn func(voice, text string) ([]byte, error)) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.mockFn = fn
-}
-
 // Voices 返回当前支持的音色列表。
 func (s *Service) Voices() []Voice {
 	return DefaultVoices()

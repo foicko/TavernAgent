@@ -3,7 +3,6 @@ package mock
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -124,17 +123,8 @@ func chunk(s string, n int) []string {
 // Frame 返回一行协议帧。
 func Frame(json string) Item { return Item{Line: json + "\n"} }
 
-// Fault 返回带故障的项。
-func Fault(err error) Item { return Item{Err: err} }
-
 var ErrSimulatedNetwork = fmt.Errorf("simulated network failure")
 var ErrSimulatedTruncation = fmt.Errorf("simulated truncation")
-
-// BuildLine 构造一行 JSON 帧。
-func BuildLine(v any) (string, error) {
-	b, err := json.Marshal(v)
-	return string(b), err
-}
 
 // DefaultStoryScript 返回一条可完整提交的演示回合（M0 开发体验用）。
 func DefaultStoryScript() []Item {

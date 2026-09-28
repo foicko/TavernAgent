@@ -100,9 +100,6 @@ func (p *StreamParser) Bytes() int { return p.total }
 // Frames 返回已发布的块帧。
 func (p *StreamParser) Blocks() []BlockFrame { return p.draft.Blocks }
 
-// Draft 返回当前已解析产物（不含 final 时也允许预览块）。
-func (p *StreamParser) Draft() TurnDraft { return p.draft }
-
 // Feed 喂入任意 UTF-8 字节块；可跨 chunk 拼接行。
 // 返回第一个校验错误；已发布帧保留在解析器中。
 func (p *StreamParser) Feed(chunk []byte) error {

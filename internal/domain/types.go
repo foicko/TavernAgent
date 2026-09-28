@@ -326,9 +326,6 @@ const (
 	OptionsNever = "never"
 )
 
-// OptionsModes 返回全部合法选项模式。
-func OptionsModes() []string { return []string{OptionsAuto, OptionsAlways, OptionsNever} }
-
 // NormalizeOptionsMode 把外部传入的取值归一到合法集合；未知值一律回到 auto。
 func NormalizeOptionsMode(mode string) string {
 	switch mode {

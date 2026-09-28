@@ -65,6 +65,20 @@
 
 - 验收：`deadcode ./...` 输出降为 0（或全部写入 allowlist 并注明"仅测试用/未来接线"）。
 
+**已删除（零引用）**：`domain.SettlePromise`、`domain.OptionsModes`、`cardmarkers.ExtractBlocks`、
+`image.SetMock`、`tts.SetMock`、`mock.Fault`、`mock.BuildLine`、`sqlite.UnmarshalState`、
+`http.Server.ListenAndServe`、`http.Server.ListenAndServeContext`、`mcp.Server.RunStdioServer`、
+`protocol.StreamParser.Draft`。
+
+**保留（allowlist，理由见括号，待复核）**：
+| 符号 | 理由 |
+| --- | --- |
+| `sqlite.HashState` / `MarshalState` | 测试夹具（`helpers_test`/`store_turn_m23`）使用 |
+| `pack.Write` | 测试（`archive_state_integrity`）使用 |
+| `application.NewArchiveService` | 测试用便捷构造器（生产用 `NewArchiveServiceWithAssets`） |
+| `application.MemoryService.{List,Overlay,Usage,branchChain}`、`TurnService.{SetCompactor,SetRuleset,SetRandom,Metrics}`、`CompactorService.RunOnce`、`ProviderManager.Configs` | 疑似保留的公共 API；可能经接口/未来入口使用，需逐条复核后再删 |
+| `context.PromptTemplateNames`、`tts.Service.Synthesize`、`embedding.OpenAIProvider.Endpoint` | 同上，待复核（`Synthesize` 可能经 TTS 端点间接使用） |
+
 ## 4. B3 跨语言契约单源化（收益最大）
 
 ### B3.1 卡片标记语法（Go / TS / Kotlin 三份）

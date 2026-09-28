@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"strings"
 	"sync"
 
@@ -476,9 +475,4 @@ func (s *Server) readResource(ctx context.Context, uri string) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown resource URI: %s", uri)
 	}
-}
-
-// RunStdioServer is a helper that runs the MCP server on os.Stdin and os.Stdout.
-func (s *Server) RunStdioServer(ctx context.Context) error {
-	return s.ServeStdio(ctx, os.Stdin, os.Stdout)
 }

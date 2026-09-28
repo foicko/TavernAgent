@@ -98,18 +98,6 @@ func Extract(text string) (string, []Hint) {
 	return clean, hints
 }
 
-// ExtractBlocks 对多个文本块逐一提取，返回清理后的文本与合并后的提示。
-func ExtractBlocks(texts []string) ([]string, []Hint) {
-	out := make([]string, len(texts))
-	var hints []Hint
-	for i, t := range texts {
-		clean, h := Extract(t)
-		out[i] = clean
-		hints = append(hints, h...)
-	}
-	return out, hints
-}
-
 // Segment 是正文的一小段：纯文本或卡内图片引用。
 type Segment struct {
 	Type     string `json:"type"` // text | image

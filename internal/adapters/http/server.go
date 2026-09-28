@@ -3,7 +3,6 @@
 package http
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -267,11 +266,6 @@ func spaHandler(staticFS fs.FS) http.Handler {
 		r2.URL.Path = "/"
 		fileServer.ServeHTTP(w, r2)
 	})
-}
-
-// ListenAndServe 启动监听（默认回环绑定）。
-func (s *Server) ListenAndServe() error {
-	return s.ListenAndServeContext(context.Background())
 }
 
 // ---- handlers ----
