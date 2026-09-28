@@ -97,6 +97,15 @@ func (s *Server) pairAuth(w http.ResponseWriter, r *http.Request) {
 			delete(s.pairFails, address)
 		}
 	}
+	// 防滥用：失败表键是客户端可控的源地址，不能无界增长。过期清理后仍超上限就逐出若干条。
+	if len(s.pairFails) > maxPairFailEntries {
+		for address := range s.pairFails {
+			delete(s.pairFails, address)
+			if len(s.pairFails) <= maxPairFailEntries {
+				break
+			}
+		}
+	}
 	failure := s.pairFails[ip]
 	if failure.Count >= 10 {
 		w.Header().Set("Retry-After", strconv.Itoa(max(1, int(failure.Expires.Sub(now).Seconds()))))
@@ -122,6 +131,9 @@ type pairFailure struct {
 	Count   int
 	Expires time.Time
 }
+
+// maxPairFailEntries 限制配对失败表的容量，避免源地址伪造把内存撑爆。
+const maxPairFailEntries = 2048
 
 func (s *Server) authStatus(w http.ResponseWriter, r *http.Request) {
 	if !isLANHost(r.Host) {

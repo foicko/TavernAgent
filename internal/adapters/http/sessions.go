@@ -111,14 +111,20 @@ func (s *Server) getGraph(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	up, down := 6, 2
 	if raw := q.Get("up"); raw != "" {
-		if n, err := strconv.Atoi(raw); err == nil && n >= 0 {
-			up = n
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 {
+			writeError(w, 400, "BAD_REQUEST", "up 必须是 >=0 的整数", false, "")
+			return
 		}
+		up = n
 	}
 	if raw := q.Get("down"); raw != "" {
-		if n, err := strconv.Atoi(raw); err == nil && n >= 0 {
-			down = n
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 {
+			writeError(w, 400, "BAD_REQUEST", "down 必须是 >=0 的整数", false, "")
+			return
 		}
+		down = n
 	}
 	target := q.Get("nodeId")
 	if target == "" {

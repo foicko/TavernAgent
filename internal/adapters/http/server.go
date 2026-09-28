@@ -227,6 +227,12 @@ func spaHandler(staticFS fs.FS) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
+		// 只有导航用的 GET/HEAD 才回落到 SPA 外壳；其它方法/未知路径一律 404，
+		// 避免对任意方法、任意路径都返回 200 + HTML。
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.NotFound(w, r)
+			return
+		}
 		cleanPath := strings.TrimPrefix(r.URL.Path, "/")
 		if cleanPath == "" {
 			cleanPath = "index.html"
