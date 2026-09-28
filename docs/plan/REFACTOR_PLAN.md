@@ -103,8 +103,21 @@
 
 ## 5. B4 拆 `internal/application`（54 文件，最大爆炸半径）
 
-**目标**：从"1 个 54 文件大包"降为"1 个门面包 + 若干子包"，**保持 `application` 对外 API 不变**（facade + 类型别名），
-避免全仓 import 改动。
+**依赖分析结论（本次实测）**：包内高度耦合——按"跨文件顶层符号引用"统计，即便引用最少的
+`avatar_resolve.go`/`calibration.go`/`capabilities.go` 等也互相引用；`pngcard.go`/`charx.go`/`tacard.go`
+各引用 12–14 个其他文件。**直接移动文件必然产生 import cycle**（子包要用父包的未导出类型/函数）。
+因此 B4 不能"按目录搬"，必须先设计接口边界。
+
+**可行设计（建议的第一步：抽 `application/card`）**：
+1. 定义 `card.Deps` 接口（只声明卡片导入所需：`ports.Store`、`ports.CardAssetStore`、日志/时钟），
+   把 `pngcard.go`/`tacard.go`/`charx.go`/`cardarchive.go`/`cardui.go` 迁入 `application/card`。
+2. 它们当前引用的 `coalescing`/`cognitive`/`compactor` 等，经核查多为共享辅助（哈希、资产落盘）——
+   先下沉为 `application/internal/…` 或 `internal/textutil` 一类叶子，再迁。
+3. `application` 侧保留同名门面（`type CardService = card.Service` 等），对外 import 不变。
+4. 逐个验证：每迁一个子包即跑全门禁 + `layering_check`。
+
+**结论**：B4 是**设计驱动**的多提交工作，不应一次性大爆炸；建议在 B3 完成后单独排期，
+按"先下沉共享辅助 → 再抽 `card` → 再 `director`/`memory`"推进。
 
 建议分包（先做前三档，`media/session` 视收益再定）：
 | 子包 | 从现有文件吸收 |
