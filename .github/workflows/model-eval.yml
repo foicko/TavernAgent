@@ -23,7 +23,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: model-eval-${{ github.ref }}
+  # 固定组名：同一时间只允许一个评测在跑，其余排队（避免并发消耗付费额度）。
+  # 成本控制建议：在仓库设置里为本工作流配置 `environment: model-eval` 以要求人工审批。
+  group: model-eval
   cancel-in-progress: false
 
 jobs:
