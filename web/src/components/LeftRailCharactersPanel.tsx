@@ -1,6 +1,7 @@
 import React from "react";
 import { Icon } from "../ui/Icon";
 import { EmptyState } from "../ui/EmptyState";
+import { ListRow } from "../ui/ListRow";
 import { CharacterCardRow } from "./CharacterCardRow";
 import { CHARACTER_PRESETS, SELECTABLE_PRESET_KEYS } from "../lib/characterPresets";
 import { openCard } from "../lib/cardLaunch";
@@ -21,7 +22,6 @@ interface LeftRailCharactersPanelProps {
   selectCharacter: (key: string) => Promise<unknown>;
   setCharImportOpen: (open: boolean) => void;
   toggleLeftRail: () => void;
-  activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
   style?: React.CSSProperties;
 }
 
@@ -37,7 +37,6 @@ export const LeftRailCharactersPanel: React.FC<LeftRailCharactersPanelProps> = (
   selectCharacter,
   setCharImportOpen,
   toggleLeftRail,
-  activateOnKey,
   style,
 }) => {
   const totalCards = SELECTABLE_PRESET_KEYS.length + importedCards.length;
@@ -106,38 +105,27 @@ export const LeftRailCharactersPanel: React.FC<LeftRailCharactersPanelProps> = (
         const isActive = c.key === activeCharKey;
         const count = sessions.filter((s) => resolveCharKeyFromSession(s) === c.key).length;
         return (
-          <div
+          <ListRow
             key={c.key}
-            className={`char-card-entry ${isActive ? "active" : ""}`}
             id={`roster-card-${c.key}`}
-            role="button"
-            tabIndex={0}
-            aria-pressed={isActive}
-            aria-label={`切换到角色 ${c.name}`}
-            onClick={() => {
+            className="char-card-entry"
+            leading={<img src={c.avatar} alt={c.name} className="char-card-thumb" />}
+            title={<span className="char-card-name">{c.name}</span>}
+            subtitle={<span className="char-card-desc">{c.role}</span>}
+            meta={
+              <span className="char-card-badge">
+                {isActive ? "当前激活" : count > 0 ? `${count}个存档` : "待起步"}
+              </span>
+            }
+            selected={isActive}
+            onSelect={() => {
               void selectCharacter(c.key);
               if (typeof window !== "undefined" && window.innerWidth <= 768) {
                 toggleLeftRail();
               }
             }}
-            onKeyDown={activateOnKey(() => {
-              void selectCharacter(c.key);
-              if (typeof window !== "undefined" && window.innerWidth <= 768) {
-                toggleLeftRail();
-              }
-            })}
-          >
-            <img src={c.avatar} alt={c.name} className="char-card-thumb" />
-            <div className="char-card-info">
-              <div className="char-card-name-row">
-                <span className="char-card-name">{c.name}</span>
-                <span className="char-card-badge">
-                  {isActive ? "当前激活" : count > 0 ? `${count}个存档` : "待起步"}
-                </span>
-              </div>
-              <span className="char-card-desc">{c.role}</span>
-            </div>
-          </div>
+            ariaLabel={`切换到角色 ${c.name}`}
+          />
         );
       })}
     </div>

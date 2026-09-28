@@ -142,14 +142,6 @@
   background: var(--color-danger-bg);
 }
 
-/* 行尾动作靠 margin-left:auto 顶到右边：载体本身已是横向 flex
-   （.char-card-entry 与 .session-card-main 在 styles.css 里定义），
-   这里只补两处会因为新增按钮而暴露的溢出行为。 */
-.session-card-content,
-.char-card-info {
-  min-width: 0;
-}
-
 /* 按下反馈：只改配色、不动几何——几何一变，鼠标抬起时就可能已经不在原按钮上，
    浏览器会把 click 派发给整行，行内的删除按钮就收不到点击。 */
 .session-entry-card:active,

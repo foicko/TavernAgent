@@ -146,16 +146,6 @@ export const LeftRail: React.FC = () => {
     }));
   }, [hasBackendNodes, currentView, liveRel, char.treeNodes]);
 
-  const activateOnKey = (run: () => void) => (event: React.KeyboardEvent) => {
-    // 只响应行本身获得焦点时的按键：行内嵌的删除 / 分支按钮冒泡上来的 Enter/Space
-    // 要留给按钮自己（否则会被 preventDefault 吞掉并误触发整行动作）。
-    if (event.target !== event.currentTarget) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      run();
-    }
-  };
-
   const filteredLore = INITIAL_LORE_ENTRIES.filter((e) => {
     if (!loreFilter) return true;
     const q = loreFilter.toLowerCase();
@@ -264,7 +254,6 @@ export const LeftRail: React.FC = () => {
             selectCharacter={selectCharacter}
             setCharImportOpen={setCharImportOpen}
             toggleLeftRail={toggleLeftRail}
-            activateOnKey={activateOnKey}
           />
 
           {/* 3. 世界书 */}

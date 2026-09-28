@@ -15,6 +15,8 @@ export interface ListRowProps {
   onSelect?: () => void;
   /** 覆盖可访问名（默认取 title 的文本）。 */
   ariaLabel?: string;
+  /** 行根元素的 id（既有 e2e 依赖 `#roster-card-*`）。 */
+  id?: string;
   className?: string;
 }
 
@@ -28,6 +30,7 @@ export function ListRow({
   disabled = false,
   onSelect,
   ariaLabel,
+  id,
   className = "",
 }: ListRowProps) {
   const classes = [
@@ -40,7 +43,7 @@ export function ListRow({
     .join(" ");
 
   return (
-    <div className={classes}>
+    <div id={id} className={classes}>
       <button
         type="button"
         className="ui-list-row__main"

@@ -169,51 +169,6 @@
   margin-bottom: 12px;
 }
 
-.char-card-entry {
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  padding: 10px;
-  cursor: pointer;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  transition: border-color var(--duration-quick) var(--ease-smooth-out),
-              background-color var(--duration-quick) var(--ease-smooth-out),
-              box-shadow var(--duration-quick) var(--ease-smooth-out);
-}
-
-.char-card-entry:hover {
-  border-color: var(--border-mid);
-  box-shadow: var(--shadow-sm);
-}
-
-.char-card-entry.active {
-  border-color: var(--accent-solid);
-  background: var(--bg-surface);
-  box-shadow: 0 0 0 1px var(--accent-solid);
-}
-
-/* 行内主操作是真实按钮（与行尾删除控件并列，不嵌套交互元素）。 */
-.char-card-main {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.char-card-main:disabled {
-  cursor: default;
-}
-
 .char-card-thumb {
   width: 40px;
   height: 40px;
@@ -221,20 +176,6 @@
   object-fit: cover;
   border: 1px solid var(--border-light);
   flex-shrink: 0;
-}
-
-.char-card-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.char-card-name-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .char-card-name {
