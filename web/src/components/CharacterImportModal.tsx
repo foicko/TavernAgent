@@ -165,12 +165,12 @@ export const CharacterImportModal: React.FC = () => {
       if (sequence !== parseSequence.current) return;
       setCharImportOpen(false);
       if (window.innerWidth < 1024) useUi.getState().closeAllDrawers();
-      notifyQuiet(storageWarning || "角色已成功导入并开启新篇章！");
+      notifyQuiet(storageWarning || "角色已成功导入并开启新篇章！", storageWarning ? "warning" : "success");
     } catch (error) {
       if (sequence !== parseSequence.current) return;
       const message = "导入失败：" + (error instanceof Error ? error.message : String(error));
       setError(message);
-      notifyQuiet(message);
+      notifyQuiet(message, "danger");
     } finally {
       if (sequence === parseSequence.current) setCreating(false);
     }

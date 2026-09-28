@@ -8,6 +8,7 @@ import { findCardByCharacterId, findCardByName, getSessionAvatar } from "../lib/
 import { resolveCharKeyFromSession } from "../stores/storyStore";
 import { useUi, type LeftSubtab } from "../stores/uiStore";
 import type { SessionView, SessionSummary } from "../app/types";
+import type { ToastTone } from "../ui/Toast";
 
 function formatSessionTime(isoString?: string): string {
   if (!isoString) return "最近";
@@ -50,7 +51,7 @@ interface LeftRailSessionsPanelProps {
   switchLeftTab: (tab: LeftSubtab) => void;
   setCharImportOpen: (open: boolean) => void;
   toggleLeftRail: () => void;
-  notifyQuiet: (message: string) => void;
+  notifyQuiet: (message: string, tone?: ToastTone) => void;
   activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
   style?: React.CSSProperties;
 }
@@ -219,6 +220,7 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
                       void deleteSession(s.sessionId).catch((error) => {
                         useUi.getState().notifyQuiet(
                           error instanceof Error && error.message ? error.message : "删除失败，请稍后重试",
+                          "danger",
                         );
                       });
                     }}
@@ -244,7 +246,7 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
             className="session-utility-btn"
             onClick={() => {
               void exportSession().then((ok) => {
-                if (ok) notifyQuiet("已导出 .tavernpack 剧情包");
+                if (ok) notifyQuiet("已导出 .tavernpack 剧情包", "success");
               });
             }}
             disabled={!currentView}
@@ -276,7 +278,7 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
                 e.target.value = "";
                 if (!file) return;
                 void importSession(file)
-                  .then(() => notifyQuiet(`已导入剧本包：${file.name}`))
+                  .then(() => notifyQuiet(`已导入剧本包：${file.name}`, "success"))
                   .catch(() => {});
               }}
             />

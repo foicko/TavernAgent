@@ -142,8 +142,8 @@ export const NarrativeStream: React.FC = () => {
   }, [showLorePop, hideLorePop]);
 
   const handleCopy = useCallback(async (text: string) => {
-    try { await navigator.clipboard.writeText(text); notifyQuiet("已将正文复制到剪贴板"); }
-    catch { notifyQuiet("复制失败，请手动选择正文"); }
+    try { await navigator.clipboard.writeText(text); notifyQuiet("已将正文复制到剪贴板", "success"); }
+    catch { notifyQuiet("复制失败，请手动选择正文", "danger"); }
   }, [notifyQuiet]);
 
   const handleQuote = useCallback((speaker: string, text: string) => {

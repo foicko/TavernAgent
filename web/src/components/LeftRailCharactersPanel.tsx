@@ -89,9 +89,9 @@ export const LeftRailCharactersPanel: React.FC<LeftRailCharactersPanelProps> = (
               void deleteImportedCardRemote(card.cardId)
                 .then(() => {
                   setImportedCards(listImportedCards());
-                  useUi.getState().notifyQuiet(`已从卡库移除「${card.name}」`);
+                  useUi.getState().notifyQuiet(`已从卡库移除「${card.name}」`, "success");
                 })
-                .catch(() => useUi.getState().notifyQuiet(`移除「${card.name}」失败，请稍后重试`));
+                .catch(() => useUi.getState().notifyQuiet(`移除「${card.name}」失败，请稍后重试`, "danger"));
             }}
           />
         );

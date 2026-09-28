@@ -6,6 +6,7 @@ import { useUi } from "./stores/uiStore";
 import { api, onAuthRequired } from "./app/api";
 import { buildCommands } from "./lib/commandRegistry";
 import { CommandPalette } from "./ui/CommandPalette";
+import { ToastStack } from "./ui/Toast";
 
 import { TopHeader } from "./components/TopHeader";
 import { LeftRail } from "./components/LeftRail";
@@ -50,7 +51,8 @@ export default function App() {
     setCharImportOpen,
     paletteOpen,
     setPaletteOpen,
-    toastMessage,
+    toasts,
+    dismissToast,
   } = useUi();
 
   // 监听局域网配对授权需求
@@ -225,12 +227,8 @@ export default function App() {
         onClose={() => setAuthPairingOpen(false)}
       />
 
-      {/* 轻量微通知吐司 */}
-      {toastMessage && (
-        <div className="quiet-toast-notification" role="status">
-          {toastMessage}
-        </div>
-      )}
+      {/* 轻量微通知吐司（设计系统实现：色调 / 可关闭 / 堆叠 / aria-live） */}
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

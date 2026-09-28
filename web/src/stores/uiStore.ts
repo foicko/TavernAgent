@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { CHARACTER_PRESETS, type CharacterPreset, type InventoryItemPreset } from "../lib/characterPresets";
 import { DEFAULT_PRESET_KEY } from "../lib/characterPresets";
+import type { ToastItem, ToastTone } from "../ui/Toast";
 
 export type ViewportMode = "studio" | "reading";
 export type LeftSubtab = "tree" | "characters" | "lore" | "sessions";
@@ -10,8 +11,9 @@ export type ThemeMode = "light" | "dark" | "violet";
 
 const THEME_STORAGE_KEY = "tavernagent.theme";
 
-// 轻提示的单一超时句柄：新提示到来时取消旧定时器，避免残留定时器在拆除后触发 setState。
-let toastTimer: ReturnType<typeof setTimeout> | undefined;
+// 轻提示：每条独立超时句柄，关闭/替换时各自取消，避免残留定时器在拆除后触发 setState。
+let toastSeq = 0;
+const toastTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 // 存储被禁用（隐私模式 / 第三方 iframe）时连访问 window.localStorage 都会抛 SecurityError；
 // 主题读取发生在模块加载期，抛出会让整个应用白屏，所以读写都兜底为"不记忆"。
@@ -102,7 +104,8 @@ interface UiState {
   meterDeltas: MeterDelta[];
   lorePopover: LorePopoverState | null;
   invBubble: InvBubbleState | null;
-  toastMessage: string | null;
+  /** 轻提示堆叠（由 ui/ToastStack 呈现，按 tone 显示成功/警告/错误色调）。 */
+  toasts: ToastItem[];
 
   // 输入框联动
   injectedComposerText: string | null;
@@ -148,7 +151,8 @@ interface UiState {
   hideLorePop: () => void;
   showInvBubble: (slotId: string, item: InventoryItemPreset, x: number, y: number) => void;
   hideInvBubble: () => void;
-  notifyQuiet: (msg: string) => void;
+  notifyQuiet: (msg: string, tone?: ToastTone) => void;
+  dismissToast: (id: string) => void;
 
   // Composer
   injectComposerText: (text: string) => void;
@@ -186,7 +190,7 @@ export const useUi = create<UiState>((set, get) => ({
   meterDeltas: [],
   lorePopover: null,
   invBubble: null,
-  toastMessage: null,
+  toasts: [],
 
   injectedComposerText: null,
   selectionWrapRequest: null,
@@ -323,14 +327,21 @@ export const useUi = create<UiState>((set, get) => ({
     set({ invBubble: null });
   },
 
-  notifyQuiet: (msg) => {
-    set({ toastMessage: msg });
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      if (get().toastMessage === msg) {
-        set({ toastMessage: null });
-      }
-    }, 2200);
+  notifyQuiet: (msg, tone = "neutral") => {
+    const id = `toast-${++toastSeq}`;
+    set((s) => ({ toasts: [...s.toasts, { id, text: msg, tone }] }));
+    // 失败/警告留更久，让用户读完；普通提示 2.4s。
+    const ttl = tone === "neutral" ? 2400 : 3600;
+    toastTimers.set(id, setTimeout(() => { get().dismissToast(id); }, ttl));
+  },
+
+  dismissToast: (id) => {
+    const timer = toastTimers.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      toastTimers.delete(id);
+    }
+    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
   },
 
   injectComposerText: (text) => set({ injectedComposerText: text }),

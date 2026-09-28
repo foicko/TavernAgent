@@ -34,10 +34,10 @@ export const MemoryBankModal: React.FC = () => {
     try {
       // reviseMemory 守卫命中时会静默返回 false：此时不能谎报成功。
       const applied = await reviseMemory(id, patch);
-      notifyQuiet(applied ? message : "当前状态不允许修改记忆，请刷新后重试");
+      notifyQuiet(applied ? message : "当前状态不允许修改记忆，请刷新后重试", applied ? "success" : "warning");
       return applied;
     } catch (error) {
-      notifyQuiet(error instanceof Error ? error.message : "记忆操作失败，请刷新后重试");
+      notifyQuiet(error instanceof Error ? error.message : "记忆操作失败，请刷新后重试", "danger");
       return false;
     } finally { setMemoryBusy(false); }
   }
@@ -196,9 +196,9 @@ export const MemoryBankModal: React.FC = () => {
                 setMemoryBusy(true);
                 try {
                   await organizeMemories();
-                  notifyQuiet("记忆整理完成");
+                  notifyQuiet("记忆整理完成", "success");
                 } catch (error) {
-                  notifyQuiet(error instanceof Error && error.message ? error.message : "记忆整理失败，请稍后重试");
+                  notifyQuiet(error instanceof Error && error.message ? error.message : "记忆整理失败，请稍后重试", "danger");
                 } finally { setMemoryBusy(false); }
               }}
             >
@@ -357,7 +357,7 @@ export const MemoryBankModal: React.FC = () => {
                 } else {
                   setCustomContents((prev) => ({ ...prev, [m.id]: editDraft.trim() }));
                   setEditedIds((prev) => new Set(prev).add(m.id));
-                  notifyQuiet("已成功保存 CoW 纠偏记忆");
+                  notifyQuiet("已成功保存 CoW 纠偏记忆", "success");
                 }
               }
               setEditingId(null);
