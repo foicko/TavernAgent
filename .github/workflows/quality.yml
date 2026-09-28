@@ -53,6 +53,7 @@ jobs:
           go build ./...
           python scripts/layering_check.py
           python scripts/gen_marker_contract.py --check
+          python scripts/gen_sse_contract.py --check
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2

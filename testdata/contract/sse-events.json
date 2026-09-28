@@ -1,0 +1,25 @@
+{
+  "_comment": "SSE/outbox 事件名的唯一契约来源。Go 测试直接读；TS/Kotlin 由 scripts/gen_sse_contract.py 生成。改事件名必须同时改这里。",
+  "turnEvents": [
+    "turn.started",
+    "turn.thinking",
+    "block.delta",
+    "block.appended",
+    "turn.truncated",
+    "turn.awaiting_continuation",
+    "turn.awaiting_approval",
+    "turn.committed",
+    "turn.cancelled",
+    "turn.failed",
+    "turn.conflicted"
+  ],
+  "terminalTurnEvents": ["turn.committed", "turn.cancelled", "turn.failed", "turn.conflicted"],
+  "directorEvents": [
+    "director.started",
+    "director.completed",
+    "director.failed",
+    "director.cancelled",
+    "director.interrupted"
+  ],
+  "internalEvents": ["turn.state.updated"]
+}

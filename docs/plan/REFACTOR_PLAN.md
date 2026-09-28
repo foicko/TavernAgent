@@ -81,6 +81,9 @@
 
 ## 4. B3 跨语言契约单源化（收益最大）
 
+> 进度：**B3.1 卡片标记 ✅**（`testdata/contract/markers.json` + Go/TS/Kotlin 生成）、**B3.3 SSE 事件 ✅**
+> （`testdata/contract/sse-events.json` + Go 源码扫描 + TS/Kotlin 生成）；**B3.2 DTO 待做**。
+
 ### B3.1 卡片标记语法（Go / TS / Kotlin 三份）
 - 现状：`internal/cardmarkers/cardmarkers.go`、`web/src/lib/cardMarkers.tsx`、`android/.../CardMarkerParser.kt`。
 - 方案（分两步）：
