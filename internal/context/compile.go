@@ -3,6 +3,8 @@ package context
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -312,9 +314,11 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 		MaxTokens: 2048,
 	}
 	t0 := c.beginPhase("session_context")
-	sc := c.loadSessionContext(sessionID)
+	sc, err := c.loadSessionContext(sessionID)
+	if err != nil {
+		return req, err
+	}
 	if c.planningInstruction == "" {
-		var err error
 		sc.Director, err = c.store.DirectorAt(nodeID)
 		if err != nil {
 			return req, err
@@ -447,15 +451,27 @@ func (c *Compiler) endPhase(name string, start time.Time) {
 // loadSessionContext 从会话根节点读取编译所需的稳定信息：
 // 开场白、玩家身份与世界书。
 // 走根节点快照而非卡片文件，保证 T20 的语义：模板后续变更只影响新会话。
-func (c *Compiler) loadSessionContext(sessionID string) sessionContext {
+func (c *Compiler) loadSessionContext(sessionID string) (sessionContext, error) {
 	sc := sessionContext{Rules: domain.DefaultRuleset()}
 	sess, err := c.store.GetSession(sessionID)
-	if err != nil || sess == nil || sess.RootNodeID == "" {
-		return sc
+	if err != nil {
+		if errors.Is(err, domain.ErrItemNotFound) {
+			return sc, nil // 会话不存在：空上下文（上层按"未找到"处理）
+		}
+		return sc, fmt.Errorf("读取会话失败: %w", err)
+	}
+	if sess == nil || sess.RootNodeID == "" {
+		return sc, nil
 	}
 	root, err := c.store.GetNode(sess.RootNodeID)
-	if err != nil || root == nil {
-		return sc
+	if err != nil {
+		if errors.Is(err, domain.ErrItemNotFound) {
+			return sc, nil
+		}
+		return sc, fmt.Errorf("读取会话根节点失败: %w", err)
+	}
+	if root == nil {
+		return sc, nil
 	}
 	var rc struct {
 		OpeningText string      `json:"openingText"`
@@ -469,14 +485,19 @@ func (c *Compiler) loadSessionContext(sessionID string) sessionContext {
 		} `json:"templates"`
 	}
 	if err := json.Unmarshal([]byte(root.ContentJSON), &rc); err != nil {
-		return sc
+		// 根节点内容损坏是数据错误，不能静默降级成"空上下文"。
+		return sc, fmt.Errorf("会话根节点内容解析失败: %w", err)
 	}
 	sc.OpeningText = rc.OpeningText
 	sc.CardUI = rc.CardUI
 	if ref := rc.Templates["rules"]; ref.TemplateVersionID != "" {
-		if tv, err := c.store.GetTemplateVersion(ref.TemplateVersionID); err == nil {
-			if err := json.Unmarshal([]byte(tv.Content), &sc.Rules); err != nil {
-				slog.Warn("模板规则解析失败，按空规则继续", "templateVersionId", ref.TemplateVersionID, "error", err)
+		tv, err := c.store.GetTemplateVersion(ref.TemplateVersionID)
+		if err != nil && !errors.Is(err, domain.ErrItemNotFound) {
+			return sc, fmt.Errorf("读取规则模板失败: %w", err)
+		}
+		if tv != nil {
+			if uerr := json.Unmarshal([]byte(tv.Content), &sc.Rules); uerr != nil {
+				slog.Warn("模板规则解析失败，按空规则继续", "templateVersionId", ref.TemplateVersionID, "error", uerr)
 			}
 		}
 	}
@@ -489,7 +510,11 @@ func (c *Compiler) loadSessionContext(sessionID string) sessionContext {
 	// 是否注入由调用方按 WorldState.UnlockedSecrets 过滤——
 	// 编译层不评估揭示条件，那属于提交路径（M4d）。
 	if ch, ok := rc.Templates["character"]; ok && ch.TemplateVersionID != "" {
-		if tv, terr := c.store.GetTemplateVersion(ch.TemplateVersionID); terr == nil && tv != nil && tv.Content != "" {
+		tv, terr := c.store.GetTemplateVersion(ch.TemplateVersionID)
+		if terr != nil && !errors.Is(terr, domain.ErrItemNotFound) {
+			return sc, fmt.Errorf("读取角色模板失败: %w", terr)
+		}
+		if tv != nil && tv.Content != "" {
 			var card struct {
 				Secrets []struct {
 					SecretID string `json:"secretId"`
@@ -512,18 +537,21 @@ func (c *Compiler) loadSessionContext(sessionID string) sessionContext {
 
 	ref, ok := rc.Templates["lorebook"]
 	if !ok || ref.TemplateVersionID == "" {
-		return sc
+		return sc, nil
 	}
 	tv, err := c.store.GetTemplateVersion(ref.TemplateVersionID)
-	if err != nil || tv == nil || tv.Kind != domain.TemplateLorebook {
-		return sc
+	if err != nil && !errors.Is(err, domain.ErrItemNotFound) {
+		return sc, fmt.Errorf("读取世界书模板失败: %w", err)
+	}
+	if tv == nil || tv.Kind != domain.TemplateLorebook {
+		return sc, nil
 	}
 	var books []domain.Lorebook
 	if err := json.Unmarshal([]byte(tv.Content), &books); err != nil {
-		return sc
+		return sc, nil
 	}
 	sc.Lorebooks = books
-	return sc
+	return sc, nil
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }

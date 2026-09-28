@@ -45,8 +45,10 @@ func (c *Compiler) CompactionPolicyAt(ctx context.Context, sessionID, nodeID str
 	if err := ctx.Err(); err != nil {
 		return CompactionPolicy{}, err
 	}
-	sc := c.loadSessionContext(sessionID)
-	var err error
+	sc, err := c.loadSessionContext(sessionID)
+	if err != nil {
+		return CompactionPolicy{}, err
+	}
 	sc.Director, err = c.store.DirectorAt(nodeID)
 	if err != nil {
 		return CompactionPolicy{}, err

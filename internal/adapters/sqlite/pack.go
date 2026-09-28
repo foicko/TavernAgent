@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"strings"
@@ -18,9 +19,8 @@ import (
 // branchID 非空时只导出该分支的头节点祖先链（仍含全部必要祖先），
 // 因为「仅导出一个分支时仍包含它的全部必要祖先和相关模板」（契约 §12.2）。
 func (s *Store) ExportSession(sessionID, branchID string) (*domain.SessionBundle, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	tx, err := s.db.Begin()
+	// 只读导出：走只读连接池的读事务，不占写入串行锁——导出期间写回合不再被阻塞。
+	tx, err := s.rdb().BeginTx(context.Background(), &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
