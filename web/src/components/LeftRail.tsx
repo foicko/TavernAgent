@@ -280,6 +280,7 @@ export const LeftRail: React.FC = () => {
                   <input
                     type="text"
                     className="lore-search-input"
+                    aria-label="检索世界书设定"
                     placeholder="检索世界书设定（支持触发词）..."
                     value={loreFilter}
                     onChange={(e) => setLoreFilter(e.target.value)}

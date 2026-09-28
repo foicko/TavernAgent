@@ -231,7 +231,8 @@ export const NarrativeStream: React.FC = () => {
             handleCopy={handleCopy} handleQuote={handleQuote} chooseOption={chooseOption} />
         ) : isWaitingColdSession ? (
           /* 2. 切换未命中缓存的会话时的骨架屏 (消除突兀白屏或错位序幕卡闪烁) */
-          <div className="narrative-loading-stage" data-testid="narrative-loading-skeleton">
+          <div className="narrative-loading-stage" data-testid="narrative-loading-skeleton" role="status" aria-live="polite" aria-busy="true">
+            <span className="sr-only">正在载入故事…</span>
             <div className="narrative-skeleton-card player-skeleton">
               <div className="skeleton-header">
                 <div className="skeleton-line pulse" />

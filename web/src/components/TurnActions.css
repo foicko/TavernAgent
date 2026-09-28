@@ -148,12 +148,12 @@
   color: var(--text-main);
 }
 
-.turn-actions-bar > div:last-child > .btn-quiet[title="新建候选分支，重新掷骰并演绎新结果"] {
+.turn-actions-bar > div:last-child > .btn-recheck {
   color: var(--accent-glow);
   font-weight: var(--fw-semibold);
 }
 
-.turn-actions-bar > div:last-child > .btn-quiet[title="新建候选分支，重新掷骰并演绎新结果"]:hover {
+.turn-actions-bar > div:last-child > .btn-recheck:hover {
   background: var(--accent-subtle);
   border-color: color-mix(in srgb, var(--accent-solid) 35%, transparent);
 }
