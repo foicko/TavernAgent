@@ -31,13 +31,13 @@
 }
 
 .dossier-modal-char-name {
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
   color: var(--text-main);
 }
 
 .dossier-modal-char-role {
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--text-dim);
 }
 
@@ -66,7 +66,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   line-height: 1.65;
   color: var(--text-main);
   scrollbar-width: thin;

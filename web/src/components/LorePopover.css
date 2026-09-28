@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 10px;
+  font-size: var(--fs-10);
   font-weight: var(--fw-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -18,7 +18,7 @@
 
 .lore-card__title {
   font-family: var(--font-display);
-  font-size: 14.5px;
+  font-size: var(--fs-14);
   font-weight: var(--fw-semibold);
   color: var(--text-main);
 }

@@ -31,7 +31,7 @@
 
 /* --- 因果分支树 ---------------------------------------------------------- */
 .tree-lead-hint {
-  font-size: 10px;
+  font-size: var(--fs-10);
   color: var(--text-dim);
 }
 
@@ -104,7 +104,7 @@
   border: 1px solid var(--border-mid);
   box-shadow: var(--shadow-sm);
   color: var(--text-main);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: var(--fw-semibold);
   font-family: inherit;
   cursor: pointer;

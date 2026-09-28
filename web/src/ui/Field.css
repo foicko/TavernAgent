@@ -128,7 +128,7 @@
 @media (max-width: 768px) {
   .ui-input,
   .ui-select {
-    font-size: 16px;
+    font-size: var(--fs-16);
     height: 38px;
   }
 }

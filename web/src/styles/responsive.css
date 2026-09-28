@@ -88,7 +88,7 @@
   }
 
   .brand-title {
-    font-size: 13px;
+    font-size: var(--fs-md);
     letter-spacing: 0.02em;
     white-space: nowrap;
   }
@@ -105,7 +105,7 @@
 
   .view-mode-tabs .ui-tabs__tab {
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--fs-11);
   }
   .view-mode-tabs .tab-text {
     display: inline;
@@ -176,7 +176,7 @@
   .scene-bar {
     padding: 4px 10px;
     gap: 6px;
-    font-size: 11.5px;
+    font-size: var(--fs-sm);
   }
 
   .stage-scroll-area {
@@ -193,7 +193,7 @@
   .block-narration,
   .dialogue-content-text,
   .player-speech-text {
-    font-size: 15px;
+    font-size: var(--fs-lg);
     line-height: 1.8;
   }
 
@@ -232,7 +232,7 @@
 
   .composer-tag-btn {
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: var(--fs-11);
     white-space: nowrap;
   }
 
@@ -248,7 +248,7 @@
 
   .macro-pill {
     padding: 2px 7px;
-    font-size: 11px;
+    font-size: var(--fs-11);
     white-space: nowrap;
   }
 
@@ -258,7 +258,7 @@
   }
 
   .composer-textarea {
-    font-size: 16px; /* 必须 >= 16px，严禁 iOS Safari 在 focus 时视口自动放大！ */
+    font-size: var(--fs-16); /* 必须 >= 16px，严禁 iOS Safari 在 focus 时视口自动放大！ */
     line-height: 1.4;
     min-height: 38px;
     max-height: 100px;
@@ -276,7 +276,7 @@
   }
 
   .composer-shelf .composer-note-input {
-    font-size: 16px;
+    font-size: var(--fs-16);
   }
 
   /* 世界书分栏转纵向响应 */
@@ -312,7 +312,7 @@
 
   .rail-subtabs .ui-tabs__tab {
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--fs-11);
   }
 
   .rail-collapse-handle-btn {

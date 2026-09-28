@@ -20,7 +20,7 @@
   background: var(--bg-subtle);
   border: 1px solid var(--border-light);
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   cursor: pointer;
   user-select: none;
@@ -116,14 +116,14 @@
 }
 
 .context-popover-title {
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: var(--fw-semibold);
   color: var(--text-main);
   letter-spacing: -0.01em;
 }
 
 .context-popover-fraction {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   color: var(--accent-glow);
   font-family: var(--font-mono);
@@ -152,7 +152,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: var(--fs-12);
 }
 
 .context-cache-label {
@@ -183,7 +183,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: var(--fs-11);
 }
 
 .detail-item-name {
@@ -219,7 +219,7 @@
 .detail-item-val {
   color: var(--text-dim);
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
 }
 
 /* 5. 底部设置跳转入口 */

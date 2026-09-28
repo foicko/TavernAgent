@@ -224,6 +224,14 @@ export function countGlassRefs(css) {
   return countPattern(css, /backdrop-filter\s*:|var\(--glass-/g);
 }
 
+/**
+ * 字号逃逸计数：`font-size` 使用裸 `px`（未走 `--fs-*` 令牌）的次数。
+ * M72 起字号统一走 tokens.css 的数值阶梯；棘轮只允许减少。
+ */
+export function countLiteralFontSizes(css) {
+  return countPattern(css, /font-size\s*:\s*[0-9.]+px\b/gi);
+}
+
 function countPattern(css, pattern) {
   // 先剥掉注释与字符串，再数：/* #fff */ 或 content: "#" 不该被记账。
   let stripped = "";
@@ -255,7 +263,7 @@ function countPattern(css, pattern) {
  * 返回的 map 同时带上"类名 → 定义于哪些文件""选择器 → 出现在哪些文件"，供门禁打印证据。
  */
 export function collectCssMetrics(root) {
-  const metrics = { lineCounts: {}, important: {}, duplicates: [], deadClasses: [], literalColors: {}, glassRefs: {} };
+  const metrics = { lineCounts: {}, important: {}, duplicates: [], deadClasses: [], literalColors: {}, glassRefs: {}, literalFontSizes: {} };
   const selectorFiles = new Map();
   const classFiles = new Map();
   for (const full of listCssFiles(join(root, "src"))) {
@@ -270,6 +278,8 @@ export function collectCssMetrics(root) {
       if (literals > 0) metrics.literalColors[path] = literals;
       const glass = countGlassRefs(css);
       if (glass > 0) metrics.glassRefs[path] = glass;
+      const fontSizes = countLiteralFontSizes(css);
+      if (fontSizes > 0) metrics.literalFontSizes[path] = fontSizes;
     }
     for (const rule of parseRules(css)) {
       if (!rule.selector || rule.selector.startsWith("@")) continue;

@@ -11,7 +11,6 @@ import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectCssMetrics } from "./css-classes.mjs";
-
 const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const tokensPath = join(root, "src", "styles", "tokens.css");
 const stylesPath = join(root, "src", "styles.css");
@@ -120,7 +119,7 @@ const updateBaseline = process.argv.includes("--update-css-baseline");
 if (updateBaseline) {
   const previous = existsSync(baselinePath)
     ? JSON.parse(readFileSync(baselinePath, "utf8"))
-    : { fileLines: {}, important: {}, duplicates: [], deadClasses: [], literalColors: {}, glassRefs: {} };
+    : { fileLines: {}, important: {}, duplicates: [], deadClasses: [], literalColors: {}, glassRefs: {}, literalFontSizes: {} };
   const next = {
     $comment: "由 node scripts/check.mjs --update-css-baseline 生成；只允许收紧，放宽会在输出中打印。",
     maxFileLines: MAX_FILE_LINES,
@@ -133,6 +132,7 @@ if (updateBaseline) {
     deadClasses: metrics.deadClasses,
     literalColors: Object.fromEntries(Object.entries(metrics.literalColors).sort()),
     glassRefs: Object.fromEntries(Object.entries(metrics.glassRefs).sort()),
+    literalFontSizes: Object.fromEntries(Object.entries(metrics.literalFontSizes).sort()),
   };
   const relaxed = [];
   // 遍历两边键的并集：只看旧键会漏掉"新增的文件里带了多少 !important"。
@@ -142,7 +142,7 @@ if (updateBaseline) {
     if (now > was) relaxed.push(`fileLines ${path}: ${was} → ${now}`);
   }
   const importantTotal = (table) => Object.values(table ?? {}).reduce((a, b) => a + b, 0);
-  for (const [key, label] of [["important", "important"], ["literalColors", "literalColor"], ["glassRefs", "glassRef"]]) {
+  for (const [key, label] of [["important", "important"], ["literalColors", "literalColor"], ["glassRefs", "glassRef"], ["literalFontSizes", "literalFontSize"]]) {
     for (const path of new Set([...Object.keys(previous[key] ?? {}), ...Object.keys(next[key])])) {
       const was = previous[key]?.[path] ?? 0;
       const now = next[key][path] ?? 0;
@@ -162,7 +162,8 @@ if (updateBaseline) {
       `跨文件重复选择器：${(previous.duplicates ?? []).length} → ${next.duplicates.length}；` +
       `死类名：${(previous.deadClasses ?? []).length} → ${next.deadClasses.length}；` +
       `颜色字面值：${importantTotal(previous.literalColors)} → ${importantTotal(next.literalColors)}；` +
-      `玻璃残留：${importantTotal(previous.glassRefs)} → ${importantTotal(next.glassRefs)}`,
+      `玻璃残留：${importantTotal(previous.glassRefs)} → ${importantTotal(next.glassRefs)}；` +
+      `字号字面值：${importantTotal(previous.literalFontSizes)} → ${importantTotal(next.literalFontSizes)}`,
   );
   if (relaxed.length > 0) {
     console.error(`⚠️  基线被放宽 ${relaxed.length} 项（评审时必须解释原因）：`);
@@ -216,6 +217,17 @@ for (const [path, count] of Object.entries(metrics.glassRefs)) {
     cssOk = false;
   } else if (count < allowed) {
     stale.push(`glassRef ${path}: ${allowed} → ${count}`);
+  }
+}
+
+// 4.7 字号字面值棘轮：字号必须走 tokens.css 的 --fs-* 阶梯；存量只减不增。
+for (const [path, count] of Object.entries(metrics.literalFontSizes)) {
+  const allowed = baseline.literalFontSizes?.[path] ?? 0;
+  if (count > allowed) {
+    console.error(`✗ ${path} 新增字号字面值（${allowed} → ${count}）：请改用 tokens.css 的 --fs-* 令牌`);
+    cssOk = false;
+  } else if (count < allowed) {
+    stale.push(`literalFontSize ${path}: ${allowed} → ${count}`);
   }
 }
 

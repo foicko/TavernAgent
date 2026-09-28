@@ -14,7 +14,7 @@
 .char-import-title {
   font-family: var(--font-display);
   font-weight: var(--fw-semibold);
-  font-size: 16px;
+  font-size: var(--fs-16);
   letter-spacing: 0.02em;
   color: var(--text-main);
 }
@@ -70,7 +70,7 @@
 
 .import-dropzone__title {
   font-weight: var(--fw-semibold);
-  font-size: 14.5px;
+  font-size: var(--fs-14);
   color: var(--text-main);
   margin-bottom: 4px;
 }
@@ -118,7 +118,7 @@
 
 .char-import-preview__name {
   font-weight: var(--fw-semibold);
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text-main);
 }
 
@@ -135,7 +135,7 @@
 }
 
 .char-import-preview__blurb {
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   color: var(--text-muted);
   margin-top: 8px;
   line-height: 1.6;
@@ -163,7 +163,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13.5px;
+  font-size: var(--fs-13-5);
   font-weight: var(--fw-semibold);
   margin-bottom: 12px;
   color: var(--text-main);
@@ -232,7 +232,7 @@
 
 .char-preset-preview-card__name {
   font-weight: var(--fw-semibold);
-  font-size: 13.5px;
+  font-size: var(--fs-13-5);
   color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
@@ -241,7 +241,7 @@
 }
 
 .char-preset-preview-card__role {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;

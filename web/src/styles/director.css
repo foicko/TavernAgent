@@ -2,7 +2,7 @@
    由 styles.css 第 5288-5363 行拆出；层叠顺序由 styles.css 的 @import 顺序决定，
    因此**不要**在本目录内调整 @import 次序，也不要随手新增文件。 */
 .director-entry { cursor: pointer; }
-.director-status { margin-bottom: 10px; padding: 9px 12px; border: 1px solid var(--border-light); border-left: 3px solid var(--accent-solid); border-radius: var(--radius-md); background: var(--bg-surface); font-size: 12px; }
+.director-status { margin-bottom: 10px; padding: 9px 12px; border: 1px solid var(--border-light); border-left: 3px solid var(--accent-solid); border-radius: var(--radius-md); background: var(--bg-surface); font-size: var(--fs-12); }
 .director-status-main { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .director-status-main > span { flex: 1; color: var(--text-muted); }
 .director-status p { margin: 5px 0 0; color: var(--text-muted); line-height: 1.6; }
@@ -10,50 +10,50 @@
 .director-dialog { display: flex; flex-direction: column; width: min(1120px, 100%); max-height: calc(100dvh - 48px); overflow: hidden; background: var(--bg-elevated); color: var(--text-main); border: 1px solid var(--border-light); border-radius: var(--radius-xl); box-shadow: var(--shadow-float); font-family: var(--font-body); animation: director-in var(--duration-fast) var(--ease-spring); }
 @keyframes director-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 .director-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--border-light); }
-.director-header h2 { margin: 3px 0 6px; font-size: 20px; font-weight: var(--fw-semibold); letter-spacing: 0.04em; }
-.director-header p { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.director-header h2 { margin: 3px 0 6px; font-size: var(--fs-20); font-weight: var(--fw-semibold); letter-spacing: 0.04em; }
+.director-header p { margin: 0; font-size: var(--fs-12); color: var(--text-muted); line-height: 1.6; }
 .director-dialog :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .director-columns { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); min-height: 220px; flex: 1; overflow: hidden; }
 .director-discussion, .director-editor { min-width: 0; padding: 20px 24px; }
 .director-discussion { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border-light); background: var(--bg-subtle); }
 .director-editor { overflow: auto; }
-.director-dialog h3 { margin: 0 0 10px; font-size: 14px; font-weight: var(--fw-semibold); }
-.director-muted { color: var(--text-muted); font-size: 12px; line-height: 1.7; margin: 0 0 10px; }
+.director-dialog h3 { margin: 0 0 10px; font-size: var(--fs-14); font-weight: var(--fw-semibold); }
+.director-muted { color: var(--text-muted); font-size: var(--fs-12); line-height: 1.7; margin: 0 0 10px; }
 .director-chat { min-height: 100px; flex: 1; overflow: auto; padding-right: 4px; }
-.director-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 12px; text-align: center; color: var(--text-muted); font-size: 14px; line-height: 1.8; }
+.director-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 12px; text-align: center; color: var(--text-muted); font-size: var(--fs-14); line-height: 1.8; }
 .director-empty > span { display: inline-flex; color: var(--accent-solid); }
-.director-empty small { font-size: 12px; }
+.director-empty small { font-size: var(--fs-12); }
 .director-exchange { margin-bottom: 20px; }
-.director-exchange article { padding: 12px 14px; border-radius: var(--radius-lg); margin-bottom: 10px; line-height: 1.8; font-size: 13px; overflow-wrap: anywhere; }
-.director-exchange article strong { font-size: 11px; color: var(--text-muted); }
+.director-exchange article { padding: 12px 14px; border-radius: var(--radius-lg); margin-bottom: 10px; line-height: 1.8; font-size: var(--fs-md); overflow-wrap: anywhere; }
+.director-exchange article strong { font-size: var(--fs-11); color: var(--text-muted); }
 .director-exchange article p { margin: 4px 0; white-space: pre-wrap; }
 .director-chat-user { background: var(--bg-surface); border: 1px solid var(--border-light); }
 .director-chat-assistant { border-left: 2px solid var(--accent-solid); }
 .director-chat-composer { padding-top: 12px; border-top: 1px solid var(--border-light); }
-.director-dialog label { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px; }
-.director-dialog input:not([type="checkbox"]), .director-dialog textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 5px; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 8px 12px; background: var(--bg-surface); color: var(--text-main); font: inherit; font-size: 13px; line-height: 1.7; transition: border-color var(--duration-quick) var(--ease-smooth-out), box-shadow var(--duration-quick) var(--ease-smooth-out); }
+.director-dialog label { display: block; font-size: var(--fs-11); color: var(--text-muted); line-height: 1.6; margin-bottom: 12px; }
+.director-dialog input:not([type="checkbox"]), .director-dialog textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 5px; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 8px 12px; background: var(--bg-surface); color: var(--text-main); font: inherit; font-size: var(--fs-md); line-height: 1.7; transition: border-color var(--duration-quick) var(--ease-smooth-out), box-shadow var(--duration-quick) var(--ease-smooth-out); }
 .director-dialog input:not([type="checkbox"]):focus-visible, .director-dialog textarea:focus-visible { outline: none; border-color: var(--accent-solid); box-shadow: var(--shadow-ring); }
 .director-dialog textarea { resize: vertical; min-height: 55px; }
 .director-dialog input:disabled, .director-dialog textarea:disabled { opacity: .7; background: var(--bg-subtle); }
 .director-chat-composer .director-actions { margin-top: 10px; justify-content: flex-end; }
 .director-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.director-section-heading span { color: var(--text-muted); font-size: 11px; }
+.director-section-heading span { color: var(--text-muted); font-size: var(--fs-11); }
 .director-dialog label.director-replace { display: flex; gap: 8px; align-items: center; padding: 8px; border: 1px dashed var(--border-mid); border-radius: var(--radius-md); }
 .director-beat { padding: 14px; border: 1px solid var(--border-light); border-radius: var(--radius-lg); margin-bottom: 14px; background: var(--bg-surface); }
 .director-beat.current { border-color: var(--accent-solid); }
-.director-beat-top { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; font-size: 11px; color: var(--text-muted); }
-.director-beat-number { color: var(--accent-glow); font-size: 17px; font-variant-numeric: tabular-nums; }
+.director-beat-top { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; font-size: var(--fs-11); color: var(--text-muted); }
+.director-beat-number { color: var(--accent-glow); font-size: var(--fs-17); font-variant-numeric: tabular-nums; }
 .director-beat-top .director-actions { margin-left: auto; }
 .director-actions { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
 .director-add { border-style: dashed; color: var(--accent-glow); }
 .director-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 14px 24px; border-top: 1px solid var(--border-light); }
-.director-footer p { margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.7; }
-.director-notice, .director-error { padding: 10px 24px; margin: 0; font-size: 12px; line-height: 1.7; }
+.director-footer p { margin: 0; font-size: var(--fs-11); color: var(--text-muted); line-height: 1.7; }
+.director-notice, .director-error { padding: 10px 24px; margin: 0; font-size: var(--fs-12); line-height: 1.7; }
 .director-notice { color: var(--text-muted); }
 .director-error { color: var(--color-danger-text); border-bottom: 1px solid var(--border-light); }
 .director-error p { margin: 0 0 6px; }
 .director-error .director-actions { margin-top: 6px; }
-.director-active-summary { padding: 12px 24px; border-bottom: 1px solid var(--border-light); font-size: 12px; max-height: 25dvh; overflow: auto; }
+.director-active-summary { padding: 12px 24px; border-bottom: 1px solid var(--border-light); font-size: var(--fs-12); max-height: 25dvh; overflow: auto; }
 .director-active-summary > span { margin-left: 12px; color: var(--text-muted); }
 .director-active-summary .director-actions { margin-top: 8px; }
 .director-active-summary summary { margin-top: 8px; cursor: pointer; color: var(--text-muted); }

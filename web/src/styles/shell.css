@@ -26,7 +26,7 @@
 
 .brand-title {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--fs-14);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text-main);
@@ -41,7 +41,7 @@
      必被本规则覆盖，于是"缩不下去"这一条只在那里写着——两处各半份。并入此处后
      组件 CSS 不再重复声明同名选择器。 */
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -70,7 +70,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   cursor: pointer;
   transition: transform var(--duration-quick, 150ms) var(--ease-smooth-out),
@@ -208,7 +208,7 @@ body.mode-reading .story-turn {
 
 /* 纯净文学排版：旁白块 */
 body.mode-reading .block-narration {
-  font-size: 16.5px;
+  font-size: var(--fs-16);
   line-height: 1.95;
   color: var(--text-main);
   border-left: 2px solid var(--border-dark);
@@ -232,7 +232,7 @@ body.mode-reading .dialogue-meta-header {
 }
 
 body.mode-reading .dialogue-content-text {
-  font-size: 16.5px;
+  font-size: var(--fs-16);
   line-height: 1.9;
   color: var(--text-main);
 }
@@ -254,7 +254,7 @@ body.mode-reading .player-bubble {
 }
 
 body.mode-reading .player-speech-text {
-  font-size: 16.5px;
+  font-size: var(--fs-16);
   line-height: 1.9;
   color: var(--text-main);
   font-weight: 500;
@@ -263,7 +263,7 @@ body.mode-reading .player-speech-text {
 body.mode-reading .dice-badge-quiet {
   background: var(--bg-subtle);
   border: 1px solid var(--border-light);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   padding: 2px 10px;
   margin-top: 8px;
 }
@@ -301,14 +301,14 @@ body.mode-reading .reading-mode-banner {
 
 .reading-book-title {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: var(--fs-22);
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: 0.1em;
 }
 
 .reading-mode-desc {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--text-dim);
   letter-spacing: 0.04em;
 }
@@ -320,7 +320,7 @@ body.mode-reading .reading-mode-banner {
   border-radius: var(--radius-full);
   color: var(--text-muted);
   padding: 4px 16px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   cursor: pointer;
   transition: var(--transition-fast);
   display: inline-flex;

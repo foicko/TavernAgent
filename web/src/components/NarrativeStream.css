@@ -126,7 +126,7 @@
 }
 .prologue-card .speaker-label > div > div:first-child {
   font-weight: var(--fw-semibold);
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text-main);
 }
 .prologue-card .speaker-label > div > div:last-child {
@@ -142,7 +142,7 @@
   font-size: var(--fs-xs);
 }
 .prologue-card .dialogue-content-text {
-  font-size: 14px;
+  font-size: var(--fs-14);
   line-height: 1.85;
   color: var(--text-main);
   margin-bottom: 20px;
@@ -166,7 +166,7 @@
   color: var(--text-main);
 }
 .prologue-guide-box > div:last-child {
-  font-size: 12.5px;
+  font-size: var(--fs-12-5);
   color: var(--text-dim);
   line-height: var(--lh-normal);
 }

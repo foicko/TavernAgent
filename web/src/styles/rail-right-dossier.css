@@ -19,16 +19,16 @@
   font-weight: var(--fw-semibold);
   color: var(--text-main);
 }
-.dossier-h1 { font-size: 13.5px; border-bottom: 1px solid var(--border-light); padding-bottom: 2px; }
-.dossier-h2 { font-size: 12.5px; }
-.dossier-h3 { font-size: 11.5px; }
+.dossier-h1 { font-size: var(--fs-13-5); border-bottom: 1px solid var(--border-light); padding-bottom: 2px; }
+.dossier-h2 { font-size: var(--fs-12-5); }
+.dossier-h3 { font-size: var(--fs-sm); }
 
 .dossier-section-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: var(--fw-semibold);
   color: var(--accent-glow);
   background: var(--accent-subtle);
@@ -39,7 +39,7 @@
 }
 
 .dossier-section-pill .pill-dot {
-  font-size: 7px;
+  font-size: var(--fs-7);
   opacity: 0.8;
 }
 
@@ -53,7 +53,7 @@
 
 .dossier-code-inline {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-11);
   padding: 1px 4px;
   border-radius: 3px;
   background: var(--bg-elevated);
@@ -84,7 +84,7 @@
   border-bottom: 1px dashed var(--border-mid);
   margin: 6px 0;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--fs-10);
   color: var(--text-dim);
 }
 
@@ -104,7 +104,7 @@
   grid-template-columns: minmax(48px, max-content) 1fr;
   gap: 8px;
   align-items: baseline;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   line-height: 1.6;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .dossier-empty-note {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   text-align: center;
   padding: 16px 0;
@@ -142,7 +142,7 @@
 }
 
 .hud-block-title {
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: var(--fw-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -175,7 +175,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-main);
 }
@@ -184,7 +184,7 @@
 #meter-num-trust,
 #meter-num-alert {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-weight: var(--fw-semibold);
   letter-spacing: 0.02em;
 }
@@ -220,7 +220,7 @@
   right: 74px;
   top: -1px;
   padding: 1px 5px;
-  font-size: 10px;
+  font-size: var(--fs-10);
   font-weight: var(--fw-semibold);
   border-radius: var(--radius-full);
   pointer-events: none;
@@ -282,12 +282,12 @@
 
 /* 行囊 */
 .slot-icon-quiet {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text-main);
 }
 
 .slot-name-label {
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
   color: var(--text-main);
   overflow: hidden;
@@ -297,7 +297,7 @@
 }
 
 .slot-status-label {
-  font-size: 9px;
+  font-size: var(--fs-9);
   color: var(--text-dim);
 }
 
@@ -323,7 +323,7 @@
 }
 
 .hud-empty-card .empty-card-text {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   color: var(--text-muted);
 }
@@ -360,7 +360,7 @@
 }
 
 .checkpoint-card-tag {
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-weight: var(--fw-semibold);
   color: var(--text-main);
   display: inline-flex;
@@ -369,14 +369,14 @@
 }
 
 .checkpoint-card-text {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   line-height: 1.6;
   color: var(--text-muted);
   margin: 0;
 }
 
 .checkpoint-card-mindset {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   line-height: 1.5;
   color: var(--text-muted);
   display: flex;
@@ -393,11 +393,11 @@
   border: 1px solid var(--border-light);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
 }
 
 .checkpoint-card-tension {
-  font-size: 11px;
+  font-size: var(--fs-11);
   font-style: italic;
   color: var(--text-dim);
   margin-top: 4px;
@@ -413,7 +413,7 @@
 
 .checkpoint-card-pre {
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--fs-11);
   line-height: 1.5;
   color: var(--text-muted);
   white-space: pre-wrap;

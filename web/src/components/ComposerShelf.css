@@ -36,7 +36,7 @@
 
 .composer-note-label {
   flex: none;
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--text-dim);
   letter-spacing: 0.04em;
 }
@@ -47,7 +47,7 @@
   border: none;
   background: transparent;
   color: var(--text-main);
-  font-size: 12px;
+  font-size: var(--fs-12);
   font-family: var(--font);
   line-height: 1.7;
   outline: none;
@@ -60,7 +60,7 @@
 .composer-note-row .btn-note-clear {
   flex: none;
   padding: 0 4px;
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--text-dim);
 }
 

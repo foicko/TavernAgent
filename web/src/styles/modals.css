@@ -19,21 +19,21 @@
   border-bottom: 1px solid var(--border-light);
 }
 .player-id-badge {
-  font-size: 10px;
+  font-size: var(--fs-10);
   font-weight: 700;
   color: var(--text-muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .player-turn-time {
-  font-size: 10px;
+  font-size: var(--fs-10);
   color: var(--text-dim);
   font-family: var(--font-mono);
 }
 
 /* 3. 纯净编年横幅出版物元数据 */
 .reading-meta-stats {
-  font-size: 11px;
+  font-size: var(--fs-11);
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -61,7 +61,7 @@
    COGNITIVE MEMORY BANK REFACTOR CSS
    -------------------------------------------------------------------------- */
 .mem-badge-cow {
-  font-size: 9px;
+  font-size: var(--fs-9);
   font-weight: 700;
   color: var(--text-dim);
   background: var(--bg-canvas);
@@ -75,7 +75,7 @@
   background: transparent;
   border: 1px solid var(--border-light);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--fs-10);
   padding: 1px 6px;
   border-radius: var(--radius-xs);
   cursor: pointer;
@@ -99,7 +99,7 @@
 }
 
 .mem-filter-btn {
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   padding: 2px 7px;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -174,7 +174,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 4px;
-  font-size: 10px;
+  font-size: var(--fs-10);
 }
 
 .mem-badge-group {
@@ -194,11 +194,11 @@
 .mem-turn-tag {
   color: var(--text-dim);
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--fs-9-5);
 }
 
 .mem-recalled-badge {
-  font-size: 9px;
+  font-size: var(--fs-9);
   font-weight: 700;
   color: var(--color-warning);
   background: color-mix(in srgb, var(--color-warning) 15%, transparent);
@@ -209,7 +209,7 @@
 }
 
 .mem-cow-edited-tag {
-  font-size: 9px;
+  font-size: var(--fs-9);
   color: var(--text-dim);
   border: 1px dashed var(--border-mid);
   padding: 0 3px;
@@ -229,7 +229,7 @@
   border: none;
   color: var(--text-dim);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--fs-10);
   padding: 2px 5px;
   border-radius: 3px;
   display: inline-flex;
@@ -251,7 +251,7 @@
 }
 
 .mem-item-content {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-main);
   line-height: 1.5;
 }
@@ -260,7 +260,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
+  font-size: var(--fs-10);
   color: var(--text-dim);
   margin-top: 2px;
 }
@@ -276,12 +276,12 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-xs);
   padding: 0 4px;
-  font-size: 9.5px;
+  font-size: var(--fs-9-5);
 }
 
 .mem-valence-pill {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--fs-9-5);
   color: var(--text-muted);
 }
 
@@ -296,7 +296,7 @@
 .mem-inline-textarea {
   width: 100%;
   min-height: 52px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-family: inherit;
   line-height: 1.45;
   background: var(--bg-canvas);
@@ -335,7 +335,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: var(--text-muted);
 }
 
@@ -346,7 +346,7 @@
   border: 1px solid var(--border-mid);
   border-radius: var(--radius-sm);
   color: var(--text-main);
-  font-size: 13px;
+  font-size: var(--fs-md);
   transition: border-color var(--duration-quick) var(--ease-smooth-out);
 }
 

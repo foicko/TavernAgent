@@ -175,7 +175,7 @@
   }
 
   .ui-command-palette__input {
-    font-size: 16px;
+    font-size: var(--fs-16);
   }
 
   .ui-command-palette__item {
