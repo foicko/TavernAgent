@@ -37,6 +37,18 @@
   border-radius: var(--radius-sm);
 }
 
+/* 触屏：原语的最小可点面积提到 44px（WCAG 2.5.5/2.5.8），避免逐组件打补丁。 */
+@media (pointer: coarse) {
+  .ui-btn--md,
+  .ui-btn--sm,
+  .ui-icon-btn {
+    min-height: 44px;
+  }
+  .ui-icon-btn {
+    min-width: 44px;
+  }
+}
+
 .ui-btn--block {
   width: 100%;
 }

@@ -1,5 +1,9 @@
 import { useEffect, useRef, type KeyboardEvent } from "react";
 
+// 同一时刻可能有多个对话框（模态叠模态）：只有最外层关闭时才恢复背景。
+let openDialogs = 0;
+let savedBodyOverflow = "";
+
 // Every custom dialog uses the same keyboard boundary and restores its opener.
 export function useDialogFocus(open: boolean, onClose?: () => void) {
   const ref = useRef<HTMLDivElement>(null);
@@ -12,7 +16,25 @@ export function useDialogFocus(open: boolean, onClose?: () => void) {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const dialog = ref.current;
     if (dialog && !dialog.contains(document.activeElement)) dialog.focus();
-    return () => { if (previous?.isConnected) previous.focus(); };
+
+    // 背景 inert + 滚动锁：仅靠 aria-modal 无法阻止辅助技术/指针到达背景内容。
+    openDialogs += 1;
+    const root = document.getElementById("root");
+    if (openDialogs === 1) {
+      root?.setAttribute("inert", "");
+      root?.setAttribute("aria-hidden", "true");
+      savedBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      openDialogs = Math.max(0, openDialogs - 1);
+      if (openDialogs === 0) {
+        root?.removeAttribute("inert");
+        root?.removeAttribute("aria-hidden");
+        document.body.style.overflow = savedBodyOverflow;
+      }
+      if (previous?.isConnected) previous.focus();
+    };
   }, [open]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

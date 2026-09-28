@@ -501,6 +501,16 @@
   background: var(--bg-muted);
   animation: skeletonPulse 1.8s ease-in-out infinite;
 }
+
+/* 装饰性无限动画在减少动效偏好下停止（WCAG 2.3.3）。 */
+@media (prefers-reduced-motion: reduce) {
+  .thinking-container:not(.committed) .thinking-icon,
+  .typing-cursor,
+  .skeleton-avatar.pulse,
+  .skeleton-line.pulse {
+    animation: none;
+  }
+}
 @keyframes skeletonPulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }

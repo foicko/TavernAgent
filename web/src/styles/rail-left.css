@@ -200,6 +200,10 @@
   animation: activeNodePulse 2.4s infinite var(--ease-smooth-out);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .node-item.active::before { animation: none; }
+}
+
 @keyframes activeNodePulse {
   0% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--text-main) 45%, transparent);
