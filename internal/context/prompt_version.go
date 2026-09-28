@@ -39,7 +39,11 @@ const (
 	//             标记归一到 [SCENE]/[HUD]/[VAR] 标准标记，仅在会话卡片带 UI 档案时注入。
 	//   v5 -> v6：动态块新增【会话变量】小节（renderSessionVariables）：把当前会话变量
 	//             的取值告知模型，使其演绎与状态一致。属动态内容，不改黄金指纹。
-	PromptVersion = 6
+	//   v6 -> v7：「卡片界面标记」契约的图片条目改为"只能使用系统列出的资源键"，
+	//             并随契约列出该卡的图片资源键清单（CardUIProfile.ImageKeys）——
+	//             此前模型无从得知有哪些键，会按命名规律自造（如 school.smug.1），
+	//             导致该处图片渲染不出来。
+	PromptVersion = 7
 )
 
 // promptTemplate 是被纳入指纹的提示词模板。Name 只用于组装哈希输入与排障展示。

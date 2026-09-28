@@ -9,6 +9,8 @@ type cardUIInfo struct {
 		MarkerFamilies []string `json:"markerFamilies"`
 	} `json:"capabilities"`
 	VarDefaults map[string]string `json:"varDefaults"`
+	// ImageKeys 是本卡可用的图片资源键（由 application 侧收集并随根节点冻结）。
+	ImageKeys []string `json:"imageKeys"`
 }
 
 // CardUIContract 是「卡片界面标记」的静态契约文本。
@@ -23,7 +25,7 @@ const CardUIContract = `【卡片界面标记】
 - 场景：[SCENE:地点或场景标题]
 - 状态面板：[HUD:名称=值|名称=值]
 - 会话变量：[VAR:键=值|键=值]
-- 图片：沿用卡片原有的 <img cmd="资源键"> 写法（等价写法 [IMG:资源键]），系统会渲染为卡内图片。
+- 图片：只能用系统列出的资源键，写成 <img cmd="资源键">（等价写法 [IMG:资源键]）；不得自造或改写键名。
 
 规则：
 1. 每条标记单独完整、用方括号包裹；键值用 | 分隔、= 连接；值内不要出现 [ ] | 换行。
@@ -44,6 +46,12 @@ func cardUIContractBlock(sc sessionContext) string {
 		b.WriteString("本卡作者原本要求输出这些自定义标记：")
 		b.WriteString(strings.Join(fams, "、"))
 		b.WriteString("。请把它们表达的状态改用上面的标准标记输出，不要再输出这些原始标记。\n")
+	}
+	// 图片资源键必须逐字复用：客户端按资源名匹配，写错或自造键名会让该处图片渲染不出来。
+	if keys := sc.CardUI.ImageKeys; len(keys) > 0 {
+		b.WriteString("本卡可用的图片资源键（只能使用下列键，逐字复制，不要自造、不要改写、不要翻译）：\n")
+		b.WriteString(strings.Join(keys, "、"))
+		b.WriteString("\n")
 	}
 	return b.String()
 }

@@ -20,7 +20,7 @@ import (
 //
 // 若只是注释、重命名、不改变渲染结果的纯重构，指纹本就不会变，
 // 此时本测试应当依旧通过——它失败就说明渲染结果确实变了。
-const promptFingerprintGolden = "f848730470b3"
+const promptFingerprintGolden = "db1270b985da"
 
 func TestPromptFingerprintIsLocked(t *testing.T) {
 	got := ctxpkg.PromptFingerprint()

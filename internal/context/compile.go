@@ -523,6 +523,7 @@ func (c *Compiler) loadSessionContext(sessionID string) (sessionContext, error) 
 					Title    string `json:"title"`
 					Content  string `json:"content"`
 				} `json:"secrets"`
+				Assets []cardAssetJSON `json:"assets"`
 			}
 			if json.Unmarshal([]byte(tv.Content), &card) == nil {
 				// 卡 JSON 按原始字节持久化（卡身份由它计算），所以 {{char}}/{{user}}
@@ -541,6 +542,10 @@ func (c *Compiler) loadSessionContext(sessionID string) (sessionContext, error) 
 						Content:  macros.Expand(sec.Content, charName, sc.PlayerName),
 					})
 				}
+				// 可用图片资源键在编译期从**本会话的角色模板**现算，而不是依赖
+				// 会话创建时冻结的 cardUI 档案：老会话的档案里没有这份清单，现算
+				// 才能让修复对所有会话立即生效；而这份 JSON 本来就要在这里解析。
+				attachCardImageKeys(&sc, tv.Content, card.Assets)
 			}
 		}
 	}
