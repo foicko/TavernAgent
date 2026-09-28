@@ -86,6 +86,8 @@ const (
 	defaultMaxTokens = 2000
 	// edgeReadTimeout 是 Edge 合成流两帧之间的最长等待：服务端卡住时不能无限挂起请求。
 	edgeReadTimeout = 20 * time.Second
+	// maxEdgeAudioBytes 限制 Edge 合成音频缓冲总量（超限即失败，不缓存）。
+	maxEdgeAudioBytes = 32 << 20
 	// maxCacheBytes / maxCacheEntries 约束内存缓存（单条音频可达数 MB，只按条数计会失控）。
 	maxCacheBytes   = 64 << 20
 	maxCacheEntries = 500
@@ -176,7 +178,13 @@ func (s *Service) SynthesizeWithOptions(ctx context.Context, opts SynthesizeOpti
 	}
 
 	// 模型也参与缓存键：同一文本与音色在 tts-1 与 gpt-4o-mini-tts（或不同 MiMo 模型）下是不同的音频。
-	cachePrefix := fmt.Sprintf("%s:%s:%s:%.2f:%s:%s", engine, strings.TrimSpace(opts.Model), voice, speed, opts.BaseURL, opts.Instruction)
+	// 凭据也要进缓存键：不同账号即使 BaseURL 相同，音频与配额也不同，不能共用缓存。
+	keyTag := ""
+	if opts.APIKey != "" {
+		k := md5.Sum([]byte(opts.APIKey))
+		keyTag = hex.EncodeToString(k[:4])
+	}
+	cachePrefix := fmt.Sprintf("%s:%s:%s:%.2f:%s:%s:%s", engine, strings.TrimSpace(opts.Model), voice, speed, opts.BaseURL, opts.Instruction, keyTag)
 	h := md5.Sum([]byte(cachePrefix + ":" + text))
 	key := hex.EncodeToString(h[:])
 
@@ -479,6 +487,10 @@ func (s *Service) synthesizeEdgeWS(ctx context.Context, voice, text string) ([]b
 				headerLen := int(binary.BigEndian.Uint16(msg[:2]))
 				if len(msg) > 2+headerLen {
 					audioData := msg[2+headerLen:]
+					// 防止异常/恶意上游无限推送把内存撑爆。
+					if audioBuf.Len()+len(audioData) > maxEdgeAudioBytes {
+						return nil, fmt.Errorf("tts audio exceeds %d bytes", maxEdgeAudioBytes)
+					}
 					audioBuf.Write(audioData)
 				}
 			}
