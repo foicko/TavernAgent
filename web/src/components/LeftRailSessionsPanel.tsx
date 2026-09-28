@@ -2,6 +2,7 @@ import React from "react";
 import { Icon } from "../ui/Icon";
 import { Banner } from "../ui/Banner";
 import { EmptyState } from "../ui/EmptyState";
+import { ListRow } from "../ui/ListRow";
 import { Tabs } from "../ui/Tabs";
 import { RowDeleteControl } from "./RowDeleteControl";
 import { CHARACTER_PRESETS } from "../lib/characterPresets";
@@ -99,6 +100,8 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
         <Tabs
           label="会话筛选"
           size="sm"
+          fill
+          className="session-filter-tabs"
           value={sessionFilter}
           onChange={setSessionFilter}
           items={[
@@ -143,66 +146,53 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
               ? (storedCard.shortName || storedCardTag(storedCard, playerName).slice(0, 16))
               : (sPreset.role ? sPreset.role.split("·")[0].trim() : sPreset.shortName);
             return (
-              <div
+              <ListRow
                 key={s.sessionId}
-                className={`session-entry-card ${isActive ? "active" : ""}`}
-              >
-                <div className="session-card-main">
-                  <button
-                    type="button"
-                    className="session-card-open"
-                    aria-current={isActive ? "true" : undefined}
-                    aria-label={`打开故事 ${s.title}`}
-                    onClick={() => {
-                      void openSession(s.sessionId);
-                      if (typeof window !== "undefined" && window.innerWidth <= 768) {
-                        toggleLeftRail();
-                      }
-                    }}
-                  >
-                  <div className="session-avatar-wrapper">
+                className={`session-entry-card${isActive ? " active" : ""}`}
+                leading={
+                  <span className="session-avatar-wrapper">
                     <img
                       src={resolvedAvatar}
                       alt={storedCard?.name || sPreset.name}
                       className="session-avatar-img"
                     />
                     {isActive && <span className="session-avatar-indicator" />}
-                  </div>
-
-                  <div className="session-card-content">
-                    <div className="session-card-header-row">
-                      <span className="session-title-text" title={s.title}>
-                        {s.title}
-                      </span>
-                      {confirmDeleteId === s.sessionId ? null : (
-                        <span className={`session-status-badge ${isActive ? "active" : "archived"}`}>
-                          {isActive ? (
-                            <>
-                              <span className="badge-pulse-dot" />
-                              {pendingSessionId === s.sessionId && sessionLoading ? "载入中" : "当前"}
-                            </>
-                          ) : (
-                            "存档"
-                          )}
-                        </span>
+                  </span>
+                }
+                title={<span className="session-title-text" title={s.title}>{s.title}</span>}
+                subtitle={
+                  confirmDeleteId === s.sessionId ? (
+                    <span className="row-confirm-hint">不可恢复</span>
+                  ) : (
+                    <span className="session-card-sub-row">
+                      <span className="session-role-tag" title={sPreset.name}>{roleTag}</span>
+                      <span className="session-time-text">{formatSessionTime(s.createdAt)}</span>
+                    </span>
+                  )
+                }
+                meta={
+                  confirmDeleteId === s.sessionId ? undefined : (
+                    <span className={`session-status-badge ${isActive ? "active" : "archived"}`}>
+                      {isActive ? (
+                        <>
+                          <span className="badge-pulse-dot" />
+                          {pendingSessionId === s.sessionId && sessionLoading ? "载入中" : "当前"}
+                        </>
+                      ) : (
+                        "存档"
                       )}
-                    </div>
-
-                    {confirmDeleteId === s.sessionId ? (
-                      <span className="row-confirm-hint">不可恢复</span>
-                    ) : (
-                      <div className="session-card-sub-row">
-                        <span className="session-role-tag" title={sPreset.name}>
-                          {roleTag}
-                        </span>
-                        <span className="session-time-text">
-                          {formatSessionTime(s.createdAt)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  </button>
-
+                    </span>
+                  )
+                }
+                selected={isActive}
+                onSelect={() => {
+                  void openSession(s.sessionId);
+                  if (typeof window !== "undefined" && window.innerWidth <= 768) {
+                    toggleLeftRail();
+                  }
+                }}
+                ariaLabel={`打开故事 ${s.title}`}
+                actions={
                   <RowDeleteControl
                     confirming={confirmDeleteId === s.sessionId}
                     idleLabel={`删除故事 ${s.title}`}
@@ -220,8 +210,8 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
                       });
                     }}
                   />
-                </div>
-              </div>
+                }
+              />
             );
           })}
         </div>

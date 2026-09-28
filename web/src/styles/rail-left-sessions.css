@@ -6,8 +6,9 @@
    ========================================== */
 .session-section-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   margin-bottom: 2px;
 }
 
@@ -19,6 +20,12 @@
   font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   color: var(--text-main);
+  white-space: nowrap;
+}
+
+/* 筛选分段控件独占一行，标签可省略号压缩，不与标题争宽。 */
+.session-filter-tabs {
+  min-width: 0;
 }
 
 .session-total-count {
@@ -41,56 +48,7 @@
   padding-right: 2px;
 }
 
-/* Session Entry Card */
-.session-entry-card {
-  position: relative;
-  padding: 10px 12px;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  cursor: pointer;
-  transition: border-color var(--duration-quick) var(--ease-smooth-out),
-              background-color var(--duration-quick) var(--ease-smooth-out),
-              box-shadow var(--duration-quick) var(--ease-smooth-out);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  user-select: none;
-}
-
-.session-entry-card:hover {
-  border-color: var(--border-mid);
-  box-shadow: var(--shadow-sm);
-}
-
-.session-entry-card.active {
-  border-color: var(--border-dark);
-  background: var(--bg-surface);
-  border-left: 3px solid var(--accent-solid);
-  padding-left: 10px;
-}
-
-.session-card-main {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.session-card-open {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
+/* 会话行外观由 ui/ListRow 提供（B10-R3）；这里只保留行内专属装饰。 */
 .session-avatar-wrapper {
   position: relative;
   width: 34px;
@@ -120,21 +78,6 @@
   border-radius: 50%;
   background: var(--color-success);
   border: 1.5px solid var(--bg-surface);
-}
-
-.session-card-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.session-card-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
 }
 
 .session-title-text {
