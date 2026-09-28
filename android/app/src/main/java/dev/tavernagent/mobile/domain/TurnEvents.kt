@@ -68,11 +68,17 @@ object TurnEventCodec {
     }
 
     /** 把 `GET /turns/{id}` 的状态映射为事件（轮询对账路径）。 */
-    fun fromStatus(status: String, inFlight: dev.tavernagent.mobile.data.remote.dto.InFlightDto? = null): TurnEvent? =
+    fun fromStatus(
+        status: String,
+        inFlight: dev.tavernagent.mobile.data.remote.dto.InFlightDto? = null,
+        failureCode: String? = null,
+        failureMessage: String? = null,
+    ): TurnEvent? =
         when (status) {
             "committed" -> TurnEvent.Committed(null)
             "cancelled" -> TurnEvent.Cancelled
-            "failed" -> TurnEvent.Failed("", "生成失败")
+            // 轮询兜底也要透传服务端失败码/消息，否则用户只看到笼统的"生成失败"。
+            "failed" -> TurnEvent.Failed(failureCode.orEmpty(), failureMessage?.takeIf { it.isNotBlank() } ?: "生成失败")
             "conflicted" -> TurnEvent.Conflicted
             "awaiting_continuation" -> TurnEvent.Truncated
             "awaiting_approval" -> TurnEvent.AwaitingConfirm

@@ -97,8 +97,15 @@ class TurnStreamRegistry(
             )
         }
         jobs[turnId] = scope.launch {
-            events(turnId, snapshotFirst = state.value.blocks.isEmpty() && state.value.thinking.isEmpty())
-                .collect { event -> reduce(state, event) }
+            try {
+                events(turnId, snapshotFirst = state.value.blocks.isEmpty() && state.value.thinking.isEmpty())
+                    .collect { event -> reduce(state, event) }
+            } finally {
+                // 终态或致命错误后驱逐注册表条目：否则长进程内多次失败回合会让
+                // states/jobs 无界增长。已在收集该 StateFlow 的 UI 持有引用，不受影响。
+                coroutineContext[Job]?.let { jobs.remove(turnId, it) }
+                states.remove(turnId, state)
+            }
         }
     }
 
@@ -192,7 +199,7 @@ class TurnStreamRegistry(
                 wait = reconcileIntervalMs
                 val turn = runCatchingCancellable { apiSource.current().turns.get(turnId) }.getOrNull() ?: continue
                 val inFlight = if (sseActive) null else turn.draft?.inFlight
-                val event = TurnEventCodec.fromStatus(turn.status, inFlight)
+                val event = TurnEventCodec.fromStatus(turn.status, inFlight, turn.failureCode, turn.failureMessage)
                 if (event != null) send(event)
                 if (turn.capabilities.terminal) {
                     done.complete(Unit)

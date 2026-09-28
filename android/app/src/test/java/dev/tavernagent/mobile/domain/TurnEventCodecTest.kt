@@ -47,4 +47,14 @@ class TurnEventCodecTest {
         assertEquals(TurnEvent.Committed(null), TurnEventCodec.fromStatus("committed"))
         assertTrue(TurnEventCodec.fromStatus("generating") is TurnEvent.Snapshot)
     }
+
+    @Test
+    fun `status mapping keeps server failure code and message`() {
+        assertEquals(
+            TurnEvent.Failed("PROVIDER_UNAVAILABLE", "上游不可用"),
+            TurnEventCodec.fromStatus("failed", failureCode = "PROVIDER_UNAVAILABLE", failureMessage = "上游不可用"),
+        )
+        // 缺省时仍是可读的兜底文案。
+        assertEquals(TurnEvent.Failed("", "生成失败"), TurnEventCodec.fromStatus("failed"))
+    }
 }

@@ -30,6 +30,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
+/** 思考文本/时长缓存的容量上限（按最近使用保留）。 */
+private const val THINKING_CACHE_LIMIT = 40
+
 /** 玩家消息的乐观回显：发送成功后立刻显示，提交后由服务端节点接管。 */
 data class PendingEcho(
     val kind: String = "text",
@@ -141,8 +144,13 @@ class StoryViewModel(
     private var pendingKey: String? = null
     private var pendingInput: TurnInputDto? = null
     private var assetsKey: String = ""
-    private val thinkingByTurn = mutableMapOf<String, String>()
-    private val thinkingSecondsByTurn = mutableMapOf<String, Int>()
+    // 思考文本/时长按 turnId 累积：长会话下必须限容（保留最近 N 个回合），否则无界增长。
+    private val thinkingByTurn = object : LinkedHashMap<String, String>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean = size > THINKING_CACHE_LIMIT
+    }
+    private val thinkingSecondsByTurn = object : LinkedHashMap<String, Int>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Int>?): Boolean = size > THINKING_CACHE_LIMIT
+    }
 
     init {
         // 「自动朗读新回复」读本机偏好；聊天页在这个开关打开时，于提交后朗读最新一条。
