@@ -6,6 +6,8 @@ TavernAgent（SillyDog）：本地优先的 AI 角色扮演 / 交互叙事引擎
 
 `docs/spec/` 是**三端开发规范（接口宪法）**：Go 后端 / Web 前端 / Android 客户端共同遵守的接口契约、命名/时间/ID、错误模型、SSE 负载、鉴权、幂等、分层与门禁基线。跨端契约以 Go 为源、生成 TS/Kotlin，改接口前先读 [`docs/spec/README.md`](docs/spec/README.md) 与 [`docs/spec/14-docs-sync.md`](docs/spec/14-docs-sync.md)。
 
+`docs/FEATURES.md` 是**功能实现手册**：逐个子系统说明「有什么功能、怎么实现」——tacard 格式与字段加载、提示词设计与版本、世界书激活、记忆形成、选项生成、对话图片、导演、预算压缩等，含数据结构、算法与代码位置。
+
 ## 构建顺序（最容易踩的坑）
 `web/dist` 是生成物、不入库，却被 `//go:embed` 嵌入：**在 `web/` 跑 `pnpm build` 之前，不要执行任何 `go build` / `go run` / `go test ./...`**——否则嵌入旧前端，或在新克隆上直接编译失败（没有 `dist`）。
 
