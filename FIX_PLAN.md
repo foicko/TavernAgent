@@ -12,13 +12,13 @@
 | B1b | 后端安全补遗（注入/SSRF/许可） | S2, S5, S7 | ✅ 已完成 |
 | B2 | 后端正确性与降级 | M6, M12, M21, M24, M26 | ✅ 已完成 |
 | B2b | 后端上下文 fail-closed 与导出读锁 | M1, M2, M17 | ✅ 已完成 |
-| B2d | 后端结构性其余（需专门设计） | M3, M4, M23, M29 | ⬜ |
+| B2d | 后端结构性其余 | M3→R10；M23/M29→R7；M4 待决策 | 🔀 并入 R |
 | B2c | 导演 activate 草稿 upsert | M22 | ✅ 已完成 |
 | B3 | 后端性能与鲁棒（部分） | M10, M25, M28 | ✅ 已完成 |
 | B3b | 后端性能与鲁棒（其余） | M7, M18 | ✅ 已完成 |
 | B3c | 后端性能与鲁棒（余下） | M16, M19 | ✅ 已完成 |
 | B3d | 后端性能/DoS（部分） | M20, M27 | ✅ 已完成 |
-| B3e | 后端性能/DoS（余下，较大改动） | M5, M9 | ⬜ |
+| B3e | 后端性能/DoS（余下） | M5→R10；M9 独立 | 🔀 部分并入 R |
 | B4 | Web SSE / 状态正确性（核心） | S8, M34, M44, M45 | ✅ 已完成 |
 | B4b | Web 状态/持久化其余项 | S9, M31, M33, M37, M38, M39, M40 | ✅ 已完成 |
 | B4c | Web 状态清理其余项 | M41, M42, M43 | ✅ 已完成 |
@@ -45,7 +45,7 @@
 | B8c | Android 头像轻量化与导演 SSE | M54, M60 | ✅ 已完成 |
 | B9 | 依赖与 CI / 工具链（基础） | M80, M85, M86, G79 | ✅ 已完成 |
 | B9b | 大版本依赖升级与许可证门禁 | M81, M82, M83, M84 | ⬜ |
-| B10 | 重构（独立 PR） | R1–R12 | 🔄 进行中 |
+| B10 | 重构（独立 PR） | R1–R12（详见 B10-重构执行计划） | 📋 计划已定 |
 | B10-R4 | 设计系统收敛 | M72 ✅；G61 ✅；G63 ✅；G62 ⬜ | 🔄 |
 | B10-R3 | 列表行统一到 `ui/ListRow`（语义已由 M66 修好，结构迁移待做） | R3 | ⬜ |
 | B11 | 轻微项清理（按子批处理） | G1–G78 | 🔄 见子批 |
@@ -56,11 +56,11 @@
 | B11e | 轻微项（其余 G，拆子批） | G4, G11, G13, G17, G21, G24, G27, G29, G32–G50, G52–G56, G58, G61–G78 | ⬜ |
 | B11e-A | 轻微项 Go（含 G21 保守处理） | G4, G11, G13, G17, G21, G24, G27, G29 | ✅ 已完成 |
 | B11e-B | 轻微项 Web（状态/死代码/样式） | G32, G35, G36, G39, G40, G43, G56, G58（G34 复核已修） | ✅ 已完成 |
-| B11e-B2 | 轻微项 Web（并发/幂等/结构） | G33, G37, G38, G41, G42 | ⬜ |
+| B11e-B2 | Web（并发/幂等/结构） | G33/G37/G38/G41/G42 → 并入 R5/R6 | 🔀 并入 R |
 | B11e-C | 轻微项 Android（API Key/槽位/通知图标） | G44, G45, G46 | ✅ 已完成 |
-| B11e-C2 | 轻微项 Android（TTS/记忆行/SSE/导航/构建） | G47, G48, G49, G52–G55 | ⬜ |
+| B11e-C2 | Android（TTS/记忆行/SSE/导航/构建） | G47–G49, G52–G55 → 并入 R11 | 🔀 并入 R |
 | B11e-D | 轻微项 工具/仓库 | G74, G75, G78 | ✅ 已完成 |
-| B11e-D2 | 轻微项 工具/仓库（余下） | G72, G73, G76, G77 | ⬜ |
+| B11e-D2 | 工具/仓库（余下） | G72/G73/G76/G77 → 并入 R12 | 🔀 并入 R |
 
 ## 每批交付要求
 
@@ -186,6 +186,87 @@ M81（ESLint 10 + typescript-eslint）、M82（Vite 8/Vitest/Playwright/jsdom/TS
 ### B10 · 重构（独立 PR，R1–R12）
 
 R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 模块化、R6 Story 运行时容器、R7 后端统一 host/auth + 错误体裁剪 + `IN` 构造器 + 读写纪律、R8 provider `streamPump`、R9 卡片导入管线统一、R10 回合生命周期 + `Compile` 拆分、R11 Android 主线程纪律 + 通知单 owner + 可测试性、R12 供应链治理。
+
+### B10-重构 · 大型重构执行计划（R1–R12）
+
+> 目标：先完成全部结构性重构（R1–R12）。**每个 R 吸收对应的零散项**——单独修一遍会与重构重复改动同一批文件。
+> 规则：每个 R 拆成「可独立过门禁、可独立回滚」的提交，每步全绿才进入下一步；**不 push**。
+
+#### 0. 吸收映射（重构覆盖的剩余条目）
+
+| 重构 | 吸收条目 | 依据 |
+| --- | --- | --- |
+| R1 模态栈 | M75、M64、M68、G66 | 4+ 套 portal/scrim/focus trap/Esc 是 S17/M64/M68/M75/G66 的共同根因 |
+| R2 分段控件 | **G62**、M65 | `Tabs` 已有 `variant=segmented`/`size`/`fill`/`radiogroup`，只需迁移 4 站点 + 删旧 CSS |
+| R3 ListRow | M66（结构迁移）、M67 | `ListRow` 已实现「主按钮 + 尾部操作」，无嵌套按钮 |
+| R5 SSE | G35、S8 边界 | `app/api.ts` 639 行混合 REST/二进制/SSE/退避 |
+| R6 运行时容器 | **G33**、**G37**、G38、G41、G42、M42、M43、M44 | `sendSeq`/`navigationEpoch`/`pending*` 等模块级单例是共同根因 |
+| R7 后端统一层 | M14、M15、G14、G25、M17、**M29**、**M23** | host/auth、错误体、`IN` 构造、读写纪律同源 |
+| R8 streamPump | M27、M28 | 三 provider 共享约 150 行骨架 |
+| R9 导入管线 | M6、M7、M13、S1（导入期 `NodeKind` 校验） | 三导入器各自实现归档/资源/告警 |
+| R10 回合生命周期 | **M1、M2、M3、M5**、M11；M4 见决策点 | `Compile`/生命周期 6 处互斥锁是根源 |
+| R11 Android | S10、M46、M52、M54、M55、M56、M57（仅文档）、G47、G48、G52、G53、G54、G55 | 同属「主线程纪律/通知 owner/资产服务化/可测性」 |
+| R12 供应链 | M80、M84、M85、M86、G72、G73、G76、G77；大版本升级 → B9b | — |
+| R4 设计系统 | M72 ✅、G61 ✅、G63 ✅；G62 → 并入 R2；徽章收敛见决策点 | 已基本完成 |
+
+> **结论**：原 `B2d`、`B3e`、`B11e-B2/C2/D2` 的剩余项**全部被上述重构吸收**，不再单列批次；仅 **M4**（规则默认属性，需产品决策）与 **M57-`networkSecurityConfig`**（不可静态实施，仅文档）为例外。
+
+#### 1. 执行顺序（5 个 Wave，按 风险 × 依赖 排序）
+
+| Wave | 内容 | 风险 | 为什么在这个位置 |
+| --- | --- | --- | --- |
+| **1** | **R2 → R3**（+R4 收尾）Web 设计系统收官 | 低 | 现有 Playwright e2e（45 通过/3 跳过）可完全覆盖；先做完可缩小后续 Web 重构的 CSS/组件面 |
+| **2** | **R1 → R6 → R5** Web 架构 | 中 | R1 收敛 Esc/inert/滚动锁（R6/R5 都依赖 App 全局键盘语义）；R6 先于 R5，避免同一批 slice 二次churn |
+| **3** | **R8 → R9 → R7 → R10** Go 后端 | 中→高 | R8/R9 耦合最低先做；R7 建立统一层（含 M29/M23）后 R10 更易；R10 风险最高放最后（此时测试/可观测网最强） |
+| **4** | **R11** Android（拆 a/b/c） | 高 | 依赖本机 `gradlew` 编译验证；`StoryViewModel`(772 行) 拆分是主要风险 |
+| **5** | **R12** + **B9b** 供应链 | 中 | 大版本升级需联网，且会牵动 Wave 1–4 的构建/测试基线，放最后 |
+
+#### 2. 各 R 任务分解（提交粒度 / 关键步骤 / 验证）
+
+**Wave 1 · Web 设计系统收官**
+
+- **B10-R2**（`refactor(web,r2)`，1–2 提交）：会话筛选、`composer-syntax-group`、`tachie-expr-switcher`、`memory-filter-row` → `Tabs`；删 4 组旧 CSS。若为纯结构迁移先 `pnpm build:parity && pnpm css:parity`，外观有变则 `pnpm css:snapshot`。补方向键/`aria-checked` 用例。
+- **B10-R3**（`refactor(web,r3)`，4 提交/行类型）：`session-entry-card`、`char-card-entry`、`node-item`、物品槽 → `ListRow`；保留全部既有 `data-testid`；确认删除/分支控件恢复可 Tab 达。更新 `leftRail.test.tsx`。
+- **B10-R4 收尾**：仅剩徽章收敛（78 个自绘 badge/pill/chip/tag 选择器 → `Pill` 变体），范围大且无对应 G 编号 → **见决策点**。
+
+**Wave 2 · Web 架构**
+
+- **B10-R1**（`refactor(web,r1)`，3–4 提交）：建 `ModalStackProvider`（栈/`closeTop`/`registerEscape`/背景 `inert`+滚动锁）→ 迁移 `Modal`/`useDialogFocus` → 让 `DirectorWorkspace`/`CommandPalette`/`Popover`/`TurnIllustration` lightbox/移动抽屉注册 → 全局快捷键改查「栈空」。补嵌套 Esc、焦点恢复、背景 inert 用例；把 `palette.spec` 的叠层验收扩到 3 层。
+- **B10-R6**（`refactor(web,r6)`，3 提交）：定义 `createStoryRuntime()` → store 创建时实例化、`beginNavigation`/`emptyStory` 调 `reset()` → 迁各 slice → 删除测试里的间接重置。以 `storyIsolation.test.ts`(41 项) 守护。
+- **B10-R5**（`refactor(web,r5)`，3 提交）：抽 `app/stream.ts`（`subscribeEvents`/`parseSSEBlock`/`readWithStall`/`sleepCancellable`）→ `onEvent` 独立 try/catch + 归一化 `seq` → 补「handler 抛错/`seq=0`/超大事件/401 非 JSON」用例。`api.ts` 随之降到 ~400 行。
+
+**Wave 3 · Go 后端**
+
+- **B10-R8**（`refactor(providers,r8)`）：抽 `streamPump`，三协议只提供「行→事件」映射；修多行 `data:`、`defer cancel()`。以现有 provider 测试 + 多行/取消用例回归。
+- **B10-R9**（`refactor(app,r9)`，3–4 提交）：有界归档读取器（entry 数/单 entry/总量上限 + 魔数预检）→ 统一资源落地与 `Warnings` → 三路径共用同一报告 + `NodeKind` 校验。以 `card_test.go`/`tacard_test.go`/`cards_tacard_test.go` 守护。
+- **B10-R7**（`refactor(http,sqlite,r7)`，4 提交）：mux 中间件（始终 `isLANHost` + 非回环强制 token，路由显式 opt-out）→ 统一 `bodySnippet(≤512)` 替换原始回显 → `sqlIN(column, ids)` 替换全部手写构造 → **M29**（投影物化移出读路径）→ **M23**（无投影 fail-closed）。以 HTTP 契约测试 + `ExportSession` 并发用例守护。
+- **B10-R10**（`refactor(app,context,r10)`，4–5 提交）：抽 `turnRunner`（单一锁序 + 生命周期记账）并让现有测试全绿 → `Compile` 改 `compileSession`（每依赖加载一次、暴露已测尺寸）→ 增量预算 + mandatory 单次估算（**M5**）→ **M1/M2** 存储错误 fail-closed → **M3** 秘密宏加载期展开。全程 `go test -race` 守护。
+
+**Wave 4 · Android**
+
+- **B10-R11a**（`refactor(android,r11a)`）：`io {}`/注入 `Dispatcher`，TLS/JSON/文件 I/O 一律移出 Main（一次覆盖 S10/M46/M55/M56/G53）。
+- **B10-R11b**（`refactor(android,r11b)`）：通知收敛为 `Application.onCreate` 创建的单一 `TurnNotifier`（M52）；离线 `TtsEngine.stop()` 接线（G47）、`SseLineParser` 空事件名/`retry`（G49）、`MemoryRow.toRow()`（G48）、死代码清理（G52）。
+- **B10-R11c**（`refactor(android,r11c)`）：资产解析收敛到单一带缓存仓库；导出/导入迁前台服务；导航 `popUpTo`/单实例（G54）；release `shrink`+签名、清理未用 `okhttp.logging`（G55）；构造函数注入仓库并补 ViewModel 相位机/分页测试；拆 `StoryViewModel`(772 行)/`StoryContent`/`StoryComposer`。验证：`:app:compileDebugKotlin` + `:app:testDebugUnitTest` + `:app:assembleDebug`。
+
+**Wave 5 · 供应链**
+
+- **B10-R12**（`chore(ci,r12)`，3 提交）：`dependabot.yml`（gomod/npm `/web`/gradle `/android`/actions）+ `golangci.yml` 启用 `gosec` → Android CI job（JDK 21 + SDK 36 + 缓存）→ `license_notices.py` 进 CI（重生成后 diff 为空）。
+- **B9b**（各自独立提交，需联网）：M81 ESLint 10、M82 Vite 8/Vitest/Playwright/jsdom/TS、M83 OkHttp 5/Coil 3/AGP 9/Gradle 9/Compose BOM/sqlite、M84 `THIRD_PARTY_NOTICES` 重生成。
+
+#### 3. 每步验证基线
+
+- Web：`pnpm build && pnpm lint && pnpm test`；结构改动 `pnpm build:parity && pnpm css:parity`，有意视觉改动 `pnpm css:snapshot`；**每个 Web R 收尾跑一次全量 Playwright e2e**（现 45 通过/3 跳过）。
+- Go：`gofmt -l internal cmd`（空）、`go vet ./...`、`go test -race -count=1 ./...`。
+- Android：`gradlew.bat :app:testDebugUnitTest :app:assembleDebug`。
+- 合规：`python scripts/release_audit.py --strict`、`python -m unittest discover -s scripts/tests`。
+- 单文件 ~800 行上限：`api.ts`(639)、`compile.go`(557)、`pack.go`(597)、`StoryViewModel.kt`(772) 均为拆分目标，不得继续加行。
+
+#### 4. 决策点（待确认）
+
+1. **R4 徽章收敛**：78 个自绘 badge/pill/chip/tag 选择器 → `Pill` 变体，范围大、无对应 G 编号。纳入本轮 / 拆为低优先独立项 / 仅收敛 `ui-pill` 命名最接近的一批？
+2. **M4（规则默认属性 0 vs 10）**：需产品语义决策（统一用 `DefaultAttribute=10`，还是要求作者显式记录）。并入 R10 还是保持单独处理？
+3. **R11 粒度**：按 a/b/c 三个子批（推荐）还是整体一批？
+4. **提交策略**：每个 R 完成即 commit（推荐，便于回滚）还是每个 Wave 结束一起 commit？
 
 ### B11 · 轻微项（G1–G78）
 
