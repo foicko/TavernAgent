@@ -24,7 +24,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
   // 旧实现失败会留下"指向不在当前视图里的节点"的 viewNodeId，输入台因此
   // 被当作只读历史锁死，而调用方用 void 吞掉了 rejection。
   const navigateView = async (apply: () => Partial<StoryState>, label: string) => {
-    const before = {
+    const before: Partial<StoryState> = {
       activeBranchId: get().activeBranchId,
       viewNodeId: get().viewNodeId,
       phase: get().phase,
@@ -42,12 +42,12 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     };
     // 落点变化意味着历史分页作废：清空已加载的更早消息，避免跨分支串页。
     clearPendingSubmission();
-    set({ ...apply(), olderMessages: [] } as never);
+    set({ ...apply(), olderMessages: [] });
     try {
       await get().reloadView();
       return true;
     } catch (e) {
-      set({ ...before, error: `${label}失败，已还原到原位置：${toErr(e)}` } as never);
+      set({ ...before, error: `${label}失败，已还原到原位置：${toErr(e)}` });
       return false;
     }
   };

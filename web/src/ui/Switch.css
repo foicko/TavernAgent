@@ -87,5 +87,6 @@
 .ui-switch__hint {
   font-size: var(--fs-xs);
   color: var(--text-dim);
-  padding-left: 40px;
+  /* 与 track 宽度（32px）+ 间距（--space-2）对齐，避免手工同步。 */
+  padding-left: calc(32px + var(--space-2));
 }

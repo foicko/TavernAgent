@@ -5,6 +5,7 @@
 // 控件都落在主线连接上：switchPrimaryModel 换"用哪个实例"，
 // setReasoningEffort 调"思考强度"——都只影响下一回合，不打断在途生成。
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { api } from "../app/api";
 import { roleLabel } from "../lib/modelLabels";
 import type { ModelInstance, ProbeResult, ProviderConfig } from "../app/types";
@@ -48,8 +49,10 @@ interface SettingsState {
   closeSettings: () => void;
 }
 
-export const useSettings = create<SettingsState>((set, get) => ({
-  models: [],
+export const useSettings = create<SettingsState>()(
+  persist(
+    (set, get) => ({
+      models: [],
   providers: [],
   loaded: false,
   error: null,
@@ -134,7 +137,19 @@ export const useSettings = create<SettingsState>((set, get) => ({
   setAutoContinue: (v) => set({ autoContinue: v }),
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
-}));
+    }),
+    {
+      name: "tavernagent_settings",
+      version: 1,
+      // 只持久化交互偏好；模型/槽位来自服务端，刷新后重新拉取，不进本地存储。
+      partialize: (state) => ({
+        optionMode: state.optionMode,
+        optionsFrequency: state.optionsFrequency,
+        autoContinue: state.autoContinue,
+      }),
+    },
+  ),
+);
 
 // activePrimaryInstance 返回主线槽位当前解析到的实例（快捷切换按钮显示它）。
 export function activePrimaryInstance(

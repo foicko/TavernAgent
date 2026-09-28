@@ -100,7 +100,7 @@ export function characterPresentation(
   }
   // 身份标语取自卡片描述，同样带 {{char}}/{{user}}。在这里统一展开一次，
   // 所有消费方（铭牌、立绘灯箱、开场头、角色库）就不必各自记得替换。
-  role = replaceMacros(role, { charName: shortName || fullName, userName: playerName });
+  role = replaceMacros(role, { charName: shortName || fullName, userName: playerName, variables: view?.state?.variables });
 
   const dossier: CharacterDossier = {
     description: character?.description || stored?.description || preset.modalDesc || "",

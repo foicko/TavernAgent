@@ -287,9 +287,6 @@ export const api = {
   exportSessionPack: async (sessionId: string, branchId?: string): Promise<Blob> => {
     const qs = branchId ? `?branchId=${encodeURIComponent(branchId)}` : "";
     const res = await binaryRequest(`/api/v1/sessions/${sessionId}/export${qs}`);
-    if (!res.ok) {
-      throw new ApiError(res.status, await res.text());
-    }
     return res.blob();
   },
   importSessionPack: async (data: ArrayBuffer): Promise<ImportResult> => {
@@ -299,9 +296,6 @@ export const api = {
       body: data,
     });
     const text = await res.text();
-    if (!res.ok) {
-      throw new ApiError(res.status, text);
-    }
     return JSON.parse(text) as ImportResult;
   },
   // 服务端卡库：导入即入库。返回的 CardPreview 带 cardId，可直接用它建会话。
@@ -313,9 +307,6 @@ export const api = {
       body: form,
     });
     const text = await res.text();
-    if (!res.ok) {
-      throw new ApiError(res.status, text);
-    }
     return JSON.parse(text) as CardPreview;
   },
   // 卡库摘要列表：只含元数据，不回传完整 characterJson。

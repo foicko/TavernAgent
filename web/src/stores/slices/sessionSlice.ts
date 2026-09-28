@@ -59,6 +59,8 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
       // 缓存命中也立刻恢复在途回合：校验请求可能很慢或失败，而用户已经在看这个故事。
       watchSession(id, epoch, () => activeTurnSub?.synchronize());
       recoverActiveTurn(cached);
+      // 缓存分支同样拉一次记忆：否则在后台校验返回前记忆库会一直是空的。
+      void get().loadMemories();
     } else {
       const targetSession = get().sessions.find((s) => s.sessionId === id);
       if (targetSession) {

@@ -365,7 +365,8 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
       const result = await api.cancelTurn(id, get().view?.characterId);
       if (!owns(owner) || get().lastTurnId !== id) return;
       if (result.status === "committed") {
-        attachTurnStream(get().view!.sessionId, id, true);
+        const sessionId = get().view?.sessionId;
+        if (sessionId) attachTurnStream(sessionId, id, true);
       } else if (result.status === "cancelled") {
         detachTurnStream(id);
         set({ phase: "idle", draftBlocks: [], draftOptions: [] });
