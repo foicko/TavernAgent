@@ -68,3 +68,11 @@ func newTestServerWithProvider(t *testing.T, provider ports.ModelProvider) (*htt
 	t.Cleanup(ts.Close)
 	return ts, ts.URL
 }
+
+// happyScript 是默认的一轮 mock 脚本：一段对白 + 一条好感增量 + 一个选项。
+func happyScript() []mock.Item {
+	return []mock.Item{
+		mock.Frame(`{"v":1,"seq":1,"type":"block","kind":"dialogue","speakerId":"npc_elena","text":"你好。"}`),
+		mock.Frame(`{"v":1,"seq":2,"type":"final","proposals":[{"proposalId":"p1","type":"relationship_delta","characterId":"npc_elena","field":"trust","delta":3}],"options":[{"optionId":"o1","intent":"clever","text":"你好，老板娘。"}]}`),
+	}
+}

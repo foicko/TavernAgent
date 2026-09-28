@@ -44,6 +44,13 @@ golangci-lint run                              # 版本锁定见 .golangci-versi
 ```
 CI（`.github/workflows/quality.yml`）额外要求：`gofmt -l internal cmd` 为空、Linux 上 `go test -race`、`govulncheck@v1.1.4 ./...`、`python -m unittest discover -s scripts/tests -v`、`python scripts/release_audit.py --strict`。
 
+## 测试策略（2026-09 精简后）
+单元测试**只保留**守卫安全边界与不可逆路径的用例：鉴权/来源校验、主机防线、SSRF/端点守卫、数据目录锁、路径穿越与归档校验、凭据脱敏、迁移与提交原子性、状态哈希/重放顺序、秘密不泄漏、恢复幂等。
+
+- 纯领域规则、分词器、协议解析、配置映射、UI 原语等"稳定且可复现"的逻辑**不再单测覆盖**；改动这些模块时无须新增测试。
+- 浏览器 e2e（`web/e2e`）与 `scripts/tests` 的合规/文档防漂移测试保留，仍是 CI 门禁。
+- 新增测试前先问：它是否守卫安全边界或不可逆行为？不是就不写。
+
 ## 硬约束（不了解就会写错）
 - **仓库只放矢量**：`release_audit.py --strict` 会把任何入库的 `.png/.jpg/.webp/.gif`、以及混进源码清单的 `data/`、`output/`、`build/`、`chars/` 判为违规。架构图入库为 SVG（`docs/artifacts/architecture/`）；本地 PNG 生成物已被 gitignore。
 - **前端分层**由 `pnpm lint` 强制：`src/components/` 只能 import `app|stores|lib|ui|react`；`src/ui/` 是叶子层（仅 `react` + `../lib`）。
@@ -57,5 +64,5 @@ CI（`.github/workflows/quality.yml`）额外要求：`gofmt -l internal cmd` �
 - `internal/adapters/http`：REST + SSE 契约；`internal/adapters/providers`：chat / responses / anthropic / mock；`internal/adapters/sqlite`：存储与迁移。
 - 卡片 UI 标记（`<img cmd>`/`<img="…">`/`<img_obj>`/`<imgBG>`/`<img src>`、`[HUD]`/`[SCENE]`/`[VAR]`）在 **`internal/cardmarkers`（Go）与 `web/src/lib/cardMarkers.tsx` 各有一份语法，改一处必须同步另一处**；详见 `docs/CARD_UI_MARKERS.md`。
 - charx / PNG 内嵌资源在导入时落地到 `data/cards/<cardID>/`，经 `/api/v1/cards/{id}/assets/{ref}` 提供（该路由不加鉴权，因为浏览器 `<img>` 无法带 token）。
-- `showcase/`（独立 Vite 展示站，`scripts/dev-showcase.ps1`，5174）与 `reference-components/` 是设计参考，不属于主二进制（`reference-components/` 为第三方下载源码、无上游许可证，已移出跟踪，仅本地保留）。
+- `docs/plan/showcase/`（独立 Vite 展示站，`scripts/dev-showcase.ps1`，5174）与 `reference-components/` 是设计参考，不属于主二进制（`reference-components/` 为第三方下载源码、无上游许可证，已移出跟踪，仅本地保留）。
 - `android/`：原生 Android 客户端（Kotlin/Compose + OkHttp/SSE），与 Web 端共用同一 REST + SSE 契约（`android/docs/API_CONTRACT.md`）；改动接口时需同步该契约文档与客户端 DTO。
