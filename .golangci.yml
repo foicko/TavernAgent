@@ -4,6 +4,7 @@ linters:
   enable:
     - copyloopvar
     - errcheck
+    - gosec
     - govet
     - ineffassign
     - staticcheck
@@ -40,6 +41,46 @@ linters:
         linters:
           - staticcheck
         text: SA5011
+      # gosec 在测试夹具里必然命中"硬编码凭据/变量 URL/文件权限"（G101/G107/G115/G306）；
+      # 测试不随二进制发布，整体豁免。
+      - path: _test\.go
+        linters:
+          - gosec
+      # 以下为经逐一复核的误报或有意为之，按规则豁免并给出理由；其余 gosec 规则保持开启：
+      # G202 拼接的是列名常量与固定表名，无外部输入。
+      - linters:
+          - gosec
+        text: "G202"
+      # G401/G501 TTS 用 md5 只是音频缓存键，不用于任何安全用途。
+      - linters:
+          - gosec
+        text: "G401|G501"
+      # G404 检定骰值本就无需密码学随机（游戏语义）。
+      - linters:
+          - gosec
+        text: "G404"
+      # G704 供应商客户端目标地址先经 endpointguard 校验（SSRF 防线），是正常出站请求。
+      - linters:
+          - gosec
+        text: "G704"
+      # G705 图像字节与内嵌 SPA 的写出都带二进制/非 HTML 内容类型，不是 HTML 注入。
+      - linters:
+          - gosec
+        text: "G705"
+      # G117 两处都在 marshal 前显式清空 APIKey，只把配置哈希写台账。
+      - linters:
+          - gosec
+        text: "G117"
+      # G118 关停协程故意脱离已取消的请求上下文，为 drain 争取独立宽限窗口。
+      - path: internal/adapters/http/lifecycle\.go
+        linters:
+          - gosec
+        text: "G118"
+      # G115 头像/PNG 通道值由构造保证落在 0..255（sum>>8 与 i<26 分支）。
+      - path: internal/application/(avatar|pngcard)\.go
+        linters:
+          - gosec
+        text: "G115"
 
 issues:
   max-issues-per-linter: 0

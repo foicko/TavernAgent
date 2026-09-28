@@ -404,9 +404,10 @@ func (s *Server) callTool(ctx context.Context, params json.RawMessage) (string, 
 		if err != nil {
 			return "", fmt.Errorf("load session view: %w", err)
 		}
-		branchID, headNodeID := view.Branch.BranchID, view.Branch.HeadNodeID
-		if branchID == "" || headNodeID == "" {
-			branchID, headNodeID = branches[0].BranchID, branches[0].HeadNodeID
+		// 只需要 head 节点：编译以 headNodeID 为基准。
+		headNodeID := view.Branch.HeadNodeID
+		if headNodeID == "" {
+			headNodeID = branches[0].HeadNodeID
 		}
 
 		state := domain.NewWorldState()

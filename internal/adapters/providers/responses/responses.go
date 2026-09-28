@@ -92,8 +92,6 @@ type responsesReasoning struct {
 // responsesMessage 复用共享的 role/content 结构。
 type responsesMessage = providerutil.Message
 
-type sseEvent = providerutil.SSEEvent
-
 type responsesPayload struct {
 	Type           string `json:"type"`
 	Delta          string `json:"delta"`

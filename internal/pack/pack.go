@@ -287,7 +287,7 @@ func Read(r io.ReaderAt, size int64) (*ReadResult, error) {
 
 	assets := map[string][]byte{}
 	found := map[string]*zip.File{}
-	var total int64
+	var total uint64
 	seen := map[string]bool{}
 	for _, f := range zr.File {
 		p, err := safePath(f.Name)
@@ -301,11 +301,13 @@ func Read(r io.ReaderAt, size int64) (*ReadResult, error) {
 		if f.Mode()&os.ModeSymlink != 0 { // zip 把 S_IFLNK 映射为 os.ModeSymlink
 			return nil, unsafe(fmt.Sprintf("symlink entry not allowed: %q", p))
 		}
-		if int64(f.UncompressedSize64) > MaxEntryBytes {
+		// 在 uint64 域内比较：zip 头声明的 UncompressedSize64 可被构造成超过 int64
+		// 上限，转成 int64 会变负从而绕过体积上限（gosec G115）。
+		if f.UncompressedSize64 > uint64(MaxEntryBytes) {
 			return nil, unsafe(fmt.Sprintf("entry too large: %q", p))
 		}
-		total += int64(f.UncompressedSize64)
-		if total > MaxUncompressedTotal {
+		total += f.UncompressedSize64
+		if total > uint64(MaxUncompressedTotal) {
 			return nil, unsafe("uncompressed size exceeds limit")
 		}
 		if strings.HasSuffix(p, "/") {

@@ -132,8 +132,6 @@ type anthropicMessage struct {
 	Content any `json:"content"`
 }
 
-type sseEvent = providerutil.SSEEvent
-
 // anthropicUsage 是 Anthropic Messages 的 usage 对象。
 //
 // cache_read_input_tokens 是**命中提示缓存**的输入 token，是判断提示词前缀是否

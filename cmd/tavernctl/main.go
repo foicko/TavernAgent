@@ -321,7 +321,8 @@ func runPack(ctx context.Context, args []string) error {
 			return fmt.Errorf("导出剧情包失败: %w", err)
 		}
 
-		if err := os.WriteFile(*outFile, res.Data, 0o644); err != nil {
+		// 导出文件可能含故事库内容，按仅属主可读写落盘（gosec G306）。
+		if err := os.WriteFile(*outFile, res.Data, 0o600); err != nil {
 			return fmt.Errorf("写入文件失败: %w", err)
 		}
 		fmt.Printf("✓ 成功导出剧情包到: %s (大小: %d 字节)\n", *outFile, len(res.Data))

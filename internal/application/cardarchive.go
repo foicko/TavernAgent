@@ -68,7 +68,8 @@ func checkArchiveEntryCount(zr *zip.Reader) error {
 // 超限直接报错而不是静默截断：截断的图片/JSON 只会在后续解码时以更费解的方式失败。
 // archive/zip 在读取时会校验实际字节数与头部声明一致，所以按声明大小预检是可靠的。
 func readZipEntry(f *zip.File, limit int64) ([]byte, error) {
-	if f.UncompressedSize64 > uint64(limit) {
+	// limit 为负时 uint64(limit) 会变成巨大值、令比较恒假——显式挡掉（gosec G115）。
+	if limit < 0 || f.UncompressedSize64 > uint64(limit) {
 		return nil, errCardArchiveEntryTooLarge
 	}
 	rc, err := f.Open()
