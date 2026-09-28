@@ -98,12 +98,14 @@ func TestValidateJSONKeyTrackingAcrossNestedValues(t *testing.T) {
 	}
 }
 
-// T04d 非法帧（未知 frame type / kind / intent / 版本）→ 拒绝。
+// T04d 非法帧（未知 frame type / kind / 版本 / 跳号）→ 拒绝。
+// 注：选项层的瑕疵（未知 intent、缺 optionId 等）不再让整帧作废，见
+// TestOptionsNormalizedNotRejected——选项是展示层材料，而 proposals 才是硬操作。
 func TestInvalidFramesRejected(t *testing.T) {
 	cases := []string{
 		mkBlock(1, BlockNarration, "a") + `{"v":1,"seq":2,"type":"weird"}`,
 		`{"v":1,"seq":1,"type":"block","kind":"theater","text":"x"}`,
-		`{"v":1,"seq":1,"type":"final","proposals":[],"options":[{"optionId":"o1","intent":"sneaky","text":"t"}]}`,
+		mkBlock(1, BlockNarration, "a") + `{"v":1,"seq":3,"type":"final","proposals":[],"options":[]}`,
 		`{"v":2,"seq":1,"type":"block","kind":"narration","text":"x"}`,
 	}
 	for i, c := range cases {
@@ -139,16 +141,71 @@ func TestFinalWithEmptyArraysOK(t *testing.T) {
 	}
 }
 
-// 选项超过 4 个 → 拒绝。
-func TestMaxOptionsRejected(t *testing.T) {
+// 选项超过 4 个 → 只保留前 4 条，而不是让整帧作废（选项是展示层材料）。
+func TestMaxOptionsTruncated(t *testing.T) {
 	var opts []string
 	for i := 0; i < 5; i++ {
 		opts = append(opts, `{"optionId":"o`+strconv.Itoa(i)+`","intent":"clever","text":"t"}`)
 	}
 	line := fmt.Sprintf(`{"v":1,"seq":1,"type":"final","proposals":[],"options":[%s]}`, strings.Join(opts, ","))
 	p := NewStreamParser()
+	if err := p.Feed([]byte(line + "\n")); err != nil {
+		t.Fatalf(">4 options 应截断而非拒绝: %v", err)
+	}
+	draft, err := p.Finish()
+	if err != nil {
+		t.Fatalf("finish: %v", err)
+	}
+	if len(draft.Options) != MaxOptions {
+		t.Fatalf("options = %d, want %d", len(draft.Options), MaxOptions)
+	}
+}
+
+// 未知 intent / 缺 optionId / 重 optionId / 空文本：规范化后仍收下选项，
+// 且同一帧里的 proposals 照常生效（此前任一条都会让整个 final 帧作废）。
+func TestOptionsNormalizedNotRejected(t *testing.T) {
+	line := `{"v":1,"seq":1,"type":"final","proposals":[{"proposalId":"p1","type":"mood_set","characterId":"npc_x","moodCode":"calm","text":"平静"}],` +
+		`"options":[` +
+		`{"optionId":"a","intent":"CURIOUS","text":" 去看看 "},` +
+		`{"optionId":"a","intent":"aggressive","text":"拔剑"},` +
+		`{"intent":"clever","text":"退后"},` +
+		`{"optionId":"d","intent":"emotional","text":"   "}` +
+		`]}`
+	p := NewStreamParser()
+	if err := p.Feed([]byte(line + "\n")); err != nil {
+		t.Fatalf("选项瑕疵不应拒绝整帧: %v", err)
+	}
+	draft, err := p.Finish()
+	if err != nil {
+		t.Fatalf("finish: %v", err)
+	}
+	if len(draft.Proposals) != 1 {
+		t.Fatalf("proposals 应保留: %+v", draft.Proposals)
+	}
+	if len(draft.Options) != 3 {
+		t.Fatalf("空文本选项应被丢弃，剩 3 条: %+v", draft.Options)
+	}
+	if draft.Options[0].Intent != "clever" {
+		t.Errorf("未知 intent 应回落 clever: %q", draft.Options[0].Intent)
+	}
+	if draft.Options[0].Text != "去看看" {
+		t.Errorf("text 应去首尾空白: %q", draft.Options[0].Text)
+	}
+	seen := map[string]bool{}
+	for _, o := range draft.Options {
+		if o.OptionID == "" || seen[o.OptionID] {
+			t.Fatalf("optionId 必须唯一非空: %+v", draft.Options)
+		}
+		seen[o.OptionID] = true
+	}
+}
+
+// proposals 仍保持严格：缺 proposalId 依旧让整帧非法（硬操作不能被静默修正）。
+func TestProposalsStillStrict(t *testing.T) {
+	line := `{"v":1,"seq":1,"type":"final","proposals":[{"type":"mood_set","characterId":"npc_x","moodCode":"calm","text":"平静"}],"options":[]}`
+	p := NewStreamParser()
 	if err := p.Feed([]byte(line + "\n")); err == nil {
-		t.Fatalf("expected >4 options rejection, got nil")
+		t.Fatal("缺 proposalId 的 proposals 必须被拒绝")
 	}
 }
 

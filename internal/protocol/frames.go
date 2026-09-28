@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // Protocol 常量（技术契约 §4）。
@@ -144,24 +145,11 @@ func parseFrame(line []byte) (bool, any, error) {
 		if err := strictDecode(line, &f); err != nil {
 			return false, nil, err
 		}
-		if len(f.Options) > MaxOptions {
-			return false, nil, Invalid(fmt.Sprintf("options exceed %d", MaxOptions), f.Seq)
-		}
-		seen := map[string]bool{}
-		for _, o := range f.Options {
-			switch o.Intent {
-			case "aggressive", "clever", "emotional", "chaotic":
-			default:
-				return false, nil, Invalid(fmt.Sprintf("unknown intent %q", o.Intent), f.Seq)
-			}
-			if o.OptionID == "" {
-				return false, nil, Invalid("option missing optionId", f.Seq)
-			}
-			if seen[o.OptionID] {
-				return false, nil, Invalid(fmt.Sprintf("duplicate optionId %q", o.OptionID), f.Seq)
-			}
-			seen[o.OptionID] = true
-		}
+		// 选项是**展示层**材料：单条选项的瑕疵（未知 intent、缺/重 optionId、
+		// 超过上限、缺文本）不该让整个 final 帧作废——否则同一帧里的 proposals
+		// （真正的状态操作）会被一起丢掉，玩家看到的是整轮失败或选项凭空消失。
+		// 这里就地规范化选项；proposals 仍保持严格校验（它们是硬操作，见下）。
+		f.Options = normalizeOptionFrames(f.Options)
 		propSeen := map[string]bool{}
 		for _, p := range f.Proposals {
 			if p.ProposalID == "" {
@@ -190,6 +178,57 @@ func isBlockKind(kind BlockKind) bool {
 		return true
 	}
 	return false
+}
+
+// optionIntents 是候选选项允许的意图标签；与提示词（context.FrameProtocolInstruction）
+// 以及两端 UI 的 intent 配色保持一致。
+var optionIntents = map[string]bool{
+	"aggressive": true, "clever": true, "emotional": true, "chaotic": true,
+}
+
+// normalizeOptionFrames 就地修复候选选项里的展示层瑕疵，而不是让整个 final 帧作废：
+//   - 超过 MaxOptions 条：只保留前 MaxOptions 条；
+//   - 缺少文本：整条丢弃（空按钮对玩家没有意义）；
+//   - intent 未知或大小写不一：归一为合法小写值，未知回落 clever（UI 只当标签/配色用）；
+//   - optionId 缺失：按位置补 o1…；重复：追加 _2、_3 直到唯一。
+//
+// optionId 会在提交后的节点内容里定型，玩家点选时回传的 optionRef 用的就是它，
+// 因此补齐/改名是安全的——不依赖模型自定的 ID 与客户端事先协商。
+func normalizeOptionFrames(options []OptionFrame) []OptionFrame {
+	if len(options) > MaxOptions {
+		options = options[:MaxOptions]
+	}
+	out := make([]OptionFrame, 0, len(options))
+	seen := make(map[string]bool, len(options))
+	for i, o := range options {
+		text := strings.TrimSpace(o.Text)
+		if text == "" {
+			continue
+		}
+		o.Text = text
+		intent := strings.ToLower(strings.TrimSpace(o.Intent))
+		if !optionIntents[intent] {
+			intent = "clever"
+		}
+		o.Intent = intent
+		id := strings.TrimSpace(o.OptionID)
+		if id == "" {
+			id = fmt.Sprintf("o%d", i+1)
+		}
+		if seen[id] {
+			for n := 2; ; n++ {
+				candidate := fmt.Sprintf("%s_%d", id, n)
+				if !seen[candidate] {
+					id = candidate
+					break
+				}
+			}
+		}
+		o.OptionID = id
+		seen[id] = true
+		out = append(out, o)
+	}
+	return out
 }
 
 // decodeBlockFrame 校验块帧。fallbackKind 非空表示调用方已从 type 位置识别出块类型。
