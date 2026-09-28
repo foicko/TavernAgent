@@ -179,6 +179,21 @@ describe("ListRow", () => {
     render(<ListRow title="A" selected onSelect={() => {}} />);
     expect(screen.getByRole("button", { name: "A" }).getAttribute("aria-current")).toBe("true");
   });
+
+  it("renders a leading slot while keeping actions as siblings", () => {
+    render(
+      <ListRow
+        title="角色卡"
+        subtitle="说明"
+        leading={<span data-testid="lead" />}
+        actions={<button type="button">删除</button>}
+        onSelect={() => {}}
+      />,
+    );
+    expect(document.querySelector(".ui-list-row__leading")).toBeTruthy();
+    expect(screen.getByTestId("lead")).toBeTruthy();
+    expect(document.querySelectorAll("button button")).toHaveLength(0);
+  });
 });
 
 describe("Menu", () => {

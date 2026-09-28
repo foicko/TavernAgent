@@ -56,6 +56,13 @@
   min-width: 0;
 }
 
+.ui-list-row__leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .ui-list-row__title {
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
