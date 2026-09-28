@@ -425,6 +425,13 @@ func (s *Store) commitWriteTx(tx *sql.Tx, plan *ports.CommitPlan, base commitBas
 			return "", fmt.Errorf("commit step [insert memories]: %w", err)
 		}
 	}
+	// 记忆投影检查点：与状态快照同样只在稀疏节点物化，但改在**提交事务内**完成（M29）。
+	// 读路径因此保持只读，不再对单写连接做无锁 INSERT、也不再给最热路径加写放大。
+	if shouldMaterializeProjection(plan.Node.Depth) {
+		if err := materializeProjectionTx(tx, plan.Node.NodeID); err != nil {
+			return "", fmt.Errorf("commit step [projection snapshot]: %w", err)
+		}
+	}
 	// 提及记录：本次注入过、且提交正文确实提到的记忆（契约 §8.1）。
 	// 记在节点上而不是回写记忆记录，避免跨分支抬高 recency（T16/T17）。
 	if err := s.insertMentionsTx(tx, plan.Node, plan.MentionedMemoryIDs, turnTextOf(plan.Node.ContentJSON), plan.NewStateJSON); err != nil {
