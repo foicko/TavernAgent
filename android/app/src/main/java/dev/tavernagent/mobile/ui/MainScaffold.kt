@@ -26,6 +26,7 @@ import dev.tavernagent.mobile.ui.RootViewModel
 import dev.tavernagent.mobile.ui.components.BottomTab
 import dev.tavernagent.mobile.ui.components.TavernBottomBar
 import dev.tavernagent.mobile.ui.nav.Routes
+import dev.tavernagent.mobile.ui.nav.navigateToStory
 import dev.tavernagent.mobile.ui.screens.archive.ArchiveScreen
 import dev.tavernagent.mobile.ui.screens.branch.BranchTreeScreen
 import dev.tavernagent.mobile.ui.screens.cards.CardsScreen
@@ -58,9 +59,7 @@ fun MainScaffold(
 
     LaunchedEffect(pendingDeepLink) {
         pendingDeepLink?.let { target ->
-            navController.navigate(Routes.story(target.sessionId, target.branchId)) {
-                launchSingleTop = true
-            }
+            navController.navigateToStory(target.sessionId, target.branchId)
             onConsumeDeepLink()
         }
     }
@@ -93,7 +92,7 @@ fun MainScaffold(
             composable(Routes.CHATS) {
                 ChatsScreen(
                     onOpenChat = { sessionId, branchId ->
-                        navController.navigate(Routes.story(sessionId, branchId))
+                        navController.navigateToStory(sessionId, branchId)
                     },
                     onFindCharacters = {
                         navController.navigate(Routes.CARDS) { launchSingleTop = true }
@@ -131,7 +130,7 @@ fun MainScaffold(
                     cardId = entry.arguments?.getString(Routes.ARG_CARD).orEmpty(),
                     onBack = { navController.popBackStack() },
                     onOpenChat = { sessionId, branchId ->
-                        navController.navigate(Routes.story(sessionId, branchId))
+                        navController.navigateToStory(sessionId, branchId)
                     },
                 )
             }
@@ -175,8 +174,8 @@ fun MainScaffold(
                 BranchTreeScreen(
                     sessionId = sessionId,
                     branchId = branchId,
-                    onOpenNode = { sid, bid, nodeId -> navController.navigate(Routes.story(sid, bid, nodeId)) },
-                    onBranchChanged = { newBranchId -> navController.navigate(Routes.story(sessionId, newBranchId)) },
+                    onOpenNode = { sid, bid, nodeId -> navController.navigateToStory(sid, bid, nodeId) },
+                    onBranchChanged = { newBranchId -> navController.navigateToStory(sessionId, newBranchId) },
                     onBack = { navController.popBackStack() },
                 )
             }
