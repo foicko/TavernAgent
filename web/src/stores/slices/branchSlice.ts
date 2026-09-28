@@ -6,17 +6,14 @@ import {
   isTurnBusy,
   messagesFromNodes,
   owns,
-  reloadSeq,
   scope,
   incrementSendSeq,
   toErr,
 } from "../storyHelpers";
+import { storyRuntime } from "../storyRuntime";
 import { clearPendingSubmission, detachTurnStream, openDerivedBranch, recoverActiveTurn } from "./turnSlice";
 import { useSettings } from "../settingsStore";
 import { emptyDirectorState } from "./directorSlice";
-
-// branchBusy 的单调序号：迟到的 finally 不得清除更新操作的忙碌锁。
-let branchOpSeq = 0;
 
 export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
   // navigateView 是切换分支/回溯节点/回到现在的唯一入口：先记录落点，
@@ -128,7 +125,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     const owner = scope();
     const view = get().view;
     if (!view || isTurnBusy(get().phase) || get().branchBusy) return;
-    const op = ++branchOpSeq;
+    const op = ++storyRuntime.branchOpSeq;
     set({ branchBusy: true, error: null });
     try {
       const res = (await api.editTurn(view.sessionId, view.branch.branchId, {
@@ -143,7 +140,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
       if (owns(owner)) set({ error: toErr(e) });
     } finally {
       // 仅当没有更新的分支操作接管时才清除，避免迟到 finally 提前释放新的忙碌锁。
-      if (op === branchOpSeq) set({ branchBusy: false });
+      if (op === storyRuntime.branchOpSeq) set({ branchBusy: false });
     }
   },
 
@@ -151,7 +148,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     const owner = scope();
     const view = get().view;
     if (!view || isTurnBusy(get().phase) || get().branchBusy) return;
-    const op = ++branchOpSeq;
+    const op = ++storyRuntime.branchOpSeq;
     set({ branchBusy: true, error: null });
     try {
       const res = await api.forkBranch(view.sessionId, { fromNodeId: nodeId, name, expectedCharacterId: view.characterId });
@@ -160,13 +157,13 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
     } catch (e) {
       if (owns(owner)) set({ error: toErr(e) });
     } finally {
-      if (op === branchOpSeq) set({ branchBusy: false });
+      if (op === storyRuntime.branchOpSeq) set({ branchBusy: false });
     }
   },
 
   loadOlder: async () => {
     const owner = scope();
-    const ticket = reloadSeq;
+    const ticket = storyRuntime.reloadSeq;
     const st = get();
     const view = st.view;
     if (!view || !st.hasMoreHistory || st.loadingOlder) return;
@@ -177,7 +174,7 @@ export const createBranchSlice = (set: StoreSet, get: StoreGet) => {
         before: st.oldestTurnId ?? undefined,
         viewNodeId: st.viewNodeId ?? undefined,
       });
-      if (!owns(owner) || reloadSeq !== ticket) {
+      if (!owns(owner) || storyRuntime.reloadSeq !== ticket) {
         // 视图已经换过：确保不把"加载中"留在这个视图上。
         set({ loadingOlder: false });
         return;

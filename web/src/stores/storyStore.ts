@@ -24,4 +24,4 @@ export const useStory = create<StoryState>((set, get) => {
 // 完整重导出公共类型与辅助函数，保持 100% 向后兼容
 export * from "./storyTypes";
 export * from "./storyHelpers";
-export { routeEvent, activeTurnSub, detachTurnStream } from "./slices/turnSlice";
+export { routeEvent, detachTurnStream } from "./slices/turnSlice";

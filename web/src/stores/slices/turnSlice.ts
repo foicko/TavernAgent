@@ -14,7 +14,6 @@ import {
   scope,
   sessionViewCache,
   toErr,
-  navigationEpoch,
   incrementSendSeq,
   getReloadSeq,
   incrementReloadSeq,
@@ -22,24 +21,20 @@ import {
   getStoryState,
   setStoryState,
 } from "../storyHelpers";
+import { storyRuntime } from "../storyRuntime";
 
-export let turnCursor: { turnId: string; id: string } | null = null;
-export let activeTurnSub: { turnId: string; sessionId: string; stop: () => void; synchronize: (committed?: boolean) => void } | null = null;
 export const TURN_STATUS_INTERVAL_MS = 5000;
 
-/** 每轮首个 thinking 事件的时间戳，用于 settle 后显示「思考了 N 秒」。 */
-const thinkingStartedAt = new Map<string, number>();
-
 export function detachTurnStream(turnId?: string) {
-  if (turnId && activeTurnSub?.turnId !== turnId) return;
-  activeTurnSub?.stop();
-  activeTurnSub = null;
+  if (turnId && storyRuntime.activeTurnSub?.turnId !== turnId) return;
+  storyRuntime.activeTurnSub?.stop();
+  storyRuntime.activeTurnSub = null;
 }
 
 export function recoverActiveTurn(view: SessionView) {
   const id = view.branch.activeTurnId;
   if (!id) return;
-  turnCursor = null;
+  storyRuntime.turnCursor = null;
   setStoryState({ phase: "generating", lastTurnId: id, draftBlocks: [], draftOptions: [] });
   // 恢复场景立刻同步一次：把服务端的在途正文快照取回来，不必等第一次轮询。
   attachTurnStream(view.sessionId, id, false, true);
@@ -55,7 +50,7 @@ export function attachTurnStream(sessionId: string, turnId: string, alreadyCommi
   let requested = false;
   let committed = alreadyCommitted;
   let syncError: string | null = null;
-  const current = () => !stopped && activeTurnSub === subscription && owns(owner) && getStoryState().lastTurnId === turnId;
+  const current = () => !stopped && storyRuntime.activeTurnSub === subscription && owns(owner) && getStoryState().lastTurnId === turnId;
   const stopTransport = () => { const stop = stopStream; stopStream = () => {}; stop(); };
   const schedule = (delay: number) => {
     clearTimeout(timer);
@@ -122,15 +117,15 @@ export function attachTurnStream(sessionId: string, turnId: string, alreadyCommi
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
     },
   };
-  activeTurnSub = subscription;
+  storyRuntime.activeTurnSub = subscription;
   if (typeof window !== "undefined") window.addEventListener("focus", onFocus);
   if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
   if (!committed) {
     stopStream = subscribeTurnEvents(turnId, {
-      lastEventId: turnCursor?.turnId === turnId ? turnCursor.id : undefined,
+      lastEventId: storyRuntime.turnCursor?.turnId === turnId ? storyRuntime.turnCursor.id : undefined,
       onEvent: ev => {
         if (!current() || committed) return;
-        if (ev.id?.startsWith(turnId + ":")) turnCursor = { turnId, id: ev.id };
+        if (ev.id?.startsWith(turnId + ":")) storyRuntime.turnCursor = { turnId, id: ev.id };
         routeEvent(ev, sessionId, turnId, () => detachTurnStream(turnId));
       },
       onReconnect: () => requestSync(),
@@ -168,7 +163,7 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
     case "turn.thinking": {
       const payload = ev.data as { thinking?: string };
       if (payload?.thinking) {
-        if (!thinkingStartedAt.has(turnId)) thinkingStartedAt.set(turnId, Date.now());
+        if (!storyRuntime.thinkingStartedAt.has(turnId)) storyRuntime.thinkingStartedAt.set(turnId, Date.now());
         setStoryState((prev) => ({
           thinkingText: prev.thinkingText + payload.thinking,
           turnThinking: {
@@ -227,41 +222,39 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
     case "turn.truncated":
     case "turn.awaiting_continuation":
     case "turn.awaiting_approval":
-      activeTurnSub?.synchronize();
+      storyRuntime.activeTurnSub?.synchronize();
       break;
     case "turn.committed":
-      activeTurnSub?.synchronize(true);
+      storyRuntime.activeTurnSub?.synchronize(true);
       break;
     case "turn.cancelled":
       onEnd();
-      thinkingStartedAt.delete(turnId);
+      storyRuntime.thinkingStartedAt.delete(turnId);
       setStoryState({ phase: "idle", draftBlocks: [], draftOptions: [] });
       break;
     case "turn.failed": {
       const d = ev.data as { message?: string };
       onEnd();
-      thinkingStartedAt.delete(turnId);
+      storyRuntime.thinkingStartedAt.delete(turnId);
       setStoryState({ phase: "failed", error: d.message ?? "生成失败", draftBlocks: [], draftOptions: [] });
       break;
     }
     case "turn.conflicted":
       onEnd();
-      thinkingStartedAt.delete(turnId);
+      storyRuntime.thinkingStartedAt.delete(turnId);
       setStoryState({ phase: "failed", error: "分支已变化，请刷新后再试", draftBlocks: [], draftOptions: [] });
       break;
   }
 }
 
-let pendingSubmission: { owner: ReturnType<typeof scope>; view: SessionView; key: string; input: TurnInput } | null = null;
-
 // 导航（切会话/分支/落点）时丢弃上一次"结果未知"的提交记录，避免陈旧状态被后续 retry 误用。
 export function clearPendingSubmission(): void {
-  pendingSubmission = null;
+  storyRuntime.pendingSubmission = null;
 }
 
 async function startTurn(view: SessionView, key: string, input: TurnInput, owner = scope()) {
   if (!owns(owner) || owner.sessionId !== view.sessionId) return;
-  pendingSubmission = { owner, view, key, input };
+  storyRuntime.pendingSubmission = { owner, view, key, input };
   setStoryState({ lastInput: input, lastTurnId: null });
   let result: AcceptResult;
   try {
@@ -277,13 +270,13 @@ async function startTurn(view: SessionView, key: string, input: TurnInput, owner
     // 后端已把这次受理记为失败终态，重试若沿用同一幂等键只会原样拿回那条失败回合。
     // 超时（status 0）与 5xx 结果不明，仍保留以便原样重放。
     const status = (e as { status?: unknown } | null)?.status;
-    if (typeof status === "number" && status >= 400 && status < 500 && pendingSubmission?.key === key) {
-      pendingSubmission = null;
+    if (typeof status === "number" && status >= 400 && status < 500 && storyRuntime.pendingSubmission?.key === key) {
+      storyRuntime.pendingSubmission = null;
     }
     throw e;
   }
   if (!owns(owner)) return;
-  if (pendingSubmission?.key === key) pendingSubmission = null;
+  if (storyRuntime.pendingSubmission?.key === key) storyRuntime.pendingSubmission = null;
   setStoryState({ lastTurnId: result.turnId, lastInput: input, thinkingText: "", draftBlocks: [], draftOptions: [] });
   attachTurnStream(view.sessionId, result.turnId);
 }
@@ -303,13 +296,15 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     if (get().viewNodeId) { set({ error: "历史快照为只读，请先返回最新进度或从此处新建分支" }); return; }
     if (!text.trim() || isTurnBusy(get().phase) || get().directorCommanding) return;
     const key = useUi.getState().activeCharKey;
-    const epoch = navigationEpoch;
+    const epoch = storyRuntime.navigationEpoch;
     if (!get().view) {
       // 输入台在调用前已清空文字：失败必须置 phase:"failed"，
       // 否则 ComposerShelf 的恢复逻辑不会把文字还回去（静默丢输入）。
       if (!key || key === "custom") { set({ phase: "failed", error: "请先打开自定义角色会话或导入角色卡" }); return; }
+      // 先置 generating 再 await：否则第二次 send 会穿过上面的忙碌守卫、重复建会话（G37）。
+      set({ phase: "generating" });
       await get().createSessionFromPreset(key);
-      if (navigationEpoch !== epoch + 1 || useUi.getState().activeCharKey !== key) return;
+      if (storyRuntime.navigationEpoch !== epoch + 1 || useUi.getState().activeCharKey !== key) return;
     }
     const view = get().view;
     if (!view || view.characterId !== get().activeCharacterId) {
@@ -405,8 +400,8 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     if (!last || !view || st.viewNodeId || st.phase === "generating" || st.phase === "committed") return;
     // A lost acceptance response does not establish failure. Replay the exact
     // original request/key, including its immutable head and option reference.
-    if (pendingSubmission && owns(pendingSubmission.owner)) {
-      const pending = pendingSubmission;
+    if (storyRuntime.pendingSubmission && owns(storyRuntime.pendingSubmission.owner)) {
+      const pending = storyRuntime.pendingSubmission;
       set({ phase: "generating", error: null });
       try { await startTurn(pending.view, pending.key, pending.input, owner); }
       catch (e) { if (owns(owner)) set({ phase: "failed", error: toErr(e) }); }
@@ -466,7 +461,7 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
     const turnThinkingSeconds = { ...get().turnThinkingSeconds };
     if (completedTurn && completedTurnId && completedThinking) {
       turnThinking[completedTurnId] = completedThinking;
-      const startedAt = thinkingStartedAt.get(completedTurnId);
+      const startedAt = storyRuntime.thinkingStartedAt.get(completedTurnId);
       const seconds = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 1000)) : undefined;
       if (seconds) {
         turnThinkingSeconds[completedTurnId] = seconds;
@@ -476,7 +471,7 @@ export const createTurnSlice = (set: StoreSet, get: StoreGet) => ({
         turnThinking[fresh.headNode.nodeId] = completedThinking;
       }
     }
-    if (completedTurn && completedTurnId) thinkingStartedAt.delete(completedTurnId);
+    if (completedTurn && completedTurnId) storyRuntime.thinkingStartedAt.delete(completedTurnId);
     if (completedTurn) detachTurnStream(get().lastTurnId ?? undefined);
     if (!st.viewNodeId) {
       sessionViewCache.set(fresh.sessionId, fresh);

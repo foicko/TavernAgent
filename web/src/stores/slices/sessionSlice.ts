@@ -20,7 +20,8 @@ import {
   toErr,
   watchSession,
 } from "../storyHelpers";
-import { activeTurnSub, clearPendingSubmission, detachTurnStream, recoverActiveTurn } from "./turnSlice";
+import { clearPendingSubmission, detachTurnStream, recoverActiveTurn } from "./turnSlice";
+import { storyRuntime } from "../storyRuntime";
 import { rememberSession } from "../sessionMemory";
 import { DEFAULT_PLAYER_NAME } from "../../lib/characterMacros";
 
@@ -57,7 +58,7 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
         pendingSessionId: null,
       });
       // 缓存命中也立刻恢复在途回合：校验请求可能很慢或失败，而用户已经在看这个故事。
-      watchSession(id, epoch, () => activeTurnSub?.synchronize());
+      watchSession(id, epoch, () => storyRuntime.activeTurnSub?.synchronize());
       recoverActiveTurn(cached);
       // 缓存分支同样拉一次记忆：否则在后台校验返回前记忆库会一直是空的。
       void get().loadMemories();
@@ -94,7 +95,7 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
         sessionLoading: false,
         pendingSessionId: null,
       });
-      watchSession(id, epoch, () => activeTurnSub?.synchronize());
+      watchSession(id, epoch, () => storyRuntime.activeTurnSub?.synchronize());
       recoverActiveTurn(view);
       await get().loadMemories();
     } catch (e) {
@@ -175,7 +176,10 @@ export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
     const owner = scope();
     const payload = JSON.stringify(opts);
     const pendingSetup = getPendingSessionSetup();
-    if (!pendingSetup || pendingSetup.epoch !== owner.epoch || pendingSetup.payload !== payload) {
+    // 幂等键与导航/epoch 解耦：只要载荷相同就复用同一 key（G38）。旧实现把 epoch
+    // 纳入匹配并在 beginNavigation 里清空，于是"响应丢失 → 切走 → 重试"会用新 key
+    // 重复建故事。成功后（见下）才清掉。
+    if (!pendingSetup || pendingSetup.payload !== payload) {
       setPendingSessionSetup({ epoch: owner.epoch, payload, key: opts.idempotencyKey ?? crypto.randomUUID() });
     }
     const requestKey = getPendingSessionSetup()!.key;

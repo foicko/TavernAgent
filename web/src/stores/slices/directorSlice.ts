@@ -2,22 +2,23 @@ import { api, subscribeDirectorEvents } from "../../app/api";
 import type { DirectorAction, DirectorDraft, DirectorPlan, DirectorView } from "../../app/types";
 import type { StoreGet, StoreSet } from "../storyTypes";
 import { isTurnBusy, owns, scope, toErr } from "../storyHelpers";
+import { storyRuntime } from "../storyRuntime";
 
 export const DIRECTOR_POLL_MS = 3000;
 
 // 讨论在推进这件事属于故事，不属于打开它的面板：面板卸载、工作区关闭都不能让它
 // 停在"执行中"。与回合恢复同一套路：durable SSE + 轮询兜底 + 归属守卫，终态后刷新。
-let directorWatch: { requestId: string; stop: () => void; timer: ReturnType<typeof setInterval> } | null = null;
+// 句柄存于 storyRuntime（集中管理运行期可变状态）。
 
 function detachDirectorWatch() {
-  if (!directorWatch) return;
-  directorWatch.stop();
-  clearInterval(directorWatch.timer);
-  directorWatch = null;
+  if (!storyRuntime.directorWatch) return;
+  storyRuntime.directorWatch.stop();
+  clearInterval(storyRuntime.directorWatch.timer);
+  storyRuntime.directorWatch = null;
 }
 
 function attachDirectorRequest(get: StoreGet, set: StoreSet, requestId: string) {
-  if (!requestId || directorWatch?.requestId === requestId) return;
+  if (!requestId || storyRuntime.directorWatch?.requestId === requestId) return;
   detachDirectorWatch();
   const owner = scope();
   let checking = false;
@@ -50,7 +51,7 @@ function attachDirectorRequest(get: StoreGet, set: StoreSet, requestId: string) 
     onFinalError: () => { void reconcile(); },
   });
   const timer = setInterval(() => { void reconcile(); }, DIRECTOR_POLL_MS);
-  directorWatch = { requestId, stop, timer };
+  storyRuntime.directorWatch = { requestId, stop, timer };
   void reconcile();
 }
 

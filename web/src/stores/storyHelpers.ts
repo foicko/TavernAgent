@@ -4,6 +4,7 @@ import { CHARACTER_PRESETS, getPresetCardJson } from "../lib/characterPresets";
 import { subscribeSessionEvents } from "../app/api";
 import { useUi } from "./uiStore";
 import { emptyDirectorState } from "./slices/directorSlice";
+import { storyRuntime, type PendingMemoryPatch, type PendingSessionSetup, type StoryScope } from "./storyRuntime";
 import type { OptionView, StoryMessage, StoryState, StoreGet, StoreSet, TurnPhase } from "./storyTypes";
 
 // 运行期 Store 访问器绑定（避免循环引用）
@@ -59,8 +60,14 @@ export function toErr(e: unknown): string {
   return String(e);
 }
 
+const presetIdentityCache = new Map<string, string>();
+
 export function presetIdentity(key: string): string {
-  return (JSON.parse(getPresetCardJson(key)) as { cardId: string }).cardId;
+  const cached = presetIdentityCache.get(key);
+  if (cached !== undefined) return cached;
+  const identity = (JSON.parse(getPresetCardJson(key)) as { cardId: string }).cardId;
+  presetIdentityCache.set(key, identity);
+  return identity;
 }
 
 // 解析会话或视图归属的角色键 (精确匹配 characters 字典与标题)。
@@ -71,7 +78,13 @@ export function resolveCharKeyFromSession(
 ): string | null {
   if (!sessionOrView) return null;
   if (sessionOrView.characterId) {
-    return Object.keys(CHARACTER_PRESETS).find(key => key !== "custom" && [presetIdentity(key), `card_${key}`].includes(sessionOrView.characterId!)) ?? null;
+    const matched = Object.keys(CHARACTER_PRESETS).find(
+      key => key !== "custom" && [presetIdentity(key), `card_${key}`].includes(sessionOrView.characterId!)
+    );
+    // 命中预设身份可直接返回；未命中时继续用下面的状态/标题兜底。
+    // （旧实现这里直接 return null，使下面的兜底分支对"有 characterId 但非预设身份"
+    //   的会话完全不可达。）
+    if (matched) return matched;
   }
 
   // 1. 优先从状态中的参与角色表解析 (例如 npc_elena, npc_saori)
@@ -127,42 +140,35 @@ export function clearSessionCache() {
   sessionViewCache.clear();
 }
 
-// 并发序号与导航 Epoch
-export let sendSeq = 0;
-export function incrementSendSeq(): number { return ++sendSeq; }
+// 并发序号与导航 Epoch：状态集中在 storyRuntime（见其注释），这里只保留访问器，
+// 保持既有调用点签名不变。
+export function incrementSendSeq(): number { return ++storyRuntime.sendSeq; }
 
-export let navigationEpoch = 0;
-export function getNavigationEpoch(): number { return navigationEpoch; }
+export function getNavigationEpoch(): number { return storyRuntime.navigationEpoch; }
 
-export let reloadSeq = 0;
-export function getReloadSeq(): number { return reloadSeq; }
-export function incrementReloadSeq(): number { return ++reloadSeq; }
+export function getReloadSeq(): number { return storyRuntime.reloadSeq; }
+export function incrementReloadSeq(): number { return ++storyRuntime.reloadSeq; }
 
-export let memorySeq = 0;
-export function getMemorySeq(): number { return memorySeq; }
-export function incrementMemorySeq(): number { return ++memorySeq; }
+export function getMemorySeq(): number { return storyRuntime.memorySeq; }
+export function incrementMemorySeq(): number { return ++storyRuntime.memorySeq; }
 
-export let sessionListSeq = 0;
-export function getSessionListSeq(): number { return sessionListSeq; }
-export function incrementSessionListSeq(): number { return ++sessionListSeq; }
+export function getSessionListSeq(): number { return storyRuntime.sessionListSeq; }
+export function incrementSessionListSeq(): number { return ++storyRuntime.sessionListSeq; }
 
-export let pendingSessionSetup: { epoch: number; payload: string; key: string } | null = null;
-export function getPendingSessionSetup() { return pendingSessionSetup; }
-export function setPendingSessionSetup(val: typeof pendingSessionSetup) { pendingSessionSetup = val; }
+export function getPendingSessionSetup(): PendingSessionSetup | null { return storyRuntime.pendingSessionSetup; }
+export function setPendingSessionSetup(val: PendingSessionSetup | null) { storyRuntime.pendingSessionSetup = val; }
 
-export let pendingMemoryPatch: { payload: string; key: string } | null = null;
-export function getPendingMemoryPatch() { return pendingMemoryPatch; }
-export function setPendingMemoryPatch(val: typeof pendingMemoryPatch) { pendingMemoryPatch = val; }
+export function getPendingMemoryPatch(): PendingMemoryPatch | null { return storyRuntime.pendingMemoryPatch; }
+export function setPendingMemoryPatch(val: PendingMemoryPatch | null) { storyRuntime.pendingMemoryPatch = val; }
 
-export let sessionStop: (() => void) | null = null;
-export function setSessionStop(stop: (() => void) | null) { sessionStop = stop; }
+export function setSessionStop(stop: (() => void) | null) { storyRuntime.sessionStop = stop; }
 
-export function scope() {
+export function scope(): StoryScope {
   const st = getStoryState();
-  return { epoch: navigationEpoch, sessionId: st.view?.sessionId, branchId: st.activeBranchId, nodeId: st.viewNodeId };
+  return { epoch: storyRuntime.navigationEpoch, sessionId: st.view?.sessionId, branchId: st.activeBranchId, nodeId: st.viewNodeId };
 }
 
-export function owns(s: ReturnType<typeof scope>): boolean {
+export function owns(s: StoryScope): boolean {
   const now = scope();
   return s.epoch === now.epoch && s.sessionId === now.sessionId && s.branchId === now.branchId && s.nodeId === now.nodeId;
 }
@@ -170,13 +176,10 @@ export function owns(s: ReturnType<typeof scope>): boolean {
 export function beginNavigation(onDetachStream?: () => void): number {
   useUi.getState().hideInvBubble();
   onDetachStream?.();
-  sessionStop?.();
-  sessionStop = null;
-  reloadSeq++;
-  memorySeq++;
-  pendingSessionSetup = null;
-  pendingMemoryPatch = null;
-  return ++navigationEpoch;
+  storyRuntime.reset();
+  storyRuntime.reloadSeq++;
+  storyRuntime.memorySeq++;
+  return ++storyRuntime.navigationEpoch;
 }
 
 export function emptyStory(): Partial<StoryState> {
@@ -228,20 +231,20 @@ export function createInitialStoryState(): Partial<StoryState> {
 }
 
 export function watchSession(sessionId: string, epoch: number, onSynchronize?: () => void) {
-  sessionStop?.();
+  storyRuntime.sessionStop?.();
   let scheduled: ReturnType<typeof setTimeout> | undefined;
   let stop: (() => void) | null = null;
   // 退避用尽（onFinalError）意味着"这个订阅死了"，而不是"这个故事从此不变"。
   // 挂起重试标记，等读者回到窗口时重建订阅并补一次视图刷新——旧实现把
   // onFinalError 当无事发生，于是后台的 head 变化要等到用户手动操作才可见。
   let stalled = false;
-  const sameStory = () => navigationEpoch === epoch && getStoryState().view?.sessionId === sessionId;
+  const sameStory = () => storyRuntime.navigationEpoch === epoch && getStoryState().view?.sessionId === sessionId;
   const subscribe = () => {
     stop = subscribeSessionEvents(sessionId, {
       onEvent: ev => {
         const st = getStoryState();
         const data = ev.data as { branchId?: string };
-        if (navigationEpoch !== epoch || st.view?.sessionId !== sessionId || data.branchId !== st.activeBranchId) return;
+        if (storyRuntime.navigationEpoch !== epoch || st.view?.sessionId !== sessionId || data.branchId !== st.activeBranchId) return;
         if (ev.event !== "session.updated") return;
         if (isTurnBusy(st.phase)) {
           onSynchronize?.();
@@ -249,7 +252,7 @@ export function watchSession(sessionId: string, epoch: number, onSynchronize?: (
         }
         clearTimeout(scheduled);
         scheduled = setTimeout(() => {
-          if (navigationEpoch === epoch && getStoryState().view?.sessionId === sessionId) {
+          if (storyRuntime.navigationEpoch === epoch && getStoryState().view?.sessionId === sessionId) {
             void getStoryState().reloadView().catch(() => undefined);
           }
         }, 100);
@@ -270,7 +273,7 @@ export function watchSession(sessionId: string, epoch: number, onSynchronize?: (
   if (typeof window !== "undefined") window.addEventListener("focus", onFocus);
   if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
 
-  sessionStop = () => {
+  storyRuntime.sessionStop = () => {
     clearTimeout(scheduled);
     if (typeof window !== "undefined") window.removeEventListener("focus", onFocus);
     if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
