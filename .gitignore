@@ -58,9 +58,9 @@ data/config/secrets.json
 # Frontend
 web/node_modules/
 web/.vite/
-docs/plan/showcase/node_modules/
-docs/plan/showcase/.vite/
-docs/plan/showcase/dist/
+archive/showcase/node_modules/
+archive/showcase/.vite/
+archive/showcase/dist/
 node_modules/
 
 # Local verification scratch (published reports live in docs/artifacts)

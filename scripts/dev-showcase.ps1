@@ -7,7 +7,7 @@
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$showcaseDir = Join-Path $root "docs/plan/showcase"
+$showcaseDir = Join-Path $root "archive/showcase"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  TavernAgent Standalone UI Component Showcase" -ForegroundColor White
