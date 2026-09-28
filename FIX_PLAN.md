@@ -203,8 +203,8 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R5 | ✅ 已完成 | SSE 传输层拆到 `app/stream.ts`；事件错误边界与超限/401 边界用例补齐 |
 | R8 | ✅ 已完成 | SSE 读取骨架收敛为 `providerutil.ReadSSE`（三份拷贝 → 1）；定时器主循环按协议保留（见备注）|
 | R9 | ✅ 已完成 | 归档边界/读取器集中在 `cardarchive.go`；新增条目数上限；landing 本就是共享路径（PNG 除外）|
-| R7 | 🔄 部分完成 | ✅ G25 `sqlIN`、✅ 错误体摘要 `httpbody`、✅ API Host 防线、✅ M29 投影写移出读路径；⬜ M23 fail-closed（见备注）|
-| R10 | 🔄 部分完成 | ✅ M4（属性默认值统一为 `DefaultAttribute=10`）、✅ M5（mandatory 只估一次）；⬜ M5 增量拟合、M3 加载期宏展开、turnRunner/compileSession 拆分、M23（见备注）|
+| R7 | ✅ 已完成 | G25 `sqlIN`、错误体摘要 `httpbody`、API Host 防线、M29 投影写移出读路径、M23 基准缺失 fail-closed |
+| R10 | 🔄 部分完成 | ✅ M4（属性默认值统一为 `DefaultAttribute=10`）、✅ M5（mandatory 只估一次）；⬜ M5 增量拟合、M3 加载期宏展开、turnRunner/compileSession 拆分 |
 | R11 | ⬜ | |
 | R12 | ⬜ | |
 
@@ -256,7 +256,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 - **B10-R8**（`refactor(providers,r8)`）：三条协议各自的「逐行读 SSE + 多行 data 拼接 + 空行分帧 + EOF 末行 + 漏发空行网关兼容 + ctx 取消」goroutine 完全同构，收敛为 `providerutil.ReadSSE`（新增 `providerutil/sse.go`），三处调用点改为消费事件通道；`openai` 的 `ssePayload` 随之删除。**偏差说明**：定时器主循环（首字/空闲/总时限、空流归类）三协议的「事件→token/结束」映射差异较大，抽公共 pump 需引入解码回调，收益低于风险，故保留各自主循环。新增 `sse_test.go` 覆盖多行 data、EOF 末行、漏空行 JSON 分派、注释/空 data。
 - **B10-R9**（`refactor(app,r9)`）：核对发现三条导入器**已共用**资源落地路径（charx/tacard 经 `rep.CharxAssets`+`persistCharxAssets`；PNG 是内存中已解码的 chunk，本质不同），S1/M6/M7/M13 亦已完成。本次做的是把散在 `charx.go`、却被 archive/tacard/cardlibrary 共用的**归档边界与读取器**集中到新 `cardarchive.go`（中性命名 `maxCardArchive{Card,Entry,Total}Bytes`、`readZipEntry`、`cardArchiveEntries`、`archiveEntryPath`），并**新增条目数上限** `maxCardArchiveEntries`（在 charx/tacard 导入入口与落地路径统一生效）。**发现并规避**：charx 支持 JPEG/ZIP polyglot（首字节非 `PK`），因此**不加** PK 魔数硬校验——`zip.OpenReader` 的中央目录扫描才是正确检测。
 - **B10-R7**（`refactor(...,r7)`，4 提交）：① **G25** 新增 `sqlite/sqlutil.go`（`placeholders`/`inClause`/`inClauseAny`），替换 7 处手写 `IN` 构造；② **G14/M15/G31** 新增 `internal/util/httpbody`，`providerutil`/`image`/`tts` 三份错误体摘要统一（按 rune 截断不破 UTF-8 + HTML 错误页替换）；③ **M14** `apiHostGuard` 在 mux 外层统一对 `/api/` 做 Host 白名单（新增路由漏包不再直接暴露）；④ **M29** 记忆投影检查点从读路径移到提交事务内（`projectionPathCTE`/`projectionTipIDs`/`materializeProjectionTx`），读路径只读。
-  - **遗留 M23**：`checkBaseHashTx` 仍把 `stateAtQ` 的 `sql.ErrNoRows` 视为通过。改为 fail-closed 需要先保证**基准节点的状态投影**在任何合法提交前都存在（根节点快照 + 稀疏检查点重放）；直接改为硬错误会在"节点已写、快照未写"的合成夹具上误判（此前一次尝试即因此回退）。属独立小改动，需与 `TestCommitOnceIdempotent`/`TestReceiptsAtResultNodes` 一并调整。
+  - **M23（已落地）**：`checkBaseHashTx` 不再把"无状态投影"静默放行，改为返回包装 `ports.ErrNoState` 的硬错误；实测只有 `TestCommitOnceIdempotent`/`TestReceiptsAtResultNodes` 两个夹具需补 `seedBaseSnapshot`（其余路径都经 `CreateSessionWithSnapshot`/导入快照，本就满足基线）。新增 `store_turn_m23_test.go`。
 - **B10-R10**（`refactor(...,r10)`，进行中）：① **M5（部分）** `fitBundleBudget` 新增 `mandatory` 参数，消除一次编译里对"不可省略材料"的**重复整份渲染+估算**。
   - **遗留**：M5 的**增量拟合**（裁剪循环每丢一项整份重渲染，O(n²)；精确增量需处理"丢历史会新增缺口提示"的非单调性）；**M3** 秘密宏加载期展开（宏展开实现在 `application`，`context` 不能反向依赖，需先把展开器下沉到共享包/domain）；**turnRunner/compileSession 结构性拆分**；**M23**（见 R7 备注，与提交路径同源，建议与 R10 一起做）。
 

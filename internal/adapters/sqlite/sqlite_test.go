@@ -38,6 +38,23 @@ func seedSession(t *testing.T, s *Store) (*domain.Session, *domain.PlotNode, *do
 	return sess, root, branch
 }
 
+// seedBaseSnapshot 为 nodeID 落一份状态快照。
+//
+// M23 之后，声明了 BaseStateHash 的提交必须能重建基准状态，否则硬失败；
+// 用例若要基于自造状态提交，就需要先把该状态落成快照。
+func seedBaseSnapshot(t *testing.T, s *Store, nodeID string, state *domain.WorldState) {
+	t.Helper()
+	raw, err := state.Marshal()
+	if err != nil {
+		t.Fatalf("marshal state: %v", err)
+	}
+	if _, err := s.db.Exec(
+		`INSERT OR REPLACE INTO state_snapshots(node_id,snapshot_version,ruleset_version,state_json,state_hash) VALUES(?,?,?,?,?)`,
+		nodeID, 1, "test", raw, HashState(state)); err != nil {
+		t.Fatalf("seed base snapshot: %v", err)
+	}
+}
+
 // 迁移与 FTS5 探测。
 func TestOpenMigratesAndProbe(t *testing.T) {
 	s := newTestStore(t)
@@ -159,6 +176,8 @@ func TestCommitOnceIdempotent(t *testing.T) {
 		EventID: "ev1", EventIndex: 0, Type: domain.EventRelationshipDelta,
 		PayloadJSON: `{"characterId":"npc","field":"trust","applied":5}`,
 	}}
+	// 基准状态必须可重建（M23）：把 base 落成根节点状态快照。
+	seedBaseSnapshot(t, s, "root", base)
 	plan := makeCommitPlan(sess.SessionID, "turn1", branch.BranchID, "node1", "root", 0, HashState(base), evs, state)
 
 	res, err := s.CommitTurn(plan)
@@ -815,6 +834,8 @@ func TestReceiptsAtResultNodes(t *testing.T) {
 
 	base := domain.NewWorldState()
 	state := base.Clone()
+	// 基准状态必须可重建（M23）：把 base 落成根节点状态快照。
+	seedBaseSnapshot(t, s, "root", base)
 	plan := makeCommitPlan(sess.SessionID, "turn1", branch.BranchID, "node1", "root", 0, HashState(base), nil, state)
 	plan.SettleReceipts = []string{"r1"}
 	if res, err := s.CommitTurn(plan); err != nil || !res.Committed {

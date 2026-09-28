@@ -493,16 +493,21 @@ func (s *Store) finalizeCommitTx(tx *sql.Tx, plan *ports.CommitPlan, base commit
 
 var errStateMismatch = errors.New("base state hash mismatch")
 
-// checkBaseHashTx 校验 given 头节点的快照哈希。
-// 注：M0 状态下每节点都有快照；M2 起改为祖先最近检查点+事件重放并维护等价校验。
 // checkBaseHashTx 校验基准状态哈希。
+//
 // 稀疏检查点下基准节点可能没有直接快照，此时用 StateAt 的
 // 「最近快照 + 事件重放」结果比对——不能因为查不到快照就跳过校验，
 // 否则大多数回合的基准校验会静默失效。
+//
+// 只有调用方**声明了** BaseStateHash（非空）才会走到这里；而生产路径的
+// BaseStateHash 只可能来自一次成功的 StateAt 读取（应用层读不到投影会先返回
+// STATE_MISSING）。因此"整条祖先链都没有状态投影"只能是数据缺口
+// （导入不完整 / 写入中断 / 数据损坏），必须 fail-closed，而不是放行一个
+// 基于陈旧 head 的提交（M23）。
 func (s *Store) checkBaseHashTx(tx *sql.Tx, headID, wantHash string) error {
 	snap, err := stateAtQ(tx, headID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil // 尚无状态投影（例如根节点快照与节点写入之间有窗口）
+		return fmt.Errorf("基准状态投影缺失（节点 %s），拒绝在无基线的情况下提交: %w", headID, ports.ErrNoState)
 	}
 	if err != nil {
 		return err
