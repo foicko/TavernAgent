@@ -200,7 +200,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R3 | ✅ 已完成 | 会话行、两份角色卡行（已收录+预设）→ `ListRow`；另两类经核实为不同模式（见下）|
 | R1 | ✅ 已完成 | 统一模态栈：Modal/命令面板/导演工作区/灯箱接入；Esc 只关栈顶；下层整体 inert |
 | R6 | ✅ 已完成 | `storyRuntime` 集中运行期状态（含 G33/G37/G38/G42）；G41 顺延（派生 selector 重构）|
-| R5 | ⬜ | |
+| R5 | ✅ 已完成 | SSE 传输层拆到 `app/stream.ts`；事件错误边界与超限/401 边界用例补齐 |
 | R8 | ⬜ | |
 | R9 | ⬜ | |
 | R7 | ⬜ | |
@@ -249,7 +249,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 
 - **B10-R1**（`refactor(web,r1)`，4 提交）：建 `lib/modalStack`（单一栈 + `closeTopLayer` + 背景/下层 inert + 滚动锁），`useDialogFocus` 接入；Modal/命令面板/导演工作区/插画灯箱全部注册；App 全局 Esc 改为 `closeTopLayer()`（只关栈顶）。
 - **B10-R6**（`refactor(web,r6)`）：新建 `stores/storyRuntime.ts`，把散落在 `storyHelpers` 与各 slice 的模块级可变状态（`sendSeq`/`navigationEpoch`/`reloadSeq`/`memorySeq`/`sessionListSeq`/`branchOpSeq`/`pendingSessionSetup`/`pendingMemoryPatch`/`pendingSubmission`/`sessionStop`/`turnCursor`/`activeTurnSub`/`directorWatch`/`thinkingStartedAt`）集中为一个对象 + 单一 `reset()`；顺带修 **G33**（`resolveCharKeyFromSession` 的兜底分支此前不可达 + `presetIdentity` 记忆化）、**G37**（`send` 在建会话前先置 `generating`）、**G38**（幂等键与导航/epoch 解耦）。**G41 顺延**：`hud`/`activeCharacterId`/`messages` 从 `view` 派生属独立的 selector 重构。
-- **B10-R5**（`refactor(web,r5)`，3 提交）：抽 `app/stream.ts`（`subscribeEvents`/`parseSSEBlock`/`readWithStall`/`sleepCancellable`）→ `onEvent` 独立 try/catch + 归一化 `seq` → 补「handler 抛错/`seq=0`/超大事件/401 非 JSON」用例。`api.ts` 随之降到 ~400 行。
+- **B10-R5**（`refactor(web,r5)`）：把 SSE 传输层（`subscribeEvents`/`parseSSEBlock`/`readWithStall`/`sleepCancellable`/三处 `subscribeXEvents`/退避与看门狗常量/`TurnStreamHandlers`）从 `app/api.ts` 拆到 `app/stream.ts`；`app/api` 仅做 re-export，既有导入点与 `vi.mock("../app/api")` 全部不变。`api.ts` 639 → 450 行。补 SSE 边界用例：超大事件终止、401（非 JSON 体）不重连。事件 handler 的独立 try/catch（S8）与游标去重为既有实现，本次补测固化。
 
 **Wave 3 · Go 后端**
 

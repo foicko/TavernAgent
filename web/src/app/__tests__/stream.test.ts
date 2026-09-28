@@ -67,4 +67,25 @@ describe("recoverable SSE transport", () => {
     // 不能进入重连风暴：处理异常后应终止，而非再次拉流。
     expect(fetchMock).toHaveBeenCalledOnce();
   });
+
+  it("单个事件超过上限时上报并终止，避免从同一游标死循环重连", async () => {
+    const huge = "event: block.delta\ndata: " + "x".repeat(1024 * 1024 + 16);
+    const fetchMock = vi.fn().mockResolvedValue(stream([huge]));
+    vi.stubGlobal("fetch", fetchMock);
+    const onFinalError = vi.fn();
+    stops.push(subscribeTurnEvents("t", { onEvent: vi.fn(), onFinalError }));
+    await vi.waitFor(() => expect(onFinalError).toHaveBeenCalledOnce());
+    expect(onFinalError.mock.calls[0][0].message).toContain("too large");
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("401（非 JSON 响应体）视为不可恢复并上报，不再重连", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("Unauthorized", { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const onFinalError = vi.fn();
+    stops.push(subscribeTurnEvents("t", { onEvent: vi.fn(), onFinalError }));
+    await vi.waitFor(() => expect(onFinalError).toHaveBeenCalledOnce());
+    expect((onFinalError.mock.calls[0][0] as { status?: number }).status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
 });
