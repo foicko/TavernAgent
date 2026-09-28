@@ -106,6 +106,29 @@ python scripts/release_eval.py protocol --samples 100
 - `preflight` 会先读台账余额：不足 `samples + 修复余量` 就拒绝启动，避免跑到一半收到 429。
 - 结论摘要请登记回 `docs/PROJECT_STATUS.md` §6（脱敏，只写数字与指纹，不写凭据）。
 
+### 长程应用验收（随机卡 + 20 轮）
+
+除 100 例协议评测外，用真实模型模拟一段完整游玩：随机挑一张角色卡，连续 20 轮对话，逐轮
+检查输出健康（提交状态、正文非空、无原始帧/宏/脚本泄漏、无乱码、图片键合法），并校验图片
+三层可达（资源清单、资源端点真取字节、正文图片标记命中清单）。设计与判定口径见
+`docs/REAL_LLM_APP_EVAL.md`。
+
+```powershell
+# 用本地已配置的供应商；默认卡池 charx/ → testdata/ → scripts/fixtures/
+python scripts/functional_eval.py --scenarios longplay --card-dir charx --turns 20
+
+# 固定种子复现一次结论
+python scripts/functional_eval.py --scenarios longplay --card-dir charx --turns 20 --seed 42
+
+# 没有本地卡池时用现场合成卡（仓库只放矢量，不提交位图）
+python scripts/functional_eval.py --scenarios longplay --card synthetic --turns 3
+```
+
+报告落在 `output/functional/<时间戳>-<provider>/`：`report.json` 的 `longplay` 段含
+`card`（含 sha256）、`seed`、`healthyRate`、`passAtK/passPowerK` 与 `images` 证据；
+`usage` 段含缓存命中率、token 速率、首字延迟与估算漂移（按 slot/task 分组）。
+走 `model-eval.yml` 时勾选 `longplay` 输入即可（经本地计量代理，仍受预算闸约束）。
+
 ## 故障排查
 
 | 提示或现象 | 处理 |

@@ -18,6 +18,10 @@ on:
         description: 并发数（越高越省时间，但更容易触发上游限流）
         required: true
         default: "2"
+      longplay:
+        description: 额外跑"随机卡 + 20 轮"长程应用验收（图片加载 + 输出健康）
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -87,6 +91,21 @@ jobs:
             --workers "${{ inputs.workers }}" \
             --upstream "$UPSTREAM"
 
+      - name: Long-play application acceptance (random card, 20 turns)
+        if: ${{ inputs.longplay }}
+        shell: bash
+        env:
+          TAVERNAGENT_EVAL_TOKEN: ${{ secrets.TAVERNAGENT_EVAL_TOKEN }}
+        run: |
+          set -euo pipefail
+          # 走本地计量代理（/<slot>/v1），额度仍受预算闸约束；
+          # 计量代理不提供 /models，故跳过预检。
+          python scripts/functional_eval.py --scenarios longplay \
+            --base-url http://127.0.0.1:18892/primary/v1 \
+            --model "${{ inputs.model }}" \
+            --key-env TAVERNAGENT_EVAL_TOKEN \
+            --skip-preflight --turns 20
+
       - name: Upload evaluation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,4 +116,6 @@ jobs:
             output/release-readiness/gemini/**/server.log
             output/release-readiness/gemini/meter.log
             output/release-readiness/gemini/application.log
+            output/functional/**/report.json
+            output/functional/**/conversation.log
           if-no-files-found: warn

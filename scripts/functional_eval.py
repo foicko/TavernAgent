@@ -1,13 +1,18 @@
 """真实模型功能测试：按剧本驱动被测服务，产出含完整对话记录的日志。
 
 覆盖：基础对话、多轮连贯、记忆提取与修订、上下文压缩、导演模式、
-世界书、分支分叉、剧情包往返。
+世界书、分支分叉、剧情包往返，以及长程应用验收（随机角色卡 + 20 轮 + 图片加载）。
 
 用法（默认使用 data/config 里已配置的供应商）：
 
     python scripts/functional_eval.py
     python scripts/functional_eval.py --provider gemini
     python scripts/functional_eval.py --base-url http://127.0.0.1:8045/v1 --model gemini-3.5-flash-lite --key-env TAVERNAGENT_EVAL_GATEWAY_KEY
+
+长程应用验收（随机角色卡 + 20 轮真实对话 + 输出健康 + 图片加载，见 docs/REAL_LLM_APP_EVAL.md）：
+
+    python scripts/functional_eval.py --scenarios longplay --card-dir charx --turns 20
+    python scripts/functional_eval.py --scenarios longplay --card synthetic --turns 3 --seed 7
 
 产物（默认 output/functional/<时间戳>-<provider>/）：
 
@@ -23,9 +28,13 @@
   * 被测服务用 build 产物，避免"源码能跑、产物不能跑"的假结论。
 """
 import argparse
+import base64
 import hashlib
+import io
 import json
 import os
+import random
+import re
 import socket
 import sqlite3
 import subprocess
@@ -34,6 +43,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,6 +51,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from config_v2 import configure_slot  # noqa: E402  配置 API v2（实例 + 槽位引用）
+from eval_metrics import pass_at_k, pass_power_k  # noqa: E402  能力/可靠性双口径
 from eval_protocol import Client, result_content  # noqa: E402  复用既有 HTTP 客户端
 
 DEFAULT_BINARY = ROOT / "build/browser" / ("tavernagent.exe" if os.name == "nt" else "tavernagent")
@@ -56,7 +67,71 @@ COMPACTION_OUTPUT = 1024
 # 约束窗口：小到连承重摘要都装不下，用来验证"必须显式报错"的契约。
 CONSTRAINT_WINDOW = 4096
 NORMAL_WINDOW = 65536
-SCENARIOS = ("basic", "memory", "compaction", "director", "lorebook", "branch", "pack")
+SCENARIOS = ("basic", "memory", "compaction", "director", "lorebook", "branch", "pack", "longplay")
+
+# ---- longplay（真实模型长程应用验收）--------------------------------------
+#
+# 随机挑一张卡、连续对话 20 轮，检查"输出有没有问题"与"图片能不能加载"。
+# 判定口径见 docs/REAL_LLM_APP_EVAL.md：能客观断言的判 FAIL，主观项只告警。
+LONGPLAY_DEFAULT_TURNS = 20
+LONGPLAY_MIN_PROSE = 20                 # 每轮正文最少字数
+LONGPLAY_MAX_REPLACEMENT_RATIO = 0.005  # U+FFFD 替换符占比上限
+LONGPLAY_MAX_REPAIRS = 3                # 截断续写次数上限（与 _submit_once 一致）
+LONGPLAY_REPEAT_ALERT = 0.5             # 相邻轮 8-gram 重合率告警阈值
+LONGPLAY_MIN_TURN_CHARS = 40            # 单轮长度合理区间（仅告警）
+LONGPLAY_MAX_TURN_CHARS = 4000
+LONGPLAY_ASSET_SAMPLE = 16              # 资源端点字节校验的抽样上限（上千张立绘的卡）
+# 卡池探测顺序；--card-dir 会给定目录。真实大卡在本地 charx/（已 gitignore）。
+CARD_POOL_DIRS = ("charx", "testdata", "scripts/fixtures")
+CARD_EXTENSIONS = (".charx", ".tacard", ".json")
+# 8×8 / 1×1 级别的极小 PNG，用于"仓库只放矢量"约束下现场合成卡（不提交位图）。
+TINY_PNG_B64 = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
+
+# 输出问题检查用的模式（硬失败）。
+FRAME_LEAK_RE = re.compile(r'\{"v"\s*:\s*1|"proposalId"|"type"\s*:\s*"final"')
+MACRO_LEAK_RE = re.compile(r"\{\{\s*(char|user|getvar|setvar|roll)\b", re.I)
+SCRIPT_RE = re.compile(r"<\s*(script|iframe)\b|javascript:|\bonerror\s*=", re.I)
+# 与 internal/cardmarkers 的 imgRe 对齐：只认**双引号**写法（cmd/src/obj/BG 均可），
+# 不认 RisuAI 未加引号的 <img src=key>（应用本身也不解析它）。
+IMG_TAG_RE = re.compile(r'<img\s*[-\w]*\s*=\s*"([^"]{1,200})"[^>]*>|\[IMG:([^\[\]\r\n]{1,200})\]', re.I)
+IMG_OBJ_RE = re.compile(r"<img_obj\b|<imgBG\b", re.I)
+HUD_RE = re.compile(r"\[HUD:([^\]]*)\]", re.I)
+SCENE_RE = re.compile(r"\[SCENE:([^\]]*)\]", re.I)
+VAR_RE = re.compile(r"\[VAR:([^\]]*)\]", re.I)
+
+# 20 条玩家"意图"：不是 20 句相同的话，而是覆盖推进/提问/表态/回指/收束等真实游玩动作。
+LONGPLAY_INTENTS = (
+    "我先环顾四周，把眼前能看到的细节记下来。",
+    "我试着向{char}打个招呼，语气尽量自然。",
+    "我问{char}这里是什么地方、今天是什么日子。",
+    "我谈起一路上的见闻，把最离奇的那件说出来。",
+    "我想看看{char}对我的说法有什么反应。",
+    "我提议一起做点具体的事，比如清点物资或收拾房间。",
+    "我提到一件让我在意的小事，请{char}帮我判断。",
+    "我开个不轻不重的玩笑，看看气氛会不会缓和。",
+    "我认真听{char}说话，只在关键处追问一句。",
+    "我说出一个自己都拿不准的猜测，请{char}纠正我。",
+    "我把刚才提到的那件事重新捡起来，问{char}还记不记得。",
+    "我请{char}讲讲自己的来历。",
+    "我提出一个需要决定的问题，让{char}先表态。",
+    "我复述一遍目前我们知道的情况，确认有没有遗漏。",
+    "我按{char}的建议行动，并把结果说给他听。",
+    "我问一个之前没敢问的问题。",
+    "我试着拉近一点距离，但留出余地。",
+    "我提出一个明确的下一步计划。",
+    "我回顾这一路发生的事，问{char}怎么想。",
+    "我停下来说，今晚就到这里，但明天继续。",
+)
+# 随机注入的演绎要求：让 20 轮输入彼此不同，避免退化成复读。
+LONGPLAY_STYLE_HINTS = (
+    "请用两三段展开，写清动作、对白与环境。",
+    "多写对白，少写旁白。",
+    "用简洁的几笔收束这一幕。",
+    "写清楚场景的变化与在场人物的反应。",
+    "注意保持人物口吻一致。",
+)
 
 
 def utc() -> str:
@@ -71,6 +146,182 @@ def load_json(path: Path) -> dict:
     if not path.is_file():
         return {}
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+# ---------------------------------------------------------------- 长程评测：选卡 / 图片 / 文本检查
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def build_synthetic_charx() -> bytes:
+    """现场合成一张带内嵌资源的最小 charx（不把位图提交进仓库）。
+
+    首屏正文故意带一个合法的 <img cmd="smile"> 与 [HUD]，让"图片标记必须命中清单"
+    这条检查在没有本地大卡时也能真实跑到。
+    """
+    card = {
+        "spec": "chara_card_v3", "spec_version": "3.0",
+        "data": {
+            "name": "长程评测卡", "description": "用于真实模型长程对话验收的合成卡。",
+            "first_mes": "桌上的灯晃了一下。<img cmd=\"smile\"> [HUD:信任=82/100|好感=40%]\n「你来了。」",
+            "assets": [
+                {"type": "icon", "uri": "embeded://assets/icon/image/1.png", "name": "icon1", "ext": "png"},
+                {"type": "x-risu-asset", "uri": "embeded://assets/other/image/2.webp", "name": "smile", "ext": "webp"},
+            ],
+        },
+    }
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("card.json", json.dumps(card, ensure_ascii=False))
+        zf.writestr("assets/icon/image/1.png", base64.b64decode(TINY_PNG_B64))
+        zf.writestr("assets/other/image/2.webp", b"RIFF....WEBPVP8 ")
+    return buf.getvalue()
+
+
+def collect_card_pool(root: Path, card_dir: Path | None) -> list[Path]:
+    bases = [Path(card_dir)] if card_dir else [root / name for name in CARD_POOL_DIRS]
+    pool: list[Path] = []
+    for base in bases:
+        if not base.is_dir():
+            continue
+        for ext in CARD_EXTENSIONS:
+            for path in base.rglob("*" + ext):
+                if not path.is_file() or path.stat().st_size == 0:
+                    continue
+                # fixtures/ 下混有非卡片 JSON（协议探针、故障输入）；只收带 "card" 的。
+                if ext == ".json" and "card" not in path.name.lower():
+                    continue
+                pool.append(path)
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for path in sorted(pool, key=lambda p: p.as_posix()):
+        if path not in seen:
+            seen.add(path)
+            unique.append(path)
+    return unique
+
+
+def resolve_longplay_card(args, directory: Path, seed: int) -> tuple[Path, str]:
+    """解析长程评测要用的卡：--card > 卡池随机 > 合成卡。"""
+    if args.card:
+        if args.card.lower() == "synthetic":
+            return write_synthetic_card(directory), "explicit:synthetic"
+        path = Path(args.card)
+        if not path.is_file():
+            raise SystemExit(f"--card 指向的文件不存在：{path}")
+        return path.resolve(), "explicit"
+    pool = collect_card_pool(ROOT, Path(args.card_dir) if args.card_dir else None)
+    if not pool:
+        return write_synthetic_card(directory), "synthetic(empty pool)"
+    return random.Random(seed).choice(pool).resolve(), f"pool[{len(pool)}]"
+
+
+def write_synthetic_card(directory: Path) -> Path:
+    path = directory / "synthetic-longplay.charx"
+    path.write_bytes(build_synthetic_charx())
+    return path
+
+
+def image_magic_ok(data: bytes) -> bool:
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return True
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return True
+    if data[:3] == b"\xff\xd8\xff":
+        return True
+    return data[:6] in (b"GIF87a", b"GIF89a")
+
+
+def replacement_ratio(text: str) -> float:
+    return text.count("\ufffd") / max(len(text), 1)
+
+
+def ngram_overlap(left: str, right: str, n: int = 8) -> float:
+    """两段正文的 n-gram Jaccard 相似度，用于发现长程复读。"""
+    def grams(text: str) -> set[str]:
+        compact = re.sub(r"\s+", "", text)
+        return {compact[i:i + n] for i in range(max(0, len(compact) - n + 1))}
+    a, b = grams(left), grams(right)
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def image_keys_in(text: str) -> list[str]:
+    keys: list[str] = []
+    for match in IMG_TAG_RE.finditer(text or ""):
+        key = next((g for g in match.groups() if g), "").strip()
+        if key:
+            keys.append(key)
+    return keys
+
+
+def malformed_markers(text: str) -> list[str]:
+    """校验 HUD/SCENE/VAR 标记语法；返回格式不合规的原始片段。"""
+    bad: list[str] = []
+    for match in HUD_RE.finditer(text or ""):
+        parts = [p for p in match.group(1).split("|") if p.strip()]
+        if not parts or any("=" not in p for p in parts):
+            bad.append(match.group(0))
+    for match in VAR_RE.finditer(text or ""):
+        parts = [p for p in match.group(1).split("|") if p.strip()]
+        if not parts or any("=" not in p for p in parts):
+            bad.append(match.group(0))
+    for match in SCENE_RE.finditer(text or ""):
+        if not match.group(1).strip():
+            bad.append(match.group(0))
+    return bad
+
+
+def turn_usage_metrics(db_path: Path) -> dict:
+    """从被测实例的用量台账计算缓存命中率与 token 速率等指标。
+
+    只读打开隔离实例的 storage.db。prompt/completion/cached 是供应商回传的真实值，
+    estimated 是编译侧估算值；reported=false 表示该次未回传 usage，不能把 0 当真实消耗。
+    """
+    if not db_path.is_file():
+        return {}
+
+    def summarize(rows: list[tuple]) -> dict:
+        calls = len(rows)
+        prompt = sum(r[0] for r in rows)
+        completion = sum(r[1] for r in rows)
+        cached = sum(r[2] for r in rows)
+        estimated = sum(r[3] for r in rows)
+        reported = sum(1 for r in rows if r[4])
+        latency = sum(r[5] for r in rows)
+        first = sum(r[6] for r in rows if r[6] >= 0)
+        generated = sum(max(r[5] - r[6], 0) for r in rows if r[6] >= 0)
+        return {
+            "calls": calls,
+            "reportedCalls": reported,
+            "promptTokens": prompt,
+            "completionTokens": completion,
+            "cachedTokens": cached,
+            "estimatedTokens": estimated,
+            "cacheHitRate": round(cached / prompt, 4) if prompt else None,
+            "estimatedDrift": round(prompt / estimated, 4) if estimated else None,
+            "avgLatencyMs": round(latency / calls, 1) if calls else None,
+            "avgFirstTokenMs": round(first / reported, 1) if reported else None,
+            "tokensPerSecond": round(completion / (latency / 1000), 2) if latency else None,
+            "outputTokensPerSecond": round(completion / (generated / 1000), 2) if generated else None,
+        }
+
+    with sqlite3.connect(f"file:{db_path}?mode=ro", uri=True) as db:
+        rows = db.execute(
+            "SELECT slot, task, prompt_tokens, completion_tokens, cached_tokens, estimated_tokens,"
+            " reported, latency_ms, first_token_ms FROM turn_usage").fetchall()
+    if not rows:
+        return {"calls": 0}
+    result = summarize([tuple(row[2:]) for row in rows])
+    for index, key in ((0, "bySlot"), (1, "byTask")):
+        groups: dict = {}
+        for row in rows:
+            groups.setdefault(row[index], []).append(tuple(row[2:]))
+        result[key] = {name: summarize(group) for name, group in sorted(groups.items())}
+    return result
 
 
 # ---------------------------------------------------------------- 供应商
@@ -326,6 +577,10 @@ class Runner:
         self.card: dict = {}
         self.current: Scenario | None = None
         self.turn_retries = 1
+        self.character_name = "角色"
+        self.longplay_card: Path | None = None
+        self.longplay_seed = 0
+        self.longplay_turns = LONGPLAY_DEFAULT_TURNS
 
     # ---- 基础操作 ----
 
@@ -334,10 +589,15 @@ class Runner:
             self.card = load_json(BUILTIN_CARD)
         return json.dumps(self.card, ensure_ascii=False)
 
-    def create_session(self, title: str, opening: str | None = None) -> dict:
-        if not BUILTIN_CARD.is_file():
-            raise SystemExit(f"缺少内置卡 fixture {BUILTIN_CARD}")
-        payload = {"title": title, "characterJson": self.card_json(), "playerName": "旅人", "playerRole": "夜里赶路的旅客"}
+    def create_session(self, title: str, opening: str | None = None,
+                       card_json: str | None = None, card_id: str | None = None) -> dict:
+        payload: dict = {"title": title, "playerName": "旅人", "playerRole": "夜里赶路的旅客"}
+        if card_id:
+            payload["cardId"] = card_id
+        else:
+            if not BUILTIN_CARD.is_file():
+                raise SystemExit(f"缺少内置卡 fixture {BUILTIN_CARD}")
+            payload["characterJson"] = card_json or self.card_json()
         if opening:
             payload["openingVariantId"] = opening
         session = self.client.must("POST", "/api/v1/sessions", payload)
@@ -346,6 +606,17 @@ class Runner:
         session["state"] = view["state"]
         session["branchId"] = view["branch"]["branchId"]
         return session
+
+    def character_name_of(self, view: dict) -> str:
+        """从会话状态里取参与者名；不写死任何卡的 npc_* 键，随机卡才可能通用。"""
+        chars = (view.get("state") or {}).get("characters") or {}
+        for key, value in chars.items():
+            if key != "player" and value.get("participant"):
+                return value.get("name") or "角色"
+        for key, value in chars.items():
+            if key != "player" and value.get("name"):
+                return value["name"]
+        return "角色"
 
     def view(self, session: dict) -> dict:
         return self.client.must("GET", "/api/v1/sessions/" + session["sessionId"])
@@ -379,6 +650,7 @@ class Runner:
         """单次提交与等待。"""
         self.counter += 1
         view = self.view(session)
+        self.character_name = self.character_name_of(view)
         branch = view["branch"]
         started = time.monotonic()
         accepted = self.client.must("POST", f"/api/v1/sessions/{session['sessionId']}/branches/{branch['branchId']}/turns", {
@@ -411,7 +683,7 @@ class Runner:
             "failureMessage": turn.get("failureMessage") or turn.get("failure_message"),
             "sessionId": session["sessionId"],
             "turnId": accepted["turnId"],
-            "character": view["state"]["characters"].get("npc_chixia", {}).get("name", "角色"),
+            "character": self.character_name,
             "text": text,
             "status": turn.get("status"),
             "elapsed": elapsed,
@@ -431,6 +703,28 @@ class Runner:
                 return response.status, response.read()
         except urllib.error.HTTPError as error:
             return error.code, error.read()
+
+    def fetch(self, path: str) -> tuple[int, dict, bytes]:
+        """返回 (status, headers, body)，用于校验资源端点的 Content-Type 与真实字节。"""
+        request = urllib.request.Request(self.server.base_url + path, method="GET")
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                return response.status, dict(response.headers), response.read()
+        except urllib.error.HTTPError as error:
+            return error.code, dict(error.headers), error.read()
+
+    def import_card(self, path: Path) -> dict:
+        """把卡原始字节导入卡库；服务端按魔数识别 png/charx/tacard/json。"""
+        status, body = self.raw("POST", "/api/v1/cards/import", path.read_bytes(), "application/octet-stream")
+        if not 200 <= status < 300:
+            raise RuntimeError(f"导入角色卡失败 HTTP {status}: {body[:200]!r}")
+        try:
+            return json.loads(body.decode("utf-8"))
+        except ValueError as error:
+            raise RuntimeError(f"导入响应不是 JSON：{error}") from None
+
+    def card_detail(self, card_id: str) -> dict:
+        return self.client.must("GET", f"/api/v1/cards/{card_id}")
 
     def summaries(self, session_id: str) -> list:
         with sqlite3.connect(f"file:{self.server.data_dir / 'storage.db'}?mode=ro", uri=True) as db:
@@ -932,6 +1226,201 @@ SELECT COUNT(*) FROM up WHERE node_key = ?""", (descendant_id, ancestor_id)).fet
         self.report["sessions"]["pack"] = sid
         return scenario
 
+    def scenario_longplay(self, name: str) -> Scenario:
+        """随机卡 + 20 轮真实对话 + 图片加载验收（见 docs/REAL_LLM_APP_EVAL.md）。"""
+        scenario = Scenario(name, "长程真实对话（随机卡）")
+        self.current = scenario
+        self.recorder.rule(f"场景：{scenario.title}")
+        if self.longplay_card is None:
+            raise RuntimeError("未解析到长程评测用卡")
+        card_path = Path(self.longplay_card)
+        card_bytes = card_path.read_bytes()
+        self.recorder.note(
+            f"随机种子 {self.longplay_seed}｜角色卡 {card_path.name}"
+            f"（{len(card_bytes)} 字节，sha256 {sha256_bytes(card_bytes)[:16]}）")
+
+        # ---- 导入与资源清单 ----
+        imported = self.import_card(card_path)
+        card_id = imported.get("cardId") or ""
+        card_name = imported.get("name") or card_path.stem
+        scenario.check(self.recorder, "角色卡导入成功", bool(card_id), f"cardId={card_id or '(无)'}｜{card_name}")
+        if not card_id:
+            return scenario
+
+        detail = self.card_detail(card_id)
+        assets = detail.get("assets") or []
+        names = [str(a.get("name")) for a in assets if a.get("name")]
+        internal = [a for a in assets if str(a.get("url") or "").startswith("/api/v1/cards/")]
+        empty_url = [a for a in assets if not a.get("url")]
+        external = [a for a in assets if str(a.get("url") or "").startswith(("http://", "https://", "data:"))]
+        by_name: dict[str, set] = {}
+        for asset in assets:
+            by_name.setdefault(str(asset.get("name")), set()).add(str(asset.get("url")))
+        conflicts = {n: sorted(u) for n, u in by_name.items() if len(u) > 1}
+        duplicates = [n for n in names if names.count(n) > 1]
+        self.recorder.note("资源清单：" + (", ".join(f"{a.get('name')}→{a.get('url') or '(空)'}" for a in assets) or "无"))
+        # 清单质量是卡片作者的数据问题（空 name、同名不同 URL、重复声明），记录为告警；
+        # 硬失败留给"模型自造键 / 端点不可达 / 安全"这些应用行为。
+        empty_names = [a for a in assets if not str(a.get("name")).strip()]
+        if empty_names:
+            scenario.warn(self.recorder, "资源清单存在空 name 的资源（无法被 <img cmd> 引用）",
+                          f"{len(empty_names)}/{len(assets)} 项")
+        if conflicts:
+            scenario.warn(self.recorder, "同名资源映射到不同 URL（卡片声明歧义，前端取其一）",
+                          "；".join(f"{n}→{len(u)} 个 URL" for n, u in sorted(conflicts.items())[:5]))
+        if duplicates:
+            scenario.warn(self.recorder, "资源清单存在同名资源（卡片声明重复）",
+                          ", ".join(sorted(set(duplicates))[:8]))
+        # 归档内路径（embeded://）绝不能被当成可加载 URL 回传，否则前端必然破图。
+        leaked = [a for a in assets if str(a.get("url") or "").startswith("embeded://")]
+        scenario.check(self.recorder, "清单不把归档内路径当可加载 URL 回传", not leaked,
+                       f"坏地址 {len(leaked)} 项" if leaked else "干净")
+        manifest = set(names)
+
+        # ---- 图片端点：真取字节 ----
+        fetched = 0
+        endpoint_fail: list[str] = []
+        sample = internal[:LONGPLAY_ASSET_SAMPLE]
+        for asset in sample:
+            url = str(asset.get("url"))
+            fetched += 1
+            status1, headers1, body1 = self.fetch(url)
+            _, _, body2 = self.fetch(url)
+            ctype = (headers1.get("Content-Type") or "").split(";")[0].strip()
+            ok = (status1 == 200 and bool(body1) and image_magic_ok(body1)
+                  and ctype.startswith("image/") and sha256_bytes(body1) == sha256_bytes(body2))
+            if not ok:
+                endpoint_fail.append(f"{asset.get('name')}(HTTP {status1}, {ctype or '无类型'}, {len(body1)}B)")
+        if fetched:
+            scenario.check(self.recorder, "内嵌资源端点可加载、格式正确且内容稳定",
+                           not endpoint_fail,
+                           f"抽样 {fetched}/{len(internal)} 个，失败 {len(endpoint_fail)} 个：{', '.join(endpoint_fail)}"
+                           if endpoint_fail else f"抽样 {fetched}/{len(internal)} 个，全部通过")
+        else:
+            scenario.warn(self.recorder, "该卡没有可抓取的内嵌资源", "跳过端点字节校验")
+        if len(internal) > len(sample):
+            scenario.warn(self.recorder, "资源较多，端点校验按抽样进行",
+                          f"共 {len(internal)} 个内嵌资源，抽样 {len(sample)} 个")
+        if empty_url:
+            scenario.warn(self.recorder, "清单存在空 URL 的资源（归档条目缺失）",
+                          ", ".join(str(a.get("name")) for a in empty_url))
+        if external:
+            scenario.warn(self.recorder, "清单含外部/内联资源，未抓取（避免外网依赖）",
+                          ", ".join(str(a.get("name")) for a in external))
+        # 负例：不存在的资源必须 404，而不是 500 或伪 200。
+        status_missing, _, _ = self.fetch(f"/api/v1/cards/{card_id}/assets/__longplay_missing__.png")
+        scenario.check(self.recorder, "不存在的资源返回 404（错误路径不伪装成功）",
+                       status_missing == 404, f"HTTP {status_missing}")
+
+        # ---- 开局 + 长程对话 ----
+        session = self.create_session("长程评测 · 随机卡", card_id=card_id)
+        sid = session["sessionId"]
+        character = self.character_name_of(self.view(session))
+        self.recorder.note(f"会话 {sid}｜角色 {character}")
+        opening = session.get("openingText") or ""
+        scenario.check(self.recorder, "开场正文已生成且无残留宏",
+                       bool(opening.strip()) and not MACRO_LEAK_RE.search(opening), f"{len(opening)} 字")
+
+        rng = random.Random(self.longplay_seed)
+        turns = max(1, self.longplay_turns)
+        images_used: list[str] = list(image_keys_in(opening))
+        healthy_flags: list[bool] = []
+        prev_prose = ""
+
+        for index in range(1, turns + 1):
+            intent = LONGPLAY_INTENTS[(index - 1) % len(LONGPLAY_INTENTS)].replace("{char}", character)
+            text = intent + "（" + rng.choice(LONGPLAY_STYLE_HINTS) + "）"
+            turn = self.submit(session, text, f"长程第 {index} 轮")
+            record = turn["record"]
+            prose = record["prose"] or ""
+            problems: list[str] = []
+            if record["status"] != "committed":
+                problems.append(f"状态 {record['status']}")
+            if len(prose.strip()) < LONGPLAY_MIN_PROSE:
+                problems.append(f"正文过短 {len(prose)} 字")
+            if FRAME_LEAK_RE.search(prose):
+                problems.append("泄漏原始帧/JSON")
+            if MACRO_LEAK_RE.search(prose):
+                problems.append("残留未展开宏")
+            if SCRIPT_RE.search(prose):
+                problems.append("包含脚本/危险属性")
+            if replacement_ratio(prose) > LONGPLAY_MAX_REPLACEMENT_RATIO:
+                problems.append("乱码替换符超阈值")
+            bad_markers = malformed_markers(prose)
+            if bad_markers:
+                problems.append("状态标记语法错误")
+            keys = image_keys_in(prose)
+            images_used.extend(keys)
+            if manifest:
+                for key in keys:
+                    if key not in manifest:
+                        problems.append(f"自造图片键 {key}")
+            healthy = not problems
+            healthy_flags.append(healthy)
+            scenario.check(self.recorder, f"第 {index} 轮：提交成功且正文健康", healthy,
+                           "；".join(problems) if problems else f"{len(prose)} 字，{record['elapsed']:.1f}s")
+
+            if prev_prose:
+                overlap = ngram_overlap(prev_prose, prose)
+                if overlap >= LONGPLAY_REPEAT_ALERT:
+                    scenario.warn(self.recorder, f"第 {index} 轮：与上一轮高度重复", f"8-gram 重合率 {overlap:.2f}")
+            if prose.strip() and not (LONGPLAY_MIN_TURN_CHARS <= len(prose) <= LONGPLAY_MAX_TURN_CHARS):
+                scenario.warn(self.recorder, f"第 {index} 轮：长度异常", f"{len(prose)} 字")
+            if bad_markers:
+                scenario.warn(self.recorder, f"第 {index} 轮：状态标记语法错误", "、".join(bad_markers[:2]))
+            if prose:
+                prev_prose = prose
+
+        # ---- 图片标记与清单一致性 ----
+        if manifest:
+            invented = sorted({k for k in images_used if k not in manifest})
+            scenario.check(self.recorder, "正文引用的图片键都命中资源清单（无自造键）",
+                           not invented,
+                           f"引用 {len(images_used)} 次，自造：{', '.join(invented)}" if invented
+                           else f"引用 {len(images_used)} 次，全部命中")
+        else:
+            fabricated = [k for k in images_used if k]
+            scenario.check(self.recorder, "无资源清单的卡不产出图片标记（不凭空造图）",
+                           not fabricated, f"出现 {len(fabricated)} 个图片标记")
+
+        # ---- 运行读数与告警 ----
+        counters = self.runtime_counters()
+        self.recorder.note("运行读数：" + json.dumps(counters, ensure_ascii=False))
+        scenario.check(self.recorder, "上下文预算未击穿（无 budgetUnfit/budgetExceeded）",
+                       not counters.get("budgetUnfit") and not counters.get("budgetExceeded"),
+                       json.dumps(counters, ensure_ascii=False))
+        warnings = self.server_warnings()
+        scenario.check(self.recorder, "服务端无致命告警（ERROR/panic）",
+                       not any("ERROR" in w or "panic" in w.lower() for w in warnings),
+                       "；".join(warnings[:2]) if warnings else "无")
+
+        # ---- 汇总：能力/可靠性双口径 ----
+        committed = sum(1 for record in self.recorder.turns
+                        if record.get("sessionId") == sid and record["status"] == "committed")
+        rate = (sum(healthy_flags) / len(healthy_flags)) if healthy_flags else 0.0
+        self.report["longplay"] = {
+            "seed": self.longplay_seed,
+            "card": {"file": card_path.name, "sha256": sha256_bytes(card_bytes),
+                     "cardId": card_id, "name": card_name, "assets": len(assets)},
+            "turns": len(healthy_flags),
+            "healthyTurns": sum(healthy_flags),
+            "healthyRate": round(rate, 4),
+            "passAtK": round(pass_at_k(rate, 3), 4),
+            "passPowerK": round(pass_power_k(rate, 3), 4),
+            "committedTurns": committed,
+            "images": {
+                "manifest": sorted(manifest),
+                "referenced": sorted(set(images_used)),
+                "endpointFailures": endpoint_fail,
+                "inventedKeys": sorted({k for k in images_used if k not in manifest}) if manifest else [],
+            },
+            "counters": counters,
+        }
+        self.report["card"] = self.report["longplay"]["card"]
+        self.report["seed"] = self.longplay_seed
+        self.report["sessions"]["longplay"] = sid
+        return scenario
+
 
 # ---------------------------------------------------------------- 入口
 
@@ -1023,6 +1512,10 @@ def main() -> int:
     parser.add_argument("--scenarios", default=",".join(SCENARIOS), help="要运行的场景，逗号分隔：" + ", ".join(SCENARIOS))
     parser.add_argument("--skip-preflight", action="store_true", help="跳过 /models 预检（仅在供应商不提供该端点时使用）")
     parser.add_argument("--turn-retries", type=int, default=2, help="单轮失败后的自动重试次数（默认 2，失败仍留痕）")
+    parser.add_argument("--card", default="", help="longplay 指定单张卡（路径，或 synthetic 强制用现场合成卡）")
+    parser.add_argument("--card-dir", default="", help="longplay 卡池目录（默认探测 charx/ → testdata/ → scripts/fixtures/）")
+    parser.add_argument("--seed", type=int, default=None, help="longplay 随机种子（默认随机；写入报告以便复现）")
+    parser.add_argument("--turns", type=int, default=LONGPLAY_DEFAULT_TURNS, help=f"longplay 对话轮数（默认 {LONGPLAY_DEFAULT_TURNS}）")
     args = parser.parse_args()
 
     binary = args.binary.resolve()
@@ -1044,6 +1537,11 @@ def main() -> int:
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     directory = (args.directory or (ROOT / "output/functional" / f"{stamp}-{provider.label}")).resolve()
     directory.mkdir(parents=True, exist_ok=True)
+    seed = args.seed if args.seed is not None else random.randrange(1, 1_000_000)
+    longplay_card: Path | None = None
+    if "longplay" in selected:
+        longplay_card, card_origin = resolve_longplay_card(args, directory, seed)
+        print(f"长程评测用卡：{longplay_card}（{card_origin}，seed={seed}）", flush=True)
     fingerprint = {"binary": str(binary.relative_to(ROOT)) if binary.is_relative_to(ROOT) else str(binary),
                    "binarySHA256": digest(binary), "commit": git_commit()}
     card = load_json(BUILTIN_CARD)
@@ -1053,11 +1551,13 @@ def main() -> int:
                      "label": provider.label, "source": provider.source},
         "fingerprint": fingerprint,
         "characterCard": {"fixture": str(BUILTIN_CARD.relative_to(ROOT)), "cardId": card.get("cardId"), "name": card.get("name")},
+        "seed": seed,
+        "card": None,
         "compactionWindow": {"contextWindow": COMPACTION_WINDOW, "maxTokens": COMPACTION_OUTPUT},
         "scenarios": [], "sessions": {}, "passed": False, "completed": False, "serverWarnings": [],
     }
     runner = None
-    recorder = Recorder(directory, [
+    header = [
         "功能测试对话记录",
         f"模型：{provider.model} @ {provider.base_url}（kind={provider.kind}）",
         f"供应商来源：{provider.source}",
@@ -1065,7 +1565,10 @@ def main() -> int:
         f"角色卡：{card.get('name')}（{card.get('cardId')}）",
         f"开始时间：{report['generatedAt']}",
         f"场景：{'、'.join(selected)}",
-    ])
+    ]
+    if longplay_card is not None:
+        header.append(f"长程评测：卡 {longplay_card.name}｜seed {seed}｜轮数 {max(1, args.turns)}")
+    recorder = Recorder(directory, header)
 
     try:
         with Server(binary, directory, args.port or free_port(), provider) as server:
@@ -1074,6 +1577,9 @@ def main() -> int:
             recorder.note("已配置槽位：" + describe_slots(config))
             runner = Runner(server, recorder, report)
             runner.turn_retries = max(0, args.turn_retries)
+            runner.longplay_card = longplay_card
+            runner.longplay_seed = seed
+            runner.longplay_turns = max(1, args.turns)
             for name in selected:
                 try:
                     item = getattr(runner, f"scenario_{name}")(name)
@@ -1086,6 +1592,8 @@ def main() -> int:
                 report["scenarios"].append({"name": item.name, "title": item.title, "passed": item.passed, "steps": item.steps})
                 recorder.rule(f"场景小结：{item.title} · " + ("全部通过" if item.passed else "存在失败项") +
                               f"（{sum(1 for s in item.steps if s['passed'])}/{len(item.steps)}）")
+            # 诊断必须在服务停止前采：/api/status 只在存活时可读。
+            report["diagnostics"] = runner.diagnostics()
             report["completed"] = True
     finally:
         report["passed"] = report["completed"] and bool(report["scenarios"]) and all(s["passed"] for s in report["scenarios"])
@@ -1093,8 +1601,8 @@ def main() -> int:
         report["finishedAt"] = utc()
         report["serverWarnings"] = server_log_warnings(directory / "server.log")
         report["failureAttributions"] = attribute_failed_steps(report)
-        if runner is not None:
-            report["diagnostics"] = runner.diagnostics()
+        report["usage"] = turn_usage_metrics(directory / "data" / "storage.db")
+        report.setdefault("diagnostics", {})
         total = sum(len(s["steps"]) for s in report["scenarios"])
         failed = sum(1 for s in report["scenarios"] for step in s["steps"] if not step["passed"])
         recorder.rule("总结")
@@ -1109,6 +1617,16 @@ def main() -> int:
             recorder.line("服务端告警（WARN/ERROR，按出现次数）：")
             for line in report["serverWarnings"]:
                 recorder.line(f"  · {line}")
+        usage = report.get("usage") or {}
+        if usage.get("calls"):
+            recorder.line("")
+            recorder.line("用量指标（来自 turn_usage 台账，只读）：")
+            recorder.line(f"  · 模型调用 {usage['calls']} 次（供应商回传 usage {usage['reportedCalls']} 次）")
+            recorder.line(f"  · 输入 token {usage['promptTokens']}｜输出 token {usage['completionTokens']}｜命中缓存输入 {usage['cachedTokens']}")
+            rate = usage.get("cacheHitRate")
+            recorder.line(f"  · 缓存命中率：{rate:.1%}" if rate is not None else "  · 缓存命中率：不可用（供应商未回传缓存字段）")
+            recorder.line(f"  · 吞吐：{usage.get('tokensPerSecond')} tokens/s（含首字等待）｜首字后 {usage.get('outputTokensPerSecond')} tokens/s")
+            recorder.line(f"  · 平均延迟 {usage.get('avgLatencyMs')} ms｜平均首字 {usage.get('avgFirstTokenMs')} ms｜估算漂移 {usage.get('estimatedDrift')}")
         recorder.line("")
         recorder.line(f"完整对话记录：{recorder.log_path}")
         recorder.line(f"结构化记录：{recorder.jsonl_path}")
@@ -1116,6 +1634,8 @@ def main() -> int:
         recorder.close()
         (directory / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps({"passed": report["passed"], "scenarios": len(report["scenarios"]), "turns": report["turnCount"],
+                          "cacheHitRate": (report.get("usage") or {}).get("cacheHitRate"),
+                          "tokensPerSecond": (report.get("usage") or {}).get("tokensPerSecond"),
                           "directory": str(directory), "log": str(recorder.log_path)}, ensure_ascii=False), flush=True)
     return 0 if report["passed"] else 1
 

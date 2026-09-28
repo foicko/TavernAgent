@@ -72,6 +72,8 @@ go run ./cmd/tavernagent -data ./data -addr 127.0.0.1:8890
 
 ## 5. 质量与门禁
 
+单元测试按 **2026-09 精简策略**执行：只保留安全边界与不可逆路径的用例（鉴权/来源/主机防线、SSRF 端点守卫、数据目录锁、路径穿越与归档校验、凭据脱敏、迁移与提交原子性、状态哈希/重放顺序、秘密不泄漏、恢复幂等）。纯领域规则、分词器、协议解析、配置映射、UI 原语等稳定逻辑不再单测覆盖；浏览器 e2e 与 `scripts/tests` 合规测试保留。策略原文见 `AGENTS.md`。
+
 ```powershell
 go test -count=1 ./...          # 全部 Go 测试
 go vet ./...                    # 静态检查
@@ -106,7 +108,16 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
 
 - **真实模型质量未闭环**：口径、归因、预算闸与手动评测工作流（`.github/workflows/model-eval.yml`）
   都已就位，**结论本身仍需**用 `scripts/release_eval.py` 在能连到网关的机器上跑 100 例产出证据；
-  网关额度不可逆，`preflight` 会先查余额再决定是否开始。
+  网关额度不可逆，`preflight` 会先查余额再决定是否开始。长程应用验收（随机角色卡 + 20 轮 + 图片加载）
+  已实现为 `python scripts/functional_eval.py --scenarios longplay`（口径见 `docs/REAL_LLM_APP_EVAL.md`），
+  其结论同样需要在能连网关的机器上跑出，尚未登记。
+- **真实模型实测记录（2026-09-28，本机网关，非发布网关；脱敏）**：`gemini-3.8-flash-high`（`anthropic-messages` 通道），
+  长程应用验收 20 轮 —— 提交 20/20、健康率 1.0；图片端点抽样可达、404 负例通过、开场图片键命中清单；
+  吞吐约 50 tok/s（含首字）/ 约 220–240 tok/s（首字后），平均首字 3.8–5.0 s，估算漂移约 0.86（编译估算偏高 14–16%）；
+  提示词版本 `v7/db1270b985da`，消融 `none`。**缓存命中率不可测**：该网关 `/v1/messages` 只回
+  `cache_creation_input_tokens`、不回 `cache_read_input_tokens`，台账按"供应商未提供记 0"处理。
+  实测另暴露两类卡片侧数据问题（空 name、同名不同 URL）与两处评测脚本缺陷（诊断在服务停止后采集、
+  清单重复名判据过严），均已修复/降级为告警。
 - **大函数/大文件**：`internal/context` 若干函数在后续变动时按需演进。
   （`commitplan.go:buildPlan` 已拆解为提案流处理管道与记忆/秘密子模块、`sqlite/import.go:ImportSession` 已按实体解耦为 11 个独立导入步骤、`server.go` 884 → 546 行、`ApplyEvent` 已按事件域拆分，四项均已偿还。）
 - **样式层**：`!important` 存量已从 245 处降至 4 处（仅保留 `Button` 的 reduced-motion 归零、`Modal` 动画归零与无障碍原语）；跨文件重复选择器 18→0、颜色字面值与玻璃残留归零，门禁基线已收紧锁定。
@@ -114,6 +125,7 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
   （开机自启）两个入口尚缺；底层能力仍在（无头服务用 `-addr 0.0.0.0:8892 -pin <码> -tls auto`
   可等价实现第二屏，`internal/util/autostart` 仍在）。待决定是否补回 `cmd/tavernagent` 的参数。
 - **发布门禁**：五平台实机运行与真实模型验收尚未全部完成。
+- **单元测试面收窄（2026-09）**：按精简策略删除了纯领域/解析/映射/UI 原语的单测，这些模块的回归风险改由浏览器 e2e、手工验证与类型/lint 门禁承担；新增功能默认不补单测，除非触及安全边界或不可逆路径。
 
 ## 7. 待做功能与近期完成
 
@@ -124,7 +136,7 @@ python scripts/eval_protocol.py --base-url http://127.0.0.1:8890 --kind mock --m
    - **P2-B 单二进制 CLI 工具链**：`cmd/tavernctl` 提供 `audit`（数据库自检）、`prompt`（上下文提示词解析）、`mcp`（启动 MCP 服务）、`pack`（归档导入导出）。
    - **P3-A SQLite 双轨编译**：默认无依赖纯 Go (`modernc.org/sqlite`)，可选支持高性能 CGO 原生驱动 (`-tags cgo`，`mattn/go-sqlite3`)。
    - **P3-B 混合向量检索接口**：`internal/ports/vector.go` 与 `internal/search/hybrid.go` 提供向量嵌入端口与 RRF (Reciprocal Rank Fusion) 混合重排能力。
-2. **发布闭环**：完成真实模型协议/叙事验收与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
+2. **发布闭环**：完成真实模型协议/叙事验收（含 `longplay` 随机卡长程应用验收）与五平台解压产物实机验证，产出脱敏、与 `BUILD-INFO.json` 指纹一致的报告。
 3. **M5 后续规划**：群像聚光灯、立绘动作表情联动、多 NPC 视角隔离。
 4. **LAN 增强**：第二设备网络/防火墙实机验证（HTTPS 通道与配对流程已有自动化冒烟：
    `python scripts/lan_smoke.py --binary <exe> --host <私网IP> --out <报告> --tls`）。
