@@ -39,7 +39,7 @@
 | B7c | Android 协程取消传播 | M62 | ✅ 已完成 |
 | B7d | Android 注册表驱逐与失败码透传 | M53, M63 | ✅ 已完成 |
 | B7e | Android 主线程/重试/通知/幂等/Keystore | M46, M47, M52, M59, M61, M57（Keystore 加密） | ✅ 已完成 |
-| B7f | Android 明文流量收敛 | M57（networkSecurityConfig） | ⬜ |
+| B7f | Android 明文流量收敛 | M57（networkSecurityConfig 不可静态实施，已文档化） | ✅ 已完成（文档）|
 | B8 | Android 其余与安全（部分） | M55 | ✅ 已完成 |
 | B8b | Android 其余与安全（部分） | M56, M58 | ✅ 已完成 |
 | B8c | Android 头像轻量化与导演 SSE | M54, M60 | ✅ 已完成 |

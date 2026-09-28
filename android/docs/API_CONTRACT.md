@@ -72,6 +72,24 @@ TLS 只解决"传输被看"，不解决"谁能进"——配对鉴权在两种模
 Android 连接自签 HTTPS 需要自行信任证书（或使用网络配置例外）；明文 HTTP 需要在
 network security config 中放行 cleartext。
 
+#### 1.2.1 Android 明文流量策略（M57）
+
+客户端当前在 `AndroidManifest.xml` 用 `android:usesCleartextTraffic="true"` **全局**
+放行明文，而不是用 `networkSecurityConfig` 按域放行。这是有意为之：
+
+- 目标主机由用户在运行时填写（任意局域网 IP / `*.local` / 任意端口），而
+  `networkSecurityConfig` 只能静态列举**字面域名**，无法表达"任意私有网段"。
+  静态配置要么把 LAN 明文全部挡死（功能不可用），要么退化成与全局放行等价。
+- 因此静态 `networkSecurityConfig` 在本项目**不可实施**。残留下限：配对令牌是局域网
+  完整授权，若用户把地址填成恶意/错误主机，明文请求会把令牌发往该主机。
+
+已实施的缓解：`allowBackup=false`（云 / `adb backup` 不外带存储）、配对令牌经
+Keystore 包装存储、服务端对所有 `/api/` 请求做 Host 白名单（拒绝非本机/非私有网段，
+防 DNS rebinding），客户端在保存地址时校验 `http(s)://host:port` 形式。
+
+后续可选加固（尚未实施）：发送令牌前在客户端校验目标主机属于回环/私有网段，
+命中公网地址时拒绝明文并提示改用 HTTPS。
+
 ### 1.3 通用请求/响应约定
 
 - 请求体：JSON（除卡片上传、剧情包导入、SSE 外）。默认 JSON 上限 `1 MiB`
