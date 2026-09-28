@@ -9,6 +9,7 @@ import (
 	"tavernagent/internal/adapters/sqlite"
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
+	"tavernagent/internal/util/id"
 )
 
 // 演播计划的用例逐条对齐 web/src/lib/ttsDirector.ts 的同名测试，
@@ -166,7 +167,9 @@ func planStack(t *testing.T) (*sqlite.Store, *SessionService, string, string, st
 // insertPlanNode 直接插入一个带 blocks 的回合节点（计划只读取节点内容与状态投影）。
 func insertPlanNode(t *testing.T, st *sqlite.Store, sessionID, parentID, contentJSON string) string {
 	t.Helper()
-	nodeID := "n_plan_" + time.Now().Format("150405.000000000")
+	// 用真正的唯一 ID 生成器：此前拼 time.Now() 纳秒字符串，在 Windows 时钟粒度下
+	// 同刻的两次调用会得到同一个 node_id，撞 UNIQUE(plot_nodes.node_id) 而假失败。
+	nodeID := "n_plan_" + id.New()
 	if err := st.InsertNode(&domain.PlotNode{
 		NodeID: nodeID, SessionID: sessionID, ParentID: parentID,
 		Kind: domain.NodeKindTurn, Depth: 1, TurnNumber: 1, SchemaVersion: 1,
