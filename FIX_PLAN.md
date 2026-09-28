@@ -205,7 +205,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R9 | ✅ 已完成 | 归档边界/读取器集中在 `cardarchive.go`；新增条目数上限；landing 本就是共享路径（PNG 除外）|
 | R7 | ✅ 已完成 | G25 `sqlIN`、错误体摘要 `httpbody`、API Host 防线、M29 投影写移出读路径、M23 基准缺失 fail-closed |
 | R10 | 🔄 部分完成 | ✅ M4（属性默认值统一）、✅ M5（mandatory 只估一次 + 阶段内二分增量拟合）、✅ M3（秘密宏加载期展开）；⬜ turnRunner/compileSession 拆分 |
-| R11 | 🔄 进行中 | ✅ R11b（G47/G48/G49/G52）、✅ G54（导航单实例）、✅ G55（release 收缩/签名/未用依赖）；M55 复核已修；⬜ R11a（主线程 I/O）、M52 通知单 owner、M46/M56/G53、M54、R11c 拆分 |
+| R11 | 🔄 大部分完成 | ✅ R11b（G47/G48/G49/G52）、✅ G54 导航单实例、✅ G55 release 收缩/签名/未用依赖；复核**已修无需改**：M46/M52/M55/M56；⬜ G53 流式下载、M54 头像轻量化、R11c DI + 拆分 |
 | R12 | ✅ 已完成 | dependabot/Android CI 已在 B9；本轮：gosec 启用 + M84 许可证门禁 + G73（发行版校验和 + 依赖验证）+ G76（G77 顺延，见备注）|
 
 #### 0. 吸收映射（重构覆盖的剩余条目）
@@ -266,7 +266,10 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 
 - **B10-R11a**（`refactor(android,r11a)`）：`io {}`/注入 `Dispatcher`，TLS/JSON/文件 I/O 一律移出 Main（一次覆盖 S10/M46/M55/M56/G53）。
 - **B10-R11b**（`refactor(android,r11b)`）：通知收敛为 `Application.onCreate` 创建的单一 `TurnNotifier`（M52）；离线 `TtsEngine.stop()` 接线（G47）、`SseLineParser` 空事件名/`retry`（G49）、`MemoryRow.toRow()`（G48）、死代码清理（G52）。
-- **B10-R11c**（`refactor(android,r11c)`）：资产解析收敛到单一带缓存仓库；导出/导入迁前台服务；导航 `popUpTo`/单实例（G54）；release `shrink`+签名、清理未用 `okhttp.logging`（G55）；构造函数注入仓库并补 ViewModel 相位机/分页测试；拆 `StoryViewModel`(772 行)/`StoryContent`/`StoryComposer`。验证：`:app:compileDebugKotlin` + `:app:testDebugUnitTest` + `:app:assembleDebug`。
+- **B10-R11c**（`refactor(android,r11c)`）：资产解析收敛到单一带缓存仓库；导出/导入迁前台服务；导航 `popUpTo`/单实例（G54）；release `shrink`+签名、清理未用 `okhttp.logging`（G55）；构造函数注入仓库并补 ViewModel 相位机/分页测试；拆 `StoryViewModel`(690 行)/`StoryContent`(778 行)/`StoryComposer`。验证：`:app:compileDebugKotlin` + `:app:testDebugUnitTest` + `:app:assembleDebug`。
+  - **已落地**：R11b（G47 朗读停止、G48 `MemoryViewDto.toRow()`、G49 SSE 空事件名/`retry`、G52 死代码，其中 `DirectorRepository.events` 经复核有调用点、属误报保留）；G54 新增 `navigateToStory()`（`launchSingleTop` + `popUpTo(STORY, inclusive)`），MainScaffold 5 处 story 跳转统一；G55 release 开启 R8 minify/shrink、新增环境变量驱动的 release 签名配置、删除未引用的 `okhttp.logging`。验证：严格依赖校验 + `--rerun-tasks` 下 `:app:assembleRelease`（app-release-unsigned.apk 2.3MB）与 `:app:testDebugUnitTest` 全绿。
+  - **复核为"已修、无需改动"**：**M46**（`applyView` 已把上百个 `contentJson` 与世界状态解析放进 `withContext(Dispatchers.Default)`）、**M52**（渠道在 `TavernApp.onCreate` 单点创建且 IMPORTANCE_LOW；完成通知单 owner `TurnNotifier`→`NotificationPresenter` 且前台抑制；`GenerationService` 只发进行中通知）、**M55**（`FilePickers.read` 已有 64MiB 上限 + 64KiB 分块流式读取并即时拦截）、**M56**（导出已移到 `ArchiveViewModel.exportTo` 的 ViewModel 作用域）。
+  - **仍待做**：**G53**（`ApiClient.DownloadBytes`/`executeRaw` 仍把整段 body 读入内存，大导出会双份缓冲——需改成流式写入 SAF `OutputStream`）、**M54**（卡头像每行一次整卡 GET → 用列表接口已有的 `avatar` 字段或轻量 assets 端点 + 批量解析 + 预览分页）、**R11c 的结构部分**（构造函数注入仓库、拆 `StoryViewModel`/`StoryContent`、补相位机/分页测试）。
 
 **Wave 5 · 供应链**
 
