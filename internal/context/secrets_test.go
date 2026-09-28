@@ -76,6 +76,25 @@ func TestSecretVisibilityFollowsViewNode(t *testing.T) {
 	}
 }
 
+// M3：卡 JSON 按原始字节持久化（卡身份由它计算），所以秘密里的
+// {{char}}/{{user}} 必须在**读取侧**展开，否则会以字面量进入提示词。
+func TestSecretMacrosExpandedAtLoad(t *testing.T) {
+	const secrets = `[{"secretId":"sec_macro","title":"{{char}}的旧名","content":"{{char}}其实是{{user}}的旧识。","order":1}]`
+	f := newFixtureFull(t, nil, "", secrets, ctxpkg.DefaultOptions())
+
+	state := domain.NewWorldState()
+	state.UnlockSecret("sec_macro")
+	head := commitTurnWithState(t, f, testBranchID, testRootID, state)
+
+	prompt := f.systemPromptWithState(t, head, "说说你的过去。", state)
+	if strings.Contains(prompt, "{{char}}") || strings.Contains(prompt, "{{user}}") {
+		t.Fatalf("秘密里的宏未被展开，字面占位符进入了上下文（M3）:\n%s", prompt)
+	}
+	if !strings.Contains(prompt, "测试卡其实是测试者的旧识。") {
+		t.Fatalf("秘密宏未按 char/user 称呼展开:\n%s", prompt)
+	}
+}
+
 var commitSeq atomic.Int64
 
 // commitTurnWithState 在 headID 上提交一个回合，其状态投影由调用方给定。

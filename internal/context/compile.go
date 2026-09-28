@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"tavernagent/internal/domain"
+	"tavernagent/internal/macros"
 	"tavernagent/internal/ports"
 )
 
@@ -516,6 +517,7 @@ func (c *Compiler) loadSessionContext(sessionID string) (sessionContext, error) 
 		}
 		if tv != nil && tv.Content != "" {
 			var card struct {
+				Name    string `json:"name"`
 				Secrets []struct {
 					SecretID string `json:"secretId"`
 					Title    string `json:"title"`
@@ -523,12 +525,20 @@ func (c *Compiler) loadSessionContext(sessionID string) (sessionContext, error) 
 				} `json:"secrets"`
 			}
 			if json.Unmarshal([]byte(tv.Content), &card) == nil {
+				// 卡 JSON 按原始字节持久化（卡身份由它计算），所以 {{char}}/{{user}}
+				// 必须在读取侧展开：否则秘密会带着字面占位符进入提示词（M3）。
+				charName := strings.TrimSpace(card.Name)
+				if charName == "" {
+					charName = strings.TrimSpace(ch.Content.Name)
+				}
 				for _, sec := range card.Secrets {
 					if sec.Content == "" {
 						continue
 					}
 					sc.Secrets = append(sc.Secrets, secretEntry{
-						SecretID: sec.SecretID, Title: sec.Title, Content: sec.Content,
+						SecretID: sec.SecretID,
+						Title:    macros.Expand(sec.Title, charName, sc.PlayerName),
+						Content:  macros.Expand(sec.Content, charName, sc.PlayerName),
 					})
 				}
 			}
