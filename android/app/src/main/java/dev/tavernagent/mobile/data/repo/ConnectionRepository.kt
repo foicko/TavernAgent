@@ -114,15 +114,6 @@ class ConnectionRepository(
 
     suspend fun forget() = serverStore.clear()
 
-    /** 读取指纹（仅用于展示）。 */
-    suspend fun fingerprintOf(baseUrl: String): String? {
-        val hostPort = UrlNormalizer.hostPort(baseUrl) ?: return null
-        return runCatchingCancellable {
-            val certificate = HttpEngine.fetchPeerCertificate(hostPort.first, hostPort.second)
-            HttpEngine.sha256Fingerprint(certificate)
-        }.getOrNull()
-    }
-
     private suspend fun trustCheck(baseUrl: String, token: String, cause: NetworkFailure): ConnectionCheck {
         val hostPort = UrlNormalizer.hostPort(baseUrl)
             ?: return ConnectionCheck.Failed(cause.message ?: "无法连接服务", true)

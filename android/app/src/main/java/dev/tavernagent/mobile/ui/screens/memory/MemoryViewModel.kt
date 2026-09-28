@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tavernagent.mobile.TavernApp
 import dev.tavernagent.mobile.data.remote.ApiException
 import dev.tavernagent.mobile.data.remote.dto.MemoryPageDto
+import dev.tavernagent.mobile.data.remote.dto.MemoryViewDto
 import dev.tavernagent.mobile.data.remote.dto.SessionViewDto
 import dev.tavernagent.mobile.data.repo.MemoryRepository
 import dev.tavernagent.mobile.data.repo.Keys
@@ -213,3 +214,21 @@ class MemoryViewModel(
         }
     }
 }
+
+/**
+ * 由列表 DTO 映射为写操作所需的行快照。
+ *
+ * 此前 MemoryScreen 在 onPin / onHide / onRevise 三处手抄同一份字段映射，
+ * 新增字段时极易漏改其中一两处（G48）。
+ */
+fun MemoryViewDto.toRow(): MemoryViewModel.MemoryRow = MemoryViewModel.MemoryRow(
+    memoryId = this.memoryId,
+    content = this.content,
+    kind = this.kind,
+    pinned = this.pinned,
+    hidden = this.hidden,
+    effective = this.effective,
+    protected = this.protected,
+    confidence = this.confidence,
+    createdTurn = this.createdTurn,
+)

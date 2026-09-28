@@ -181,7 +181,5 @@ class StoryRepository(
     fun ensureStreaming(sessionId: String, branchId: String, turnId: String, characterId: String, title: String) =
         turns.ensureStreaming(sessionId, branchId, turnId, characterId, title)
 
-    suspend fun detachStream(turnId: String) = turns.detach(turnId)
-
     fun forgetStream(turnId: String) = turns.forget(turnId)
 }

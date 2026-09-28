@@ -146,47 +146,17 @@ fun MemoryScreen(
                                 colors = colors,
                                 onPin = {
                                     viewModel.togglePin(
-                                        MemoryViewModel.MemoryRow(
-                                            memoryId = memory.memoryId,
-                                            content = memory.content,
-                                            kind = memory.kind,
-                                            pinned = memory.pinned,
-                                            hidden = memory.hidden,
-                                            effective = memory.effective,
-                                            protected = memory.protected,
-                                            confidence = memory.confidence,
-                                            createdTurn = memory.createdTurn,
-                                        ),
+                                        memory.toRow(),
                                     )
                                 },
                                 onHide = {
                                     viewModel.toggleHidden(
-                                        MemoryViewModel.MemoryRow(
-                                            memoryId = memory.memoryId,
-                                            content = memory.content,
-                                            kind = memory.kind,
-                                            pinned = memory.pinned,
-                                            hidden = memory.hidden,
-                                            effective = memory.effective,
-                                            protected = memory.protected,
-                                            confidence = memory.confidence,
-                                            createdTurn = memory.createdTurn,
-                                        ),
+                                        memory.toRow(),
                                     )
                                 },
                                 onRevise = {
                                     viewModel.openEditor(
-                                        MemoryViewModel.MemoryRow(
-                                            memoryId = memory.memoryId,
-                                            content = memory.content,
-                                            kind = memory.kind,
-                                            pinned = memory.pinned,
-                                            hidden = memory.hidden,
-                                            effective = memory.effective,
-                                            protected = memory.protected,
-                                            confidence = memory.confidence,
-                                            createdTurn = memory.createdTurn,
-                                        ),
+                                        memory.toRow(),
                                     )
                                 },
                             )

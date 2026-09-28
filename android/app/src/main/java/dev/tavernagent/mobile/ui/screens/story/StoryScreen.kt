@@ -64,6 +64,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,6 +83,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.tavernagent.mobile.data.remote.dto.SessionViewDto
 import dev.tavernagent.mobile.domain.TurnPhase
+import dev.tavernagent.mobile.playback.TtsEngine
 import dev.tavernagent.mobile.playback.readAloud
 import dev.tavernagent.mobile.service.GenerationService
 import dev.tavernagent.mobile.ui.components.ConfirmDialog
@@ -159,6 +161,12 @@ fun StoryScreen(
             val text = latest.blocks.joinToString("\n") { it.text }.trim()
             if (text.isNotBlank()) readAloud(context, text)
         }
+    }
+
+    // 离开故事页（含切到别的会话）时停止本地朗读：
+    // TtsEngine.stop() 此前没有任何调用点，离开页面后朗读会继续（G47）。
+    DisposableEffect(Unit) {
+        onDispose { TtsEngine.stop() }
     }
 
     Scaffold(

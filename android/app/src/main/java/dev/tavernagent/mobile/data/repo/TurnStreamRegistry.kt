@@ -21,8 +21,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
 /** 一次在途回合的流式状态（进程内共享；杀进程后由服务端 activeTurnId 恢复）。 */
@@ -68,7 +66,6 @@ class TurnStreamRegistry(
 
     private val states = ConcurrentHashMap<String, MutableStateFlow<TurnStreamState>>()
     private val jobs = ConcurrentHashMap<String, Job>()
-    private val mutex = Mutex()
 
     var notifier: TurnNotifier? = null
 
@@ -109,13 +106,7 @@ class TurnStreamRegistry(
         }
     }
 
-    /** 停止本地订阅（不取消服务端回合）。 */
-    suspend fun detach(turnId: String) {
-        mutex.withLock {
-            jobs.remove(turnId)?.cancel()
-        }
-    }
-
+    /** 丢弃本地订阅与状态（不取消服务端回合）。 */
     fun forget(turnId: String) {
         jobs.remove(turnId)?.cancel()
         states.remove(turnId)
@@ -211,11 +202,15 @@ class TurnStreamRegistry(
         launch {
             var attempts = 0
             var lastEventId: String? = null
+            // 服务端 `retry:` 给出的重连间隔下限；与我们自己的退避取较大值，
+            // 既遵守服务端建议，又不让它把"连上即断"的退避保护抹平（G49）。
+            var serverRetryMillis = 0L
             while (isActive && !done.isCompleted) {
                 try {
                     apiSource.current().turns.events(turnId, lastEventId).collect { frame ->
                         sseActive = true
                         frame.id?.let { lastEventId = it }
+                        frame.retryMillis?.let { serverRetryMillis = it }
                         val event = TurnEventCodec.parse(frame) ?: return@collect
                         // 只有「有实质进展」的事件才清零退避：turn.started 常被反复重放，
                         // 拿它当健康信号会让"连上即断"退化成重连风暴。纯心跳式空转逐步退避到上限。
@@ -230,7 +225,7 @@ class TurnStreamRegistry(
                     sseActive = false
                     if (isActive && !done.isCompleted) {
                         attempts++
-                        delay(backoff(attempts))
+                        delay(maxOf(backoff(attempts), serverRetryMillis))
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -246,7 +241,7 @@ class TurnStreamRegistry(
                         return@launch
                     }
                     attempts++
-                    delay(backoff(attempts))
+                    delay(maxOf(backoff(attempts), serverRetryMillis))
                 }
             }
         }

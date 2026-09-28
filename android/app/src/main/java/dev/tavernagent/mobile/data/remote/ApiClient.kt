@@ -2,7 +2,6 @@ package dev.tavernagent.mobile.data.remote
 
 import dev.tavernagent.mobile.data.local.ServerCredentials
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -221,26 +220,4 @@ class ApiClient(
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         private val HEX = "0123456789abcdef"
     }
-}
-
-/** 带退避的重试包装：只在明确可重试（网络或 5xx）时重试。 */
-suspend fun <T> withRetry(
-    attempts: Int = 3,
-    initialDelayMillis: Long = 500,
-    block: suspend (attempt: Int) -> T,
-): T {
-    var lastError: Throwable? = null
-    repeat(attempts) { index ->
-        try {
-            return block(index)
-        } catch (e: ApiException) {
-            if (!e.retryable || index == attempts - 1) throw e
-            lastError = e
-        } catch (e: NetworkFailure) {
-            if (index == attempts - 1) throw e
-            lastError = e
-        }
-        delay(initialDelayMillis * (1L shl index))
-    }
-    throw lastError ?: IllegalStateException("重试失败")
 }

@@ -205,7 +205,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R9 | ✅ 已完成 | 归档边界/读取器集中在 `cardarchive.go`；新增条目数上限；landing 本就是共享路径（PNG 除外）|
 | R7 | ✅ 已完成 | G25 `sqlIN`、错误体摘要 `httpbody`、API Host 防线、M29 投影写移出读路径、M23 基准缺失 fail-closed |
 | R10 | 🔄 部分完成 | ✅ M4（属性默认值统一）、✅ M5（mandatory 只估一次 + 阶段内二分增量拟合）、✅ M3（秘密宏加载期展开）；⬜ turnRunner/compileSession 拆分 |
-| R11 | ⬜ | |
+| R11 | 🔄 进行中 | ✅ R11b（G47 朗读停止、G48 MemoryRow.toRow、G49 SSE retry/空事件名、G52 死代码）；⬜ R11a（主线程 I/O）、M52 通知单 owner、R11c（资产/前台服务/导航/DI/拆分）|
 | R12 | ✅ 已完成 | dependabot/Android CI 已在 B9；本轮：gosec 启用 + M84 许可证门禁 + G73（发行版校验和 + 依赖验证）+ G76（G77 顺延，见备注）|
 
 #### 0. 吸收映射（重构覆盖的剩余条目）

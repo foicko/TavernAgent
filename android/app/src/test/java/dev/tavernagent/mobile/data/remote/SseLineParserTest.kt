@@ -56,4 +56,34 @@ class SseLineParserTest {
         val frame = parser.endOfStream()
         assertEquals("turn.committed", frame?.event)
     }
+
+    @Test
+    fun `empty event name falls back to message`() {
+        val parser = SseLineParser()
+        assertNull(parser.accept("event:"))
+        assertNull(parser.accept("data: x"))
+        // 规范：事件名缓冲为空时按 message 派发，而不是产出 event="" 被消费端丢弃。
+        assertEquals("message", parser.accept("")?.event)
+    }
+
+    @Test
+    fun `retry is parsed and exposed as stream level hint`() {
+        val parser = SseLineParser()
+        assertNull(parser.accept("retry: 2500"))
+        parser.accept("data: x")
+        assertEquals(2500L, parser.accept("")?.retryMillis)
+
+        // 非数字与负数按规范忽略，沿用上一个有效值。
+        parser.accept("retry: nope")
+        parser.accept("retry: -1")
+        parser.accept("data: y")
+        assertEquals(2500L, parser.accept("")?.retryMillis)
+    }
+
+    @Test
+    fun `frame without retry carries null`() {
+        val parser = SseLineParser()
+        parser.accept("data: x")
+        assertNull(parser.accept("")?.retryMillis)
+    }
 }

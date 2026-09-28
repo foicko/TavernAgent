@@ -53,20 +53,6 @@ object ApiErrorParser {
         return ApiException(status, fallbackCode(status), responseMessage ?: fallbackMessage(status))
     }
 
-    /** SSE 错误事件与断流错误共用同一套字段。 */
-    fun fromEventData(rawBody: String?): ApiException? {
-        val parsed = parse(rawBody) ?: return null
-        val code = parsed.stringOrNull("code") ?: return null
-        return ApiException(
-            status = 0,
-            code = code,
-            message = parsed.stringOrNull("message") ?: "生成失败",
-            retryable = parsed["retryable"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false,
-            turnId = parsed.stringOrNull("turnId").orEmpty(),
-            traceId = parsed.stringOrNull("traceId").orEmpty(),
-        )
-    }
-
     private fun parse(raw: String?): JsonObject? {
         if (raw.isNullOrBlank()) return null
         return try {
