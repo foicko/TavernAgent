@@ -3,12 +3,10 @@
 package responses
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -172,71 +170,8 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		return providerutil.ReadHTTPError(resp, providerutil.DecodeOpenAIError)
 	}
 
-	eventCh := make(chan sseEvent, 16)
-	bodyErrCh := make(chan error, 1)
-
-	go func() {
-		defer close(eventCh)
-		br := bufio.NewReader(resp.Body)
-		var currentEvent string
-		// SSE 规范允许一个事件跨多行 data:（以空行结束）：累积到空行再拼接派发。
-		var pending [][]byte
-		flush := func() bool {
-			if len(pending) == 0 {
-				return true
-			}
-			data := bytes.Join(pending, []byte("\n"))
-			pending = pending[:0]
-			select {
-			case eventCh <- sseEvent{Event: currentEvent, Data: data}:
-				return true
-			case <-streamCtx.Done():
-				return false
-			}
-		}
-		for {
-			line, err := br.ReadBytes('\n')
-			// EOF 时 ReadBytes 仍会返回末尾未以换行结束的最后一行：先处理它，
-			// 下一轮读取再以 (nil, EOF) 退出，否则网关不补结尾换行时最后一个事件会被丢掉。
-			if err != nil && (err != io.EOF || len(line) == 0) {
-				if err != io.EOF {
-					select {
-					case bodyErrCh <- err:
-					default:
-					}
-				} else {
-					flush()
-				}
-				return
-			}
-			t := bytes.TrimSpace(line)
-			if len(t) == 0 {
-				// 空行：一个 SSE 事件结束（多行 data: 在此拼接派发）。
-				if !flush() {
-					return
-				}
-				currentEvent = ""
-				continue
-			}
-			if bytes.HasPrefix(t, []byte("event:")) {
-				currentEvent = strings.TrimSpace(string(t[len("event:"):]))
-				continue
-			}
-			if bytes.HasPrefix(t, []byte("data:")) {
-				data := bytes.TrimSpace(t[len("data:"):])
-				if len(data) == 0 {
-					continue
-				}
-				// 兼容漏发空行的网关：上一段已是完整 JSON 时先派发。
-				if len(pending) > 0 && json.Valid(bytes.Join(pending, []byte("\n"))) {
-					if !flush() {
-						return
-					}
-				}
-				pending = append(pending, data)
-			}
-		}
-	}()
+	// body 读取 goroutine（共享实现见 providerutil.ReadSSE）。
+	eventCh, bodyErrCh := providerutil.ReadSSE(streamCtx, resp.Body)
 
 	tokenSeen := false
 	// eventSeen 区分『供应商没按 SSE 说话』与『模型写了一半被截断』。

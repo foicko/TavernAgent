@@ -4,12 +4,10 @@
 package openai
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -173,62 +171,9 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		return providerutil.ReadHTTPError(resp, providerutil.DecodeOpenAIError)
 	}
 
-	// body 读取 goroutine：逐行提取 data: 载荷。读完（或错误）后关闭 lineCh，
-	// 主循环先排空缓冲数据再收到关闭信号。错误经 bodyErrCh 单独上报。
-	lineCh := make(chan []byte, 16)
-	bodyErrCh := make(chan error, 1)
-	go func() {
-		defer close(lineCh)
-		br := bufio.NewReader(resp.Body)
-		// SSE 规范允许一个事件跨多行 data:（以空行结束）：累积到空行再拼接派发。
-		var pending [][]byte
-		flush := func() bool {
-			if len(pending) == 0 {
-				return true
-			}
-			payload := bytes.Join(pending, []byte("\n"))
-			pending = pending[:0]
-			select {
-			case lineCh <- payload:
-				return true
-			case <-streamCtx.Done():
-				return false
-			}
-		}
-		for {
-			line, err := br.ReadBytes('\n')
-			// EOF 时 ReadBytes 仍会返回末尾未以换行结束的最后一行：先处理它，
-			// 下一轮读取再以 (nil, EOF) 退出，否则网关不补结尾换行时最后一个事件会被丢掉。
-			if err != nil && (err != io.EOF || len(line) == 0) {
-				if err != io.EOF {
-					select {
-					case bodyErrCh <- err:
-					default:
-					}
-				} else {
-					flush()
-				}
-				return
-			}
-			if len(bytes.TrimSpace(line)) == 0 {
-				// 空行：一个 SSE 事件结束。
-				if !flush() {
-					return
-				}
-				continue
-			}
-			if payload := ssePayload(line); payload != nil {
-				// 兼容漏发空行的网关：上一段已是完整 JSON 时先派发，避免把多个
-				// 独立事件错误拼成一段。
-				if len(pending) > 0 && json.Valid(bytes.Join(pending, []byte("\n"))) {
-					if !flush() {
-						return
-					}
-				}
-				pending = append(pending, payload)
-			}
-		}
-	}()
+	// body 读取 goroutine（共享实现见 providerutil.ReadSSE）：逐事件派发 data 载荷，
+	// 读完/出错关闭事件通道，读取错误经 errCh 单独上报。
+	eventCh, bodyErrCh := providerutil.ReadSSE(streamCtx, resp.Body)
 
 	tokenSeen := false
 	finishLength := false
@@ -278,7 +223,7 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 			if tokenSeen {
 				return ErrTimeoutIdle
 			}
-		case ln, ok := <-lineCh:
+		case ev, ok := <-eventCh:
 			if !ok {
 				// 流结束（lineCh 关闭且已排空）。
 				if !tokenSeen {
@@ -289,7 +234,7 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 				}
 				return nil
 			}
-			if strings.TrimSpace(string(ln)) == "[DONE]" {
+			if strings.TrimSpace(string(ev.Data)) == "[DONE]" {
 				if !tokenSeen {
 					return providerutil.EmptyStreamError(payloadSeen)
 				}
@@ -300,7 +245,7 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 			}
 			payloadSeen = true
 			var chunk sseChunk
-			if err := json.Unmarshal(ln, &chunk); err != nil {
+			if err := json.Unmarshal(ev.Data, &chunk); err != nil {
 				// 供应商扩展字段不影响解析；跳过无法解析的行。
 				continue
 			}
@@ -368,23 +313,6 @@ func (p *Provider) buildBody(req ports.ChatRequest) ([]byte, error) {
 // normalizeMessages 复用共享的消息规范化（见 providerutil.NormalizeMessages）。
 func normalizeMessages(messages []ports.ChatMessage) []chatMessage {
 	return providerutil.NormalizeMessages(messages)
-}
-
-// ssePayload 提取一行 SSE：`data: ...`（空行/注释/event:/id: 返回 nil）。
-func ssePayload(line []byte) []byte {
-	t := bytes.TrimSpace(line)
-	if len(t) == 0 || t[0] != 'd' {
-		return nil
-	}
-	// 只接受以 data: 开头（不匹配 event:/id:/retry:）
-	if !bytes.HasPrefix(t, []byte("data:")) {
-		return nil
-	}
-	p := bytes.TrimSpace(t[len("data:"):])
-	if len(p) == 0 {
-		return nil
-	}
-	return p
 }
 
 func normalizeURL(baseURL string) string {
