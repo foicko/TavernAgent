@@ -117,14 +117,9 @@ func (s *Store) MemoriesInChain(nodeIDs []string) ([]*domain.MemoryRecord, error
 	if len(nodeIDs) == 0 {
 		return nil, nil
 	}
-	ph := make([]string, len(nodeIDs))
-	args := make([]any, len(nodeIDs))
-	for i, id := range nodeIDs {
-		ph[i] = "?"
-		args[i] = id
-	}
+	ph, args := inClause(nodeIDs)
 	rows, err := s.rdb().Query(`SELECT `+memoryCols+` FROM memory_records
-		WHERE source_node_id IN (`+strings.Join(ph, ",")+`) ORDER BY rowid`, args...)
+		WHERE source_node_id IN (`+ph+`) ORDER BY rowid`, args...)
 	if err != nil {
 		return nil, err
 	}

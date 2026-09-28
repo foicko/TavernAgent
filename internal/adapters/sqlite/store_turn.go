@@ -216,7 +216,7 @@ func (s *Store) ReceiptsAtResultNodes(resultNodeIDs []string) ([]ports.ReceiptAt
 	if len(resultNodeIDs) == 0 {
 		return nil, nil
 	}
-	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(resultNodeIDs)), ",")
+	marks := placeholders(len(resultNodeIDs))
 	args := make([]any, 0, len(resultNodeIDs))
 	for _, id := range resultNodeIDs {
 		args = append(args, id)
@@ -226,7 +226,7 @@ func (s *Store) ReceiptsAtResultNodes(resultNodeIDs []string) ([]ports.ReceiptAt
 		 FROM action_receipts a
 		 JOIN turn_requests t ON t.turn_id = a.turn_id
 		 JOIN plot_nodes n ON n.node_id = t.result_node_id
-		 WHERE t.result_node_id IN (` + placeholders + `) AND a.status=?`
+		 WHERE t.result_node_id IN (` + marks + `) AND a.status=?`
 	args = append(args, string(domain.ReceiptCommitted))
 	rows, err := s.rdb().Query(q, args...)
 	if err != nil {

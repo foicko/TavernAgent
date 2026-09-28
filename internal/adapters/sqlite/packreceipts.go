@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"strings"
 	"tavernagent/internal/domain"
 )
 
@@ -10,11 +9,7 @@ func receiptsForNodesQ(q queryer, nodes []string) ([]domain.PortableReceipt, err
 	// Bound the SQL parameter count for very large exported trees.
 	for start := 0; start < len(nodes); start += 400 {
 		end := min(start+400, len(nodes))
-		args := make([]any, 0, end-start)
-		for _, n := range nodes[start:end] {
-			args = append(args, n)
-		}
-		marks := strings.TrimSuffix(strings.Repeat("?,", len(args)), ",")
+		marks, args := inClause(nodes[start:end])
 		rows, err := q.Query(`SELECT `+prefixed(receiptCols, "r")+`,t.result_node_id FROM action_receipts r JOIN turn_requests t ON t.turn_id=r.turn_id WHERE r.status='committed' AND t.result_node_id IN (`+marks+`) ORDER BY t.result_node_id,r.receipt_id`, args...)
 		if err != nil {
 			return nil, err

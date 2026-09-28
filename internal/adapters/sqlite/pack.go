@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/pack"
@@ -180,18 +179,6 @@ func inBatches(ids []string, size int, fn func(batch []string) error) error {
 		}
 	}
 	return nil
-}
-
-func inClause(ids []string) (string, []any) {
-	if len(ids) == 0 {
-		// 空切片会让 strings.Repeat("?,", -1) panic；调用方必须自行跳过空批次。
-		return "", nil
-	}
-	args := make([]any, 0, len(ids))
-	for _, id := range ids {
-		args = append(args, id)
-	}
-	return strings.Repeat("?,", len(ids)-1) + "?", args
 }
 
 func eventsForNodesQ(q queryer, nodeIDs []string) ([]*domain.DomainEvent, error) {

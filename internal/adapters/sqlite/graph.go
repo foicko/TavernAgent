@@ -6,11 +6,8 @@ import (
 )
 
 func childArgs(sessionID string, parents []string) (string, []any) {
-	args := []any{sessionID}
-	for _, p := range parents {
-		args = append(args, p)
-	}
-	return strings.TrimSuffix(strings.Repeat("?,", len(parents)), ","), args
+	marks, inArgs := inClause(parents)
+	return marks, append([]any{sessionID}, inArgs...)
 }
 
 func (s *Store) ChildWindow(sessionID string, parents []string, limit int, content bool) (map[string][]*domain.PlotNode, bool, error) {

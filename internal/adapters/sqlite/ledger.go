@@ -1,8 +1,6 @@
 package sqlite
 
 import (
-	"strings"
-
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
 )
@@ -60,12 +58,9 @@ JOIN up ON up.id = n.node_id`
 
 	args := []any{nodeID}
 	if len(eventTypes) > 0 {
-		ph := make([]string, len(eventTypes))
-		for i, t := range eventTypes {
-			ph[i] = "?"
-			args = append(args, string(t))
-		}
-		query += ` WHERE e.type IN (` + strings.Join(ph, ",") + `)`
+		ph, typeArgs := inClauseAny(eventTypes)
+		args = append(args, typeArgs...)
+		query += ` WHERE e.type IN (` + ph + `)`
 	}
 	query += ` ORDER BY n.turn_number ASC, e.event_index ASC`
 

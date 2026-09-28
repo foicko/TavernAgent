@@ -492,13 +492,8 @@ func (s *Store) insertMentionsTx(ex execQueryer, node *domain.PlotNode, candidat
 	if len(candidates) == 0 || strings.TrimSpace(turnText) == "" {
 		return nil
 	}
-	ph := make([]string, len(candidates))
-	args := make([]any, 0, len(candidates))
-	for i, id := range candidates {
-		ph[i] = "?"
-		args = append(args, id)
-	}
-	rows, err := ex.Query(`SELECT `+memoryCols+` FROM memory_records WHERE memory_id IN (`+strings.Join(ph, ",")+`)`, args...)
+	ph, args := inClause(candidates)
+	rows, err := ex.Query(`SELECT `+memoryCols+` FROM memory_records WHERE memory_id IN (`+ph+`)`, args...)
 	if err != nil {
 		return err
 	}
