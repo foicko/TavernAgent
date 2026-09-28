@@ -16,8 +16,8 @@ async function openDirectory(page: Page, info: { project: { name: string } }) {
 }
 
 async function closeDrawer(page: Page, info: { project: { name: string } }) {
-  // 窄屏下抽屉会盖住正文区：操作正文里的控件前必须先收起。
-  if (info.project.name === "narrow") await page.getByTitle("收起目录").click();
+  // 窄屏下抽屉会盖住正文区：操作正文里的控件前必须先收起（Escape 关闭抽屉，见 M68）。
+  if (info.project.name === "narrow") await page.keyboard.press("Escape");
 }
 
 async function openStory(page: Page, info: { project: { name: string } }, title: string) {

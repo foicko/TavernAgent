@@ -3,6 +3,7 @@
 // 挂载即打开（由外层决定何时渲染），命令清单由 lib/commandRegistry 装配后传进来。
 // 依赖面：react 与 ../lib/commands（纯模块，不含 store）——叶子层约束见 scripts/check.mjs。
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { filterCommands, isCommandEnabled, sectionize, type Command } from "../lib/commands";
 import { Icon } from "./Icon";
 import { Kbd } from "./Kbd";
@@ -123,7 +124,7 @@ export function CommandPalette({
 
   const optionId = (index: number) => `${listId}-option-${index}`;
 
-  return (
+  return createPortal(
     <div
       className="ui-command-palette__backdrop"
       data-testid="command-palette-backdrop"
@@ -212,6 +213,7 @@ export function CommandPalette({
           </span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

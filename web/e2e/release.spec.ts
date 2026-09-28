@@ -173,7 +173,8 @@ test("story graph opens immutable history and the memory bank restores focus", a
   await graph.getByRole("button", { name: /故事起点/ }).click();
   await graph.getByRole("button", { name: "查看历史快照" }).click();
   await expect(graph).toHaveCount(0);
-  if (info.project.name === "narrow") await page.getByTitle("收起目录", { exact: true }).click();
+  // 窄屏下抽屉遮罩挡住其它控件：用 Escape 关闭抽屉（见 M68）。
+  if (info.project.name === "narrow") await page.keyboard.press("Escape");
   await expect(page.locator(".history-read-banner")).toBeVisible();
   await expect(input).toBeDisabled();
   await page.getByRole("button", { name: "返回最新进度" }).click();
