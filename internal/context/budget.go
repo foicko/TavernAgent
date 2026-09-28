@@ -72,9 +72,14 @@ func calibrateTokens(raw int, factor float64) int {
 // 第 3 与第 5 条是"摘要不可静默消失"这条不变量的两侧：历史还在时淘汰摘要
 // 是纯收益；历史已不在时淘汰摘要等于删掉一段故事，只能整轮失败并告诉用户
 // 怎么把窗口调够。契约 §9.1 对"不可省略材料"的要求同样适用于承重摘要。
+// fitBundleBudget 在给定预算内收敛可压缩材料。
+//
+// mandatory 是"不可省略材料"的已测量尺寸（规则/人设/状态/输入/账本）。
+// 由调用方传入而不是在这里重算：compile 在解析尾部策略时已经量过一次，
+// 重复渲染整份消息列表是热路径上的纯浪费（M5）。
 func (c *Compiler) fitBundleBudget(lore []lorebookHit, memories []*domain.MemoryRecord, ancestors []*domain.PlotNode,
 	summaries []*domain.SummaryArtifact,
-	checks []domain.CheckResult, sc sessionContext, state *domain.WorldState, input, ledger string,
+	checks []domain.CheckResult, sc sessionContext, state *domain.WorldState, input, ledger string, mandatory int,
 ) ([]lorebookHit, []*domain.MemoryRecord, []*domain.PlotNode, []*domain.SummaryArtifact, BudgetReport, error) {
 	ancestors = append([]*domain.PlotNode{}, ancestors...)
 	budget := c.options.InputBudget()
@@ -84,7 +89,7 @@ func (c *Compiler) fitBundleBudget(lore []lorebookHit, memories []*domain.Memory
 	}
 	report.BeforeTrim = measure()
 	report.Total = report.BeforeTrim
-	report.Mandatory = c.EstimateMessages(c.buildMessages(nil, nil, nil, nil, checks, sc, state, input, ledger, 0))
+	report.Mandatory = mandatory
 	if !report.Enabled {
 		return lore, memories, ancestors, summaries, report, nil
 	}
@@ -228,6 +233,7 @@ type BudgetReport struct {
 func (c *Compiler) fitToBudget(lore []lorebookHit, memories []*domain.MemoryRecord, ancestors []*domain.PlotNode,
 	checks []domain.CheckResult, sc sessionContext, state *domain.WorldState, inputText, ledger string,
 ) ([]lorebookHit, []*domain.MemoryRecord, []*domain.PlotNode, BudgetReport, error) {
-	l, m, a, _, report, err := c.fitBundleBudget(lore, memories, ancestors, nil, checks, sc, state, inputText, ledger)
+	mandatory := c.EstimateMessages(c.buildMessages(nil, nil, nil, nil, checks, sc, state, inputText, ledger, 0))
+	l, m, a, _, report, err := c.fitBundleBudget(lore, memories, ancestors, nil, checks, sc, state, inputText, ledger, mandatory)
 	return l, m, a, report, err
 }

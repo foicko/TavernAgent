@@ -409,7 +409,7 @@ func (c *Compiler) Compile(ctx context.Context, sessionID, nodeID, inputText str
 	// 上下文预算（技术契约 §9.1）：按分配顺序收敛可压缩材料。
 	// 未配置窗口时跳过——预算未知时臆测上限比明确说"未启用"更危险。
 	t0 = c.beginPhase("budget")
-	lore, memories, ancestors, summaries, breport, berr := c.fitBundleBudget(lore, memories, ancestors, summaries, checks, sc, state, inputText, ledger)
+	lore, memories, ancestors, summaries, breport, berr := c.fitBundleBudget(lore, memories, ancestors, summaries, checks, sc, state, inputText, ledger, mandatory)
 	if berr != nil {
 		return req, berr
 	}

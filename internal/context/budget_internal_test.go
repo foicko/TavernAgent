@@ -248,7 +248,7 @@ func TestFitBundleBudgetDropsRedundantSummaryAtAnyIndex(t *testing.T) {
 	fits := c.EstimateMessages(c.buildMessages(nil, nil, ancestors, []*domain.SummaryArtifact{loadBearing}, nil, sc, state, "输入。", "", 0))
 	c.options.ContextWindow = fits + 50
 
-	_, _, fitHistory, fitSummaries, report, err := c.fitBundleBudget(nil, nil, ancestors, summaries, nil, sc, state, "输入。", "")
+	_, _, fitHistory, fitSummaries, report, err := c.fitBundleBudget(nil, nil, ancestors, summaries, nil, sc, state, "输入。", "", c.EstimateMessages(c.buildMessages(nil, nil, nil, nil, nil, sc, state, "输入。", "", 0)))
 	if err != nil {
 		t.Fatalf("丢掉排在后面的冗余摘要即可装下，却整轮失败：%v", err)
 	}
