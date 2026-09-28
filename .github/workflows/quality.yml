@@ -70,7 +70,7 @@ jobs:
           cd web
           pnpm exec playwright install --with-deps chromium
           pnpm test:browser
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: browser-evidence
@@ -131,7 +131,7 @@ jobs:
           node-version: 24
       - name: Native tests, build, package and run the actual extracted artifact
         run: python scripts/release.py --target ${{ matrix.target }} --smoke
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: tavernagent-${{ matrix.name }}
