@@ -10,7 +10,7 @@ import { Icon } from "../ui/Icon";
 import { EmptyState } from "../ui/EmptyState";
 
 const blankPlan = (): DirectorPlan => ({ title: "", guidance: "", beats: [] });
-const statusText = { active: "执行中", paused: "已暂停", completed: "已完成" };
+const statusText: Record<string, string> = { active: "执行中", paused: "已暂停", completed: "已完成" };
 
 export function DirectorStatusBar({ onOpen }: { onOpen: () => void }) {
   const summary = useStory(s => s.view?.director);
@@ -20,7 +20,7 @@ export function DirectorStatusBar({ onOpen }: { onOpen: () => void }) {
   if (!summary) return null;
   return <div className="director-status" aria-label="导演进度">
     <div className="director-status-main">
-      <Button size="sm" variant="outline" onClick={onOpen}><Icon name="film" size={13} /> {summary.title} · {statusText[summary.status]}</Button>
+      <Button size="sm" variant="outline" onClick={onOpen}><Icon name="film" size={13} /> {summary.title} · {statusText[summary.status] ?? summary.status}</Button>
       <span>{summary.status === "completed" ? "阶段已全部结束，可自由续写" : `当前：${summary.currentBeatTitle}`} · {summary.completed}/{summary.total}</span>
       {summary.status !== "completed" && <Button size="sm" variant="ghost" disabled={disabled}
         onClick={() => void command(summary.status === "paused" ? "resume" : "pause").catch(() => undefined)}>{summary.status === "paused" ? "恢复大纲" : "暂停大纲"}</Button>}
@@ -198,7 +198,7 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
       </header>
       {readonly && <div className="director-notice">正在查看历史大纲，此处只读。回到当前节点或从此处分叉后，可以调整未来安排。</div>}
       {active && <div className="director-active-summary">
-        <strong>{active.plan.title}</strong><span>{statusText[active.status]} · {Object.keys(active.progress).length}/{active.plan.beats.length} 阶段</span>
+        <strong>{active.plan.title}</strong><span>{statusText[active.status] ?? active.status} · {Object.keys(active.progress).length}/{active.plan.beats.length} 阶段</span>
         <div className="director-actions">
           {active.status !== "completed" && <><Button size="sm" variant="outline" disabled={busy} onClick={() => void run(active.status === "paused" ? "resume" : "pause")}>{active.status === "paused" ? "恢复大纲" : "暂停大纲"}</Button>
             <Button size="sm" variant="outline" disabled={busy} onClick={() => void run("complete", active.currentBeatId)}>标记当前阶段完成</Button>

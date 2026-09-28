@@ -20,7 +20,7 @@
 
 - 前端：`pnpm install --frozen-lockfile` → `typecheck` → `lint` → `test` → `build` → `audit --audit-level=high`
 - 第三方声明：`python scripts/license_notices.py` + `git diff --exit-code -- THIRD_PARTY_NOTICES.md LICENSES`
-- Go：`gofmt -l internal cmd` 为空 → `go test -race -count=1 ./...` → `go vet ./...` → `go build ./...` → `python scripts/layering_check.py` → `gen_marker_contract.py --check` → `gen_sse_contract.py --check`
+- Go：`gofmt -l internal cmd` 为空 → `go test -race -count=1 ./...` → `go vet ./...` → `go build ./...` → `python scripts/layering_check.py` → `gen_marker_contract.py --check` → `gen_sse_contract.py --check` → `go run ./cmd/gencontract --check`
 - `golangci-lint`（版本锁定 `v2.12.2`）
 - `govulncheck@v1.1.4 ./...` → `python -m unittest discover -s scripts/tests -v` → `python scripts/release_audit.py --strict`
 - 浏览器测试：构建二进制 → `pnpm test:browser`

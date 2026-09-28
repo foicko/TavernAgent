@@ -378,9 +378,9 @@ private fun ModelEditDialog(
                         initial.copy(
                             name = name.trim(),
                             kind = kind,
-                            baseUrl = baseUrl.trim().takeIf { it.isNotBlank() },
-                            model = model.trim().takeIf { it.isNotBlank() },
-                            apiKey = apiKey.trim().takeIf { it.isNotBlank() },
+                            baseUrl = baseUrl.trim(),
+                            model = model.trim(),
+                            apiKey = apiKey.trim(),
                             contextWindow = contextWindow.toIntOrNull() ?: 0,
                             maxTokens = maxTokens.toIntOrNull() ?: 0,
                         ),

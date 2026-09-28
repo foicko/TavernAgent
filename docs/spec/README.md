@@ -48,7 +48,7 @@
 | 错误码枚举（跨端共享） | ⚠️ Go 侧已有映射 | 无单一枚举源，TS/Kotlin 未绑定 | 待补 |
 | SSE 事件名 | ✅ 单源化 | — | `gen_sse_contract.py --check` |
 | SSE 负载字段 | ❌ 未机器化 | 需在契约中声明每事件必需字段并三端断言 | 待补 |
-| DTO 字段与命名 | ⚠️ Web 有手写夹具 | Go/Kotlin 无断言；`testdata/contract/api.json` 未建（B3.2） | 待补 |
+| DTO 字段与命名 | ⚠️ Go 生成（第一批） | 覆盖 Director*/ModelInstance/MemoryUsage；SessionView/Turn/WorldState/MemoryView 与 44 处 map 响应待覆盖 | `go run ./cmd/gencontract --check` |
 | camelCase | ⚠️ 主体符合 | V2 卡片字段保留 `snake_case`（历史兼容，见 [`07`](07-conventions.md)） | `check.mjs` / 评审 |
 | 时间 RFC3339 | ✅ 已实现 | — | Go 测试 |
 | 实体 ID 前缀 | ⚠️ 部分 | 多数 ID 是裸 UUIDv7；文档示例中的 `card_` 与实际不符 | 待补 |

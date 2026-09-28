@@ -230,7 +230,7 @@ export const MemoryBankModal: React.FC = () => {
         {memoryUsage && (
           <div className="memory-modal-quota-box memory-quota" role="status">
             普通记忆 {memoryUsage.used}/{memoryUsage.limit} · 受保护 {memoryUsage.protected} ·{" "}
-            {{ Normal: "充足", Notice: "留意容量", Degraded: "建议整理", Critical: "容量紧张" }[memoryUsage.tier]}
+            {({ Normal: "充足", Notice: "留意容量", Degraded: "建议整理", Critical: "容量紧张" } as Record<string, string>)[memoryUsage.tier] ?? memoryUsage.tier}
             <progress value={memoryUsage.used} max={memoryUsage.limit} aria-label="记忆容量" />
           </div>
         )}

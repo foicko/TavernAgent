@@ -170,16 +170,6 @@ data class MemoryViewDto(
 )
 
 @Serializable
-data class MemoryUsageDto(
-    val limit: Int = 0,
-    val used: Int = 0,
-    val protected: Int = 0,
-    val headroom: Int = 0,
-    val tier: String = "",
-    val reclaimable: Int = 0,
-)
-
-@Serializable
 data class MemoryPageDto(
     val memories: List<MemoryViewDto> = emptyList(),
     val usage: MemoryUsageDto = MemoryUsageDto(),

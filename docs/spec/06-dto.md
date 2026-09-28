@@ -43,44 +43,46 @@
 
 > 说明：这些漂移**不会导致 Android 崩溃**（`ignoreUnknownKeys=true`、`explicitNulls=false`），但会导致**静默丢字段/默认值**，属于隐蔽缺陷。
 
-## 4. 契约夹具格式（`testdata/contract/api.json`，待建）
+## 4. Go 代码生成（已落地）
 
-建议结构（与 `markers.json` / `sse-events.json` 同风格）：
+**决策**：以 Go 类型为唯一源，生成 TS 与 Kotlin 的 DTO（`cmd/gencontract`，用 `reflect` 读取 `json` tag）。
 
-```jsonc
-{
-  "_comment": "API DTO 字段与枚举的唯一契约来源。Go 反射断言；TS/Kotlin 由脚本生成断言。",
-  "dtos": {
-    "SessionView": {
-      "required": ["sessionId","characterId","title","rootNodeId","branch","headNode","state"],
-      "optional": ["director","branches","viewNodeId","viewNode","nodes","candidateGroups","secrets","outline","activeSummary","actions","hasMore","oldestTurnId","capabilities"]
-    },
-    "TurnView": {
-      "required": ["turnId","sessionId","branchId","status","mode","input","expectedHeadId","expectedVersion","capabilities"],
-      "optional": ["failureCode","failureMessage","resultNodeId","resultNode","draft"]
-    }
-  },
-  "enums": {
-    "TurnStatus": ["accepted","queued","preparing","generating","validating","awaiting_approval","awaiting_continuation","committed","cancelled","failed","conflicted"],
-    "MemoryKind": ["observed","reported","inferred","secret"],
-    "ProviderKind": ["openai-chat","openai-responses","anthropic-messages"]
-  }
-}
-```
+- 生成物：`web/src/app/generated/dto.generated.ts`（`export interface`）与
+  `android/.../data/remote/dto/GeneratedDtos.kt`（`@Serializable data class`，全字段带默认值）。
+- 手写定义**不得与生成物重复**：TS 在 `types.ts` 里再导出（`export type { … } from "./generated/dto.generated"`）；
+  Kotlin 生成物与手写 DTO 同包，直接删除被覆盖的手写 data class。
+- CI：`go run ./cmd/gencontract --check`（生成物过期即失败）。
 
-## 5. 三端断言方法
+**当前覆盖（第一批）**：`DirectorEvidence` / `DirectorBeat` / `DirectorPlan` / `DirectorBeatProgress` /
+`DirectorState` / `DirectorSummary` / `ModelInstance` / `MemoryUsage`。清单在 `cmd/gencontract/main.go` 的 `manifest`。
 
-| 端 | 方法 |
-|---|---|
-| Go | 用 `reflect` 读取目标结构体的 `json` tag，断言 `required` 全部存在、`optional` 存在且带 `omitempty`、枚举常量集合等于 `enums` |
-| TS | 生成期望字段联合类型，用 `expectTypeOf<keyof T>().toEqualTypeOf<Generated>()` 做**类型级**断言；枚举用联合类型断言 |
-| Kotlin | 对 `@Serializable` DTO 用 `serializer().descriptor.elementNames` 断言字段集合；或对样例实例 `Json.encodeToString` 后比对 key 集合 |
+**尚未覆盖**：`SessionView`、`TurnView`/`TurnContent`、`WorldState`、`MemoryView` 等。
+其中 `TurnView` 等是 `http` 层的 **ad-hoc `map[string]any` 响应（全仓 44 处）**，没有可反射的 Go 结构体——
+必须先把它们重构成具名 struct，才能纳入生成。这是下一步，也是「覆盖全部」的前置。
 
-生成脚本沿用 `scripts/gen_*_contract.py` 模式，输出 TS/Kotlin 断言文件，`--check` 入 CI。
+## 5. 生成器的类型映射
+
+| Go | TS | Kotlin |
+|---|---|---|
+| `string` | `string` | `String` |
+| `bool` | `boolean` | `Boolean` |
+| `int`/`int32` | `number` | `Int` |
+| `int64`/`uint64` | `number` | `Long` |
+| `float64` | `number` | `Double` |
+| `[]T` | `T[]` | `List<T>` |
+| `map[string]T` | `Record<string, T>` | `Map<String, T>` |
+| `*T` | `T \| null` | `T?` |
+| `time.Time` | `string` | `String` |
+| `json.RawMessage` | `unknown` | `JsonElement`（**暂不支持**，需先在生成器补映射） |
+| 匿名嵌入（无 tag） | 展平 | 展平 |
+
+- `omitempty` → TS 可选（`?`）；Kotlin 一律给默认值（保证 `ignoreUnknownKeys`/缺字段时能解码）。
+- 未登记进 manifest 的具名结构体 → 生成失败（强制显式登记，避免静默降级）。
 
 ## 6. 演进规则
 
-- **加字段**：先在契约的 `optional`/`required` 中声明 → 更新 Go → 生成 TS/Kotlin → 三端断言通过。自由演进允许直接加，但**必须同提交完成三端**。
-- **改字段名/删字段**：视为破坏性变更，必须同提交改三端 + 契约源；`--check` 通过才可合。
-- **枚举加值**：先在契约 `enums` 加值 → 三端同步（TS 联合、Kotlin 常量/`when`）。
-- **禁止**：三端各自维护一份手写字段清单而不入契约（`web/src/app/__tests__/contract_fixtures.json` 目前就是手写的，应作为种子迁移进 `api.json`）。
+- **加字段**：改 Go 结构体 → `go run ./cmd/gencontract` → 三端自动跟随；`--check` 必须通过。
+- **改字段名/删字段**：改 Go → 重新生成 → 修因类型变化而编译失败的消费点；视为破坏性变更，同提交完成。
+- **枚举**：生成器目前只输出裸 `string`（Go 的枚举是字符串常量，无类型信息）。如需联合类型/常量，另建枚举清单（待做）。
+- **禁止**：手写定义与生成物重复；未登记类型混入生成物。
+

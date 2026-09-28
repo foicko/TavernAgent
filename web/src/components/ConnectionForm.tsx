@@ -46,6 +46,7 @@ function blank(): ModelInstance {
     baseUrl: "",
     model: "",
     apiKey: "",
+    hasApiKey: false,
     temperature: 0.8,
     maxTokens: 4096,
     contextWindow: 131072,

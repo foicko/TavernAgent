@@ -604,7 +604,7 @@ URL 规则（`cardAssetsBody`）：内部资源 → `/api/v1/cards/{cardId}/asse
 
 1. **续写信号统一为 `turn.truncated`**：状态 `awaiting_continuation` 仍存在，但 `turn.awaiting_continuation` / `turn.awaiting_approval` 事件名已从契约与三端移除（后端从不产出）。
 2. **SSE 负载字段未机器化**：只锁了事件名；负载靠散文/各端代码。`turn.committed` 的 live 唤醒负载是 `{}`，客户端必须读 `seq>0` 的持久事件。
-3. **DTO 跨端漂移（B3.2 待做）**：TS 缺 `SessionView.capabilities`、`PlotNode.schemaVersion`、`WorldState.goals/milestones/unlockedSecrets`、`MemoryView.secretId`、`TurnView.expectedHeadId/expectedVersion/capabilities`；Kotlin 有非法默认值（`intent="unknown"`、`status="pending"`）。
+3. **DTO 跨端漂移**：已落地 Go 代码生成（`cmd/gencontract`）第一批（Director*/ModelInstance/MemoryUsage）。TS 曾缺 `SessionView.capabilities`、`PlotNode.schemaVersion`、`WorldState.goals/milestones/unlockedSecrets`、`MemoryView.secretId` 等仍在，待覆盖 SessionView/Turn/WorldState/MemoryView（前置：把 44 处 `map[string]any` 响应重构成具名 struct）。
 4. **错误码无共享枚举**；`/api/` 未知路径与 stdlib `404/405` 仍是纯文本，不符统一信封。
 5. ~~`STALE_OPTION` 不一致~~（已收敛：缺 `optionRef` 与「已过期」统一为 409/可重试；`QUEUE_FULL`/`STORAGE_UNAVAILABLE`/`BUDGET_EXCEEDED` 的 retryable 已按 HTTP 语义修正）。
 6. **提示词指纹无回归测试**：`internal/context/prompt_fingerprint_test.go` 被多处引用但**不存在**；`prompt_docs.py` 的模板表是硬编码，可能与源码漂移而不被测试发现。

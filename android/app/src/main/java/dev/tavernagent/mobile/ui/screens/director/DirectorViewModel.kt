@@ -120,8 +120,8 @@ class DirectorViewModel(
                     expectedDraftVersion = draft?.version ?: 0,
                     baseRevisionId = draft?.baseRevisionId ?: snapshot.directorView?.state?.plan?.revisionId.orEmpty(),
                     plan = DirectorPlanDto(
-                        planId = draft?.plan?.planId,
-                        revisionId = draft?.plan?.revisionId,
+                        planId = draft?.plan?.planId ?: "",
+                        revisionId = draft?.plan?.revisionId ?: "",
                         title = snapshot.draftTitle,
                         guidance = snapshot.draftGuidance,
                         beats = snapshot.draftBeats,

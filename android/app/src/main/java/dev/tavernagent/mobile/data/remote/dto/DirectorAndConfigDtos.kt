@@ -3,50 +3,8 @@ package dev.tavernagent.mobile.data.remote.dto
 import kotlinx.serialization.Serializable
 
 // ---- 导演 ----
-
-@Serializable
-data class DirectorBeatDto(
-    val beatId: String = "",
-    val title: String = "",
-    val instruction: String = "",
-    val completionCriteria: String = "",
-)
-
-@Serializable
-data class DirectorPlanDto(
-    val planId: String? = null,
-    val revisionId: String? = null,
-    val title: String = "",
-    val guidance: String = "",
-    val beats: List<DirectorBeatDto> = emptyList(),
-)
-
-@Serializable
-data class DirectorBeatProgressDto(
-    val status: String = "pending",
-    val note: String? = null,
-)
-
-@Serializable
-data class DirectorStateDto(
-    val plan: DirectorPlanDto = DirectorPlanDto(),
-    val status: String = "active",
-    val currentBeatId: String = "",
-    val progress: Map<String, DirectorBeatProgressDto> = emptyMap(),
-    val warning: String? = null,
-)
-
-@Serializable
-data class DirectorSummaryDto(
-    val title: String = "",
-    val revisionId: String = "",
-    val status: String = "",
-    val currentBeatId: String = "",
-    val currentBeatTitle: String = "",
-    val completed: Int = 0,
-    val total: Int = 0,
-    val warning: String? = null,
-)
+// DirectorBeatDto / DirectorPlanDto / DirectorBeatProgressDto / DirectorStateDto /
+// DirectorSummaryDto 由 Go 生成（GeneratedDtos.kt），此处不再手写。
 
 @Serializable
 data class DirectorDraftDto(
@@ -128,22 +86,7 @@ data class DirectorCommandRequestDto(
 )
 
 // ---- 模型配置 ----
-
-@Serializable
-data class ModelInstanceDto(
-    val id: String = "",
-    val name: String = "",
-    val kind: String = "openai-chat",
-    val baseUrl: String? = null,
-    val model: String? = null,
-    val apiKey: String? = null,
-    val hasApiKey: Boolean = false,
-    val temperature: Double? = null,
-    val maxTokens: Int = 0,
-    val contextWindow: Int = 0,
-    val reasoningEffort: String? = null,
-    val inputBudget: Int? = null,
-)
+// ModelInstanceDto 由 Go 生成（GeneratedDtos.kt），此处不再手写。
 
 @Serializable
 data class SlotBindingDto(

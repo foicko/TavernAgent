@@ -1,4 +1,28 @@
 // API 类型镜像后端契约（camelCase；与 internal/domain 一致）。
+//
+// 部分 DTO 由 Go 生成（源：cmd/gencontract，见 docs/spec/06-dto.md）：
+// 这里只做再导出，手写定义不得与生成物重复。
+import type {
+  DirectorBeat,
+  DirectorBeatProgress,
+  DirectorEvidence,
+  DirectorPlan,
+  DirectorState,
+  DirectorSummary,
+  MemoryUsage,
+  ModelInstance,
+} from "./generated/dto.generated";
+export type {
+  DirectorBeat,
+  DirectorBeatProgress,
+  DirectorEvidence,
+  DirectorPlan,
+  DirectorState,
+  DirectorSummary,
+  MemoryUsage,
+  ModelInstance,
+};
+
 export interface TextBlock {
   kind: "narration" | "dialogue" | "inner_monologue";
   speakerId?: string | null;
@@ -200,20 +224,8 @@ export interface SecretView {
   revealed: boolean;
 }
 
-export interface DirectorBeat { beatId: string; title: string; instruction: string; completionCriteria: string }
-export interface DirectorPlan { planId?: string; revisionId?: string; title: string; guidance: string; beats: DirectorBeat[] }
-export interface DirectorEvidence { blockSeq: number; quote: string }
-export interface DirectorState {
-  plan: DirectorPlan;
-  status: "active" | "paused" | "completed";
-  currentBeatId: string;
-  progress: Record<string, { status: "completed" | "skipped"; sourceNodeId: string; evidence?: DirectorEvidence[] }>;
-  warning?: string;
-}
-export interface DirectorSummary {
-  title: string; revisionId: string; status: DirectorState["status"];
-  currentBeatId: string; currentBeatTitle: string; completed: number; total: number; warning?: string;
-}
+// 导演 DTO 的字段形状由 Go 生成（见文件顶部再导出）。
+
 export interface DirectorDraft {
   sessionId: string; branchId: string; version: number; baseRevisionId: string; plan: DirectorPlan; updatedAt: string;
 }
@@ -329,20 +341,7 @@ export interface ProviderConfig {
   reasoningEffort?: string; // low | medium | high；空 = 默认（不发送思考参数）
 }
 
-// ModelInstance 是唯一携带连接信息的实体：新建一次，多个槽位引用。
-export interface ModelInstance {
-  id: string;
-  name: string;
-  kind: string;
-  baseUrl?: string;
-  model?: string;
-  apiKey?: string; // 只写；读取为脱敏值（留空或回传掩码 = 保留原密钥）
-  hasApiKey?: boolean;
-  temperature?: number | null;
-  maxTokens?: number;
-  contextWindow?: number;
-  reasoningEffort?: string; // low | medium | high；空 = 默认（不发送思考参数）
-}
+// ModelInstance 字段形状由 Go 生成（见文件顶部再导出）。
 
 // ModelCatalog 是 GET /api/v1/config/models 的返回。
 export interface ModelCatalog {
@@ -389,14 +388,7 @@ export interface MemoryView {
   validUntilTurn?: number;
 }
 
-export interface MemoryUsage {
-  used: number;
-  protected: number;
-  limit: number;
-  reclaimable: number;
-  headroom: number;
-  tier: "Normal" | "Notice" | "Degraded" | "Critical";
-}
+// MemoryUsage 字段形状由 Go 生成（见文件顶部再导出）。
 
 // ---- M1-2：导入预览 ----
 
