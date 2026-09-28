@@ -35,37 +35,37 @@ describe("Tabs", () => {
     );
   }
 
-  it("exposes a tablist with roving tabindex and passes ids through", () => {
+  it("exposes a radiogroup with roving tabindex and passes ids through", () => {
     render(<Harness />);
-    expect(screen.getByRole("tablist", { name: "左栏页签" })).toBeTruthy();
-    const tree = screen.getByRole("tab", { name: "因果" });
-    expect(tree.getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("radiogroup", { name: "左栏页签" })).toBeTruthy();
+    const tree = screen.getByRole("radio", { name: "因果" });
+    expect(tree.getAttribute("aria-checked")).toBe("true");
     expect(tree.tabIndex).toBe(0);
-    expect(screen.getByRole("tab", { name: "角色" }).tabIndex).toBe(-1);
+    expect(screen.getByRole("radio", { name: "角色" }).tabIndex).toBe(-1);
     expect(document.getElementById("subtab-btn-characters")).toBeTruthy();
   });
 
   it("moves with arrow keys, skips disabled tabs and wraps around", () => {
     const onChange = vi.fn();
     render(<Harness onChange={onChange} />);
-    const tree = screen.getByRole("tab", { name: "因果" });
+    const tree = screen.getByRole("radio", { name: "因果" });
     fireEvent.keyDown(tree, { key: "ArrowRight" });
     expect(onChange).toHaveBeenLastCalledWith("characters");
-    fireEvent.keyDown(screen.getByRole("tab", { name: "角色" }), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("radio", { name: "角色" }), { key: "ArrowRight" });
     // 世界书被禁用，跳到会话
     expect(onChange).toHaveBeenLastCalledWith("sessions");
-    fireEvent.keyDown(screen.getByRole("tab", { name: "会话" }), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("radio", { name: "会话" }), { key: "ArrowRight" });
     expect(onChange).toHaveBeenLastCalledWith("tree");
-    fireEvent.keyDown(screen.getByRole("tab", { name: "因果" }), { key: "End" });
+    fireEvent.keyDown(screen.getByRole("radio", { name: "因果" }), { key: "End" });
     expect(onChange).toHaveBeenLastCalledWith("sessions");
   });
 
   it("selects on click", () => {
     const onChange = vi.fn();
     render(<Harness onChange={onChange} />);
-    fireEvent.click(screen.getByRole("tab", { name: "会话" }));
+    fireEvent.click(screen.getByRole("radio", { name: "会话" }));
     expect(onChange).toHaveBeenCalledWith("sessions");
-    expect(screen.getByRole("tab", { name: "会话" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("radio", { name: "会话" }).getAttribute("aria-checked")).toBe("true");
   });
 });
 

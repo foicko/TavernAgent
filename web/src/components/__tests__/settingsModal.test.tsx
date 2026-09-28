@@ -192,7 +192,7 @@ describe("SettingsModal · 角色与连接", () => {
     render(<SettingsModal onClose={() => {}} />);
     await waitFor(() => expect(screen.getByRole("heading", { name: "角色" })).toBeTruthy());
 
-    const ttsTab = screen.getByRole("tab", { name: "语音设置 (TTS)" });
+    const ttsTab = screen.getByRole("radio", { name: "语音设置 (TTS)" });
     expect(ttsTab).toBeTruthy();
 
     fireEvent.click(ttsTab);
@@ -205,7 +205,7 @@ describe("SettingsModal · 角色与连接", () => {
     render(<SettingsModal onClose={() => {}} />);
     await waitFor(() => expect(screen.getByRole("heading", { name: "角色" })).toBeTruthy());
 
-    const imageTab = screen.getByRole("tab", { name: "图像生成" });
+    const imageTab = screen.getByRole("radio", { name: "图像生成" });
     expect(imageTab).toBeTruthy();
 
     fireEvent.click(imageTab);

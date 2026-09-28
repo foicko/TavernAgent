@@ -17,7 +17,7 @@ export interface TabsProps<T extends string = string> {
   items: ReadonlyArray<TabItem<T>>;
   value: T;
   onChange: (value: T) => void;
-  /** tablist 的可访问名。 */
+  /** radiogroup 的可访问名。 */
   label: string;
   /** segmented：胶囊轨道 + 滑动高亮块；underline：底部滑动下划线。 */
   variant?: "segmented" | "underline";
@@ -28,8 +28,10 @@ export interface TabsProps<T extends string = string> {
 }
 
 /**
- * 分段控件 / 页签（唯一实现）：滑动高亮块 250ms 对称过渡（transitions.dev tabs-sliding），
- * roving tabindex + 方向键/Home/End 键盘导航（WAI-ARIA tabs 模式）。
+ * 分段控件（唯一实现）：滑动高亮块 250ms 对称过渡（transitions.dev tabs-sliding），
+ * roving tabindex + 方向键/Home/End 键盘导航。
+ * 语义为 `radiogroup`/`radio`（互斥选择）——组件本身不渲染内容面板，
+ * 因此不使用需要 `tabpanel` 关联的 `tablist`/`tab`。
  * 高亮块位置由 useLayoutEffect 量出（支持内容宽度不等的页签），写入 --tab-x / --tab-w。
  */
 export function Tabs<T extends string = string>({
@@ -49,7 +51,7 @@ export function Tabs<T extends string = string>({
     const list = listRef.current;
     const indicator = indicatorRef.current;
     if (!list || !indicator) return;
-    const active = list.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+    const active = list.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]');
     if (!active) {
       indicator.style.opacity = "0";
       return;
@@ -95,7 +97,7 @@ export function Tabs<T extends string = string>({
     event.preventDefault();
     if (!next) return;
     onChange(next.value);
-    const tabs = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    const tabs = Array.from(listRef.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? []);
     tabs.find((tab) => tab.dataset.value === next.value)?.focus();
   };
 
@@ -110,7 +112,7 @@ export function Tabs<T extends string = string>({
     .join(" ");
 
   return (
-    <div ref={listRef} role="tablist" aria-label={label} className={classes} onKeyDown={onKeyDown}>
+    <div ref={listRef} role="radiogroup" aria-label={label} className={classes} onKeyDown={onKeyDown}>
       <span ref={indicatorRef} className="ui-tabs__indicator" aria-hidden="true" />
       {items.map((item) => {
         const selected = item.value === value;
@@ -118,11 +120,11 @@ export function Tabs<T extends string = string>({
           <button
             key={item.value}
             type="button"
-            role="tab"
+            role="radio"
             id={item.id}
             title={item.title}
             data-value={item.value}
-            aria-selected={selected}
+            aria-checked={selected}
             tabIndex={selected ? 0 : -1}
             disabled={item.disabled}
             className={["ui-tabs__tab", selected ? "active" : ""].filter(Boolean).join(" ")}
