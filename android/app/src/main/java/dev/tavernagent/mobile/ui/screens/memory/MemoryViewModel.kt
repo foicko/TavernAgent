@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tavernagent.mobile.TavernApp
+import dev.tavernagent.mobile.data.remote.ApiException
 import dev.tavernagent.mobile.data.remote.dto.MemoryPageDto
 import dev.tavernagent.mobile.data.remote.dto.SessionViewDto
 import dev.tavernagent.mobile.data.repo.MemoryRepository
+import dev.tavernagent.mobile.data.repo.Keys
 import dev.tavernagent.mobile.data.repo.StoryRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -57,6 +59,10 @@ class MemoryViewModel(
     private var searchJob: Job? = null
     private var sessionId: String = ""
     private var branchId: String = ""
+    // 写操作幂等键按"操作签名"复用：超时/结果未知后用户重试不会建出重复 CoW 修订。
+    private val patchKeys = mutableMapOf<String, String>()
+    // 分页加载代次：搜索/筛选变更会让在途的旧页请求作废，避免旧结果覆盖新结果。
+    private var loadGeneration = 0
 
     fun open(sessionId: String, branchId: String) {
         this.sessionId = sessionId
@@ -74,6 +80,8 @@ class MemoryViewModel(
     fun refresh() = load()
 
     private fun load(cursor: String? = null) {
+        if (cursor == null) loadGeneration++
+        val generation = loadGeneration
         viewModelScope.launch {
             if (cursor == null) {
                 _state.update { it.copy(loading = it.page == null, error = null) }
@@ -91,6 +99,7 @@ class MemoryViewModel(
                     cursor = cursor,
                 )
             }.onSuccess { page ->
+                if (generation != loadGeneration) return@onSuccess
                 _state.update { current ->
                     val merged = if (cursor == null) page else page.copy(
                         memories = current.page?.memories.orEmpty() + page.memories,
@@ -98,6 +107,7 @@ class MemoryViewModel(
                     current.copy(loading = false, loadingMore = false, page = merged, error = null)
                 }
             }.onFailure { error ->
+                if (generation != loadGeneration) return@onFailure
                 _state.update { it.copy(loading = false, loadingMore = false, error = error.message ?: "加载记忆失败") }
             }
         }
@@ -161,6 +171,8 @@ class MemoryViewModel(
         hidden: Boolean? = null,
     ) {
         val view = _state.value.view ?: return
+        val signature = listOf(memoryId, content, pinned, hidden).joinToString("|")
+        val key = patchKeys.getOrPut(signature) { Keys.new("mp") }
         viewModelScope.launch {
             _state.update { it.copy(busy = true, error = null) }
             runCatching {
@@ -171,14 +183,18 @@ class MemoryViewModel(
                     characterId = view.characterId,
                     expectedHeadId = view.branch.headNodeId,
                     expectedVersion = view.branch.version,
+                    idempotencyKey = key,
                     content = content,
                     pinned = pinned,
                     hidden = hidden,
                 )
             }.onSuccess {
+                patchKeys.remove(signature)
                 _state.update { current -> current.copy(busy = false, message = "已更新记忆") }
                 load()
             }.onFailure { error ->
+                // 4xx 明确拒绝：该键作废，下次重试用新键；其余（超时/网络）保留键以便安全重放。
+                if (error is ApiException && error.status in 400..499) patchKeys.remove(signature)
                 _state.update { it.copy(busy = false, error = error.message ?: "更新失败") }
             }
         }

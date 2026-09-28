@@ -32,23 +32,24 @@ class ServerStore(private val context: Context) {
     val credentials: Flow<ServerCredentials> = context.serverDataStore.data.map { prefs ->
         ServerCredentials(
             baseUrl = prefs[KEY_BASE_URL].orEmpty(),
-            token = prefs[KEY_TOKEN].orEmpty(),
+            // Token 与 TOFU 证书落盘前经 Keystore 加密；读取时解密（历史明文值原样返回）。
+            token = SecretCipher.decrypt(prefs[KEY_TOKEN].orEmpty()),
             trustedHostPort = prefs[KEY_TRUSTED_HOST].orEmpty(),
-            trustedCertDerBase64 = prefs[KEY_TRUSTED_CERT].orEmpty(),
+            trustedCertDerBase64 = SecretCipher.decrypt(prefs[KEY_TRUSTED_CERT].orEmpty()),
         )
     }
 
     suspend fun saveConnection(baseUrl: String, token: String) {
         context.serverDataStore.edit { prefs ->
             prefs[KEY_BASE_URL] = baseUrl
-            prefs[KEY_TOKEN] = token
+            prefs[KEY_TOKEN] = SecretCipher.encrypt(token)
         }
     }
 
     suspend fun saveTrustedCertificate(hostPort: String, der: ByteArray) {
         context.serverDataStore.edit { prefs ->
             prefs[KEY_TRUSTED_HOST] = hostPort
-            prefs[KEY_TRUSTED_CERT] = Base64.encodeToString(der, Base64.NO_WRAP)
+            prefs[KEY_TRUSTED_CERT] = SecretCipher.encrypt(Base64.encodeToString(der, Base64.NO_WRAP))
         }
     }
 

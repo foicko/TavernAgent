@@ -1,7 +1,6 @@
 package dev.tavernagent.mobile.service
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -39,11 +38,6 @@ class GenerationService : Service() {
     private var turnId: String = ""
 
     override fun onBind(intent: Intent?): IBinder? = null
-
-    override fun onCreate() {
-        super.onCreate()
-        createChannel()
-    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
@@ -87,20 +81,7 @@ class GenerationService : Service() {
                         val text = state.text.takeLast(60).ifBlank { "正在演绎…" }
                         notify(buildNotification(title, text, ongoing = true))
                     }
-                    TurnPhase.TRUNCATED -> {
-                        notify(buildNotification(title, "本段已写完，等待续写", ongoing = false))
-                        stopSelfSoon()
-                    }
-                    TurnPhase.FAILED -> {
-                        notify(buildNotification(title, state.error ?: "生成失败", ongoing = false))
-                        stopSelfSoon()
-                    }
-                    TurnPhase.COMMITTED, TurnPhase.IDLE -> {
-                        if (state.phase == TurnPhase.COMMITTED) {
-                            notify(buildNotification(title, "回复已完成", ongoing = false))
-                        }
-                        stopSelfSoon()
-                    }
+                    TurnPhase.TRUNCATED, TurnPhase.FAILED, TurnPhase.COMMITTED, TurnPhase.IDLE -> stopSelfSoon()
                     TurnPhase.AWAITING_CONFIRM -> Unit
                 }
             }
@@ -135,7 +116,7 @@ class GenerationService : Service() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, GenerationNotifications.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_edit)
             .setContentTitle(title.ifBlank { getString(R.string.app_name) })
             .setContentText(text)
@@ -146,24 +127,12 @@ class GenerationService : Service() {
             .build()
     }
 
-    private fun createChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "生成进度", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "回合生成中与完成后的提示"
-            },
-        )
-    }
-
     override fun onDestroy() {
         scope.cancel()
         super.onDestroy()
     }
 
     companion object {
-        private const val CHANNEL_ID = "tavern_generation"
         private const val NOTIFICATION_ID = 0x7A11
         private const val ACTION_STOP = "dev.tavernagent.mobile.STOP_GENERATION"
         const val EXTRA_SESSION = "sessionId"
@@ -199,15 +168,9 @@ class NotificationPresenter(context: Context) {
     private val appContext = context.applicationContext
 
     fun notifyFinished(state: TurnStreamState, success: Boolean) {
+        // 应用在前台时抑制：界面上已经看得到结果，不必再打扰。
+        if (TavernApp.isForeground) return
         val manager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channel = NotificationChannel(
-            "tavern_generation",
-            "生成进度",
-            NotificationManager.IMPORTANCE_DEFAULT,
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && manager.getNotificationChannel(channel.id) == null) {
-            manager.createNotificationChannel(channel)
-        }
         val intent = Intent(appContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             if (state.sessionId.isNotBlank()) putExtra(GenerationService.EXTRA_SESSION, state.sessionId)
@@ -219,7 +182,7 @@ class NotificationPresenter(context: Context) {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val notification = NotificationCompat.Builder(appContext, channel.id)
+        val notification = NotificationCompat.Builder(appContext, GenerationNotifications.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_edit)
             .setContentTitle(state.sessionTitle.ifBlank { "TavernAgent" })
             .setContentText(if (success) "回复已完成" else (state.error ?: "生成未完成"))

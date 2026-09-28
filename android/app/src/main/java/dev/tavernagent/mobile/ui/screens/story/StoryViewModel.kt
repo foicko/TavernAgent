@@ -22,12 +22,14 @@ import dev.tavernagent.mobile.domain.StoryMessage
 import dev.tavernagent.mobile.domain.StoryMessages
 import dev.tavernagent.mobile.domain.TurnPhase
 import dev.tavernagent.mobile.util.runCatchingCancellable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** 思考文本/时长缓存的容量上限（按最近使用保留）。 */
@@ -142,7 +144,13 @@ class StoryViewModel(
 
     private var streamJob: Job? = null
     private var pendingKey: String? = null
+    // 幂等载荷基线：重试必须复用同一 (key, input, expectedHeadId, expectedVersion)，
+    // 否则 head/version 变动会让同键不同值 → 409 IDEMPOTENCY_CONFLICT（假失败）。
+    private var pendingHeadId: String? = null
+    private var pendingBranchVersion: Long? = null
     private var pendingInput: TurnInputDto? = null
+    // 最近一次被服务端受理的输入：终态失败时用它重发一个新回合（而不是重放已终态的回合）。
+    private var lastInput: TurnInputDto? = null
     private var assetsKey: String = ""
     // 思考文本/时长按 turnId 累积：长会话下必须限容（保留最近 N 个回合），否则无界增长。
     private val thinkingByTurn = object : LinkedHashMap<String, String>(16, 0.75f, true) {
@@ -225,9 +233,22 @@ class StoryViewModel(
         }
     }
 
-    private fun applyView(view: SessionViewDto, keepViewingNode: Boolean = false) {
-        val messages = StoryMessages.fromView(view, thinkingByTurn, thinkingSecondsByTurn)
-        val worldState = view.state?.let { runCatchingCancellable { ApiJson.from<WorldStateDto>(it) }.getOrNull() }
+    /** 幂等键与其并发基线必须一起失效，避免"新键配旧基线"。 */
+    private fun clearPendingKey() {
+        pendingKey = null
+        pendingHeadId = null
+        pendingBranchVersion = null
+    }
+
+    private suspend fun applyView(view: SessionViewDto, keepViewingNode: Boolean = false) {
+        // 解析可能上百个回合的 contentJson 与世界状态：放到 Default 线程，避免主线程卡顿/ANR。
+        // 思考缓存先做快照，避免后台解析与主线程写入并发访问同一 map。
+        val thinkingSnapshot = HashMap(thinkingByTurn)
+        val secondsSnapshot = HashMap(thinkingSecondsByTurn)
+        val (messages, worldState) = withContext(Dispatchers.Default) {
+            StoryMessages.fromView(view, thinkingSnapshot, secondsSnapshot) to
+                view.state?.let { runCatchingCancellable { ApiJson.from<WorldStateDto>(it) }.getOrNull() }
+        }
         val charId = view.characterId
         val base = _state.value.baseUrl
         val playerAvatar = worldState?.characters?.get("player")?.avatar?.let { av ->
@@ -383,7 +404,11 @@ class StoryViewModel(
         optionRef: dev.tavernagent.mobile.data.remote.dto.OptionRefDto? = null,
     ) {
         val snapshot = _state.value
-        val key = pendingKey ?: Keys.new("turn").also { pendingKey = it }
+        val key = pendingKey ?: Keys.new("turn").also {
+            pendingKey = it
+            pendingHeadId = snapshot.headNodeId
+            pendingBranchVersion = snapshot.branchVersion
+        }
         val input = TurnInputDto(
             kind = kind,
             text = text,
@@ -405,7 +430,8 @@ class StoryViewModel(
                     input = input,
                 )
             }.onSuccess { response ->
-                pendingKey = null
+                clearPendingKey()
+                lastInput = input
                 pendingInput = null
                 _state.update {
                     it.copy(
@@ -425,7 +451,7 @@ class StoryViewModel(
                 // 4xx（含 429 QUEUE_FULL）表示服务端已明确拒绝：该幂等键不再复用。
                 val rejected = error is ApiException && error.status in 400..499
                 if (rejected) {
-                    pendingKey = null
+                    clearPendingKey()
                 }
                 _state.update {
                     it.copy(
@@ -443,8 +469,15 @@ class StoryViewModel(
     fun retry() {
         val pending = pendingInput
         if (pending != null) {
-            val key = pendingKey ?: Keys.new("turn").also { pendingKey = it }
             val snapshot = _state.value
+            val key = pendingKey ?: Keys.new("turn").also {
+                pendingKey = it
+                pendingHeadId = snapshot.headNodeId
+                pendingBranchVersion = snapshot.branchVersion
+            }
+            // 复用意图时捕获的并发基线：head/version 变动也不改变同键载荷。
+            val headId = pendingHeadId ?: snapshot.headNodeId
+            val version = pendingBranchVersion ?: snapshot.branchVersion
             viewModelScope.launch {
                 _state.update { it.copy(busyAction = "retry", error = null) }
                 runCatchingCancellable {
@@ -452,13 +485,14 @@ class StoryViewModel(
                         sessionId = snapshot.sessionId,
                         branchId = snapshot.branchId,
                         idempotencyKey = key,
-                        expectedHeadId = snapshot.headNodeId,
-                        expectedVersion = snapshot.branchVersion,
+                        expectedHeadId = headId,
+                        expectedVersion = version,
                         characterId = snapshot.characterId,
                         input = pending,
                     )
                 }.onSuccess { response ->
-                    pendingKey = null
+                    clearPendingKey()
+                    lastInput = pending
                     pendingInput = null
                     _state.update {
                         it.copy(
@@ -470,7 +504,7 @@ class StoryViewModel(
                     }
                     startStream(response.turnId)
                 }.onFailure { error ->
-                    if (error is ApiException && error.status in 400..499) pendingKey = null
+                    if (error is ApiException && error.status in 400..499) clearPendingKey()
                     _state.update {
                         it.copy(busyAction = null, phase = TurnPhase.FAILED, error = error.message ?: "重试失败")
                     }
@@ -478,7 +512,16 @@ class StoryViewModel(
             }
             return
         }
-        val turnId = _state.value.currentTurnId
+        val snapshot = _state.value
+        // 终态失败：provider 已失败、回合不可续，重放同一回合只会立刻再次失败。
+        // 用新幂等键重发一个新回合（保留原输入），让"重试"真的能重试。
+        val last = lastInput
+        if (snapshot.phase == TurnPhase.FAILED && last != null) {
+            clearPendingKey()
+            submit(kind = last.kind, text = last.text, note = last.note, optionRef = last.optionRef)
+            return
+        }
+        val turnId = snapshot.currentTurnId
         if (turnId != null) {
             viewModelScope.launch {
                 runCatchingCancellable { repository.cancelTurn(turnId, _state.value.characterId) }

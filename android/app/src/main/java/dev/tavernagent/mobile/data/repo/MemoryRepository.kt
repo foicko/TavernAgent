@@ -29,6 +29,7 @@ class MemoryRepository(private val apiProvider: ApiProvider) {
         characterId: String,
         expectedHeadId: String,
         expectedVersion: Long,
+        idempotencyKey: String,
         content: String? = null,
         pinned: Boolean? = null,
         hidden: Boolean? = null,
@@ -42,7 +43,7 @@ class MemoryRepository(private val apiProvider: ApiProvider) {
             expectedCharacterId = characterId.ifBlank { null },
             expectedHeadId = expectedHeadId.ifBlank { null },
             expectedVersion = expectedVersion,
-            idempotencyKey = Keys.new("mp"),
+            idempotencyKey = idempotencyKey,
         )
         return apiProvider.current().memories.patch(sessionId, branchId, memoryId, body)
     }

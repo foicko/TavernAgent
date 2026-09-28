@@ -16,8 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-import dev.tavernagent.mobile.data.repo.TurnNotifier
-
 /**
  * 手写依赖容器，避免引入 DI 框架。生命周期与应用一致；网络层与本地存储都在这里组装。
  */
@@ -35,11 +33,7 @@ class AppContainer(private val context: Context) {
     }
 
     val turnStreams: TurnStreamRegistry by lazy {
-        TurnStreamRegistry(apiProvider, applicationScope).apply {
-            notifier = TurnNotifier { state, success ->
-                dev.tavernagent.mobile.service.NotificationPresenter(appContext).notifyFinished(state, success)
-            }
-        }
+        TurnStreamRegistry(apiProvider, applicationScope)
     }
 
     val cardsRepository: CardsRepository by lazy { CardsRepository(apiProvider) }

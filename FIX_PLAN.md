@@ -37,7 +37,8 @@
 | B7b | Android 关键其余项 | S11, M51, M57（禁用备份面） | ✅ 已完成 |
 | B7c | Android 协程取消传播 | M62 | ✅ 已完成 |
 | B7d | Android 注册表驱逐与失败码透传 | M53, M63 | ✅ 已完成 |
-| B7e | Android 其余关键项 | M46, M47, M52, M57（Keystore 加密）, M59, M61 | ⬜ |
+| B7e | Android 主线程/重试/通知/幂等/Keystore | M46, M47, M52, M59, M61, M57（Keystore 加密） | ✅ 已完成 |
+| B7f | Android 明文流量收敛 | M57（networkSecurityConfig） | ⬜ |
 | B8 | Android 其余与安全（部分） | M55 | ✅ 已完成 |
 | B8b | Android 其余与安全（部分） | M56, M58 | ✅ 已完成 |
 | B8c | Android 其余与安全（余下） | M54, M60 | ⬜ |
