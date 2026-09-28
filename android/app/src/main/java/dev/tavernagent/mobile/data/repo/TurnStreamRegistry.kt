@@ -7,6 +7,7 @@ import dev.tavernagent.mobile.domain.DraftReducer
 import dev.tavernagent.mobile.domain.TurnEvent
 import dev.tavernagent.mobile.domain.TurnEventCodec
 import dev.tavernagent.mobile.domain.TurnPhase
+import dev.tavernagent.mobile.util.runCatchingCancellable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -189,7 +190,7 @@ class TurnStreamRegistry(
             while (isActive && !done.isCompleted) {
                 if (wait > 0) delay(wait)
                 wait = reconcileIntervalMs
-                val turn = runCatching { apiSource.current().turns.get(turnId) }.getOrNull() ?: continue
+                val turn = runCatchingCancellable { apiSource.current().turns.get(turnId) }.getOrNull() ?: continue
                 val inFlight = if (sseActive) null else turn.draft?.inFlight
                 val event = TurnEventCodec.fromStatus(turn.status, inFlight)
                 if (event != null) send(event)

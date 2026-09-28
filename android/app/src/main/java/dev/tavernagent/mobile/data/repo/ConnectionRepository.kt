@@ -8,6 +8,7 @@ import dev.tavernagent.mobile.data.remote.HttpEngine
 import dev.tavernagent.mobile.data.remote.NetworkFailure
 import dev.tavernagent.mobile.data.remote.UrlNormalizer
 import dev.tavernagent.mobile.data.remote.api.AuthApi
+import dev.tavernagent.mobile.util.runCatchingCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.net.ssl.SSLException
@@ -116,7 +117,7 @@ class ConnectionRepository(
     /** 读取指纹（仅用于展示）。 */
     suspend fun fingerprintOf(baseUrl: String): String? {
         val hostPort = UrlNormalizer.hostPort(baseUrl) ?: return null
-        return runCatching {
+        return runCatchingCancellable {
             val certificate = HttpEngine.fetchPeerCertificate(hostPort.first, hostPort.second)
             HttpEngine.sha256Fingerprint(certificate)
         }.getOrNull()
@@ -127,7 +128,7 @@ class ConnectionRepository(
             ?: return ConnectionCheck.Failed(cause.message ?: "无法连接服务", true)
         val key = "${hostPort.first}:${hostPort.second}"
         val previouslyTrusted = serverStore.credentials.first().trustedHostPort == key
-        val fingerprint = runCatching {
+        val fingerprint = runCatchingCancellable {
             val certificate = HttpEngine.fetchPeerCertificate(hostPort.first, hostPort.second)
             HttpEngine.sha256Fingerprint(certificate)
         }.getOrNull()

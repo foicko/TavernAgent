@@ -35,7 +35,8 @@
 | B6e | Web 字号令牌化（跨文件，较大） | M72 | ⬜ |
 | B7 | Android 关键缺陷（核心） | S10, S12, M48, M49, M50 | ✅ 已完成 |
 | B7b | Android 关键其余项 | S11, M51, M57（禁用备份面） | ✅ 已完成 |
-| B7c | Android 其余关键项 | M46, M47, M52, M53, M57（Keystore 加密）, M59, M61, M62, M63 | ⬜ |
+| B7c | Android 协程取消传播 | M62 | ✅ 已完成 |
+| B7d | Android 其余关键项 | M46, M47, M52, M53, M57（Keystore 加密）, M59, M61, M63 | ⬜ |
 | B8 | Android 其余与安全（部分） | M55 | ✅ 已完成 |
 | B8b | Android 其余与安全（部分） | M56, M58 | ✅ 已完成 |
 | B8c | Android 其余与安全（余下） | M54, M60 | ⬜ |
@@ -124,6 +125,10 @@ B5b + B6（Web a11y/视觉）┘
 | M59/M61/M62/M63 | 幂等/取消/失败码 | 记忆补丁键跨重试复用；重试复用原始并发基线；`runCatching` 重抛 `CancellationException`；透传 `failureCode`/`failureMessage` |
 
 风险：本机无 SDK，全部改动需由新增 Android CI 编译验证；`ApiClientMockServerTest` 等 51 项单测为回归基线。
+
+> 复核更新：本机实际**已安装 Android SDK**（`android/local.properties` → `platforms 34–37`、JDK 21）。
+> 自 B7c 起，Android 改动均在本地执行 `:app:compileDebugKotlin` 与 `:app:testDebugUnitTest` 验证；
+> 并借此修复了 B7b 引入、此前从未编译过的 `StoryMessage.id` → `nodeId` 字段错误。
 
 ### B2b · 后端结构性/并发（需设计，风险较高）
 

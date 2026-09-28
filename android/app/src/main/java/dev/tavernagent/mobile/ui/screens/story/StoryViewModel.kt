@@ -21,6 +21,7 @@ import dev.tavernagent.mobile.domain.DraftBlock
 import dev.tavernagent.mobile.domain.StoryMessage
 import dev.tavernagent.mobile.domain.StoryMessages
 import dev.tavernagent.mobile.domain.TurnPhase
+import dev.tavernagent.mobile.util.runCatchingCancellable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -162,7 +163,7 @@ class StoryViewModel(
             )
         }
         viewModelScope.launch {
-            val base = runCatching { repository.baseUrl() }.getOrDefault("")
+            val base = runCatchingCancellable { repository.baseUrl() }.getOrDefault("")
             _state.update { it.copy(baseUrl = base) }
         }
         loadModels()
@@ -178,7 +179,7 @@ class StoryViewModel(
         viewModelScope.launch {
             _state.update { it.copy(refreshing = true, error = null, historyLoading = before != null) }
             val snapshot = _state.value
-            runCatching {
+            runCatchingCancellable {
                 repository.view(
                     sessionId = snapshot.sessionId,
                     branchId = branchHint ?: snapshot.branchId.takeIf { it.isNotBlank() },
@@ -218,7 +219,7 @@ class StoryViewModel(
 
     private fun applyView(view: SessionViewDto, keepViewingNode: Boolean = false) {
         val messages = StoryMessages.fromView(view, thinkingByTurn, thinkingSecondsByTurn)
-        val worldState = view.state?.let { runCatching { ApiJson.from<WorldStateDto>(it) }.getOrNull() }
+        val worldState = view.state?.let { runCatchingCancellable { ApiJson.from<WorldStateDto>(it) }.getOrNull() }
         val charId = view.characterId
         val base = _state.value.baseUrl
         val playerAvatar = worldState?.characters?.get("player")?.avatar?.let { av ->
@@ -284,13 +285,13 @@ class StoryViewModel(
         // 换卡时先清掉上一张卡的头像，避免短暂张冠李戴；资源表由下面的请求补齐。
         _state.update { it.copy(characterAvatarUrl = null) }
         viewModelScope.launch {
-            val summary = runCatching { cardsRepository.assets(cardId) }.getOrNull()
+            val summary = runCatchingCancellable { cardsRepository.assets(cardId) }.getOrNull()
             if (summary == null) {
                 assetsKey = "" // 允许下次刷新时重试
                 return@launch
             }
             // baseUrl 可能还没从 ServerStore 就绪：这时资源表按服务端实际地址解析，避免拼出空主机。
-            val effectiveBase = base.ifBlank { runCatching { repository.baseUrl() }.getOrDefault("") }
+            val effectiveBase = base.ifBlank { runCatchingCancellable { repository.baseUrl() }.getOrDefault("") }
             val index = dev.tavernagent.mobile.domain.CardAssetResolver.index(summary.assets)
             _state.update {
                 it.copy(
@@ -385,7 +386,7 @@ class StoryViewModel(
         pendingInput = input
         viewModelScope.launch {
             _state.update { it.copy(busyAction = "send", error = null) }
-            runCatching {
+            runCatchingCancellable {
                 repository.acceptTurn(
                     sessionId = snapshot.sessionId,
                     branchId = snapshot.branchId,
@@ -438,7 +439,7 @@ class StoryViewModel(
             val snapshot = _state.value
             viewModelScope.launch {
                 _state.update { it.copy(busyAction = "retry", error = null) }
-                runCatching {
+                runCatchingCancellable {
                     repository.acceptTurn(
                         sessionId = snapshot.sessionId,
                         branchId = snapshot.branchId,
@@ -472,7 +473,7 @@ class StoryViewModel(
         val turnId = _state.value.currentTurnId
         if (turnId != null) {
             viewModelScope.launch {
-                runCatching { repository.cancelTurn(turnId, _state.value.characterId) }
+                runCatchingCancellable { repository.cancelTurn(turnId, _state.value.characterId) }
                 startStream(turnId)
             }
         } else {
@@ -483,7 +484,7 @@ class StoryViewModel(
     fun cancel() {
         val turnId = _state.value.currentTurnId ?: return
         viewModelScope.launch {
-            runCatching { repository.cancelTurn(turnId, _state.value.characterId) }
+            runCatchingCancellable { repository.cancelTurn(turnId, _state.value.characterId) }
                 .onSuccess {
                     _state.update {
                         val echo = it.pendingEcho
@@ -506,7 +507,7 @@ class StoryViewModel(
         val turnId = _state.value.currentTurnId ?: return
         viewModelScope.launch {
             _state.update { it.copy(busyAction = "continue") }
-            runCatching { repository.continueTurn(turnId, _state.value.characterId) }
+            runCatchingCancellable { repository.continueTurn(turnId, _state.value.characterId) }
                 .onSuccess { startStream(turnId) }
                 .onFailure { error -> _state.update { it.copy(busyAction = null, error = error.message ?: "续写失败") } }
         }
@@ -518,7 +519,7 @@ class StoryViewModel(
         val snapshot = _state.value
         viewModelScope.launch {
             _state.update { it.copy(busyAction = "regenerate", error = null) }
-            runCatching {
+            runCatchingCancellable {
                 repository.regenerate(snapshot.sessionId, snapshot.branchId, nodeId, snapshot.characterId, recheck, note)
             }.onSuccess { derived ->
                 _state.update { it.copy(busyAction = null, branchId = derived.branchId, viewingNodeId = null, draftBlocks = emptyList(), thinking = "") }
@@ -534,7 +535,7 @@ class StoryViewModel(
         val snapshot = _state.value
         viewModelScope.launch {
             _state.update { it.copy(busyAction = "fork", error = null) }
-            runCatching {
+            runCatchingCancellable {
                 repository.fork(snapshot.sessionId, nodeId, snapshot.characterId, name = "平行分支_${System.currentTimeMillis() % 10000}")
             }.onSuccess { branch ->
                 _state.update { it.copy(busyAction = null, branchId = branch.branchId, viewingNodeId = null, toast = "已开辟新分支") }
@@ -552,7 +553,7 @@ class StoryViewModel(
             _state.update {
                 it.copy(branchId = branchId, viewingNodeId = null, draftBlocks = emptyList(), thinking = "", phase = TurnPhase.IDLE, currentTurnId = null)
             }
-            val view = runCatching { repository.view(snapshot.sessionId, branchId, null, 100) }.getOrNull()
+            val view = runCatchingCancellable { repository.view(snapshot.sessionId, branchId, null, 100) }.getOrNull()
             if (view != null) {
                 applyView(view)
                 repository.rememberLocation(view.sessionId, view.branch.branchId, view.branch.headNodeId, view.title)
@@ -616,7 +617,7 @@ class StoryViewModel(
 
     private fun reloadAfterCommit(turnId: String) {
         viewModelScope.launch {
-            val view = runCatching {
+            val view = runCatchingCancellable {
                 repository.view(_state.value.sessionId, _state.value.branchId, null, 100)
             }.getOrNull()
             // 网络往返期间用户可能已取消并发出新回合：绝不能用旧回合的视图/终态覆盖新回合。
@@ -644,7 +645,7 @@ class StoryViewModel(
 
     fun loadModels() {
         viewModelScope.launch {
-            runCatching { modelsRepository.catalog() }
+            runCatchingCancellable { modelsRepository.catalog() }
                 .onSuccess { catalog ->
                     _state.update { it.copy(models = catalog.models, slots = catalog.slots) }
                 }
@@ -653,7 +654,7 @@ class StoryViewModel(
 
     fun switchPrimaryModel(modelId: String) {
         viewModelScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 modelsRepository.saveSlot("primary", enabled = true, modelId = modelId)
             }.onSuccess { updatedSlots ->
                 val picked = _state.value.models.firstOrNull { it.id == modelId }
@@ -678,7 +679,7 @@ class StoryViewModel(
         }
         if (current.reasoningEffort.orEmpty() == effort) return
         viewModelScope.launch {
-            runCatching {
+            runCatchingCancellable {
                 modelsRepository.save(current.copy(reasoningEffort = effort, apiKey = ""))
             }.onSuccess { saved ->
                 _state.update { state ->
