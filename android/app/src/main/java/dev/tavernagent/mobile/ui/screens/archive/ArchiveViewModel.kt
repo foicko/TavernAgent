@@ -1,5 +1,7 @@
 package dev.tavernagent.mobile.ui.screens.archive
 
+import android.content.ContentResolver
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -7,11 +9,13 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.tavernagent.mobile.TavernApp
 import dev.tavernagent.mobile.data.remote.dto.SessionDto
 import dev.tavernagent.mobile.data.repo.StoryRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** 故事归档：导出 / 导入整段故事（.tavernpack）。 */
 class ArchiveViewModel(private val repository: StoryRepository) : ViewModel() {
@@ -48,6 +52,27 @@ class ArchiveViewModel(private val repository: StoryRepository) : ViewModel() {
         result.onSuccess { _state.update { current -> current.copy(message = "已导出 ${it.size / 1024} KB") } }
             .onFailure { error -> _state.update { current -> current.copy(error = error.message ?: "导出失败") } }
         return result
+    }
+
+    /**
+     * 导出并直接写入用户选择的位置：写在 viewModelScope 里，导航/配置变化不会中途取消。
+     * Composable 作用域会在离开屏幕时取消，留下半截文件却已上报成功。
+     */
+    fun exportTo(sessionId: String, resolver: ContentResolver, uri: Uri) {
+        viewModelScope.launch {
+            _state.update { it.copy(busy = true, error = null) }
+            runCatching {
+                val bytes = repository.exportSession(sessionId)
+                withContext(Dispatchers.IO) {
+                    resolver.openOutputStream(uri)?.use { it.write(bytes) } ?: error("无法写入所选位置")
+                }
+                bytes.size
+            }.onSuccess { size ->
+                _state.update { it.copy(busy = false, message = "已导出对话包（${size / 1024} KB）") }
+            }.onFailure { error ->
+                _state.update { it.copy(busy = false, error = "导出失败：${error.message}") }
+            }
+        }
     }
 
     fun import(bytes: ByteArray) {

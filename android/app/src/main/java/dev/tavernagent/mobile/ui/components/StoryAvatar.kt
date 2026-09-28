@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,6 +32,7 @@ import kotlin.math.abs
  * - 优先加载网络 / 本地 / Base64 图片（经 Coil 渲染）
  * - 加载中或失败时自动降级展示依据名称 Hash 派生的彩色渐变首字符徽标
  * - 支持圆角裁切与外发丝线
+ * - 可点击时触控目标至少 48dp（WCAG 2.5.8），视觉仍保持 [size]
  */
 @Composable
 fun StoryAvatar(
@@ -36,18 +40,35 @@ fun StoryAvatar(
     avatarUrl: String?,
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
-    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(12.dp),
+    shape: Shape = RoundedCornerShape(12.dp),
     borderColor: Color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
     onClick: (() -> Unit)? = null,
 ) {
-    val clickableModifier = if (onClick != null) {
-        modifier.clickable(onClick = onClick)
+    if (onClick == null) {
+        AvatarVisual(name, avatarUrl, modifier, size, shape, borderColor)
     } else {
-        modifier
+        Box(
+            modifier = modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .clickable(role = Role.Button, onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            AvatarVisual(name, avatarUrl, Modifier, size, shape, borderColor)
+        }
     }
+}
 
+@Composable
+private fun AvatarVisual(
+    name: String,
+    avatarUrl: String?,
+    modifier: Modifier,
+    size: Dp,
+    shape: Shape,
+    borderColor: Color,
+) {
     Box(
-        modifier = clickableModifier
+        modifier = modifier
             .size(size)
             .clip(shape)
             .border(1.dp, borderColor, shape),

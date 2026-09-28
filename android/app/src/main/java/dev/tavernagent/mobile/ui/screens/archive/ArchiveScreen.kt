@@ -66,16 +66,8 @@ fun ArchiveScreen(onBack: () -> Unit) {
         val sessionId = pendingExport
         pendingExport = null
         if (uri != null && sessionId != null) {
-            scope.launch {
-                viewModel.export(sessionId).onSuccess { bytes ->
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
-                    }
-                    snackbar.showSnackbar("已导出对话包（${bytes.size / 1024} KB）")
-                }.onFailure { error ->
-                    snackbar.showSnackbar("导出失败：${error.message}")
-                }
-            }
+            // 写入放在 ViewModel 作用域：离开屏幕/旋转不再中断导出。
+            viewModel.exportTo(sessionId, context.contentResolver, uri)
         }
     }
 

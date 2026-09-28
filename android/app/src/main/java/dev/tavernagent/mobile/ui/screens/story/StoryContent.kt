@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -349,7 +351,7 @@ private fun AssistantTurnBubble(
 
                 // 快捷工具栏（朗读、引用、从此分叉）
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onReadAloud, modifier = Modifier.size(28.dp)) {
+                    IconButton(onClick = onReadAloud) {
                         Icon(
                             Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = "朗读",
@@ -360,7 +362,6 @@ private fun AssistantTurnBubble(
                     if (onQuote != null && message.blocks.isNotEmpty()) {
                         IconButton(
                             onClick = { onQuote(message.blocks.joinToString("\n") { it.text }) },
-                            modifier = Modifier.size(28.dp),
                         ) {
                             Icon(
                                 Icons.Filled.FormatQuote,
@@ -817,13 +818,17 @@ private fun TurnActionsRow(onRegenerate: () -> Unit, onFork: () -> Unit, onViewA
 
 @Composable
 private fun TextButtonMini(label: String, onClick: () -> Unit) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+    Box(
         modifier = Modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .clip(RoundedCornerShape(4.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-    )
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+        )
+    }
 }

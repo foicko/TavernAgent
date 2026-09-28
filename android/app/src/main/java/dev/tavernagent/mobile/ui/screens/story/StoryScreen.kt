@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -73,6 +74,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -174,9 +176,13 @@ fun StoryScreen(
                     val characterId = state.view?.characterId.orEmpty()
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable(enabled = characterId.isNotBlank()) {
-                            onOpenCharacterProfile(characterId)
-                        },
+                        modifier = Modifier
+                            .sizeIn(minHeight = 48.dp)
+                            .clickable(
+                                enabled = characterId.isNotBlank(),
+                                role = Role.Button,
+                                onClick = { onOpenCharacterProfile(characterId) },
+                            ),
                     ) {
                         StoryAvatar(
                             name = state.resolvedCharacterName,
