@@ -360,7 +360,15 @@ export const RightRail: React.FC = () => {
               <div
                 key={item.id}
                 className="item-slot"
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  showInvBubble(item.id, item, rect.left + rect.width / 2, rect.top);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter" && e.key !== " ") return;
+                  e.preventDefault();
                   const rect = e.currentTarget.getBoundingClientRect();
                   showInvBubble(item.id, item, rect.left + rect.width / 2, rect.top);
                 }}

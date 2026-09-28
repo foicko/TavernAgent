@@ -129,6 +129,9 @@ export default function App() {
         e.preventDefault();
         useUi.getState().openLeftTabAndExpand(LEFT_TAB_KEYS[e.code]);
       } else if (e.key === "Escape") {
+        // 抽屉遮罩仅在 ≤768px 生效；桌面端 Esc 不应收起侧栏。
+        const drawerOpen = (window.matchMedia?.("(max-width: 768px)").matches ?? false)
+          && (!isLeftRailCollapsed || !isRightRailCollapsed);
         if (paletteOpen) {
           setPaletteOpen(false);
         } else if (fullTachieOpen) {
@@ -139,6 +142,9 @@ export default function App() {
           setCharImportOpen(false);
         } else if (settingsOpen) {
           closeSettings();
+        } else if (drawerOpen) {
+          if (!isLeftRailCollapsed) toggleLeftRail();
+          if (!isRightRailCollapsed) toggleRightRail();
         } else if (viewMode === "reading") {
           switchViewMode("studio");
         }
@@ -150,6 +156,8 @@ export default function App() {
   }, [
     toggleLeftRail,
     toggleRightRail,
+    isLeftRailCollapsed,
+    isRightRailCollapsed,
     paletteOpen,
     setPaletteOpen,
     fullTachieOpen,
@@ -188,6 +196,8 @@ export default function App() {
       {/* 移动端侧栏抽屉遮罩层 */}
       <div
         className={`mobile-drawer-backdrop ${(!isLeftRailCollapsed || !isRightRailCollapsed) ? "active" : ""}`}
+        role="presentation"
+        aria-hidden="true"
         onClick={() => {
           if (!isLeftRailCollapsed) toggleLeftRail();
           if (!isRightRailCollapsed) toggleRightRail();
