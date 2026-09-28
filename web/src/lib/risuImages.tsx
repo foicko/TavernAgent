@@ -27,6 +27,19 @@ function stripImageExt(lower: string): string {
   return lower.replace(IMAGE_EXT, "");
 }
 
+/** 取资源 URL 的末段引用名（percent-decode，忽略查询串与锚点）。 */
+function refOfUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.startsWith("data:")) return "";
+  const path = trimmed.split("?")[0].split("#")[0];
+  const last = path.slice(path.lastIndexOf("/") + 1);
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}
+
 /**
  * 解析资源键 → 资源 URL。
  *
@@ -56,6 +69,7 @@ export function resolveCardAsset(
   let hit: string | undefined;
   const suffix: string[] = [];
   for (const name of Object.keys(assets)) {
+    const url = assets[name];
     const lower = name.toLowerCase();
     if (lower === norm) {
       hit = name;
@@ -65,6 +79,14 @@ export function resolveCardAsset(
     if (stem === norm || stem === normStem) {
       // 记录首个候选即可（同一键命中多张时按资源顺序稳定取第一张）。
       if (!hit) hit = name;
+      continue;
+    }
+    // 资源 URL 末段（ref）同样作为候选键：服务端会把非 ASCII 引用清洗成下划线，
+    // 模型直接写 ref / 卡原文用文件名时，只按资源 name 匹配会落空。
+    // 与 Android CardAssetResolver 的第 5 条规则对齐。
+    const refStem = stripImageExt(refOfUrl(url).toLowerCase());
+    if (refStem && (refStem === norm || refStem === normStem) && !hit) {
+      hit = name;
       continue;
     }
     if (stem.length > normStem.length && stem.startsWith(normStem) && NUMERIC_SUFFIX.test(stem.slice(normStem.length))) {

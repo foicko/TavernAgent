@@ -340,9 +340,16 @@ func cardAssetsBody(rep *application.ImportReport, entry *domain.CharacterCardEn
 	}
 	out := make([]map[string]string, 0, len(rep.Card.Assets))
 	for _, a := range rep.Card.Assets {
-		assetURL := strings.TrimSpace(a.URI)
-		if a.Ref != "" && cardID != "" {
+		// 只有两种 URL 对客户端有意义：落地资源（ref）的服务端路径，或卡里显式给出的
+		// 外部 http(s)/data URI。归档条目缺失时 a.Ref 为空、a.URI 仍是 embeded://…（归档内
+		// 路径），把它当图片 URL 回传只会让客户端发起必然失败的请求并显示破图——
+		// 宁可返回空 URL 让客户端跳过该资源（标记回落为原文），也不要给出坏地址。
+		assetURL := ""
+		switch {
+		case a.Ref != "" && cardID != "":
 			assetURL = "/api/v1/cards/" + url.PathEscape(cardID) + "/assets/" + url.PathEscape(a.Ref)
+		case isExternalAssetURI(a.URI):
+			assetURL = strings.TrimSpace(a.URI)
 		}
 		out = append(out, map[string]string{
 			"name": a.Name,
@@ -351,6 +358,15 @@ func cardAssetsBody(rep *application.ImportReport, entry *domain.CharacterCardEn
 		})
 	}
 	return out
+}
+
+// isExternalAssetURI 判断卡资源 URI 是否是客户端可直接加载的地址。
+// embeded:// 是归档内路径，只有落地成 ref 后经 assets 路由才可用。
+func isExternalAssetURI(uri string) bool {
+	trimmed := strings.TrimSpace(uri)
+	return strings.HasPrefix(trimmed, "http://") ||
+		strings.HasPrefix(trimmed, "https://") ||
+		strings.HasPrefix(trimmed, "data:")
 }
 
 // serveCardAsset 提供卡内嵌资源（charx 立绘/图标）的读取。

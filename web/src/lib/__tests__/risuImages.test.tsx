@@ -95,4 +95,19 @@ describe("renderWithCardImages", () => {
     // nami.flustered 是完整资源名，标记 nami 不应命中它
     expect(resolveCardAsset({ "nami.flustered": "/n" }, "nami")).toBeUndefined();
   });
+
+  it("resolveCardAsset 可按资源 URL 末段（ref）命中：name 与落地文件名不同", () => {
+    // 服务端把资源名清洗成 [A-Za-z0-9._-] 后落地，模型可能直接写落地文件名。
+    const m = { "Emotion Smile": "/api/v1/cards/c/assets/emotion_smile.webp" };
+    expect(resolveCardAsset(m, "emotion_smile")).toBe(m["Emotion Smile"]);
+    expect(resolveCardAsset(m, "emotion_smile.webp")).toBe(m["Emotion Smile"]);
+    // 非 ASCII 名清洗成下划线的情况同样可按 ref 命中。
+    const cleaned = { "立绘": "/api/v1/cards/c/assets/___.png" };
+    expect(resolveCardAsset(cleaned, "___")).toBe(cleaned["立绘"]);
+  });
+
+  it("resolveCardAsset 对 ref 做 percent-decode", () => {
+    const m = { "icon": "/api/v1/cards/c/assets/%E5%A4%B4%E5%83%8F.png" };
+    expect(resolveCardAsset(m, "头像")).toBe(m["icon"]);
+  });
 });
