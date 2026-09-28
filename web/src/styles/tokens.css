@@ -187,6 +187,13 @@
   --fs-20: 20px;
   --fs-22: 22px;
   --fs-24: 24px;
+
+  /* 图标尺寸（必须与 ui/Icon.tsx 的 ICON_SIZES 保持一致） */
+  --icon-xs: 12px;
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 20px;
+  --icon-xl: 24px;
   --lh-tight: 1.35;
   --lh-normal: 1.6;
   --lh-narrative: 1.78;

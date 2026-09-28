@@ -298,3 +298,15 @@ describe("Modal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+describe("Icon 尺寸档", () => {
+  it("语义档映射到与令牌一致的像素，数值仍兼容", () => {
+    const { container, rerender } = render(<Icon name="close" size="lg" />);
+    const svg = () => container.querySelector("svg")!;
+    expect(svg().getAttribute("width")).toBe("20");
+    rerender(<Icon name="close" size="xs" />);
+    expect(svg().getAttribute("width")).toBe("12");
+    rerender(<Icon name="close" size={18} />);
+    expect(svg().getAttribute("width")).toBe("18");
+  });
+});

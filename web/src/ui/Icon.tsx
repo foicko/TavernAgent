@@ -501,11 +501,17 @@ const GLYPHS: Record<IconName, ReactNode> = {
   ),
 };
 
+/** 图标的语义尺寸档。 */
+export type IconSize = "xs" | "sm" | "md" | "lg" | "xl";
+
+/** 语义档 → 像素；必须与 tokens.css 的 `--icon-*` 保持一致（R4/G63）。 */
+export const ICON_SIZES: Record<IconSize, number> = { xs: 12, sm: 14, md: 16, lg: 20, xl: 24 };
+
 export interface IconProps {
   name: IconName;
-  /** 像素尺寸（宽高相等），默认 16。 */
-  size?: number;
-  /** 描边粗细，默认 1.8（beautifului 线性图标规范）。 */
+  /** 尺寸：像素数值（兼容旧调用点）或语义档名；默认 md(16)。 */
+  size?: number | IconSize;
+  /** 描边粗细，默认按尺寸自适应（≤14px 用 1.4，否则 1.5）。 */
   strokeWidth?: number;
   className?: string;
   style?: CSSProperties;
@@ -513,15 +519,17 @@ export interface IconProps {
   title?: string;
 }
 
-export function Icon({ name, size = 16, strokeWidth = size <= 14 ? 1.4 : 1.5, className, style, title }: IconProps) {
+export function Icon({ name, size = "md", strokeWidth, className, style, title }: IconProps) {
+  const px = typeof size === "number" ? size : ICON_SIZES[size];
+  const stroke = strokeWidth ?? (px <= 14 ? 1.4 : 1.5);
   return (
     <svg
-      width={size}
-      height={size}
+      width={px}
+      height={px}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={strokeWidth}
+      strokeWidth={stroke}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={["ui-icon", className].filter(Boolean).join(" ")}
