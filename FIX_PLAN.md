@@ -204,7 +204,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R8 | ✅ 已完成 | SSE 读取骨架收敛为 `providerutil.ReadSSE`（三份拷贝 → 1）；定时器主循环按协议保留（见备注）|
 | R9 | ✅ 已完成 | 归档边界/读取器集中在 `cardarchive.go`；新增条目数上限；landing 本就是共享路径（PNG 除外）|
 | R7 | ✅ 已完成 | G25 `sqlIN`、错误体摘要 `httpbody`、API Host 防线、M29 投影写移出读路径、M23 基准缺失 fail-closed |
-| R10 | 🔄 部分完成 | ✅ M4（属性默认值统一）、✅ M5（mandatory 只估一次）、✅ M3（秘密宏加载期展开）；⬜ M5 增量拟合、turnRunner/compileSession 拆分 |
+| R10 | 🔄 部分完成 | ✅ M4（属性默认值统一）、✅ M5（mandatory 只估一次 + 阶段内二分增量拟合）、✅ M3（秘密宏加载期展开）；⬜ turnRunner/compileSession 拆分 |
 | R11 | ⬜ | |
 | R12 | ⬜ | |
 
@@ -259,7 +259,8 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
   - **M23（已落地）**：`checkBaseHashTx` 不再把"无状态投影"静默放行，改为返回包装 `ports.ErrNoState` 的硬错误；实测只有 `TestCommitOnceIdempotent`/`TestReceiptsAtResultNodes` 两个夹具需补 `seedBaseSnapshot`（其余路径都经 `CreateSessionWithSnapshot`/导入快照，本就满足基线）。新增 `store_turn_m23_test.go`。
 - **B10-R10**（`refactor(...,r10)`，进行中）：① **M5（部分）** `fitBundleBudget` 新增 `mandatory` 参数，消除一次编译里对"不可省略材料"的**重复整份渲染+估算**。
   - **M3（已落地）**：宏展开器下沉到叶子包 `internal/macros`（`application` 委托它），`context.loadSessionContext` 读取秘密时展开——卡 JSON 按原始字节持久化以保 `CardIdentity`，展开必须在读取侧。新增 `macros_test.go`、`context/TestSecretMacrosExpandedAtLoad`。
-  - **遗留**：M5 的**增量拟合**（裁剪循环每丢一项整份重渲染，O(n²)；精确增量需处理"丢历史会新增缺口提示"的非单调性）；**turnRunner/compileSession 结构性拆分**。
+  - **M5 增量拟合（已落地）**：裁剪循环每丢一项就整份重渲染（O(n²)）→ 按契约淘汰顺序分阶段（世界书 → 记忆 → 冗余摘要 → 历史 → 报错），阶段内二分"刚好装下"的最小丢弃数；历史阶段做线性校正以吸收缺口提示文案的微增。保留/丢弃集合与旧循环一致（既有 budget 用例全绿），新增最小性用例。
+  - **遗留**：**turnRunner/compileSession 结构性拆分**。
 
 **Wave 4 · Android**
 

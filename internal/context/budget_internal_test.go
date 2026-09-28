@@ -73,6 +73,43 @@ func repeatCJK(t *testing.T, n int) string {
 	return b.String()
 }
 
+// M5：历史裁剪改为"阶段内二分最小丢弃数"后，结果必须仍然最小——
+// 少丢一个节点就装不下，且丢的是最旧的节点、最近的历史必须保留。
+func TestFitToBudgetHistoryDropsMinimalOldestTurns(t *testing.T) {
+	c := New(nil, CompilerOptions{ContextWindow: 6000, ReservedOutput: 200, SafetyMargin: 100})
+	c.options.CompactionPolicy.TailWindowTurns = 5
+	sc := sessionContext{OpeningText: "开场。"}
+	state := domain.NewWorldState()
+	history := make([]*domain.PlotNode, 0, 40)
+	for i := 0; i < 40; i++ {
+		content := string(rune(0x4E00+i)) + repeatCJK(t, 99)
+		history = append(history, mustTurn(content))
+	}
+
+	_, _, fitHistory, report, err := c.fitToBudget(nil, nil, history, nil, sc, state, "输入。", "")
+	if err != nil {
+		t.Fatalf("fit 应成功: %v", err)
+	}
+	if report.DroppedHistory == 0 {
+		t.Fatalf("应触发历史裁剪: %+v", report)
+	}
+	if report.Total > report.Budget {
+		t.Fatalf("裁剪后仍超预算: %d > %d", report.Total, report.Budget)
+	}
+	if len(fitHistory) != len(history)-report.DroppedHistory {
+		t.Fatalf("保留数 %d != 总数 %d - 丢弃 %d", len(fitHistory), len(history), report.DroppedHistory)
+	}
+	// 最小性：少丢一个节点就应装不下（否则二分丢多了）。
+	k := report.DroppedHistory
+	if got := c.EstimateMessages(c.buildMessages(nil, nil, history[k-1:], nil, nil, sc, state, "输入。", "", k-1)); got <= report.Budget {
+		t.Fatalf("丢弃数不是最小：少丢一个也装得下（%d <= %d）", got, report.Budget)
+	}
+	// 丢的是最旧的：最近一轮必须保留。
+	if fitHistory[len(fitHistory)-1].NodeID != history[len(history)-1].NodeID {
+		t.Fatalf("最近的历史被裁掉了")
+	}
+}
+
 // 预算裁剪的顺序：世界书先丢，其次记忆，最后才是历史。
 // 三个压力逐级上升，保证"只丢了该丢的那一层"——顺序写错时这里会立刻暴露。
 func TestFitToBudgetDropsLowestPriorityFirst(t *testing.T) {

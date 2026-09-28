@@ -128,56 +128,127 @@ func (c *Compiler) fitBundleBudget(lore []lorebookHit, memories []*domain.Memory
 		without := c.EstimateMessages(c.buildMessages(nil, nil, nil, nil, checks, sc, state, input, ledger, 0))
 		return max(0, withSummaries-without)
 	}
-	// firstRedundant 返回任意位置上第一条冗余摘要的下标；SummariesOnPath 按端点
-	// 深度升序排列，[0] 往往是承重的最旧摘要，只看它会漏掉后面可丢的冗余摘要。
-	firstRedundant := func() int {
+	// 预算拟合（M5）：每个阶段内「丢弃数 → 总量」单调不增，因此二分找**刚好装下**的
+	// 最小丢弃数，而不是逐条丢、每条都对整份上下文重渲染——历史会被反复渲染成 O(n²)。
+	// 阶段顺序与契约一致：世界书 → 记忆 → 冗余摘要 → 历史。
+	//
+	// 唯一非单调处是历史阶段的缺口提示：丢弃数从 0 到 1 会**新增**一条提示，
+	// 但进入该阶段时总量已必然超预算，故只在 [1, max] 上二分并在结果附近线性校正。
+	measureWith := func(lore []lorebookHit, memories []*domain.MemoryRecord, ancestors []*domain.PlotNode, summaries []*domain.SummaryArtifact, omitted int) int {
+		return c.EstimateMessages(c.buildMessages(lore, memories, ancestors, summaries, checks, sc, state, input, ledger, omitted))
+	}
+	// smallestFit 返回使 measureK(k) <= budget 的最小 k（k ∈ [1, maxK]）；
+	// 连 maxK 都不达标时返回 (maxK, false)，由调用方继续下一个阶段。
+	smallestFit := func(maxK int, measureK func(int) int) (int, bool) {
+		if measureK(maxK) > budget {
+			return maxK, false
+		}
+		lo, hi := 1, maxK
+		for lo < hi {
+			mid := (lo + hi) / 2
+			if measureK(mid) <= budget {
+				hi = mid
+			} else {
+				lo = mid + 1
+			}
+		}
+		return lo, true
+	}
+
+	// 阶段 1：世界书（背景参考，优先级最低，从尾部丢）。
+	if report.Total > budget && len(lore) > 0 {
+		k, _ := smallestFit(len(lore), func(k int) int {
+			return measureWith(lore[:len(lore)-k], memories, ancestors, summaries, report.DroppedHistory)
+		})
+		lore = lore[:len(lore)-k]
+		report.DroppedLorebook += k
+		report.Total = measure()
+	}
+	// 阶段 2：记忆（得分低的先丢，从尾部丢）。
+	if report.Total > budget && len(memories) > 0 {
+		k, _ := smallestFit(len(memories), func(k int) int {
+			return measureWith(lore, memories[:len(memories)-k], ancestors, summaries, report.DroppedHistory)
+		})
+		memories = memories[:len(memories)-k]
+		report.DroppedMemories += k
+		report.Total = measure()
+	}
+	// 阶段 3：冗余摘要（区间原文仍完整在历史里，丢掉不损失任何信息）。
+	if report.Total > budget && len(lore) == 0 && len(memories) == 0 {
+		var redIdx []int
 		for i, a := range summaries {
 			if redundant(a) {
-				return i
+				redIdx = append(redIdx, i)
 			}
 		}
-		return -1
-	}
-	for report.Total > budget {
-		redundantIdx := -1
-		if len(lore) == 0 && len(memories) == 0 {
-			redundantIdx = firstRedundant()
-		}
-		switch {
-		case len(lore) > 0:
-			lore = lore[:len(lore)-1]
-			report.DroppedLorebook++
-		case len(memories) > 0:
-			memories = memories[:len(memories)-1]
-			report.DroppedMemories++
-		// 冗余摘要（区间原文仍完整在历史里）先丢：丢掉不损失任何信息。
-		case redundantIdx >= 0:
-			summaries = append(summaries[:redundantIdx:redundantIdx], summaries[redundantIdx+1:]...)
-			report.DroppedSummaries++
-		// 历史回合先于承重摘要被淘汰：单条摘要承载几十轮的信息密度远高于单个回合，
-		// 丢摘要换空间会连旧故事一起丢掉。
-		case len(ancestors) > 0 && countTurns(ancestors) > protected:
-			ancestors = ancestors[1:]
-			report.DroppedHistory++
-		default:
-			if cost := summaryCost(); cost > 0 {
-				report.SummaryTokens = cost
-				for _, a := range summaries {
-					if !redundant(a) {
-						report.LoadBearingSummaries++
+		if len(redIdx) > 0 {
+			// dropRedundant 丢掉按路径顺序排在前 k 位的冗余摘要。
+			dropRedundant := func(src []*domain.SummaryArtifact, k int) []*domain.SummaryArtifact {
+				kept := make([]*domain.SummaryArtifact, 0, len(src))
+				di := 0
+				for i, a := range src {
+					if di < k && i == redIdx[di] {
+						di++
+						continue
 					}
+					kept = append(kept, a)
 				}
-				return lore, memories, ancestors, summaries, report, &Error{
-					Code: "CONTEXT_OVER_BUDGET",
-					Message: "上下文预算不足：历史摘要需要 " + itoa(cost) + " token，输入预算为 " + itoa(budget) +
-						" token；它覆盖的原文已折叠移除，丢弃摘要会让模型彻底失去那一段历史。" +
-						"请调大模型上下文窗口、降低输出预留，或缩短本次输入。",
-					Status: 422,
+				return kept
+			}
+			k, _ := smallestFit(len(redIdx), func(k int) int {
+				return measureWith(lore, memories, ancestors, dropRedundant(summaries, k), report.DroppedHistory)
+			})
+			summaries = dropRedundant(summaries, k)
+			report.DroppedSummaries += k
+			report.Total = measure()
+		}
+	}
+	// 阶段 4：历史回合。历史先于承重摘要被淘汰：单条摘要承载几十轮的信息密度
+	// 远高于单个回合，丢摘要换空间会连旧故事一起丢掉。
+	if report.Total > budget && len(ancestors) > 0 && countTurns(ancestors) > protected {
+		// 可丢的**节点**数：逐节点丢到剩余轮数 <= protected（ancestors 里可能含
+		// 非回合节点，所以按节点而不是按轮计数，与旧实现一致）。
+		maxK := 0
+		for maxK < len(ancestors) && countTurns(ancestors[maxK:]) > protected {
+			maxK++
+		}
+		if maxK > 0 {
+			measureK := func(k int) int {
+				return measureWith(lore, memories, ancestors[k:], summaries, report.DroppedHistory+k)
+			}
+			k, fit := smallestFit(maxK, measureK)
+			if fit {
+				// 缺口提示文案长度随丢弃数微增，二分结果附近线性校正以取最小 k。
+				for k > 1 && measureK(k-1) <= budget {
+					k--
+				}
+				for k < maxK && measureK(k) > budget {
+					k++
 				}
 			}
-			return lore, memories, ancestors, summaries, report, &Error{Code: "CONTEXT_OVER_BUDGET", Message: "无法在预算内保留必要上下文（已保护最近 " + itoa(protected) + " 轮原文）", Status: 422}
+			ancestors = ancestors[k:]
+			report.DroppedHistory += k
+			report.Total = measure()
 		}
-		report.Total = measure()
+	}
+	// 阶段 5：所有可压缩材料都已舍弃仍超预算 → 明确报错，不做静默截断。
+	if report.Total > budget {
+		if cost := summaryCost(); cost > 0 {
+			report.SummaryTokens = cost
+			for _, a := range summaries {
+				if !redundant(a) {
+					report.LoadBearingSummaries++
+				}
+			}
+			return lore, memories, ancestors, summaries, report, &Error{
+				Code: "CONTEXT_OVER_BUDGET",
+				Message: "上下文预算不足：历史摘要需要 " + itoa(cost) + " token，输入预算为 " + itoa(budget) +
+					" token；它覆盖的原文已折叠移除，丢弃摘要会让模型彻底失去那一段历史。" +
+					"请调大模型上下文窗口、降低输出预留，或缩短本次输入。",
+				Status: 422,
+			}
+		}
+		return lore, memories, ancestors, summaries, report, &Error{Code: "CONTEXT_OVER_BUDGET", Message: "无法在预算内保留必要上下文（已保护最近 " + itoa(protected) + " 轮原文）", Status: 422}
 	}
 	report.ProtectedTurns = min(countTurns(ancestors), protected)
 	for _, n := range ancestors {
