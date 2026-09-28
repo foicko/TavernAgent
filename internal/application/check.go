@@ -168,12 +168,11 @@ func ruleContextOf(state *domain.WorldState) domain.RuleContext {
 			}
 			return 0
 		},
+		// 与 attributeOf 同一默认值：未记录的角色/属性按 DefaultAttribute（修正 0）处理。
+		// 此前这里直接返回 0，与 attributeOf 的 10 分叉，同一属性在"结算"与"检定"
+		// 两条路径上会得到不同的修正（M4）。
 		Attribute: func(characterID, attribute string) int {
-			ch, ok := state.Characters[characterID]
-			if !ok {
-				return 0
-			}
-			return ch.Attributes[attribute]
+			return attributeOf(state, characterID, attribute)
 		},
 		HasItem: func(itemID string) bool {
 			item, ok := state.Items[itemID]

@@ -204,7 +204,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R8 | ✅ 已完成 | SSE 读取骨架收敛为 `providerutil.ReadSSE`（三份拷贝 → 1）；定时器主循环按协议保留（见备注）|
 | R9 | ✅ 已完成 | 归档边界/读取器集中在 `cardarchive.go`；新增条目数上限；landing 本就是共享路径（PNG 除外）|
 | R7 | 🔄 部分完成 | ✅ G25 `sqlIN`、✅ 错误体摘要 `httpbody`、✅ API Host 防线、✅ M29 投影写移出读路径；⬜ M23 fail-closed（见备注）|
-| R10 | 🔄 部分完成 | ✅ M5（mandatory 只估一次）；⬜ M5 增量拟合、M3 加载期宏展开、turnRunner/compileSession 拆分、M23（见备注）|
+| R10 | 🔄 部分完成 | ✅ M4（属性默认值统一为 `DefaultAttribute=10`）、✅ M5（mandatory 只估一次）；⬜ M5 增量拟合、M3 加载期宏展开、turnRunner/compileSession 拆分、M23（见备注）|
 | R11 | ⬜ | |
 | R12 | ⬜ | |
 
@@ -225,7 +225,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | R12 供应链 | M80、M84、M85、M86、G72、G73、G76、G77；大版本升级 → B9b | — |
 | R4 设计系统 | M72 ✅、G61 ✅、G63 ✅；G62 → 并入 R2；徽章收敛见决策点 | 已基本完成 |
 
-> **结论**：原 `B2d`、`B3e`、`B11e-B2/C2/D2` 的剩余项**全部被上述重构吸收**，不再单列批次；仅 **M4**（规则默认属性，需产品决策）与 **M57-`networkSecurityConfig`**（不可静态实施，仅文档）为例外。
+> **结论**：原 `B2d`、`B3e`、`B11e-B2/C2/D2` 的剩余项**全部被上述重构吸收**，不再单列批次；**M4** 已在 R10 统一（规则上下文与 `attributeOf` 都取 `DefaultAttribute=10`）；仅 **M57-`networkSecurityConfig`**（不可静态实施，仅文档）为例外。
 
 #### 1. 执行顺序（5 个 Wave，按 风险 × 依赖 排序）
 
