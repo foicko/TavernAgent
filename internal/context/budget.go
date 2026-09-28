@@ -293,18 +293,4 @@ type BudgetReport struct {
 	// 与 policy.DecideCompaction 为准。
 }
 
-// fitToBudget 把可压缩材料收敛进输入预算。
-//
-// 契约 §9.1 的分配顺序是：必要宿主规则与行动结果 → 必要人设和当前状态 →
-// 最新输入与近期回合 → 相关摘要/记忆。丢东西的顺序正好相反：
-// 世界书（背景参考）→ 记忆（得分低的先丢）→ 历史（最旧的先丢）。
-//
-// 「不可省略」部分超预算时**报错**而不是静默截断——契约明确禁止
-// "静默截去核心约束"；用户应当被告知缩短输入或更换模型配置。
-func (c *Compiler) fitToBudget(lore []lorebookHit, memories []*domain.MemoryRecord, ancestors []*domain.PlotNode,
-	checks []domain.CheckResult, sc sessionContext, state *domain.WorldState, inputText, ledger string,
-) ([]lorebookHit, []*domain.MemoryRecord, []*domain.PlotNode, BudgetReport, error) {
-	mandatory := c.EstimateMessages(c.buildMessages(nil, nil, nil, nil, checks, sc, state, inputText, ledger, 0))
-	l, m, a, _, report, err := c.fitBundleBudget(lore, memories, ancestors, nil, checks, sc, state, inputText, ledger, mandatory)
-	return l, m, a, report, err
-}
+// fitToBudget 的历史包装已删除：调用方统一走 fitBundleBudget（真实裁剪路径）。
