@@ -5,6 +5,7 @@ import { useSettings } from "./stores/settingsStore";
 import { useUi } from "./stores/uiStore";
 import { api, onAuthRequired } from "./app/api";
 import { buildCommands } from "./lib/commandRegistry";
+import { isModalOpen } from "./lib/modalStack";
 import { CommandPalette } from "./ui/CommandPalette";
 import { ToastStack } from "./ui/Toast";
 
@@ -114,7 +115,9 @@ export default function App() {
       if (mod && e.key.toLowerCase() === "k") {
         // 浏览器里 Ctrl+K 是"跳到地址栏"，必须拦下来才轮得到我们。
         e.preventDefault();
-        setPaletteOpen(!useUi.getState().paletteOpen);
+        // 已打开时按键关闭；否则只在没有其它模态时才开，避免模态叠模态。
+        if (useUi.getState().paletteOpen) setPaletteOpen(false);
+        else if (!isModalOpen()) setPaletteOpen(true);
       } else if (mod && e.key === "[") {
         e.preventDefault();
         toggleLeftRail();
@@ -123,7 +126,7 @@ export default function App() {
         toggleRightRail();
       } else if (mod && e.key === ",") {
         e.preventDefault();
-        useSettings.getState().openSettings();
+        if (!isModalOpen()) useSettings.getState().openSettings();
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "l") {
         e.preventDefault();
         useUi.getState().toggleTheme();
