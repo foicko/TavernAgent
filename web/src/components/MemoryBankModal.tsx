@@ -247,7 +247,7 @@ export const MemoryBankModal: React.FC = () => {
         </div>
       </div>
 
-      <div className="memory-filter-row memory-modal-filters" id="memory-filter-row">
+      <div className="memory-filter-row memory-modal-filters" id="memory-filter-row" role="group" aria-label="记忆筛选">
         {([
           ["all", "生效", null],
           ["episodic", "亲历", "eye"],

@@ -46,7 +46,7 @@
 | B9 | 依赖与 CI / 工具链（基础） | M80, M85, M86, G79 | ✅ 已完成 |
 | B9b | 大版本依赖升级与许可证门禁 | M81, M82, M83, M84 | ⬜ |
 | B10 | 重构（独立 PR） | R1–R12（详见 B10-重构执行计划） | 📋 计划已定 |
-| B10-R4 | 设计系统收敛 | M72 ✅；G61 ✅；G63 ✅；G62 ⬜ | 🔄 |
+| B10-R4 | 设计系统收敛 | M72 ✅；G61 ✅；G63 ✅；G62 ✅（经 R2）；徽章收敛留独立项 | ✅ 完成 |
 | B10-R3 | 列表行统一到 `ui/ListRow`（语义已由 M66 修好，结构迁移待做） | R3 | ⬜ |
 | B11 | 轻微项清理（按子批处理） | G1–G78 | 🔄 见子批 |
 | B11a | 轻微项（Go 正确性/资源优先项） | G3, G5, G8, G23, G25, G26, G30, G31 | ✅ 已完成 |
@@ -192,6 +192,22 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 > 目标：先完成全部结构性重构（R1–R12）。**每个 R 吸收对应的零散项**——单独修一遍会与重构重复改动同一批文件。
 > 规则：每个 R 拆成「可独立过门禁、可独立回滚」的提交，每步全绿才进入下一步；**不 push**。
 
+#### 进度
+
+| R | 状态 | 备注 |
+| --- | --- | --- |
+| R2 | ✅ 已完成 | 会话筛选、立绘神情差分 → `Tabs`；另两处经核实为不同模式（见下）|
+| R3 | ⬜ | |
+| R1 | ⬜ | |
+| R6 | ⬜ | |
+| R5 | ⬜ | |
+| R8 | ⬜ | |
+| R9 | ⬜ | |
+| R7 | ⬜ | |
+| R10 | ⬜ | |
+| R11 | ⬜ | |
+| R12 | ⬜ | |
+
 #### 0. 吸收映射（重构覆盖的剩余条目）
 
 | 重构 | 吸收条目 | 依据 |
@@ -225,7 +241,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 
 **Wave 1 · Web 设计系统收官**
 
-- **B10-R2**（`refactor(web,r2)`，1–2 提交）：会话筛选、`composer-syntax-group`、`tachie-expr-switcher`、`memory-filter-row` → `Tabs`；删 4 组旧 CSS。若为纯结构迁移先 `pnpm build:parity && pnpm css:parity`，外观有变则 `pnpm css:snapshot`。补方向键/`aria-checked` 用例。
+- **B10-R2**（`refactor(web,r2)`，3 提交）：**已核对 4 处真实语义**——只有 2 处是分段控件：会话筛选、立绘神情差分 → `Tabs`；`composer-syntax-group`（`handleTagClick` 向输入框插入包裹，是动作组）与 `memory-filter-row`（5 项含计数、窄屏必须换行的筛选芯片行）不适用 `Tabs`，保留但补 `role="group"`/`aria-label`。删除对应自绘 CSS；有意视觉改动已 `pnpm css:snapshot`。补方向键/`aria-checked` 用例。
 - **B10-R3**（`refactor(web,r3)`，4 提交/行类型）：`session-entry-card`、`char-card-entry`、`node-item`、物品槽 → `ListRow`；保留全部既有 `data-testid`；确认删除/分支控件恢复可 Tab 达。更新 `leftRail.test.tsx`。
 - **B10-R4 收尾**：仅剩徽章收敛（78 个自绘 badge/pill/chip/tag 选择器 → `Pill` 变体），范围大且无对应 G 编号 → **见决策点**。
 
