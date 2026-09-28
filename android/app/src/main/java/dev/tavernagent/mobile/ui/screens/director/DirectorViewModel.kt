@@ -18,8 +18,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** 导演讨论最长等待（SSE）；超时给出显式提示而不是静默退出。 */
+private const val DIRECTOR_STREAM_TIMEOUT_MS = 5 * 60 * 1000L
 
 /** 导演模式：大纲草稿编辑、讨论（异步终态 + 轮询）、三阶段命令。 */
 class DirectorViewModel(
@@ -203,18 +210,37 @@ class DirectorViewModel(
         pollJob?.cancel()
         pollJob = viewModelScope.launch {
             _state.update { it.copy(polling = true) }
-            repeat(120) {
-                val request = runCatching { director.request(requestId) }.getOrNull() ?: return@repeat
-                _state.update { it.copy(activeRequest = request) }
-                if (request.status != "generating") {
-                    _state.update { it.copy(polling = false) }
-                    refresh()
-                    return@launch
+            // 优先用导演 SSE：一条长连接替代原先 120 次 × 2s 的轮询。
+            // 事件到达即拉一次请求状态（终态带回候选/错误），`first` 命中终态后自动取消上游。
+            val streamed = runCatching {
+                withTimeoutOrNull(DIRECTOR_STREAM_TIMEOUT_MS) {
+                    director.events(requestId)
+                        .mapNotNull { runCatching { director.request(requestId) }.getOrNull() }
+                        .onEach { request -> _state.update { it.copy(activeRequest = request) } }
+                        .first { it.status != "generating" }
                 }
-                delay(2_000)
-            }
+            }.getOrNull()
+            val request = streamed ?: pollFallback(requestId)
             _state.update { it.copy(polling = false) }
+            if (request == null) {
+                _state.update { it.copy(error = "导演讨论超时，请稍后重试") }
+            } else {
+                refresh()
+            }
         }
+    }
+
+    /** SSE 不可用/提前断开时的兜底轮询：少量尝试后退避，最终交由显式超时提示。 */
+    private suspend fun pollFallback(requestId: String): DirectorRequestDto? {
+        repeat(8) {
+            val request = runCatching { director.request(requestId) }.getOrNull()
+            if (request != null) {
+                _state.update { it.copy(activeRequest = request) }
+                if (request.status != "generating") return request
+            }
+            delay(2_000)
+        }
+        return null
     }
 
     fun applyCandidate() {

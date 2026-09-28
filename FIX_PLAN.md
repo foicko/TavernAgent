@@ -41,7 +41,7 @@
 | B7f | Android 明文流量收敛 | M57（networkSecurityConfig） | ⬜ |
 | B8 | Android 其余与安全（部分） | M55 | ✅ 已完成 |
 | B8b | Android 其余与安全（部分） | M56, M58 | ✅ 已完成 |
-| B8c | Android 其余与安全（余下） | M54, M60 | ⬜ |
+| B8c | Android 头像轻量化与导演 SSE | M54, M60 | ✅ 已完成 |
 | B9 | 依赖与 CI / 工具链（基础） | M80, M85, M86, G79 | ✅ 已完成 |
 | B9b | 大版本依赖升级与许可证门禁 | M81, M82, M83, M84 | ⬜ |
 | B10 | 重构（独立 PR） | R1–R12 | ⬜ |

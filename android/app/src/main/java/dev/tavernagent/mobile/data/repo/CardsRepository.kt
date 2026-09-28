@@ -108,8 +108,8 @@ class CardsRepository(private val apiProvider: ApiProvider) {
         return assetUrlOrNull(cardId, ref)
     }
 
-    /** 列表用的角色头像（从卡片条目出发）。 */
-    suspend fun listAvatar(card: CharacterCardEntryDto): String? = displayAvatar(card.cardId, card.avatar)
+    /** 列表用的角色头像（从卡片条目出发）：直接用列表已返回的 avatar，避免每行一次整卡 GET。 */
+    suspend fun listAvatar(card: CharacterCardEntryDto): String? = avatarUrl(card)
 
     /** 资料页用的角色头像（只拿得到 cardId 时）。 */
     suspend fun detailAvatar(cardId: String): String? {
