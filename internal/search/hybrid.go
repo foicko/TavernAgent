@@ -63,6 +63,13 @@ func ReciprocalRankFusion(lexical []RankedItem, vector []RankedItem, k float64, 
 	if k <= 0 {
 		k = 60.0
 	}
+	// 负权重会产出负分并污染排序：逐项 clamp 到 0，再在两者都为 0 时回退到均权。
+	if lexicalWeight < 0 {
+		lexicalWeight = 0
+	}
+	if vectorWeight < 0 {
+		vectorWeight = 0
+	}
 	if lexicalWeight <= 0 && vectorWeight <= 0 {
 		lexicalWeight = 0.5
 		vectorWeight = 0.5

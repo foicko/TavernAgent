@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 )
 
@@ -52,6 +53,12 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, target any, limit int64)
 }
 
 func decodeLimitedJSON(w http.ResponseWriter, r *http.Request, target any, limit int64, strict bool) error {
+	// 有 Content-Type 时必须声明 JSON；空值保持宽松（CLI/测试直连常见）。
+	if ct := r.Header.Get("Content-Type"); ct != "" {
+		if mediaType, _, err := mime.ParseMediaType(ct); err != nil || mediaType != "application/json" {
+			return fmt.Errorf("请求体必须是 application/json（实际 %q）", ct)
+		}
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	decoder := json.NewDecoder(r.Body)
 	if strict {

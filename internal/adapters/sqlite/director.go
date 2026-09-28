@@ -156,7 +156,7 @@ func directorDraftQ(q queryer, branchID string) (*domain.DirectorDraft, error) {
 	if err := json.Unmarshal([]byte(raw), &d.Plan); err != nil {
 		return nil, err
 	}
-	d.UpdatedAt = (&Store{}).parseTime(updated)
+	d.UpdatedAt = parseTime(updated)
 	return d, nil
 }
 
@@ -334,7 +334,7 @@ func scanDirectorRequest(row interface{ Scan(...any) error }) (*domain.DirectorR
 			return nil, err
 		}
 	}
-	r.CreatedAt = (&Store{}).parseTime(created)
+	r.CreatedAt = parseTime(created)
 	return r, nil
 }
 func (s *Store) GetDirectorRequest(requestID string) (*domain.DirectorRequest, error) {

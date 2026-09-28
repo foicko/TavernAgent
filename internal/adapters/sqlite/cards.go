@@ -34,10 +34,10 @@ func (s *Store) ListCards() ([]*domain.CharacterCardEntry, error) {
 		if err := rows.Scan(&c.CardID, &c.Name, &c.ShortName, &c.Avatar, &c.Format, &c.Role, &c.ContentHash, &created, &updated, &used); err != nil {
 			return nil, err
 		}
-		c.CreatedAt = s.parseTime(created)
-		c.UpdatedAt = s.parseTime(updated)
+		c.CreatedAt = parseTime(created)
+		c.UpdatedAt = parseTime(updated)
 		if used != "" {
-			if t := s.parseTime(used); !t.IsZero() {
+			if t := parseTime(used); !t.IsZero() {
 				c.LastUsedAt = &t
 			}
 		}
@@ -159,10 +159,10 @@ func (s *Store) scanCard(row *sql.Row) (*domain.CharacterCardEntry, error) {
 		&c.ContentHash, &created, &updated, &used); err != nil {
 		return nil, err
 	}
-	c.CreatedAt = s.parseTime(created)
-	c.UpdatedAt = s.parseTime(updated)
+	c.CreatedAt = parseTime(created)
+	c.UpdatedAt = parseTime(updated)
 	if used != "" {
-		if t := s.parseTime(used); !t.IsZero() {
+		if t := parseTime(used); !t.IsZero() {
 			c.LastUsedAt = &t
 		}
 	}

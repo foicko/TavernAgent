@@ -81,8 +81,8 @@ func (s *Store) GetSession(sessionID string) (*domain.Session, error) {
 	if err := row.Scan(&sess.SessionID, &sess.RootNodeID, &sess.Title, &at, &ruleset, &sess.CharacterID, &updated); err != nil {
 		return nil, mapErr(err)
 	}
-	sess.CreatedAt = s.parseTime(at)
-	sess.UpdatedAt = s.parseTime(updated)
+	sess.CreatedAt = parseTime(at)
+	sess.UpdatedAt = parseTime(updated)
 	sess.RulesetVersion = ruleset.String
 	return &sess, nil
 }
@@ -101,8 +101,8 @@ func (s *Store) ListSessions() ([]*domain.Session, error) {
 		if err := rows.Scan(&sess.SessionID, &sess.RootNodeID, &sess.Title, &at, &ruleset, &sess.CharacterID, &updated); err != nil {
 			return nil, err
 		}
-		sess.CreatedAt = s.parseTime(at)
-		sess.UpdatedAt = s.parseTime(updated)
+		sess.CreatedAt = parseTime(at)
+		sess.UpdatedAt = parseTime(updated)
 		sess.RulesetVersion = ruleset.String
 		out = append(out, &sess)
 	}

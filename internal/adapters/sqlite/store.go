@@ -185,7 +185,7 @@ func (s *Store) SystemInfo() (ports.SystemInfo, error) {
 
 func (s *Store) now() string { return s.clock.Now().UTC().Format(time.RFC3339Nano) }
 
-func (s *Store) parseTime(v string) time.Time {
+func parseTime(v string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, v)
 	if err != nil {
 		return time.Time{}

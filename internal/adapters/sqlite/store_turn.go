@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
@@ -29,8 +28,8 @@ func (s *Store) scanTurn(row interface{ Scan(...any) error }) (*domain.TurnReque
 	t.ResultNodeID = resultNode.String
 	t.FailureCode = failCode.String
 	t.FailureMessage = failMsg.String
-	t.CreatedAt = s.parseTime(createdAt.String)
-	t.UpdatedAt = s.parseTime(updatedAt.String)
+	t.CreatedAt = parseTime(createdAt.String)
+	t.UpdatedAt = parseTime(updatedAt.String)
 	return &t, nil
 }
 
@@ -437,7 +436,7 @@ func (s *Store) commitWriteTx(tx *sql.Tx, plan *ports.CommitPlan, base commitBas
 	// StateAt 会用「最近快照 + 事件重放」还原出同样的状态与哈希。
 	if shouldCheckpoint(plan.Node.Depth) {
 		if _, err := tx.Exec(`INSERT OR REPLACE INTO state_snapshots(node_id, snapshot_version, ruleset_version, state_json, state_hash) VALUES(?,?,?,?,?)`,
-			plan.Node.NodeID, time.Now().UnixNano(), plan.RulesetVersion, plan.NewStateJSON, plan.NewStateHash); err != nil {
+			plan.Node.NodeID, s.clock.Now().UnixNano(), plan.RulesetVersion, plan.NewStateJSON, plan.NewStateHash); err != nil {
 			return "", fmt.Errorf("commit step [insert snapshot]: %w", err)
 		}
 	}
@@ -557,7 +556,7 @@ func (s *Store) PollOutbox(aggregateID string, afterSequence int64, limit int) (
 		if err := rows.Scan(&ev.EventID, &ev.AggregateID, &ev.Sequence, &ev.Type, &ev.PayloadJSON, &at); err != nil {
 			return nil, err
 		}
-		ev.CreatedAt = s.parseTime(at)
+		ev.CreatedAt = parseTime(at)
 		out = append(out, &ev)
 	}
 	return out, rows.Err()

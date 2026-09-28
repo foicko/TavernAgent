@@ -205,7 +205,9 @@ func (c *CharacterCard) ScanSecretLeakWarnings() []string {
 			continue
 		}
 		for _, pub := range public {
-			if strings.Contains(pub, key) || strings.Contains(key, pub) && len(pub) >= 8 {
+			// 优先级修正：`len(pub)>=8` 必须同时约束两个 Contains（原写法 A || (B && C) 让长文本
+			// 单向包含也误报，且短文本反向包含漏报）。
+			if strings.Contains(pub, key) || (len(pub) >= 8 && strings.Contains(key, pub)) {
 				warns = append(warns, "秘密条目「"+s.Title+"」的内容疑似与公开字段重复，可能泄漏")
 				break
 			}

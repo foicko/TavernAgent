@@ -4,7 +4,10 @@
 package http
 
 import (
+	"bufio"
+	"io"
 	"log"
+	"net"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -120,4 +123,21 @@ func (r *statusRecorder) Flush() {
 	if f, ok := r.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
+}
+
+// Hijack 透传：WebSocket 升级等需要直接接管底层连接；不透传会让升级失败。
+func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, http.ErrNotSupported
+}
+
+// ReadFrom 透传：让 io.Copy 走底层 sendfile 快路径，同时保持状态码捕获。
+func (r *statusRecorder) ReadFrom(src io.Reader) (int64, error) {
+	r.wrote = true
+	if rf, ok := r.ResponseWriter.(io.ReaderFrom); ok {
+		return rf.ReadFrom(src)
+	}
+	return io.Copy(r.ResponseWriter, src)
 }

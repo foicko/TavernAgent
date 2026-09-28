@@ -125,8 +125,8 @@ func (s *Store) sessionQ(q queryer, sessionID string) (*domain.Session, error) {
 	if err := row.Scan(&sess.SessionID, &sess.RootNodeID, &sess.Title, &at, &ruleset, &sess.CharacterID, &updated); err != nil {
 		return nil, mapErr(err)
 	}
-	sess.CreatedAt = s.parseTime(at)
-	sess.UpdatedAt = s.parseTime(updated)
+	sess.CreatedAt = parseTime(at)
+	sess.UpdatedAt = parseTime(updated)
 	sess.RulesetVersion = ruleset.String
 	return &sess, nil
 }
@@ -183,6 +183,10 @@ func inBatches(ids []string, size int, fn func(batch []string) error) error {
 }
 
 func inClause(ids []string) (string, []any) {
+	if len(ids) == 0 {
+		// 空切片会让 strings.Repeat("?,", -1) panic；调用方必须自行跳过空批次。
+		return "", nil
+	}
 	args := make([]any, 0, len(ids))
 	for _, id := range ids {
 		args = append(args, id)

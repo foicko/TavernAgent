@@ -13,9 +13,19 @@ import (
 )
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
+	// 先编码再写头：编码失败（NaN/Inf、不支持的类型等）时尚未发出 200，
+	// 可以干净地回 500，而不是留下 200 + 截断体。
+	data, err := json.Marshal(v)
+	if err != nil {
+		log.Printf("响应编码失败: %v", err)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"code":"INTERNAL","message":"服务内部错误，请稍后重试","retryable":true,"turnId":""}` + "\n"))
+		return
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+	_, _ = w.Write(append(data, '\n'))
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string, retryable bool, turnID string) {

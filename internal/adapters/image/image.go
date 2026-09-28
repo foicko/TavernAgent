@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"tavernagent/internal/util/atomicfile"
 	"tavernagent/internal/util/endpointguard"
 )
 
@@ -616,7 +617,9 @@ func (s *Service) generateComfyUI(ctx context.Context, opts GenerateOptions) ([]
 
 func (s *Service) saveImage(data []byte, mimeType, prompt string) (*GeneratedImage, error) {
 	var randomBuf [8]byte
-	_, _ = rand.Read(randomBuf[:])
+	if _, err := rand.Read(randomBuf[:]); err != nil {
+		return nil, fmt.Errorf("generate image id: %w", err)
+	}
 	id := fmt.Sprintf("img_%d_%s", time.Now().Unix(), hex.EncodeToString(randomBuf[:]))
 
 	ext := ".png"
@@ -629,7 +632,8 @@ func (s *Service) saveImage(data []byte, mimeType, prompt string) (*GeneratedIma
 	filename := id + ext
 	filePath := filepath.Join(s.dataDir, filename)
 
-	if err := os.WriteFile(filePath, data, 0o644); err != nil {
+	// 原子写：崩溃/断电不会留下半截图片仍被 200 提供。
+	if err := atomicfile.Write(filePath, data, 0o644); err != nil {
 		return nil, fmt.Errorf("write image file: %w", err)
 	}
 

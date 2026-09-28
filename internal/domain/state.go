@@ -227,6 +227,7 @@ func (s *WorldState) Clone() *WorldState {
 	for k, v := range s.Characters {
 		v.Aliases = slices.Clone(v.Aliases)
 		v.Attributes = maps.Clone(v.Attributes)
+		v.Tags = slices.Clone(v.Tags)
 		c.Characters[k] = v
 	}
 	return c
