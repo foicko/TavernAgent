@@ -32,6 +32,13 @@ type Server struct {
 	mu sync.Mutex
 }
 
+// mcpProtocolVersion 是本实现声明的 MCP 协议版本；协商时只在受支持集合内回显。
+const mcpProtocolVersion = "2024-11-05"
+
+var supportedMCPProtocols = map[string]bool{
+	mcpProtocolVersion: true,
+}
+
 // Config holds dependencies for the MCP server.
 type Config struct {
 	Store    ports.Store
@@ -168,8 +175,18 @@ func (s *Server) handleRequest(ctx context.Context, req jsonRPCRequest) jsonRPCR
 
 	switch req.Method {
 	case "initialize":
+		// 协议版本协商：客户端请求的版本我们支持才回显，否则回落到本实现版本。
+		protocol := mcpProtocolVersion
+		if len(req.Params) > 0 {
+			var params struct {
+				ProtocolVersion string `json:"protocolVersion"`
+			}
+			if err := json.Unmarshal(req.Params, &params); err == nil && supportedMCPProtocols[params.ProtocolVersion] {
+				protocol = params.ProtocolVersion
+			}
+		}
 		resp.Result = map[string]any{
-			"protocolVersion": "2024-11-05",
+			"protocolVersion": protocol,
 			"capabilities": map[string]any{
 				"tools":     map[string]any{},
 				"resources": map[string]any{},
@@ -382,11 +399,19 @@ func (s *Server) callTool(ctx context.Context, params json.RawMessage) (string, 
 		if err != nil || len(branches) == 0 {
 			return "", fmt.Errorf("no branch found for session %s: %v", args.SessionID, err)
 		}
-		branch := branches[0]
+		// 用会话的活动分支（ViewQuery 空 branchId 时由服务端选定），而不是固定第一个分支。
+		view, err := s.sessions.View(args.SessionID, application.ViewQuery{})
+		if err != nil {
+			return "", fmt.Errorf("load session view: %w", err)
+		}
+		branchID, headNodeID := view.Branch.BranchID, view.Branch.HeadNodeID
+		if branchID == "" || headNodeID == "" {
+			branchID, headNodeID = branches[0].BranchID, branches[0].HeadNodeID
+		}
 
 		state := domain.NewWorldState()
 		if s.store != nil {
-			if snap, err := s.store.StateAt(branch.HeadNodeID); err == nil && snap != nil {
+			if snap, err := s.store.StateAt(headNodeID); err == nil && snap != nil {
 				if ws, err := domain.UnmarshalWorld(snap.StateJSON); err == nil && ws != nil {
 					state = ws
 				}
@@ -402,7 +427,7 @@ func (s *Server) callTool(ctx context.Context, params json.RawMessage) (string, 
 			input = "（继续推演）"
 		}
 
-		req, err := s.compiler.Compile(ctx, args.SessionID, branch.HeadNodeID, input, ctxpkg.TurnDirectives{}, state, nil)
+		req, err := s.compiler.Compile(ctx, args.SessionID, headNodeID, input, ctxpkg.TurnDirectives{}, state, nil)
 		if err != nil {
 			return "", fmt.Errorf("compile prompt: %w", err)
 		}

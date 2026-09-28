@@ -269,7 +269,9 @@ func UnmarshalWorld(data string) (*WorldState, error) {
 }
 
 // String 保留旧版稳定文本；仅用于旧快照指纹校验与日志。
-// 完整状态的确定性比较应使用 HashID。
+//
+// 弃用提示：它**不包含 Characters/Variables**，因此不同状态可能得到相同字符串。
+// 严禁用它做相等比较或生成新指纹——完整状态的确定性比较一律使用 HashID。
 func (s *WorldState) String() string {
 	rel := make([]string, 0, len(s.Relationships))
 	for k := range s.Relationships {

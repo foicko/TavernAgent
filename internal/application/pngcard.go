@@ -57,12 +57,18 @@ const (
 	maxMetaChunk   = 64 << 20 // 单个元数据块上限，防膨胀攻击
 	// maxMetaInflateTotal 是整份 PNG 文本块解压后的总量上限（多个小压缩块叠加）。
 	maxMetaInflateTotal = 128 << 20
+	// maxPNGCardBytes 是 PNG 角色卡输入字节的硬上限（HTTP/CLI/Android 三个入口共用）。
+	maxPNGCardBytes = 64 << 20
 )
 
 // ImportCardPNG 从 PNG 字节流提取卡片元数据并解码为原生角色卡（纯 Go，无外部依赖）。
 // 只读取 tEXt/iTXt/zTXt chunk；像素仅用于生成有界头像缩略图，不随卡片保存。
 // 外部脚本/HTML 一律按纯文本保留，不执行。
 func ImportCardPNG(pngData []byte) (*ImportReport, error) {
+	// 上限放在解析器内部：不能只依赖 HTTP 调用方，CLI/Android 桥等第二个调用方易遗漏。
+	if len(pngData) > maxPNGCardBytes {
+		return nil, fmt.Errorf("PNG 角色卡体积过大（%d MiB，上限 %d MiB）", len(pngData)>>20, maxPNGCardBytes>>20)
+	}
 	meta, chunkWarns, err := readPNGMeta(pngData)
 	if err != nil {
 		return nil, err

@@ -59,6 +59,12 @@ func (s *Store) SaveAsset(cardID, file string, r io.Reader) error {
 		_ = os.Remove(tmpName)
 		return fmt.Errorf("cardassets: write: %w", err)
 	}
+	// 落盘后再改名：崩溃不会留下"已改名但内容未刷盘"的半截文件。
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("cardassets: sync: %w", err)
+	}
 	if err := tmp.Close(); err != nil {
 		_ = os.Remove(tmpName)
 		return fmt.Errorf("cardassets: close: %w", err)
@@ -177,7 +183,24 @@ func safeSegment(raw string) (string, error) {
 	if out == "" || out == "." || out == ".." {
 		return "", fmt.Errorf("cardassets: unsafe segment %q", raw)
 	}
+	// Windows 保留设备名（含带扩展名形式）不能作为文件名，否则在 Windows 上创建失败或行为怪异。
+	base := out
+	if i := strings.IndexByte(out, '.'); i >= 0 {
+		base = out[:i]
+	}
+	if reservedWindowsNames[strings.ToUpper(base)] {
+		return "", fmt.Errorf("cardassets: reserved segment %q", raw)
+	}
 	return out, nil
+}
+
+// reservedWindowsNames 是 Windows 保留的设备名（大小写不敏感）。
+var reservedWindowsNames = map[string]bool{
+	"CON": true, "PRN": true, "AUX": true, "NUL": true,
+	"COM1": true, "COM2": true, "COM3": true, "COM4": true, "COM5": true,
+	"COM6": true, "COM7": true, "COM8": true, "COM9": true,
+	"LPT1": true, "LPT2": true, "LPT3": true, "LPT4": true, "LPT5": true,
+	"LPT6": true, "LPT7": true, "LPT8": true, "LPT9": true,
 }
 
 // mimeForExt 按扩展名推断 MIME（卡资源常见类型）。

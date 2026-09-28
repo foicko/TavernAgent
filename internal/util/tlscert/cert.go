@@ -13,6 +13,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
@@ -163,7 +164,13 @@ func loadIfCovers(paths Paths, hosts []string) (bool, bool) {
 	if _, err := tls.LoadX509KeyPair(paths.Cert, paths.Key); err != nil {
 		return false, false
 	}
-	if time.Now().After(cert.NotAfter) {
+	now := time.Now()
+	// 同时校验生效区间两端：只验 NotAfter 会让"尚未生效"的证书被复用。
+	if now.After(cert.NotAfter) || now.Before(cert.NotBefore) {
+		return false, false
+	}
+	// 密钥强度：只接受 P-256/P-384/P-521 的 ECDSA 或 ≥2048 位 RSA；弱/未知一律重签。
+	if !strongPublicKey(cert.PublicKey) {
 		return false, false
 	}
 	have := map[string]bool{}
@@ -179,6 +186,18 @@ func loadIfCovers(paths Paths, hosts []string) (bool, bool) {
 		}
 	}
 	return true, true
+}
+
+// strongPublicKey 判断公钥算法与强度是否达标（复用旧证书前的最低要求）。
+func strongPublicKey(pub any) bool {
+	switch k := pub.(type) {
+	case *ecdsa.PublicKey:
+		return k.Curve == elliptic.P256() || k.Curve == elliptic.P384() || k.Curve == elliptic.P521()
+	case *rsa.PublicKey:
+		return k.N.BitLen() >= 2048
+	default:
+		return false
+	}
 }
 
 // generate 生成自签证书与私钥（PEM 编码）。

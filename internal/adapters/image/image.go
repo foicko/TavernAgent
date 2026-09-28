@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -115,6 +116,9 @@ func (s *Service) Generate(ctx context.Context, opts GenerateOptions) (*Generate
 		} else if strings.Contains(strings.ToLower(opts.BaseURL), "openai") || strings.Contains(strings.ToLower(opts.BaseURL), "siliconflow") {
 			engine = "openai"
 		} else {
+			// 无法从 URL/模型推断引擎：按 ComfyUI 兜底，但记一条日志，
+			// 便于排查"该端点其实不是 ComfyUI"这类困惑失败（应显式配置 engine）。
+			slog.Warn("图像引擎未显式指定且无法自动识别，按 ComfyUI 处理", "baseUrl", opts.BaseURL, "model", opts.Model)
 			engine = "comfyui"
 		}
 	}

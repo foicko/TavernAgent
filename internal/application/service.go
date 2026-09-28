@@ -69,10 +69,11 @@ func NewTurnService(store ports.Store, provider ports.ModelProvider, compiler *c
 	}
 }
 
-// SetRuleset 替换生效的规则包（规则升级入口；契约 §7 要求升级通过显式配置）。
+// SetRuleset 替换生效的规则包。仅在启动装配期调用（不并发安全）；
+// 运行时规则升级必须走显式配置重建，不要在回合进行中调用。
 func (s *TurnService) SetRuleset(rs domain.Ruleset) { s.ruleset = rs }
 
-// SetRandom 替换随机源（测试与确定性重放用）。
+// SetRandom 替换随机源。同样仅在启动装配/测试装配期调用（不并发安全）。
 func (s *TurnService) SetRandom(r ports.Random) { s.rand = r }
 
 func (s *TurnService) Metrics() *RuntimeMetrics { return s.metrics }

@@ -100,6 +100,9 @@ type Service struct {
 	cacheBytes int
 	mockFn     func(voice, text string) ([]byte, error)
 	wsDialer   *websocket.Dialer
+	// 复用 HTTP client 以保留连接池，避免每次合成都重新握手。
+	client     *http.Client // 30s：OpenAI 兼容合成
+	clientLong *http.Client // 60s：MiMo 兼容合成
 }
 
 // NewService 创建 TTS 语音服务实例。
@@ -109,6 +112,8 @@ func NewService() *Service {
 		wsDialer: &websocket.Dialer{
 			HandshakeTimeout: 8 * time.Second,
 		},
+		client:     &http.Client{Timeout: 30 * time.Second},
+		clientLong: &http.Client{Timeout: 60 * time.Second},
 	}
 }
 
@@ -277,7 +282,7 @@ func (s *Service) synthesizeOpenAI(ctx context.Context, opts SynthesizeOptions, 
 		req.Header.Set("Authorization", "Bearer "+opts.APIKey)
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := s.client
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request to %s failed: %w", endpoint, err)
@@ -374,7 +379,7 @@ func (s *Service) synthesizeMiMo(ctx context.Context, opts SynthesizeOptions, vo
 		req.Header.Set("Authorization", "Bearer "+opts.APIKey)
 	}
 
-	client := &http.Client{Timeout: 60 * time.Second}
+	client := s.clientLong
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request to %s failed: %w", endpoint, err)
