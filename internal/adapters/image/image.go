@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -578,8 +579,11 @@ func (s *Service) generateComfyUI(ctx context.Context, opts GenerateOptions) ([]
 				continue
 			}
 
-			viewURL := fmt.Sprintf("%s/view?filename=%s&subfolder=%s&type=%s",
-				baseURL, foundFilename, foundSubfolder, foundType)
+			viewQuery := url.Values{}
+			viewQuery.Set("filename", foundFilename)
+			viewQuery.Set("subfolder", foundSubfolder)
+			viewQuery.Set("type", foundType)
+			viewURL := strings.TrimRight(baseURL, "/") + "/view?" + viewQuery.Encode()
 			viewReq, err := http.NewRequestWithContext(ctx, http.MethodGet, viewURL, nil)
 			if err != nil {
 				return nil, "", fmt.Errorf("create comfyui view request: %w", err)

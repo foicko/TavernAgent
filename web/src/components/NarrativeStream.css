@@ -293,7 +293,7 @@
   align-self: center;
 }
 
-/* ¿¨ÄÚÇ¶×ÊÔ´£¨charx Á¢»æ£©£ºÕıÎÄ <img cmd> äÖÈ¾³öµÄÍ¼Æ¬ */
+/* å¡å†…åµŒèµ„æºï¼ˆcharx ç«‹ç»˜ï¼‰ï¼šç”¨äº <img cmd> æ¸²æŸ“çš„å†…è”å›¾ç‰‡ */
 .story-inline-image {
   display: block;
   max-width: min(100%, 380px);
@@ -301,6 +301,6 @@
   width: auto;
   height: auto;
   margin: var(--space-3) auto;
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-md);
   object-fit: contain;
 }

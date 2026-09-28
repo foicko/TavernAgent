@@ -23,7 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -86,7 +86,7 @@ fun CharactersScreen(
                     onRetry = { viewModel.load(sessionId, branchId) },
                 )
                 else -> Column {
-                    TabRow(selectedTabIndex = tab) {
+                    PrimaryTabRow(selectedTabIndex = tab) {
                         tabs.forEachIndexed { index, label ->
                             Tab(selected = tab == index, onClick = { tab = index }, text = { Text(label) })
                         }

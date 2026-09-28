@@ -456,6 +456,14 @@ func safePath(name string) (string, error) {
 	if name == "" {
 		return "", unsafe("empty entry name")
 	}
+	if len(name) > 1024 {
+		return "", unsafe(fmt.Sprintf("entry name too long (%d bytes)", len(name)))
+	}
+	for _, r := range name {
+		if r < 0x20 || r == 0x7f {
+			return "", unsafe(fmt.Sprintf("entry name contains control characters: %q", name))
+		}
+	}
 	// Windows 盘符或 UNC 前缀。
 	if strings.Contains(name, ":") {
 		return "", unsafe(fmt.Sprintf("illegal entry path %q", name))

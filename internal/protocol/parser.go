@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 	"sync/atomic"
-	"unicode/utf8"
 )
 
 // 解析错误类别。
@@ -191,10 +190,14 @@ func extractInFlightBlock(line []byte) (seq int, kind BlockKind, speakerID *stri
 	if seqIdx := bytes.Index(line, []byte(`"seq":`)); seqIdx >= 0 {
 		rest := line[seqIdx+6:]
 		num := 0
+		started := false
 		for _, b := range rest {
 			if b >= '0' && b <= '9' {
 				num = num*10 + int(b-'0')
-			} else if num > 0 {
+				started = true
+			} else if started {
+				// 一旦开始消费数字，遇到任意非数字即结束（含 seq:0 后的逗号）：
+				// 旧写法 `num > 0` 会让 seq:0 继续扫描并把后续字段里的数字并进来。
 				break
 			}
 		}
@@ -277,9 +280,8 @@ func extractInFlightBlock(line []byte) (seq int, kind BlockKind, speakerID *stri
 	}
 
 	res := buf.String()
-	for len(res) > 0 && !utf8.ValidString(res) {
-		res = res[:len(res)-1]
-	}
+	// O(n) 修复尾部不完整 UTF-8 序列（旧实现每次重扫整串，最坏 O(n²)）。
+	res = strings.ToValidUTF8(res, "")
 
 	return seq, kind, speakerID, res, false
 }

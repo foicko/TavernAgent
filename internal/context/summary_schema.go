@@ -56,6 +56,9 @@ func validateSummaryXML(raw string) error {
 			}
 			stack = append(stack, name)
 		case xml.EndElement:
+			if len(stack) == 0 {
+				return errors.New("摘要 XML 结构不匹配")
+			}
 			stack = stack[:len(stack)-1]
 		case xml.CharData:
 			if len(stack) == 2 && stack[1] == "narrative_arc" {

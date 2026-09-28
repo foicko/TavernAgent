@@ -19,7 +19,7 @@
   max-height: 88vh;
   background: var(--bg-elevated);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl, 18px);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-float);
   outline: none;
   animation: ui-modal-in var(--duration-fast, 250ms) var(--ease-spring);

@@ -45,7 +45,8 @@ func DoWithinFirstTokenBudget(client *http.Client, req *http.Request, budget tim
 	resp.Body = &cancelOnClose{ReadCloser: resp.Body, cancel: cancel}
 	remaining = budget - time.Since(start)
 	if remaining <= 0 {
-		remaining = time.Nanosecond
+		// 响应头恰好卡在时限上到达：交给调用方决定下限，别返回 1ns（会立即误报超时）。
+		remaining = 0
 	}
 	return resp, remaining, false, nil
 }

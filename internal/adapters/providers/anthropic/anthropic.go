@@ -286,7 +286,16 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 	var firstTimer *time.Timer
 	var firstDone <-chan time.Time
 	if p.cfg.TimeoutFirstToken > 0 {
-		firstTimer = time.NewTimer(firstBudget)
+		// 响应头恰好卡在首字时限上到达时 firstBudget 可能 ≤0：给一个下限，
+		// 否则 NewTimer(≤0) 会立即触发并误报"等待首个 token 超时"。
+		budget := firstBudget
+		if budget <= 0 {
+			budget = p.cfg.TimeoutIdle
+		}
+		if budget <= 0 {
+			budget = providerutil.DefaultTimeoutFirstToken
+		}
+		firstTimer = time.NewTimer(budget)
 		firstDone = firstTimer.C
 		defer firstTimer.Stop()
 	}

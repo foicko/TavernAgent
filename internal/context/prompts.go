@@ -731,6 +731,9 @@ func (c *Compiler) buildPlanningMessages(lore []lorebookHit, memories []*domain.
 	if len(summaries) > 0 {
 		b.WriteString("\n【故事背景与历史摘要（只读参考）】\n")
 		for _, a := range summaries {
+			if a == nil {
+				continue
+			}
 			// 摘要由模型从既往叙事反推，可能被正文间接污染：必须与其它资料一样中和边界标签。
 			txt := strings.TrimSpace(neutralizeBoundaryTags(a.Text))
 			b.WriteString("- " + oneLine(txt) + "\n")

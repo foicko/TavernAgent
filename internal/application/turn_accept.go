@@ -281,7 +281,7 @@ func (s *TurnService) validateTurnInput(headID string, in domain.TurnInput) (dom
 				return domain.TurnInput{}, nil, Err("STALE_OPTION", "选项来源链异常，请基于当前回合重新选择", 409)
 			}
 			node, err := s.store.GetNode(cursor)
-			if err != nil || (node.Kind != domain.NodeKindMemoryChange && node.Kind != domain.NodeKindDirectorEvent) || node.ParentID == "" {
+			if err != nil || node == nil || (node.Kind != domain.NodeKindMemoryChange && node.Kind != domain.NodeKindDirectorEvent) || node.ParentID == "" {
 				return domain.TurnInput{}, nil, Err("STALE_OPTION", "该选项已过期，请基于当前回合重新选择", 409)
 			}
 			cursor = node.ParentID

@@ -85,6 +85,9 @@ func (s *MemoryService) ListAt(sessionID, branchID, nodeID string) ([]MemoryView
 	}
 	out := []MemoryView{}
 	for _, m := range domain.ApplyMemoryOverlays(records) {
+		if m == nil {
+			continue
+		}
 		probe := *m
 		probe.Hidden = false
 		if domain.MemoryVisibleTo(&probe, state) {
@@ -262,7 +265,8 @@ func (s *MemoryService) OverlayContext(ctx context.Context, sessionID, branchID,
 	next.SourceNodeID = id.New()
 	next.CreatedTurn = curTurn
 	next.ValidFromTurn = curTurn
-	current.ValidUntilTurn = curTurn
+	// 注意：不要原地修改 current（它可能来自 store 的共享投影缓存，且本次提交并不落它）；
+	// 被取代记录的 ValidUntilTurn 由投影按 next.ValidFromTurn 推导。
 	if patch.SubjectKey != nil {
 		next.SubjectKey = domain.NormalizeSubjectKey(*patch.SubjectKey)
 	}
