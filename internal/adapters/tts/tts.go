@@ -15,11 +15,11 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
 
 	"tavernagent/internal/util/endpointguard"
+	"tavernagent/internal/util/httpbody"
 )
 
 // Voice 表示可用的 TTS 音色配置。
@@ -314,15 +314,7 @@ func readCapped(r io.Reader, limit int64) ([]byte, error) {
 
 // bodySnippet 截取响应体开头用于错误信息：整段响应（可达数 MB）不该进日志与 API 错误。
 func bodySnippet(b []byte) string {
-	const max = 512
-	if len(b) <= max {
-		return string(b)
-	}
-	cut := max
-	for cut > 0 && !utf8.RuneStart(b[cut]) {
-		cut--
-	}
-	return string(b[:cut]) + "…"
+	return httpbody.Snippet(b, httpbody.SnippetLimit)
 }
 
 func (s *Service) synthesizeMiMo(ctx context.Context, opts SynthesizeOptions, voice, text string) ([]byte, error) {

@@ -21,19 +21,12 @@ import (
 
 	"tavernagent/internal/util/atomicfile"
 	"tavernagent/internal/util/endpointguard"
+	"tavernagent/internal/util/httpbody"
 )
 
-// maxErrorBodySnippet 限制回显给客户端/日志的上游响应体长度，避免把
-// 可能含私有数据或内部页面的大型响应体（当前读取上限 32MB）原样带出。
-const maxErrorBodySnippet = 512
-
-// bodySnippet 返回用于错误信息的响应体摘要（截断并去空白）。
+// bodySnippet 返回用于错误信息的响应体摘要（截断、去空白、HTML 错误页替换）。
 func bodySnippet(b []byte) string {
-	s := strings.TrimSpace(string(b))
-	if len(s) > maxErrorBodySnippet {
-		s = s[:maxErrorBodySnippet] + "…"
-	}
-	return s
+	return httpbody.Snippet(b, httpbody.SnippetLimit)
 }
 
 // GenerateOptions 描述图像生成参数。

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"tavernagent/internal/ports"
+	"tavernagent/internal/util/httpbody"
 )
 
 // 默认超时：首字 / 空闲 / 总时限。各适配器的 Config 可覆盖。
@@ -129,7 +130,7 @@ func NormalizeMessages(messages []ports.ChatMessage) []Message {
 type APIErrorDecoder func(body []byte) (code, message string, ok bool)
 
 // ReadHTTPError 读取并解析非 2xx 响应体：协议特有的 JSON 形状由 decoder 提供，
-// 其余处理（限长、纯文本兜底、空体兜底）三协议一致。
+// 其余处理（限长、纯文本兜底、空体兜底、HTML 错误页替换）三协议一致。
 func ReadHTTPError(resp *http.Response, decoder APIErrorDecoder) error {
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
 	if decoder != nil {
@@ -137,34 +138,11 @@ func ReadHTTPError(resp *http.Response, decoder APIErrorDecoder) error {
 			return &HTTPError{StatusCode: resp.StatusCode, Code: code, Message: message}
 		}
 	}
-	msg := strings.TrimSpace(string(body))
-	// 网关/代理常见的 HTML 错误页对用户毫无意义，也不该原样塞进失败提示。
-	if looksLikeHTML(msg) {
-		msg = "供应商网关返回了非预期的 HTML 响应（通常是网关或代理错误页），请检查接口地址与网关状态"
-	}
-	msg = truncateRunes(msg, 512)
+	msg := httpbody.Snippet(body, httpbody.SnippetLimit)
 	if msg == "" {
 		msg = "无响应体"
 	}
 	return &HTTPError{StatusCode: resp.StatusCode, Message: msg}
-}
-
-// looksLikeHTML 判断响应体是否是 HTML 错误页（大小写不敏感，允许前置空白）。
-func looksLikeHTML(s string) bool {
-	lower := strings.ToLower(strings.TrimSpace(s))
-	return strings.HasPrefix(lower, "<!doctype") || strings.HasPrefix(lower, "<html") || strings.Contains(lower, "<html")
-}
-
-// truncateRunes 按字符（而非字节）截断，避免把多字节 UTF-8 字符切成乱码。
-func truncateRunes(s string, max int) string {
-	if len(s) <= max {
-		return s
-	}
-	runes := []rune(s)
-	if len(runes) <= max {
-		return s
-	}
-	return string(runes[:max])
 }
 
 // DecodeOpenAIError 解析 OpenAI 系（Chat Completions 与 Responses）的错误体：
