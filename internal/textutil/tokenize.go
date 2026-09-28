@@ -1,4 +1,4 @@
-// Package search 提供中文词法预处理与 FTS 查询构造。
+// Package textutil 提供中文词法预处理与 FTS 查询构造。
 //
 // 为什么单独成包：索引侧（adapters/sqlite 写 memory_fts）与查询侧
 // （context 构造 MATCH）必须使用**完全相同**的词元切分，否则两侧词元空间
@@ -10,7 +10,7 @@
 // CGO，与无 CGO 构建的目标冲突；而 FTS5 自带的 unicode61 会把一整串汉字
 // 当成**一个**词元，中文检索等于失效。因此由本包先切分，再交给 unicode61
 // 索引，两边都只看到空格分隔的二元词。
-package search
+package textutil
 
 import (
 	"strings"

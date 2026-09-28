@@ -8,7 +8,7 @@ import (
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
-	"tavernagent/internal/search"
+	"tavernagent/internal/textutil"
 )
 
 // currentMemoryRelevance measures distinctive content in the current request.
@@ -47,8 +47,8 @@ func currentMemoryRelevance(candidates []*ports.MemoryCandidate, input string, s
 			query = strings.ReplaceAll(query, name, " ")
 		}
 	}
-	query += " " + strings.Join(search.ConceptTerms(input), " ")
-	terms := search.Tokens(query)
+	query += " " + strings.Join(textutil.ConceptTerms(input), " ")
+	terms := textutil.Tokens(query)
 	if len(terms) == 0 || len(candidates) == 0 {
 		return nil
 	}
@@ -56,7 +56,7 @@ func currentMemoryRelevance(candidates []*ports.MemoryCandidate, input string, s
 	frequency := map[string]int{}
 	for _, candidate := range candidates {
 		words := map[string]bool{}
-		for _, word := range search.Tokenize(candidate.Memory.Content) {
+		for _, word := range textutil.Tokenize(candidate.Memory.Content) {
 			if !words[word] {
 				frequency[word]++
 				words[word] = true

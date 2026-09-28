@@ -7,7 +7,7 @@ import (
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
-	"tavernagent/internal/search"
+	"tavernagent/internal/textutil"
 )
 
 // Worldbook search is a derived index of immutable templates. It never indexes
@@ -124,7 +124,7 @@ func indexLorebookTx(tx execer, template *domain.TemplateVersion) error {
 			if _, err := tx.Exec(`INSERT INTO lorebook_entries(template_version_id,book_index,entry_index,book_name,entry_json,search_text,title_tokens,keys_tokens,content_tokens)
  VALUES(?,?,?,?,?,?,?,?,?)`, template.TemplateVersionID, bi, ei, book.Name, string(raw),
 				strings.ToLower(entry.Title+"\n"+keys+"\n"+entry.Content),
-				strings.Join(search.Tokenize(entry.Title), " "), strings.Join(search.Tokenize(keys), " "), strings.Join(search.Tokenize(entry.Content), " ")); err != nil {
+				strings.Join(textutil.Tokenize(entry.Title), " "), strings.Join(textutil.Tokenize(keys), " "), strings.Join(textutil.Tokenize(entry.Content), " ")); err != nil {
 				return err
 			}
 			count++
@@ -142,7 +142,7 @@ func (s *Store) SearchLorebook(templateVersionID, text string, offset, limit int
 	limit = min(limit, 101) // one extra row permits a bounded hasMore response
 	offset = max(offset, 0)
 	text = strings.TrimSpace(text)
-	expr := search.MatchExpr(text)
+	expr := textutil.MatchExpr(text)
 	query := `SELECT e.book_index,e.entry_index,e.book_name,e.entry_json FROM lorebook_entries e WHERE e.template_version_id=?`
 	args := []any{templateVersionID}
 	if text != "" && s.loreFTS && expr != "" {

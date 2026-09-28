@@ -7,7 +7,7 @@ import (
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
-	"tavernagent/internal/search"
+	"tavernagent/internal/textutil"
 )
 
 // memoryFTSTable 是记忆词法索引的虚拟表名。
@@ -247,7 +247,7 @@ func entityTermsMap(stateJSON string) map[string][]string {
 // 按角色名的查询会把这类记忆整条漏掉，而它们恰恰是最需要被召回的关系性认知。
 func memoryIndexTokens(m *domain.MemoryRecord, terms map[string][]string) string {
 	var sb strings.Builder
-	sb.WriteString(strings.Join(search.Tokenize(m.Content), " "))
+	sb.WriteString(strings.Join(textutil.Tokenize(m.Content), " "))
 	ids := make([]string, 0, len(m.EntityIDs)+len(m.OwnerIDs))
 	ids = append(ids, m.EntityIDs...)
 	ids = append(ids, m.OwnerIDs...)
@@ -256,10 +256,10 @@ func memoryIndexTokens(m *domain.MemoryRecord, terms map[string][]string) string
 			continue
 		}
 		sb.WriteString(" ")
-		sb.WriteString(strings.Join(search.Tokenize(id), " "))
+		sb.WriteString(strings.Join(textutil.Tokenize(id), " "))
 		for _, t := range terms[id] {
 			sb.WriteString(" ")
-			sb.WriteString(strings.Join(search.Tokenize(t), " "))
+			sb.WriteString(strings.Join(textutil.Tokenize(t), " "))
 		}
 	}
 	return strings.TrimSpace(sb.String())
@@ -399,7 +399,7 @@ func (s *Store) RecallMemories(nodeID string, q ports.MemoryRecallQuery) ([]*por
 	if s.fts {
 		addChannel("lexical", "memory_fts", q.MatchExpr)
 	}
-	triExpr := search.TrigramMatchExpr(q.RawText)
+	triExpr := textutil.TrigramMatchExpr(q.RawText)
 	if s.trigram {
 		addChannel("trigrams", "memory_fts_tri", triExpr)
 	}
@@ -537,12 +537,12 @@ func mentionsMemory(turnText string, m *domain.MemoryRecord, terms map[string][]
 		}
 	}
 	turn := map[string]bool{}
-	for _, t := range search.Tokenize(turnText) {
+	for _, t := range textutil.Tokenize(turnText) {
 		turn[t] = true
 	}
 	seen := map[string]bool{}
 	overlap := 0
-	for _, t := range search.Tokenize(m.Content) {
+	for _, t := range textutil.Tokenize(m.Content) {
 		if seen[t] || !turn[t] {
 			continue
 		}

@@ -7,7 +7,7 @@ import (
 
 	"tavernagent/internal/domain"
 	"tavernagent/internal/ports"
-	"tavernagent/internal/search"
+	"tavernagent/internal/textutil"
 )
 
 // ---- 记忆召回（来源化认知，技术契约 §8.1）----
@@ -39,7 +39,7 @@ func recencyHalfLife(importance int) float64 {
 
 // memoryQueryText 是记忆检索用的查询文本，顺序即相关度优先级。
 //
-// 与 buildHaystack 的区别只在**顺序**：词元有上限（search.MaxQueryTerms），
+// 与 buildHaystack 的区别只在**顺序**：词元有上限（textutil.MaxQueryTerms），
 // 先出现的先保留。因此当前输入与最近回合必须排在开场白之前——否则长会话里
 // 被留下来的全是开场白，检索就退化成"按开场白找记忆"。
 func memoryQueryText(opening string, recent []*domain.PlotNode, inputText string) string {
@@ -107,7 +107,7 @@ func memoryQueryEntities(state *domain.WorldState, haystack string) []string {
 func memoryEntityTerms(ids []string) []string {
 	var out []string
 	for _, id := range ids {
-		out = append(out, search.Tokenize(id)...)
+		out = append(out, textutil.Tokenize(id)...)
 	}
 	return out
 }
@@ -209,9 +209,9 @@ func (c *Compiler) memoryCandidates(nodeID, haystack, queryText string, state *d
 		if len(entities) == 0 {
 			entities = memoryQueryEntities(state, queryText)
 		}
-		focus := search.Tokens(currentInput + " " + strings.Join(search.ConceptTerms(currentInput), " "))
+		focus := textutil.Tokens(currentInput + " " + strings.Join(textutil.ConceptTerms(currentInput), " "))
 		terms := append(memoryEntityTerms(entities), focus...)
-		terms = append(terms, search.Tokens(queryText)...)
+		terms = append(terms, textutil.Tokens(queryText)...)
 		var owners, secrets []string
 		if state != nil {
 			owners = []string{}
@@ -227,7 +227,7 @@ func (c *Compiler) memoryCandidates(nodeID, haystack, queryText string, state *d
 			fallbackLimit = 20
 		}
 		return c.store.RecallMemories(nodeID, ports.MemoryRecallQuery{
-			MatchExpr:     search.MatchExprOf(terms),
+			MatchExpr:     textutil.MatchExprOf(terms),
 			RawText:       queryText,
 			OwnerIDs:      owners,
 			SecretIDs:     secrets,

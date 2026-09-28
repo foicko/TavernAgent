@@ -24,7 +24,7 @@ internal/
 ├── application/  应用编排：回合生命周期、提交计划、记忆、导演、存档、分支、计划
 ├── protocol/     逐行 JSON 帧协议的解析与增量还原
 ├── pack/         剧情包（.tavernpack）读写
-├── search/       检索
+├── textutil/     中文词元切分与 FTS MATCH 构造（叶子包，仅标准库；任何层可 import）
 ├── adapters/
 │   ├── sqlite/   存储实现、迁移、投影
 │   ├── http/     REST + SSE 契约（含鉴权、来源校验）

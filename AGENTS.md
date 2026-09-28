@@ -56,7 +56,7 @@ CI（`.github/workflows/quality.yml`）额外要求：`gofmt -l internal cmd` �
 - **前端分层**由 `pnpm lint` 强制：`src/components/` 只能 import `app|stores|lib|ui|react`；`src/ui/` 是叶子层（仅 `react` + `../lib`）。
 - **样式必须走令牌**：组件样式只能引用 `src/styles/tokens.css` 的变量；禁止新增 `!important`、颜色字面值、跨文件重复选择器、死类名、`backdrop-filter`/`--glass-*`（六项 CSS 棘轮门禁）。纯结构改动需 `pnpm build:parity && pnpm css:parity` 证明声明集合未变；有意改视觉后 `pnpm css:snapshot`；收紧基线用 `node scripts/check.mjs --update-css-baseline`（放宽项会被打印，要求解释）。
 - **单文件约 800 行上限**（Go 与 CSS 一致）：有若干超限文件被基线豁免，往里加行会让门禁失败——应拆分而非继续加。
-- **Go 分层禁止反向依赖**：`domain` ← `ports` ← `context`/`application`/`pack`/`search` ← `adapters`（例如 `domain` 不得 import `application`）。
+- **Go 分层禁止反向依赖**：`domain` ← `ports` ← `context`/`application`/`pack` ← `adapters`（例如 `domain` 不得 import `application`）；`internal/textutil` 是仅依赖标准库的叶子包，任何层可 import。该约束由 `scripts/layering_check.py` 机器强制。
 - **运行时数据在 `data/`（gitignore）**：SQLite `storage.db`、模型密钥 `data/config/secrets.json`、charx 资源 `data/cards/<cardID>/`。测试一律用临时目录，绝不动日常故事库；不要把模型凭据写进仓库。
 
 ## 关键入口与同步点

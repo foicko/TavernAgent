@@ -246,7 +246,7 @@ type TurnStore interface {
 
 // MemoryRecallQuery 是可见候选的检索参数（技术契约 §8.1）。
 type MemoryRecallQuery struct {
-	// MatchExpr 是 FTS5 的 MATCH 表达式（由 internal/search 构造并转义）。
+	// MatchExpr 是 FTS5 的 MATCH 表达式（由 internal/textutil 构造并转义）。
 	// 空表示不做词法检索：此时池只由置顶/隐藏/覆盖记录构成。
 	// 单字与无词元查询会得到空表达式——契约 §8.1 要求这类查询走实体兜底，
 	// 而不是把单字塞进索引（单字命中几乎所有文本，噪声大于收益）。

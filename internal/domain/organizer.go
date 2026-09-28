@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"tavernagent/internal/search"
+	"tavernagent/internal/textutil"
 	"unicode/utf8"
 )
 
@@ -238,7 +238,7 @@ func overlapIDs(a, b []string) bool {
 	return false
 }
 func lexicalSimilarity(a, b string) float64 {
-	x, y := search.Tokens(a), search.Tokens(b)
+	x, y := textutil.Tokens(a), textutil.Tokens(b)
 	set := map[string]bool{}
 	for _, t := range x {
 		set[t] = true
