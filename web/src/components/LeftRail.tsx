@@ -352,7 +352,6 @@ export const LeftRail: React.FC = () => {
             setCharImportOpen={setCharImportOpen}
             toggleLeftRail={toggleLeftRail}
             notifyQuiet={notifyQuiet}
-            activateOnKey={activateOnKey}
           />
         </div>
       </div>

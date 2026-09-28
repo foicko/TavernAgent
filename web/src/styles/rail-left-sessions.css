@@ -110,6 +110,21 @@
   gap: 9px;
 }
 
+.session-card-open {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .session-avatar-wrapper {
   position: relative;
   width: 34px;

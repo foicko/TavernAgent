@@ -172,6 +172,9 @@ describe("LeftRail left information rail", () => {
     const user = userEvent.setup();
     render(<LeftRail />);
 
+    // M66：会话行内不得嵌套交互元素（现在是真实 button + 并列的删除控件）。
+    expect(document.querySelectorAll("#view-sessions button button")).toHaveLength(0);
+
     const trash = screen.getByRole("button", { name: "删除故事 亚美的冒险" });
     trash.focus();
     await user.keyboard("{Enter}");

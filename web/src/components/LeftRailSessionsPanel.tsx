@@ -52,7 +52,6 @@ interface LeftRailSessionsPanelProps {
   setCharImportOpen: (open: boolean) => void;
   toggleLeftRail: () => void;
   notifyQuiet: (message: string, tone?: ToastTone) => void;
-  activateOnKey: (run: () => void) => (event: React.KeyboardEvent) => void;
   style?: React.CSSProperties;
 }
 
@@ -81,7 +80,6 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
   setCharImportOpen,
   toggleLeftRail,
   notifyQuiet,
-  activateOnKey,
   style,
 }) => {
   return (
@@ -148,24 +146,20 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
               <div
                 key={s.sessionId}
                 className={`session-entry-card ${isActive ? "active" : ""}`}
-                role="button"
-                tabIndex={0}
-                aria-current={isActive ? "true" : undefined}
-                aria-label={`打开故事 ${s.title}`}
-                onClick={() => {
-                  void openSession(s.sessionId);
-                  if (typeof window !== "undefined" && window.innerWidth <= 768) {
-                    toggleLeftRail();
-                  }
-                }}
-                onKeyDown={activateOnKey(() => {
-                  void openSession(s.sessionId);
-                  if (typeof window !== "undefined" && window.innerWidth <= 768) {
-                    toggleLeftRail();
-                  }
-                })}
               >
                 <div className="session-card-main">
+                  <button
+                    type="button"
+                    className="session-card-open"
+                    aria-current={isActive ? "true" : undefined}
+                    aria-label={`打开故事 ${s.title}`}
+                    onClick={() => {
+                      void openSession(s.sessionId);
+                      if (typeof window !== "undefined" && window.innerWidth <= 768) {
+                        toggleLeftRail();
+                      }
+                    }}
+                  >
                   <div className="session-avatar-wrapper">
                     <img
                       src={resolvedAvatar}
@@ -207,6 +201,7 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
                       </div>
                     )}
                   </div>
+                  </button>
 
                   <RowDeleteControl
                     confirming={confirmDeleteId === s.sessionId}
