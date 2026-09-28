@@ -35,6 +35,8 @@ export const LeftRail: React.FC = () => {
 
   const {
     sessions,
+    sessionsError,
+    loadSessions,
     openSession,
     deleteSession,
     selectCharacter,
@@ -51,8 +53,8 @@ export const LeftRail: React.FC = () => {
     packError,
     clearPackError,
   } = useStory(useShallow(s => ({
-    sessions: s.sessions, openSession: s.openSession, deleteSession: s.deleteSession, selectCharacter: s.selectCharacter,
-    startNewSessionForCurrentChar: s.startNewSessionForCurrentChar, view: s.view, hud: s.hud,
+    sessions: s.sessions, sessionsError: s.sessionsError, loadSessions: s.loadSessions,
+    openSession: s.openSession, deleteSession: s.deleteSession, selectCharacter: s.selectCharacter,    startNewSessionForCurrentChar: s.startNewSessionForCurrentChar, view: s.view, hud: s.hud,
     viewAt: s.viewAt, forkFrom: s.forkFrom, regenerate: s.regenerate,
     exportSession: s.exportSession, importSession: s.importSession,
     sessionLoading: s.sessionLoading, pendingSessionId: s.pendingSessionId,
@@ -327,6 +329,8 @@ export const LeftRail: React.FC = () => {
           <LeftRailSessionsPanel
             style={{ display: leftTab === "sessions" ? "flex" : "none" }}
             sessions={sessions}
+            sessionsError={sessionsError}
+            loadSessions={loadSessions}
             sessionFilter={sessionFilter}
             setSessionFilter={setSessionFilter}
             currentView={currentView}

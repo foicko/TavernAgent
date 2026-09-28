@@ -28,6 +28,8 @@ function formatSessionTime(isoString?: string): string {
 
 interface LeftRailSessionsPanelProps {
   sessions: SessionSummary[];
+  sessionsError: string | null;
+  loadSessions: () => Promise<void>;
   sessionFilter: "all" | "current";
   setSessionFilter: (filter: "all" | "current") => void;
   currentView: SessionView | null;
@@ -55,6 +57,8 @@ interface LeftRailSessionsPanelProps {
 
 export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
   sessions,
+  sessionsError,
+  loadSessions,
   sessionFilter,
   setSessionFilter,
   currentView,
@@ -107,7 +111,16 @@ export const LeftRailSessionsPanel: React.FC<LeftRailSessionsPanelProps> = ({
         </div>
       </div>
 
-      {sessions.length === 0 ? (
+      {sessionsError && sessions.length === 0 ? (
+        <div className="session-empty-state">
+          <div className="empty-icon"><Icon name="alert" size={22} /></div>
+          <div className="empty-title">无法加载故事列表</div>
+          <div className="empty-desc">{sessionsError}</div>
+          <button type="button" className="btn-quiet" onClick={() => void loadSessions()}>
+            <Icon name="refresh" size={13} /> 重试
+          </button>
+        </div>
+      ) : sessions.length === 0 ? (
         <div className="session-empty-state">
           <div className="empty-icon"><Icon name="scroll" size={22} /></div>
           <div className="empty-title">暂无历史故事会话</div>

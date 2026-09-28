@@ -27,8 +27,13 @@ import { DEFAULT_PLAYER_NAME } from "../../lib/characterMacros";
 export const createSessionSlice = (set: StoreSet, get: StoreGet) => ({
   loadSessions: async () => {
     const ticket = incrementSessionListSeq();
-    const { sessions } = await api.listSessions();
-    if (ticket === getSessionListSeq()) set({ sessions: Array.isArray(sessions) ? sessions : [] });
+    try {
+      const { sessions } = await api.listSessions();
+      if (ticket === getSessionListSeq()) set({ sessions: Array.isArray(sessions) ? sessions : [], sessionsError: null });
+    } catch (e) {
+      // 列表拉取失败必须可见：否则与"你还没有故事"不可区分。
+      if (ticket === getSessionListSeq()) set({ sessionsError: toErr(e) });
+    }
   },
 
   openSession: async (id: string) => {

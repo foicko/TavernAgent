@@ -194,6 +194,7 @@ export function createInitialStoryState(): Partial<StoryState> {
   return {
     ...emptyDirectorState,
     sessions: [],
+    sessionsError: null,
     view: null,
     messages: [],
     olderMessages: [],

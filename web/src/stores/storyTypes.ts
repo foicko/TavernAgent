@@ -96,6 +96,7 @@ export interface MemoryLoadOptions {
 export interface StoryState extends DirectorSliceState {
   // 会话与元数据
   sessions: SessionSummary[];
+  sessionsError: string | null;
   view: SessionView | null;
   messages: StoryMessage[];
   /** 通过"加载更早"分页得到的、早于当前服务端窗口的消息；reloadView 会与其合并而非丢弃。 */
