@@ -6,6 +6,8 @@ import type {
   AcceptResult,
   AssistantEditResult,
   BranchView,
+  CharacterInfo,
+  CharacterMood,
   DeriveResult,
   DirectorBeat,
   DirectorBeatProgress,
@@ -13,14 +15,22 @@ import type {
   DirectorPlan,
   DirectorState,
   DirectorSummary,
+  Goal,
+  ItemInstance,
   MemoryUsage,
   ModelInstance,
+  PromiseItem,
+  RelationValue,
+  Scene,
   TurnCapabilities,
+  WorldState,
 } from "./generated/dto.generated";
 export type {
   AcceptResult,
   AssistantEditResult,
   BranchView,
+  CharacterInfo,
+  CharacterMood,
   DeriveResult,
   DirectorBeat,
   DirectorBeatProgress,
@@ -28,9 +38,15 @@ export type {
   DirectorPlan,
   DirectorState,
   DirectorSummary,
+  Goal,
+  ItemInstance,
   MemoryUsage,
   ModelInstance,
+  PromiseItem,
+  RelationValue,
+  Scene,
   TurnCapabilities,
+  WorldState,
 };
 
 export interface TextBlock {
@@ -121,62 +137,8 @@ export interface PlotNode {
 
 // BranchView 字段形状由 Go 生成（见文件顶部再导出）。
 
-export interface RelationValue {
-  affection: number;
-  trust: number;
-  alertness: number;
-}
-
-export interface ItemInstance {
-  instanceId: string;
-  templateId?: string;
-  name: string;
-  ownerId?: string;
-  quantity: number;
-  protection?: number;
-  keepsake?: boolean;
-  unique?: boolean;
-}
-
-export interface CharacterInfo {
-  characterId: string;
-  name: string;
-  description?: string;
-  participant?: boolean;
-  avatar?: string;
-  personality?: string;
-  scenario?: string;
-  // 以下字段沿用线上（V2 兼容）命名：世界状态、卡片 JSON 与剧情包用的是同一套名字，
-  // 前端不再各自翻译一遍，避免「线上叫 mes_example、界面按 mesExample 读」而永远取空。
-  mes_example?: string;
-  system_prompt?: string;
-  post_history_instructions?: string;
-  creator_notes?: string;
-  tags?: string[];
-  creator?: string;
-  character_version?: string;
-  nickname?: string;
-}
-
-export interface PromiseItem {
-  promiseId: string;
-  participantIds?: string[];
-  content: string;
-  sourceNodeId: string;
-  state: "proposed" | "active" | "fulfilled" | "broken" | "cancelled";
-  settledByReceiptId?: string;
-}
-
-export interface WorldState {
-  relationships: Record<string, RelationValue>;
-  items: Record<string, ItemInstance>;
-  promises: Record<string, PromiseItem>;
-  moods: Record<string, { moodCode: string; text: string }>;
-  characters: Record<string, CharacterInfo>;
-  scene?: { sceneId: string; title?: string } | null;
-  /** 会话级键值状态（卡片 [VAR] 标记写入）。 */
-  variables?: Record<string, string>;
-}
+// RelationValue / ItemInstance / CharacterInfo / PromiseItem / WorldState /
+// CharacterMood / Goal / Scene 字段形状由 Go 生成（见文件顶部再导出）。
 
 export interface SessionView {
 	/** 当前查看节点的导演进度；完整大纲通过独立接口读取。 */

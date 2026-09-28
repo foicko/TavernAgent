@@ -13,7 +13,7 @@ export function recoveryView(id = "A", complete = false): SessionView {
   return { sessionId: id, characterId: "card_elena", title: "港口", rootNodeId: root.nodeId,
     branch: { branchId: `branch_${id}`, name: "main", headNodeId: complete ? turn.nodeId : root.nodeId, version: complete ? 1 : 0 },
     headNode: complete ? turn : root, nodes: complete ? [root, turn] : [root],
-    state: { characters: { npc_elena: { characterId: "npc_elena", name: "向导", participant: true } }, items: {}, relationships: {}, promises: {}, moods: {} },
+    state: { characters: { npc_elena: { characterId: "npc_elena", name: "向导", description: "", participant: true } }, items: {}, relationships: {}, promises: {}, moods: {}, goals: {}, milestones: {} },
   };
 }
 

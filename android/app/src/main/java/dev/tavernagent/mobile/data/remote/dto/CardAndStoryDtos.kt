@@ -206,79 +206,8 @@ data class PlotNodeDto(
 }
 
 // ---- 状态投影 ----
-
-@Serializable
-data class RelationValueDto(
-    val affection: Int = 0,
-    val trust: Int = 0,
-    val alertness: Int = 0,
-)
-
-@Serializable
-data class ItemInstanceDto(
-    val instanceId: String = "",
-    val templateId: String = "",
-    val name: String = "",
-    val aliases: List<String> = emptyList(),
-    val ownerId: String? = null,
-    val locationId: String? = null,
-    val quantity: Int = 0,
-    val protection: Int = 0,
-    val keepsake: Boolean = false,
-    val unique: Boolean = false,
-)
-
-@Serializable
-data class PromiseDto(
-    val promiseId: String = "",
-    val participantIds: List<String> = emptyList(),
-    val content: String = "",
-    val sourceNodeId: String = "",
-    val state: String = "proposed",
-)
-
-@Serializable
-data class CharacterMoodDto(
-    val moodCode: String = "",
-    val text: String = "",
-)
-
-@Serializable
-data class GoalDto(
-    val text: String = "",
-    val characterId: String = "",
-)
-
-@Serializable
-data class SceneDto(
-    val sceneId: String = "",
-    val locationId: String? = null,
-    val title: String? = null,
-)
-
-@Serializable
-data class CharacterInfoDto(
-    val characterId: String = "",
-    val name: String = "",
-    val aliases: List<String> = emptyList(),
-    val description: String = "",
-    val participant: Boolean = false,
-    val avatar: String? = null,
-)
-
-@Serializable
-data class WorldStateDto(
-    val relationships: Map<String, RelationValueDto> = emptyMap(),
-    val items: Map<String, ItemInstanceDto> = emptyMap(),
-    val promises: Map<String, PromiseDto> = emptyMap(),
-    val moods: Map<String, CharacterMoodDto> = emptyMap(),
-    val goals: Map<String, GoalDto> = emptyMap(),
-    val scene: SceneDto? = null,
-    val milestones: Map<String, String> = emptyMap(),
-    val unlockedSecrets: List<String> = emptyList(),
-    val characters: Map<String, CharacterInfoDto> = emptyMap(),
-    val variables: Map<String, String> = emptyMap(),
-)
+// RelationValueDto / ItemInstanceDto / PromiseDto / CharacterMoodDto / GoalDto /
+// SceneDto / CharacterInfoDto / WorldStateDto 由 Go 生成（GeneratedDtos.kt）。
 
 // ---- 视图 ----
 

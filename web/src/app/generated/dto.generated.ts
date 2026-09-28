@@ -109,3 +109,80 @@ export interface AssistantEditResult {
   mode: string;
 }
 
+export interface RelationValue {
+  affection: number;
+  trust: number;
+  alertness: number;
+}
+
+export interface ItemInstance {
+  instanceId: string;
+  templateId: string;
+  name: string;
+  aliases?: string[];
+  ownerId?: string;
+  locationId?: string;
+  quantity: number;
+  protection: number;
+  keepsake: boolean;
+  unique: boolean;
+}
+
+export interface PromiseItem {
+  promiseId: string;
+  participantIds: string[];
+  content: string;
+  sourceNodeId: string;
+  state: string;
+  settledByReceiptId?: string;
+}
+
+export interface CharacterMood {
+  moodCode: string;
+  text: string;
+}
+
+export interface Goal {
+  text: string;
+  characterId: string;
+}
+
+export interface Scene {
+  sceneId: string;
+  locationId?: string;
+  title?: string;
+}
+
+export interface CharacterInfo {
+  characterId: string;
+  name: string;
+  aliases?: string[];
+  description: string;
+  participant: boolean;
+  attributes?: Record<string, number>;
+  avatar?: string;
+  personality?: string;
+  scenario?: string;
+  mes_example?: string;
+  system_prompt?: string;
+  post_history_instructions?: string;
+  creator_notes?: string;
+  tags?: string[];
+  creator?: string;
+  character_version?: string;
+  nickname?: string;
+}
+
+export interface WorldState {
+  relationships: Record<string, RelationValue>;
+  items: Record<string, ItemInstance>;
+  promises: Record<string, PromiseItem>;
+  moods: Record<string, CharacterMood>;
+  goals: Record<string, Goal>;
+  scene?: Scene | null;
+  milestones: Record<string, string>;
+  unlockedSecrets?: string[];
+  characters: Record<string, CharacterInfo>;
+  variables?: Record<string, string>;
+}
+

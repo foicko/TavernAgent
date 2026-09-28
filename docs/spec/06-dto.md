@@ -55,9 +55,11 @@
 
 **当前覆盖**：`DirectorEvidence` / `DirectorBeat` / `DirectorPlan` / `DirectorBeatProgress` /
 `DirectorState` / `DirectorSummary` / `ModelInstance` / `MemoryUsage` / `BranchView` /
-`TurnCapabilities` / `AcceptResult` / `DeriveResult` / `AssistantEditResult`。清单在 `cmd/gencontract/main.go` 的 `manifest`。
+`TurnCapabilities` / `AcceptResult` / `DeriveResult` / `AssistantEditResult` /
+`WorldState` 及其子模型（`RelationValue`/`ItemInstance`/`Promise`/`CharacterMood`/`Goal`/`Scene`/`CharacterInfo`）。
+清单在 `cmd/gencontract/main.go` 的 `manifest`。
 
-**尚未覆盖**：`TurnView`/`TurnContent`、`SessionView`、`WorldState`、`MemoryView`、`CardPreview` 等。
+**尚未覆盖**：`TurnView`/`TurnContent`、`SessionView`、`MemoryView`、`CardPreview` 等。
 `TurnView` 等曾是 `http` 层的 **ad-hoc `map[string]any` 响应**——已把回合受理/派生/编辑结果改成具名
 struct 并纳入生成；其余同类 map 响应仍待重构。这是「覆盖全部」的前置。
 

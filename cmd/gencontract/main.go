@@ -45,6 +45,14 @@ var manifest = []entry{
 	{reflect.TypeOf(application.AcceptResult{}), "AcceptResult", "AcceptTurnResponseDto"},
 	{reflect.TypeOf(application.DeriveResponse{}), "DeriveResult", "DeriveTurnResponseDto"},
 	{reflect.TypeOf(application.AssistantEditResponse{}), "AssistantEditResult", "AssistantEditResponseDto"},
+	{reflect.TypeOf(domain.RelationValue{}), "RelationValue", "RelationValueDto"},
+	{reflect.TypeOf(domain.ItemInstance{}), "ItemInstance", "ItemInstanceDto"},
+	{reflect.TypeOf(domain.Promise{}), "PromiseItem", "PromiseDto"},
+	{reflect.TypeOf(domain.CharacterMood{}), "CharacterMood", "CharacterMoodDto"},
+	{reflect.TypeOf(domain.Goal{}), "Goal", "GoalDto"},
+	{reflect.TypeOf(domain.Scene{}), "Scene", "SceneDto"},
+	{reflect.TypeOf(domain.CharacterInfo{}), "CharacterInfo", "CharacterInfoDto"},
+	{reflect.TypeOf(domain.WorldState{}), "WorldState", "WorldStateDto"},
 }
 
 var (
