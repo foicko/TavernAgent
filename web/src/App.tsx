@@ -5,6 +5,7 @@ import { useSettings } from "./stores/settingsStore";
 import { useUi } from "./stores/uiStore";
 import { api, onAuthRequired } from "./app/api";
 import { buildCommands } from "./lib/commandRegistry";
+import { closeTopLayer } from "./lib/modalStack";
 import { CommandPalette } from "./ui/CommandPalette";
 import { ToastStack } from "./ui/Toast";
 
@@ -131,6 +132,9 @@ export default function App() {
         e.preventDefault();
         useUi.getState().openLeftTabAndExpand(LEFT_TAB_KEYS[e.code]);
       } else if (e.key === "Escape") {
+        // 统一模态栈优先：Esc 只关最上面那一个图层（Modal / 命令面板）。
+        // 命令面板已注册进栈，因此这里不会再误关它下面打开的世界书等弹窗（M75）。
+        if (closeTopLayer()) return;
         // 抽屉遮罩仅在 ≤768px 生效；桌面端 Esc 不应收起侧栏。
         const drawerOpen = (window.matchMedia?.("(max-width: 768px)").matches ?? false)
           && (!isLeftRailCollapsed || !isRightRailCollapsed);

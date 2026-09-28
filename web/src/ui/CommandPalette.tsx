@@ -5,6 +5,7 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { filterCommands, isCommandEnabled, sectionize, type Command } from "../lib/commands";
+import { useDialogFocus } from "../lib/useDialogFocus";
 import { Icon } from "./Icon";
 import { Kbd } from "./Kbd";
 import "./CommandPalette.css";
@@ -28,6 +29,8 @@ export function CommandPalette({
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  // 注册进统一模态栈：Esc/焦点边界交给 lib/useDialogFocus，叠层时下层 inert。
+  const dialog = useDialogFocus(true, onClose);
 
   const visible = useMemo(() => filterCommands(commands, query), [commands, query]);
   const enabledFlags = useMemo(() => visible.map(isCommandEnabled), [visible]);
@@ -87,12 +90,6 @@ export function CommandPalette({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     switch (event.key) {
-      case "Escape":
-        // 面板是最上层：吃掉这次 Esc，既不关侧栏也不关下层弹窗。
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-        return;
       case "Tab":
         // 焦点不逃逸：唯一可聚焦的是搜索框，列表用 aria-activedescendant 走虚拟焦点。
         event.preventDefault();
@@ -132,7 +129,15 @@ export function CommandPalette({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="ui-command-palette" role="dialog" aria-modal="true" aria-label={label} onKeyDown={handleKeyDown}>
+      <div
+        {...dialog}
+        aria-label={label}
+        className="ui-command-palette"
+        onKeyDown={(event) => {
+          handleKeyDown(event);
+          dialog.onKeyDown(event);
+        }}
+      >
         <div className="ui-command-palette__search">
           <Icon name="search" size={15} className="ui-command-palette__search-icon" />
           <input

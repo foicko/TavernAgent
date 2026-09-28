@@ -53,6 +53,8 @@ export function useDialogFocus(open: boolean, onClose?: () => void) {
   }, [open]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // 内层控件已经处理掉这次按键时不再插手（例如命令面板自己吃掉 Tab）。
+    if (event.defaultPrevented) return;
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
