@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
+import { useDialogFocus } from "../lib/useDialogFocus";
 import { useImageSettings } from "../stores/imageSettingsStore";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
@@ -13,16 +14,8 @@ export interface TurnIllustrationProps {
 export function TurnIllustration({ turnId, onOpenModal }: TurnIllustrationProps) {
   const illustration = useImageSettings((s) => s.turnIllustrations[turnId]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && lightboxOpen) {
-        setLightboxOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxOpen]);
+  // 灯箱接入统一模态栈（B10-R1）：Esc 关灯箱、焦点归还、打开期间背景 inert 都由栈负责。
+  const lightbox = useDialogFocus(lightboxOpen, () => setLightboxOpen(false));
 
   if (!illustration) {
     return null;
@@ -54,7 +47,12 @@ export function TurnIllustration({ turnId, onOpenModal }: TurnIllustrationProps)
       </div>
 
       {lightboxOpen && typeof document !== "undefined" && createPortal(
-        <div className="lightbox-backdrop" onClick={() => setLightboxOpen(false)}>
+        <div
+          {...lightbox}
+          className="lightbox-backdrop"
+          aria-label={illustration.prompt || "全屏场景插画"}
+          onClick={() => setLightboxOpen(false)}
+        >
           <img
             src={illustration.url}
             alt={illustration.prompt || "全屏场景插画"}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDialogFocus } from "../lib/useDialogFocus";
 import type { DirectorAction, DirectorBeat, DirectorDraft, DirectorPlan } from "../app/types";
 import { directorBusy, storyBusy, useStory } from "../stores/storyStore";
 import { directorScopeKey } from "../stores/slices/directorSlice";
@@ -59,7 +60,9 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
   const [saveIssue, setSaveIssue] = useState("");
   const [notice, setNotice] = useState("");
   const [ready, setReady] = useState(false);
-  const dialog = useRef<HTMLDivElement>(null);
+  // 注册进统一模态栈（B10-R1）：Esc / Tab 焦点边界 / 关闭后焦点归还交给 lib/useDialogFocus。
+  const closeRef = useRef<() => void>(() => {});
+  const dialog = useDialogFocus(true, () => closeRef.current());
   const editor = useRef(plan);
   const dirtyRef = useRef(false);
   const version = useRef(0);
@@ -79,10 +82,9 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
   useEffect(() => { void load(); }, [load, view.sessionId, view.branch.branchId, viewNodeId, view.branch.headNodeId]);
   useEffect(() => {
     mounted.current = true;
-    const previous = document.activeElement as HTMLElement | null;
-    dialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
-    return () => { mounted.current = false; previous?.focus(); };
-  }, []);
+    dialog.ref.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    return () => { mounted.current = false; };
+  }, [dialog.ref]);
 
   useEffect(() => {
     if (!workspace || dirtyRef.current) return;
@@ -147,6 +149,7 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
     edit({ ...editor.current, beats });
   };
   const close = async () => { try { await saveNow(); } catch { /* Durable browser backup survives closing the workspace. */ } if (stillHere()) onClose(); };
+  closeRef.current = () => void close();
   const run = async (action: DirectorAction, beatId?: string) => {
     try {
       await saveNow();
@@ -188,16 +191,7 @@ export function DirectorWorkspace({ onClose }: { onClose: () => void }) {
   const firstMovable = replace || !active ? 0 : currentIndex >= 0 ? currentIndex + 1 : Object.keys(active.progress).length;
 
   return createPortal(<div className="director-overlay">
-    <div ref={dialog} className="director-dialog" role="dialog" aria-modal="true" aria-labelledby="director-title"
-      onKeyDown={event => {
-        if (event.key === "Escape") { event.stopPropagation(); void close(); }
-        if (event.key === "Tab") {
-          const items = Array.from(dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"]') ?? []);
-          const first = items[0], last = items.at(-1);
-          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-        }
-      }}>
+    <div {...dialog} className="director-dialog" aria-labelledby="director-title">
       <header className="director-header">
         <div><h2 id="director-title">导演模式</h2><p>先商量故事的方向，再让角色走进下一幕。</p></div>
         <Button variant="outline" onClick={() => void close()}>返回剧情 <Icon name="close" size={13} /></Button>

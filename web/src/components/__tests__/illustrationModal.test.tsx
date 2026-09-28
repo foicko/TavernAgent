@@ -143,8 +143,8 @@ describe("TurnIllustration Component", () => {
     fireEvent.click(thumbnail);
     expect(document.querySelector(".lightbox-img")).toBeTruthy();
 
-    // Press Escape to close lightbox
-    fireEvent.keyDown(window, { key: "Escape" });
+    // Press Escape to close lightbox（灯箱已注册进统一模态栈，Esc 由图层自身处理）
+    fireEvent.keyDown(document.querySelector(".lightbox-backdrop")!, { key: "Escape" });
     expect(document.querySelector(".lightbox-img")).toBeNull();
 
     // Click re-generate button calls onOpenModal

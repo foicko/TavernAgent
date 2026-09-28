@@ -32,7 +32,7 @@
 | B6 | Web 视觉一致性与 UX（部分） | M73, M77, M79 | ✅ 已完成 |
 | B6b | Web 视觉/UX 其余（部分） | M69 | ✅ 已完成 |
 | B6c | Web 视觉/UX（菜单 portal） | M78 | ✅ 已完成 |
-| B6d | Web 视觉/UX（模态栈） | M75（已回退，见备注） | ↩️ 已回退 |
+| B6d | Web 视觉/UX（模态栈） | M75（经 R1 统一模态栈解决） | ✅ 经 R1 |
 | B6e | Web 字号令牌化（R4/M72，全量迁移） | M72 | ✅ 已完成 |
 | B7 | Android 关键缺陷（核心） | S10, S12, M48, M49, M50 | ✅ 已完成 |
 | B7b | Android 关键其余项 | S11, M51, M57（禁用备份面） | ✅ 已完成 |
@@ -89,7 +89,7 @@
 - **M29（投影写移出读路径）**：需把记忆投影物化从读路径迁到提交路径，属设计改动，**顺延到 B2d**。
 - **M74（示例世界书条目预选）**：复核 `characterPresets.ts:112`，`INITIAL_LORE_ENTRIES` 为**空数组**，侧栏"示例世界书词条"不会渲染任何可点卡片（同时 `LeftRail.tsx:302` 的 `role=button` 缺失也因此不可达）。原描述的场景在当前源码下不成立，**不适用，不改**；若将来填充示例条目，应同时补预选与键盘可达。
 - **G60（自绘 toast 的 `z-index:9999`）**：已随 M69（B6b）删除自绘 `.quiet-toast-notification`、改用令牌化 `ToastStack` 而一并消除，**已随 M69 完成**。
-- **M75（全局快捷键造成模态叠模态）**：本已实现「无对话框时才响应 Ctrl+K/Ctrl+,」，但 `e2e/palette.spec.ts` 明确验收「允许叠层 + Esc 只关最上层」，两者互斥；**以验收测试为规格，已回退**。真正的解决方案是 R1（统一模态栈），届时再收。附带发现并修复了一个真实回归：M64 对 `#root` 设 `inert` 后，未 portal 的 `CommandPalette` 会一并失效——命令面板已改为 portal 到 `document.body`（与 `Modal` 一致）。
+- **M75（全局快捷键造成模态叠模态）**：`e2e/palette.spec.ts` 明确验收「允许叠层 + Esc 只关最上层」，因此 M75 的前提（禁用叠层）与验收互斥。**已由 R1 正解**：建统一模态栈（`lib/modalStack`），叠层是允许的，但**只有栈顶可交互、更下层整层 inert**，`Esc` 走 `closeTopLayer()` 只关栈顶。附带修复的真实回归：M64 对 `#root` 设 `inert` 后未 portal 的 `CommandPalette` 失效——命令面板已 portal 到 `document.body` 并接入栈。
 
 ---
 
@@ -198,7 +198,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 | --- | --- | --- |
 | R2 | ✅ 已完成 | 会话筛选、立绘神情差分 → `Tabs`；另两处经核实为不同模式（见下）|
 | R3 | ✅ 已完成 | 会话行、两份角色卡行（已收录+预设）→ `ListRow`；另两类经核实为不同模式（见下）|
-| R1 | ⬜ | |
+| R1 | ✅ 已完成 | 统一模态栈：Modal/命令面板/导演工作区/灯箱接入；Esc 只关栈顶；下层整体 inert |
 | R6 | ⬜ | |
 | R5 | ⬜ | |
 | R8 | ⬜ | |
@@ -247,7 +247,7 @@ R1 对话框栈、R2 选择控件、R3 ListRow、R4 设计系统收敛、R5 SSE 
 
 **Wave 2 · Web 架构**
 
-- **B10-R1**（`refactor(web,r1)`，3–4 提交）：建 `ModalStackProvider`（栈/`closeTop`/`registerEscape`/背景 `inert`+滚动锁）→ 迁移 `Modal`/`useDialogFocus` → 让 `DirectorWorkspace`/`CommandPalette`/`Popover`/`TurnIllustration` lightbox/移动抽屉注册 → 全局快捷键改查「栈空」。补嵌套 Esc、焦点恢复、背景 inert 用例；把 `palette.spec` 的叠层验收扩到 3 层。
+- **B10-R1**（`refactor(web,r1)`，4 提交）：建 `lib/modalStack`（单一栈 + `closeTopLayer` + 背景/下层 inert + 滚动锁），`useDialogFocus` 接入；Modal/命令面板/导演工作区/插画灯箱全部注册；App 全局 Esc 改为 `closeTopLayer()`（只关栈顶）。
 - **B10-R6**（`refactor(web,r6)`，3 提交）：定义 `createStoryRuntime()` → store 创建时实例化、`beginNavigation`/`emptyStory` 调 `reset()` → 迁各 slice → 删除测试里的间接重置。以 `storyIsolation.test.ts`(41 项) 守护。
 - **B10-R5**（`refactor(web,r5)`，3 提交）：抽 `app/stream.ts`（`subscribeEvents`/`parseSSEBlock`/`readWithStall`/`sleepCancellable`）→ `onEvent` 独立 try/catch + 归一化 `seq` → 补「handler 抛错/`seq=0`/超大事件/401 非 JSON」用例。`api.ts` 随之降到 ~400 行。
 
