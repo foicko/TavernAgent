@@ -345,6 +345,32 @@ func TestInstanceEnvironmentOverrideWins(t *testing.T) {
 	}
 }
 
+// 环境变量来源的实例：客户端把脱敏密钥原样回传（读-改-写）不得报错，且密钥保持环境变量值。
+func TestEnvBackedInstanceAcceptsMaskedKeyOnRewrite(t *testing.T) {
+	store := openStore(t, t.TempDir())
+	created, err := store.SaveModel(ports.ModelInstance{Name: "A", Kind: "openai-chat", BaseURL: "https://a.example/v1", Model: "m1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(instanceEnvPrefix+envKeyForID(created.ID), "sk-from-env")
+	cat, err := store.LoadCatalog(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	masked := modelByName(t, cat, "A").APIKey
+	if masked == "" || masked == "sk-from-env" {
+		t.Fatalf("期望脱敏值，实际 %q", masked)
+	}
+	// 读-改-写：改名并回传脱敏密钥
+	if _, err := store.SaveModel(ports.ModelInstance{ID: created.ID, Name: "A2", Kind: "openai-chat", BaseURL: "https://a.example/v1", Model: "m1", APIKey: masked}); err != nil {
+		t.Fatalf("回传脱敏密钥不应报错: %v", err)
+	}
+	cat, _ = store.LoadCatalog(false)
+	if modelByName(t, cat, "A2").APIKey != "sk-from-env" {
+		t.Fatalf("密钥应保持环境变量值，实际 %q", modelByName(t, cat, "A2").APIKey)
+	}
+}
+
 // 同一个模型、多个槽位各用自己名字的密钥引用（但密钥值相同）→ 必须合并成一个实例。
 // 真实配置就是这样：primary/assist/reflection 的 ref 名不同，值指向同一把密钥。
 func TestMigrateMergesSlotsSharingTheSameKeyValue(t *testing.T) {

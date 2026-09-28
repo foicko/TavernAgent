@@ -121,9 +121,13 @@ func Bootstrap(cfg Config) (*App, error) {
 	}
 	// v1 配置（槽位内联字段 + 档案）一次性迁移成"模型实例 + 槽位引用"：
 	// 迁移前备份为 settings.json.v1.bak，迁移后磁盘只保留 v2。
-	if migrated, err := cfgStore.MigrateLegacy(); err != nil {
-		log.Printf("模型配置迁移失败（继续使用内存中的迁移结果）: %v", err)
-	} else if migrated {
+	// 迁移必须落盘：否则每次读取都会在内存里重新迁移并生成新的随机实例 ID，
+	// 槽位引用/界面选择会随之漂移，因此失败即启动失败。
+	migrated, err := cfgStore.MigrateLegacy()
+	if err != nil {
+		return nil, fmt.Errorf("模型配置迁移失败: %w", err)
+	}
+	if migrated {
 		log.Printf("模型配置已迁移为实例+槽位形态（旧文件备份为 settings.json.v1.bak）")
 	}
 

@@ -214,6 +214,13 @@ func (f *FileStore) SaveModel(instance ports.ModelInstance) (ports.ModelInstance
 	if instance.ID == "" {
 		instance.ID = "m_" + id.New()
 	}
+	// 环境变量来源的实例：客户端把脱敏值原样回传（读-改-写）时应视为"未变更"，
+	// 而不是报"脱敏凭据不能作为新密钥"。
+	if instance.APIKey != "" {
+		if envKey := os.Getenv(instanceEnvPrefix + envKeyForID(instance.ID)); envKey != "" && instance.APIKey == ports.MaskAPIKey(envKey) {
+			instance.APIKey = ""
+		}
+	}
 	if len(sf.Models) >= maxInstances && sf.Models[instance.ID] == nil {
 		return ports.ModelInstance{}, fmt.Errorf("最多保存 %d 个模型实例", maxInstances)
 	}
