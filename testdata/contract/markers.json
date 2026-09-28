@@ -1,0 +1,18 @@
+{
+  "_comment": "卡片 UI 标记语法的唯一契约来源。Go/TS 测试直接读取本文件；Kotlin 测试由 scripts/gen_marker_contract.py 生成。改语法必须同时改这里。",
+  "cases": [
+    { "id": "img-cmd", "text": "前 <img cmd=\"smile\"> 后", "images": ["smile"] },
+    { "id": "img-eq", "text": "<img=\"smile\">", "images": ["smile"] },
+    { "id": "img-obj", "text": "<img_obj=\"smile\">", "images": ["smile"] },
+    { "id": "img-bg", "text": "<imgBG=\"smile\">", "images": ["smile"] },
+    { "id": "img-src-attr", "text": "<img src=\"smile\" rel=\"x\">", "images": ["smile"] },
+    { "id": "img-bracket", "text": "[IMG:smile]", "images": ["smile"] },
+    { "id": "img-order", "text": "<img cmd=\"smile\"> 和 [IMG:wave]", "images": ["smile", "wave"] },
+    { "id": "img-unquoted-ignored", "text": "<img src=smile>", "images": [] },
+    { "id": "img-escaped-literal", "text": "[[IMG:smile]", "images": [] },
+    { "id": "hud", "text": "[HUD:信任=82/100|好感=40%]", "hud": [{ "信任": "82/100", "好感": "40%" }] },
+    { "id": "hud-malformed-kept", "text": "[HUD:没有等号]", "hud": [] },
+    { "id": "scene", "text": "[SCENE:雨夜酒馆]", "scene": "雨夜酒馆" },
+    { "id": "var-removed", "text": "前[VAR:flag=1]后", "varRemoved": true }
+  ]
+}
