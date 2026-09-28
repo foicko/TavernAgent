@@ -193,8 +193,8 @@ class StoryViewModel(
                 applyView(view, keepViewingNode = before != null)
                 if (before != null && previous.isNotEmpty()) {
                     _state.update { st ->
-                        val olderIds = st.messages.map { it.id }.toSet()
-                        st.copy(messages = st.messages + previous.filter { it.id !in olderIds })
+                        val olderIds = st.messages.map { it.nodeId }.toSet()
+                        st.copy(messages = st.messages + previous.filter { it.nodeId !in olderIds })
                     }
                 }
                 repository.rememberLocation(view.sessionId, view.branch.branchId, view.branch.headNodeId, view.title)
