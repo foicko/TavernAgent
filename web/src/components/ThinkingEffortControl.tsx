@@ -22,6 +22,7 @@ export function ThinkingEffortControl() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const current = useMemo(() => activePrimaryInstance(providers, models), [providers, models]);
   const effort = current?.reasoningEffort ?? "";
@@ -32,7 +33,7 @@ export function ThinkingEffortControl() {
     if (!loaded) void load();
   }, [loaded, load]);
 
-  useDismiss({ enabled: open, onDismiss: close, ignore: [root] });
+  useDismiss({ enabled: open, onDismiss: close, ignore: [root, menuRef] });
 
   const choose = async (value: string) => {
     close();
@@ -72,6 +73,8 @@ export function ThinkingEffortControl() {
         label="选择思考强度"
         direction="up"
         align="end"
+        anchor={root}
+        panelRef={menuRef}
         onClose={close}
       >
         {EFFORT_OPTIONS.map((option) => (

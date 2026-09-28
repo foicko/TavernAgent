@@ -1,4 +1,6 @@
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { createPortal } from "react-dom";
+import { placePopover } from "./Popover";
 import "./Menu.css";
 
 export interface MenuProps {
@@ -13,6 +15,10 @@ export interface MenuProps {
   align?: "start" | "end";
   footer?: ReactNode;
   className?: string;
+  /** 传入锚点（通常是包裹触发按钮的容器）时，菜单 portal 到 body 并按视口定位，避免被 overflow:hidden 祖先裁切。 */
+  anchor?: RefObject<HTMLElement | null>;
+  /** portal 模式下把面板节点暴露给调用方，供 useDismiss 的 ignore 使用。 */
+  panelRef?: RefObject<HTMLDivElement | null>;
   children: ReactNode;
 }
 
@@ -31,10 +37,47 @@ export function Menu({
   align = "start",
   footer,
   className = "",
+  anchor,
+  panelRef: externalPanelRef,
   children,
 }: MenuProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
+  const localRef = useRef<HTMLDivElement>(null);
+  const panelRef = externalPanelRef ?? localRef;
   const triggerRef = useRef<HTMLElement | null>(null);
+  const portal = Boolean(anchor);
+  const side = direction === "up" ? "top" : "bottom";
+  const popAlign = align === "end" ? "end" : "start";
+  const [placement, setPlacement] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
+
+  const reposition = useCallback(() => {
+    if (!portal) return;
+    const panel = panelRef.current;
+    const anchorElement = anchor?.current;
+    if (!panel || !anchorElement) return;
+    const rect = anchorElement.getBoundingClientRect();
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const placed = placePopover(rect, { width: panel.offsetWidth, height: panel.offsetHeight }, side, popAlign, 8, viewport);
+    // 限制高度：矮屏（横屏手机）也要能滚动到全部选项。
+    setPlacement({ top: placed.top, left: placed.left, maxHeight: Math.max(140, Math.min(320, viewport.height - 16)) });
+  }, [portal, panelRef, anchor, side, popAlign]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlacement(null);
+      return;
+    }
+    reposition();
+  }, [open, reposition, children]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [open, reposition]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,7 +96,7 @@ export function Menu({
         trigger.focus?.();
       }
     };
-  }, [open]);
+  }, [open, panelRef]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const nodes = menuItems(panelRef.current);
@@ -92,12 +135,13 @@ export function Menu({
 
   if (!open) return null;
 
-  return (
+  const panel = (
     <div
       ref={panelRef}
       role="menu"
       aria-label={label}
-      className={["ui-menu", `ui-menu--${direction}`, `ui-menu--align-${align}`, className].filter(Boolean).join(" ")}
+      className={["ui-menu", portal ? "ui-menu--portal" : "", `ui-menu--${direction}`, `ui-menu--align-${align}`, className].filter(Boolean).join(" ")}
+      style={portal ? (placement ? { top: placement.top, left: placement.left, maxHeight: placement.maxHeight } : { top: 0, left: 0, visibility: "hidden" }) : undefined}
       onKeyDown={onKeyDown}
     >
       {header ? <div className="ui-menu__header">{header}</div> : null}
@@ -105,6 +149,11 @@ export function Menu({
       {footer ? <div className="ui-menu__foot">{footer}</div> : null}
     </div>
   );
+
+  if (portal && typeof document !== "undefined") {
+    return createPortal(panel, document.body);
+  }
+  return panel;
 }
 
 export interface MenuItemProps {

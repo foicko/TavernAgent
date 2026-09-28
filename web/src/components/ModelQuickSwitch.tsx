@@ -22,6 +22,7 @@ export function ModelQuickSwitch() {
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const current = useMemo(() => activePrimaryInstance(providers, models), [providers, models]);
   const labels = useMemo(() => optionLabels(models), [models]);
@@ -32,7 +33,7 @@ export function ModelQuickSwitch() {
     if (!loaded) void load();
   }, [loaded, load]);
 
-  useDismiss({ enabled: open, onDismiss: close, ignore: [root] });
+  useDismiss({ enabled: open, onDismiss: close, ignore: [root, menuRef] });
 
   const choose = async (modelId: string) => {
     close();
@@ -78,6 +79,8 @@ export function ModelQuickSwitch() {
         label="选择主线模型"
         direction="up"
         align="end"
+        anchor={root}
+        panelRef={menuRef}
         onClose={close}
         footer="切换对新回合生效，正在生成的这一段不变。"
       >

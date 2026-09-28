@@ -229,6 +229,24 @@ describe("Menu", () => {
     expect(screen.getByRole("menuitemradio", { name: /^A/ }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByRole("menuitemradio", { name: /^B/ }).getAttribute("aria-checked")).toBe("false");
   });
+
+  it("portals to body when an anchor is provided (overflow:hidden ancestors cannot clip it)", () => {
+    const anchor = { current: null as HTMLDivElement | null };
+    render(
+      <div style={{ overflow: "hidden" }}>
+        <div
+          ref={(el) => { anchor.current = el; }}
+          style={{ display: "inline-flex" }}
+        />
+        <Menu open label="选择主线模型" anchor={anchor} onClose={() => {}}>
+          <MenuItem title="A" onSelect={() => {}} />
+        </Menu>
+      </div>,
+    );
+    const menu = screen.getByRole("menu");
+    expect(menu.parentElement).toBe(document.body);
+    expect(menu.classList.contains("ui-menu--portal")).toBe(true);
+  });
 });
 
 describe("Modal", () => {

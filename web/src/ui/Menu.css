@@ -41,6 +41,23 @@
   left: 0;
 }
 
+/* portal 到 body 时坐标由内联 top/left 提供：禁用相对锚点的定位，避免 top/bottom 同时生效被拉伸。 */
+.ui-menu--portal {
+  position: fixed;
+}
+
+.ui-menu--portal.ui-menu--up,
+.ui-menu--portal.ui-menu--down {
+  top: auto;
+  bottom: auto;
+}
+
+.ui-menu--portal.ui-menu--align-start,
+.ui-menu--portal.ui-menu--align-end {
+  left: auto;
+  right: auto;
+}
+
 @keyframes ui-menu-in {
   from {
     opacity: 0;
