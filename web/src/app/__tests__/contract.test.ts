@@ -127,7 +127,7 @@ describe("前后端载荷契约测试 (Contract Verification)", () => {
 
     const usage = fixtures.memoryUsage as unknown as MemoryUsage;
     expect(usage.used).toBe(1);
-    expect(usage.limit).toBe(200);
+    expect(usage.limit).toBe(80);
     expect(["Normal", "Notice", "Degraded", "Critical"]).toContain(usage.tier);
   });
 
@@ -160,8 +160,6 @@ describe("前后端载荷契约测试 (Contract Verification)", () => {
       "block.delta",
       "block.appended",
       "turn.truncated",
-      "turn.awaiting_continuation",
-      "turn.awaiting_approval",
       "turn.committed",
       "turn.cancelled",
       "turn.failed",

@@ -35,15 +35,15 @@
 | 错误码 | HTTP | retryable | 含义 |
 |---|---|---|---|
 | `IDEMPOTENCY_CONFLICT` | 409 | false | 同幂等键但载荷/基线不匹配 |
-| `HEAD_CONFLICT` | 409 | false | 期望分支头与实际不一致（乐观并发） |
-| `STALE_OPTION` | 409 | false | 选项已过期/不适用 |
+| `HEAD_CONFLICT` | 409 | true | 期望分支头与实际不一致（乐观并发）；刷新后重试 |
+| `STALE_OPTION` | 409 | true | 选项已过期/不适用；基于当前回合重选 |
 | `MISSING_IDEMPOTENCY_KEY` | 422 | false | 写请求缺少幂等键 |
 | `PROTOCOL_INVALID` | 422 | false | 模型输出不符合协议 |
 | `OPERATION_REJECTED` | 422 | false | 操作在当前状态不可执行 |
-| `QUEUE_FULL` | 429 | true | 生成队列已满 |
+| `QUEUE_FULL` | 429 | true | 生成队列已满，稍后重试 |
 | `PROVIDER_UNAVAILABLE` | 502 | true | 模型供应商不可用 |
-| `STORAGE_UNAVAILABLE` | 503 | true | 存储不可用 |
-| `BUDGET_EXCEEDED` | 507 | false | 超出预算/配额 |
+| `STORAGE_UNAVAILABLE` | 503 | true | 存储暂时不可用，退避重试 |
+| `BUDGET_EXCEEDED` | 507 | false | 超出预算/配额（原样重试无效） |
 | `MODEL_IN_USE` | 409 | false | 模型被 slot 引用，不能删 |
 | `MODEL_NOT_FOUND` | 404 | false | 模型不存在 |
 | `SLOT_TAKES_REFERENCE_ONLY` | 400 | false | slot 只能引用 modelId，不能内联连接信息 |
@@ -56,7 +56,8 @@
 | `INVALID_PIN` | 401 | 配对码错误 |
 | `FORBIDDEN` | 403 | Host 非私有地址，或跨来源写请求 |
 | `TOO_MANY_ATTEMPTS` | 429 | 配对尝试过多（带 `Retry-After`） |
-| `NOT_FOUND` | 404 | 资源不存在 |
+| `NOT_FOUND` | 404 | 资源不存在（含未知 `/api/*` 路径） |
+| `METHOD_NOT_ALLOWED` | 405 | 已知路径但方法不允许（保留 `Allow` 头） |
 | `BAD_REQUEST` | 400 | 请求体解析失败 |
 | `REQUEST_TOO_LARGE` | 413 | 请求体超限 |
 | `INTERNAL` | 500 | 未预期错误（细节只进日志） |
@@ -77,5 +78,6 @@
 ## 4. 差距（必须收敛）
 
 - **无跨端共享的错误码枚举**：目前只有 Go 侧 `APIError` 与 TS/Kotlin 各自的字符串。目标：在 `testdata/contract/` 增加错误码源（或并入 `api.json`），生成三端常量，并加契约测试。
-- **stdlib 纯文本错误**：`/api/` 下未知路径与 `404/405` 未走信封。目标：用自定义 `NotFoundHandler` / `MethodNotAllowedHandler` 包装为信封。
 - **`message` 目前是中文**：规范允许其可变；若未来需要多语言，只改 `message`，`code` 不变。
+
+> 已收敛：`/api/` 下未知路径与 `404/405` 现在也返回统一信封（`NOT_FOUND` / `METHOD_NOT_ALLOWED`，由 `apiErrorEnvelope` 中间件包装 stdlib 的纯文本响应）。

@@ -492,7 +492,7 @@ URL 规则（`cardAssetsBody`）：内部资源 → `/api/v1/cards/{cardId}/asse
 - 提交时硬保证：`never` 清空；`auto` 且上一轮有选项 → 抑制并记 `suppressedOptions`；`always` 保留。
 - 玩家选择：客户端发 `input.kind="option"` + `optionRef{nodeId,optionId}`。
 - 服务端校验（`validateTurnInput`）：选项必须来自当前分支头（允许中间隔 maintenance 节点，walk 上限 4096）；必须真实存在；**客户端改写文本会被降级为自由文本并丢弃 actionRef**；服务端始终用存储的选项文本。
-- 过期 → `STALE_OPTION`（409）。**注意**：HTTP 层对「缺 optionRef」返回 422/false，而应用层对「已过期」返回 409/true——存在不一致（见 §17）。
+- 过期 → `STALE_OPTION`（409，可重试：刷新后基于当前回合重选）。缺 `optionRef` 与「已过期」由应用层统一分类，语义一致。
 
 ---
 
@@ -602,11 +602,11 @@ URL 规则（`cardAssetsBody`）：内部资源 → `/api/v1/cards/{cardId}/asse
 
 ## 17. 已知差距与注意事项
 
-1. **`turn.awaiting_continuation` / `turn.awaiting_approval` 后端从不产出**：真实续写信号是 `turn.truncated`（状态 `awaiting_continuation`）。三端都在映射这两个事件名。
+1. **续写信号统一为 `turn.truncated`**：状态 `awaiting_continuation` 仍存在，但 `turn.awaiting_continuation` / `turn.awaiting_approval` 事件名已从契约与三端移除（后端从不产出）。
 2. **SSE 负载字段未机器化**：只锁了事件名；负载靠散文/各端代码。`turn.committed` 的 live 唤醒负载是 `{}`，客户端必须读 `seq>0` 的持久事件。
 3. **DTO 跨端漂移（B3.2 待做）**：TS 缺 `SessionView.capabilities`、`PlotNode.schemaVersion`、`WorldState.goals/milestones/unlockedSecrets`、`MemoryView.secretId`、`TurnView.expectedHeadId/expectedVersion/capabilities`；Kotlin 有非法默认值（`intent="unknown"`、`status="pending"`）。
 4. **错误码无共享枚举**；`/api/` 未知路径与 stdlib `404/405` 仍是纯文本，不符统一信封。
-5. **`STALE_OPTION` 不一致**：HTTP 缺 optionRef → 422/false，应用层过期 → 409/true。
+5. ~~`STALE_OPTION` 不一致~~（已收敛：缺 `optionRef` 与「已过期」统一为 409/可重试；`QUEUE_FULL`/`STORAGE_UNAVAILABLE`/`BUDGET_EXCEEDED` 的 retryable 已按 HTTP 语义修正）。
 6. **提示词指纹无回归测试**：`internal/context/prompt_fingerprint_test.go` 被多处引用但**不存在**；`prompt_docs.py` 的模板表是硬编码，可能与源码漂移而不被测试发现。
 7. **`MemoryQuota` 与 Web 夹具不一致**：实现是 80，`contract_fixtures.json` 写 200。
 8. **嵌入未接线**：向量检索已删除，embeddings 仅配置/诊断。

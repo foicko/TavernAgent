@@ -216,7 +216,7 @@ func (s *Server) Handler() http.Handler {
 	if s.staticFS != nil {
 		mux.Handle("/", spaHandler(s.staticFS))
 	}
-	return withLogging(s.apiHostGuard(mux), s.tracer)
+	return withLogging(s.apiHostGuard(apiErrorEnvelope(mux)), s.tracer)
 }
 
 // apiHostGuard 是 mux 外层的第一道防线：所有 `/api/` 请求先做 Host 白名单
@@ -476,10 +476,8 @@ func (s *Server) acceptTurn(w http.ResponseWriter, r *http.Request) {
 	if req.Input.Kind == "" {
 		req.Input.Kind = "text"
 	}
-	if req.Input.Kind == "option" && req.Input.OptionRef == nil {
-		writeError(w, 422, "STALE_OPTION", "选项引用缺失", false, "")
-		return
-	}
+	// 选项引用的完整校验（含"缺失即过期"）统一由应用层给出，避免同一错误码在
+	// HTTP 层是 422/不可重试、在应用层是 409/可重试两套语义。
 	turn, err := s.turns.Accept(r.Context(), sessionID, branchID, &application.TurnAcceptRequest{
 		IdempotencyKey: req.IdempotencyKey, ExpectedHeadID: req.ExpectedHeadID,
 		ExpectedVersion: req.ExpectedVersion, AfterTurnID: req.AfterTurnID, Mode: req.Mode,

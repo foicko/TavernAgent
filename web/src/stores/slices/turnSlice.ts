@@ -220,8 +220,6 @@ export function routeEvent(ev: { event: string; data: unknown }, sessionId: stri
     }
     case "turn.started":
     case "turn.truncated":
-    case "turn.awaiting_continuation":
-    case "turn.awaiting_approval":
       storyRuntime.activeTurnSub?.synchronize();
       break;
     case "turn.committed":

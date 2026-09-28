@@ -37,17 +37,21 @@ func Err(code, message string, status int) *APIError {
 	case "IDEMPOTENCY_CONFLICT":
 		return NewError(code, message, false, statusOverride(status, 409))
 	case "HEAD_CONFLICT", "STALE_OPTION":
+		// 基线/选项已变化：刷新视图后可用新基线重试。
 		return NewError(code, message, true, statusOverride(status, 409))
 	case "QUEUE_FULL":
-		return NewError(code, message, false, statusOverride(status, 429))
+		// 429：服务端繁忙，稍后重试有意义。
+		return NewError(code, message, true, statusOverride(status, 429))
 	case "PROVIDER_UNAVAILABLE":
 		return NewError(code, message, true, statusOverride(status, 502))
 	case "PROTOCOL_INVALID", "OPERATION_REJECTED":
 		return NewError(code, message, false, statusOverride(status, 422))
 	case "BUDGET_EXCEEDED":
-		return NewError(code, message, true, statusOverride(status, 507))
+		// 507：预算/配额是硬约束，原样重试不会成功。
+		return NewError(code, message, false, statusOverride(status, 507))
 	case "STORAGE_UNAVAILABLE":
-		return NewError(code, message, false, statusOverride(status, 503))
+		// 503：存储暂时不可用，退避重试有意义。
+		return NewError(code, message, true, statusOverride(status, 503))
 	default:
 		return NewError(code, message, false, statusOverride(status, 400))
 	}

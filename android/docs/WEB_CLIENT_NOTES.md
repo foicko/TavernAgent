@@ -152,7 +152,7 @@ Web 客户端本身不做 scheme 处理（同源）。唯一和 scheme 相关的
 | `turn.thinking` | `{thinking, attemptId}` | `thinkingText += thinking`；同时写入 `turnThinking[turnId]`。首个 thinking 记录时间戳，用于 settle 后显示"思考了 N 秒"。 |
 | `block.delta` | `{seq, kind, speakerId, delta}` | 追加到 `draftBlocks[seq-1].text`；缺位用 `{kind:"narration", text:""}` 填充；`kind` 缺省 `narration`。 |
 | `block.appended` | `{frameSeq, frame:{seq,kind,speakerId,text}}` | 用完整 frame **替换** `draftBlocks[seq-1]`（或 push）。 |
-| `turn.truncated` / `turn.awaiting_continuation` / `turn.awaiting_approval` | `{}` | `synchronize()` → phase 分别映射 `truncated` / `awaiting_confirm` |
+| `turn.truncated` | `{}` | `synchronize()` → phase 映射 `truncated` |
 | `turn.committed` | `{}` | `synchronize(true)`：停止传输、`phase="committed"`、`reloadView()` 拉权威历史 |
 | `turn.cancelled` | `{}` | detach；`phase="idle"`；清空 draft |
 | `turn.failed` | `{code,message}` | detach；`phase="failed"`；`error=message`（缺省"生成失败"） |

@@ -6,8 +6,6 @@ export const TURN_EVENT_TYPES = [
   "block.delta",
   "block.appended",
   "turn.truncated",
-  "turn.awaiting_continuation",
-  "turn.awaiting_approval",
   "turn.committed",
   "turn.cancelled",
   "turn.failed",

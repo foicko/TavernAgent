@@ -49,8 +49,7 @@ object TurnEventCodec {
             val frameDto = payload.frame ?: return null
             TurnEvent.BlockAppended(frameDto.seq, frameDto.kind, frameDto.speakerId, frameDto.text)
         }
-        "turn.truncated", "turn.awaiting_continuation" -> TurnEvent.Truncated
-        "turn.awaiting_approval" -> TurnEvent.AwaitingConfirm
+        "turn.truncated" -> TurnEvent.Truncated
         "turn.committed" -> TurnEvent.Committed(committedNodeId(frame.data))
         "turn.cancelled" -> TurnEvent.Cancelled
         "turn.failed" -> {

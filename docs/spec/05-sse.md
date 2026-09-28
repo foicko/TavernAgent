@@ -48,8 +48,6 @@ data: <payload JSON>
 | `block.delta` | 否 | `attemptId`, `seq`(int), `kind`, `speakerId`(nullable), `delta` |
 | `block.appended` | 是 | `attemptId`, `frameSeq`(int), `frame` = `{v,seq,type,kind,speakerId,text}` |
 | `turn.truncated` | 是 | `turnId`, `attemptId`, `code`, `message`, `reason`, `retryable` |
-| `turn.awaiting_continuation` | 是 | （**当前后端不产出**，见 §6） |
-| `turn.awaiting_approval` | 是 | （**当前后端不产出**，见 §6） |
 | `turn.committed` | 是 | `nodeId`, `branchId`, `branchVersion` |
 | `turn.cancelled` | 是 | `turnId`, `attemptId`, `code`, `message`, `reason`, `retryable` |
 | `turn.failed` | 是 | 同 `turn.cancelled` |
@@ -97,6 +95,6 @@ data: <payload JSON>
 
 ## 6. 差距（必须收敛）
 
-- **`turn.awaiting_continuation` / `turn.awaiting_approval` 后端不产出**：实际续写信号是 `turn.truncated`（状态为 `awaiting_continuation`）。三端都在映射这两个事件名，但没有任何代码路径发出它们。目标：要么删除这两个事件名（自由演进允许），要么补上产出路径。**在收敛前，三端都必须容忍「收到 `turn.truncated` 即视为需续写」**。
+- **续写信号统一为 `turn.truncated`**：状态 `awaiting_continuation` 存在，但**没有** `turn.awaiting_continuation` / `turn.awaiting_approval` 事件名（后端从不产出，已从契约与三端移除）。三端一律以 `turn.truncated` 作为「需续写」信号。
 - **负载字段未机器化**：目前只有事件名单源化，负载字段靠散文（本章）与各端代码。目标：在 `sse-events.json` 中为每个事件声明必需字段，三端加解析断言（B3.3 扩展）。
 - **`turn.committed` 的 live 唤醒负载是 `{}`**：只有持久事件带真实负载；客户端必须依赖 `sequence>0` 的持久事件读取 `nodeId`，不要读 live 唤醒的负载。
