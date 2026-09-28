@@ -37,6 +37,12 @@ func (s *Server) registerCardRoutes(mux *http.ServeMux) {
 // importCard 解析角色卡并写入卡库，返回标准化预览与 cardId。
 // 支持 multipart/form-data 文件上传，也支持原始二进制或 JSON 请求体。
 func (s *Server) importCard(w http.ResponseWriter, r *http.Request) {
+	if !acquireUploadSlot() {
+		w.Header().Set("Retry-After", "2")
+		writeError(w, 503, "UPLOAD_BUSY", "服务器正在处理其他上传，请稍后重试", true, "")
+		return
+	}
+	defer releaseUploadSlot()
 	tmpPath, ok := s.readCardUpload(w, r)
 	if !ok {
 		return

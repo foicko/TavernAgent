@@ -34,3 +34,25 @@ func TestBoundedJSONErrors(t *testing.T) {
 		})
 	}
 }
+
+// M20：并发上传预算必须封顶，且释放后可再次获取（不能泄漏名额）。
+func TestUploadSlotBudget(t *testing.T) {
+	acquired := 0
+	for acquireUploadSlot() {
+		acquired++
+		if acquired > maxConcurrentUploads {
+			t.Fatalf("acquired more than budget: %d", acquired)
+		}
+	}
+	if acquired != maxConcurrentUploads {
+		t.Fatalf("acquired %d slots, want %d", acquired, maxConcurrentUploads)
+	}
+	releaseUploadSlot()
+	if !acquireUploadSlot() {
+		t.Fatal("slot should be available again after release")
+	}
+	// 归还全部名额，避免影响同包其他用例。
+	for i := 0; i < maxConcurrentUploads; i++ {
+		releaseUploadSlot()
+	}
+}

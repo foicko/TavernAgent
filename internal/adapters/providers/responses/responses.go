@@ -179,6 +179,21 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 		defer close(eventCh)
 		br := bufio.NewReader(resp.Body)
 		var currentEvent string
+		// SSE 规范允许一个事件跨多行 data:（以空行结束）：累积到空行再拼接派发。
+		var pending [][]byte
+		flush := func() bool {
+			if len(pending) == 0 {
+				return true
+			}
+			data := bytes.Join(pending, []byte("\n"))
+			pending = pending[:0]
+			select {
+			case eventCh <- sseEvent{Event: currentEvent, Data: data}:
+				return true
+			case <-streamCtx.Done():
+				return false
+			}
+		}
 		for {
 			line, err := br.ReadBytes('\n')
 			// EOF 时 ReadBytes 仍会返回末尾未以换行结束的最后一行：先处理它，
@@ -189,11 +204,17 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 					case bodyErrCh <- err:
 					default:
 					}
+				} else {
+					flush()
 				}
 				return
 			}
 			t := bytes.TrimSpace(line)
 			if len(t) == 0 {
+				// 空行：一个 SSE 事件结束（多行 data: 在此拼接派发）。
+				if !flush() {
+					return
+				}
 				currentEvent = ""
 				continue
 			}
@@ -206,11 +227,13 @@ func (p *Provider) Stream(ctx context.Context, req ports.ChatRequest, sink ports
 				if len(data) == 0 {
 					continue
 				}
-				select {
-				case eventCh <- sseEvent{Event: currentEvent, Data: data}:
-				case <-streamCtx.Done():
-					return
+				// 兼容漏发空行的网关：上一段已是完整 JSON 时先派发。
+				if len(pending) > 0 && json.Valid(bytes.Join(pending, []byte("\n"))) {
+					if !flush() {
+						return
+					}
 				}
+				pending = append(pending, data)
 			}
 		}
 	}()

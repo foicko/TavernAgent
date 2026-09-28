@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -85,6 +86,34 @@ func TestStreamDeliversDeltaContent(t *testing.T) {
 	}
 	if !strings.Contains(s.gotBody, `"model":"m"`) || !strings.Contains(s.gotBody, `"stream":true`) {
 		t.Fatalf("request body = %s", s.gotBody)
+	}
+}
+
+// M27：SSE 事件跨多行 data:（以空行结束）必须按规范以 \n 拼接后再解析，
+// 否则合规但少见的网关会把 JSON 拆成无法解析的碎片并静默丢弃。
+func TestStreamJoinsMultilineData(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		// 同一事件的两行 data:：换行落在 JSON 的结构空白处，拼接后仍是合法 JSON。
+		_, _ = io.WriteString(w, "data: {\"choices\":[{\"delta\":\n")
+		_, _ = io.WriteString(w, "data: {\"content\":\"hi\"}}]}\n")
+		_, _ = io.WriteString(w, "\n")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+		w.(http.Flusher).Flush()
+	}))
+	defer srv.Close()
+	p := New(Config{BaseURL: srv.URL, Model: "m", APIKey: "k"})
+
+	var got []byte
+	err := p.Stream(context.Background(), ports.ChatRequest{}, ports.OnChunkSink(func(c []byte) error {
+		got = append(got, c...)
+		return nil
+	}))
+	if err != nil {
+		t.Fatalf("stream err: %v", err)
+	}
+	if string(got) != "hi" {
+		t.Fatalf("content = %q, want %q", got, "hi")
 	}
 }
 
